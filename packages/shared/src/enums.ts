@@ -53,3 +53,47 @@ export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;
 export function isFinalApplicationStatus(status: ApplicationStatus): boolean {
   return status === 'DEPLOYED' || status === 'REJECTED' || status === 'WITHDRAWN';
 }
+
+export const EMAIL_TOKEN_TYPES = ['VERIFY_EMAIL', 'RESET_PASSWORD'] as const;
+export const emailTokenTypeSchema = z.enum(EMAIL_TOKEN_TYPES);
+export type EmailTokenType = z.infer<typeof emailTokenTypeSchema>;
+
+export const GENDERS = ['MALE', 'FEMALE', 'OTHER'] as const;
+export const genderSchema = z.enum(GENDERS);
+export type Gender = z.infer<typeof genderSchema>;
+
+/** Highest level completed, lowest first. */
+export const EDUCATION_LEVELS = [
+  'NONE',
+  'PRIMARY',
+  'SECONDARY',
+  'VOCATIONAL',
+  'BACHELOR',
+  'MASTER',
+  'DOCTORATE',
+] as const;
+export const educationLevelSchema = z.enum(EDUCATION_LEVELS);
+export type EducationLevel = z.infer<typeof educationLevelSchema>;
+
+/** CEFR levels, lowest first, then NATIVE. */
+export const LANGUAGE_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'NATIVE'] as const;
+export const languageLevelSchema = z.enum(LANGUAGE_LEVELS);
+export type LanguageLevel = z.infer<typeof languageLevelSchema>;
+
+export const DOCUMENT_TYPES = [
+  'CV',
+  'PASSPORT',
+  'PHOTO',
+  'DIPLOMA',
+  'CERTIFICATE',
+  'STCW',
+  'SEAMAN_BOOK',
+  'MEDICAL',
+  'OTHER',
+] as const;
+export const documentTypeSchema = z.enum(DOCUMENT_TYPES);
+export type DocumentType = z.infer<typeof documentTypeSchema>;
+
+export const SALARY_PERIODS = ['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] as const;
+export const salaryPeriodSchema = z.enum(SALARY_PERIODS);
+export type SalaryPeriod = z.infer<typeof salaryPeriodSchema>;

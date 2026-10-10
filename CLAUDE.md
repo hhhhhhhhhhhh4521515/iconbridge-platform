@@ -21,18 +21,19 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 
 Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, never OneDrive).
 
-| Command                             | Effect                                                                                     |
-| ----------------------------------- | ------------------------------------------------------------------------------------------ |
-| `pnpm env:init`                     | Create missing `.env` files from the `.env.example` files                                  |
-| `pnpm dev`                          | Start the compose services, wait until healthy, then run web, api and shared in watch mode |
-| `pnpm build`                        | Build every workspace                                                                      |
-| `pnpm test`                         | Run all tests (Vitest)                                                                     |
-| `pnpm lint`                         | ESLint in every workspace                                                                  |
-| `pnpm typecheck`                    | `tsc --noEmit` in every workspace                                                          |
-| `pnpm format`                       | Prettier on the whole repository                                                           |
-| `pnpm db:migrate`                   | `prisma migrate dev` (create and apply migrations locally)                                 |
-| `pnpm db:seed`                      | Run `apps/api/prisma/seed.ts`                                                              |
-| `pnpm infra:up` / `pnpm infra:down` | Start / stop the compose services only                                                     |
+| Command                                   | Effect                                                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `pnpm env:init`                           | Create missing `.env` files from the `.env.example` files                                                    |
+| `pnpm dev`                                | Start the compose services, wait until healthy, then run web, api and shared in watch mode                   |
+| `pnpm build`                              | Build every workspace                                                                                        |
+| `pnpm test`                               | Run all tests (Vitest)                                                                                       |
+| `pnpm lint`                               | ESLint in every workspace                                                                                    |
+| `pnpm typecheck`                          | `tsc --noEmit` in every workspace                                                                            |
+| `pnpm format`                             | Prettier on the whole repository                                                                             |
+| `pnpm db:migrate`                         | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                       |
+| `pnpm db:seed`                            | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again |
+| `pnpm --filter @iconbridge/api db:studio` | Prisma Studio on <http://localhost:5555>                                                                     |
+| `pnpm infra:up` / `pnpm infra:down`       | Start / stop the compose services only                                                                       |
 
 One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://localhost:3000>, Swagger <http://localhost:4000/api/docs>, Mailpit <http://localhost:8025> (SMTP on 2525), Azurite blob `localhost:10000`.
 
@@ -42,6 +43,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Validate with zod at every boundary: HTTP input, environment variables, external responses. Schemas used by both apps live in `packages/shared`; derive types with `z.infer`.
 - `apps/api` and `packages/shared` are ESM: relative imports end in `.js`.
 - Business rules (re-application cooldown, job availability, status transitions, passport checks) must have tests. Enforce them in the API, not only in the UI.
+- Database: follow the conventions in the "Data model" section of `docs/ARCHITECTURE.md`. Create migrations with `--create-only` when they need hand-written SQL (CHECK constraints, generated columns), and list new constraints in that section. Never edit a migration that has been merged.
+- An enum that exists in both `schema.prisma` and `packages/shared` must be changed in both; `apps/api/src/prisma/enums.spec.ts` checks it.
 - New environment variable: add it to the zod schema and to the matching `.env.example`, with a comment.
 - shadcn/ui components are added with `pnpm dlx shadcn@latest add <name>` from `apps/web`.
 - Versions shared by workspaces are set in the `catalog` of `pnpm-workspace.yaml`.
@@ -53,6 +56,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 
 - Never commit secrets. `.env` files and `.azure-context` are git-ignored; only `.env.example` files with non-secret local values are committed.
 - Never log personal data: passport numbers, dates of birth, phone numbers, email addresses, document contents, tokens, passwords. Log ids instead.
+- Passport numbers are written only through `protectPassportNumber` (`apps/api/src/common/crypto/passport.ts`): encrypted column plus masked column. Lists, snapshots, exports and audit entries use the masked value.
+- Tokens (refresh, email) are stored as SHA-256 hashes; passwords as argon2id hashes.
 - Error messages about configuration name the variable, never its value.
 - Candidate files are private: serve them through short-lived SAS links, never public containers.
 - Internal notes are never returned to candidates.

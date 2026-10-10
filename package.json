@@ -20,7 +20,7 @@
     "env:init": "node scripts/env-init.mjs",
     "db:generate": "turbo run db:generate",
     "db:migrate": "pnpm --filter @iconbridge/api db:migrate",
-    "db:seed": "pnpm --filter @iconbridge/api db:seed",
+    "db:seed": "pnpm --filter @iconbridge/shared build && pnpm --filter @iconbridge/api db:seed",
     "prepare": "husky"
   },
   "lint-staged": {

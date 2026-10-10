@@ -14,6 +14,7 @@ catalog:
 
 # Dependencies allowed to run install scripts (pnpm blocks them by default).
 allowBuilds:
+  argon2: true
   '@nestjs/core': false
   '@prisma/engines': true
   '@scarf/scarf': false

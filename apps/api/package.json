@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev && prisma generate",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
@@ -27,11 +27,13 @@
     "@nestjs/swagger": "^12.0.2",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "argon2": "^0.45.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
     "@iconbridge/config": "workspace:*",
     "@nestjs/cli": "^12.0.8",
     "@nestjs/schematics": "^12.0.6",
