@@ -21,7 +21,8 @@ function idFromResponse(body: unknown): string | null {
  * record, its state before and after, and the client IP.
  *
  * With @Audit() the entry is named and has snapshots. Without it the write is
- * still recorded, under "<METHOD> <route>". Failed requests are not recorded.
+ * still recorded, under "<METHOD> <route>". A read is recorded only when it has
+ * @Audit(), which is how document downloads are traced. Failed requests are not recorded.
  */
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -36,11 +37,12 @@ export class AuditInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const actor = request.user;
-    if (!actor || actor.role === 'CANDIDATE' || SAFE_METHODS.has(request.method.toUpperCase())) {
+    const options = this.reflector.get<AuditOptions | undefined>(AUDIT_KEY, context.getHandler());
+    // Reads are recorded only when the route asks for it with @Audit (document downloads).
+    const isRead = SAFE_METHODS.has(request.method.toUpperCase());
+    if (!actor || actor.role === 'CANDIDATE' || (isRead && !options)) {
       return next.handle();
     }
-
-    const options = this.reflector.get<AuditOptions | undefined>(AUDIT_KEY, context.getHandler());
     const routePath = (request.route as { path?: string } | undefined)?.path ?? request.path;
     const action = options?.action ?? `${request.method.toUpperCase()} ${routePath}`;
     const entityType = options?.entityType ?? 'unknown';

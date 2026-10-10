@@ -8,6 +8,9 @@ import { AdminModule } from './admin/admin.module.js';
 import { AuditInterceptor } from './admin/audit/audit.interceptor.js';
 import { RATE_LIMITS } from './auth/auth.constants.js';
 import { AuthModule } from './auth/auth.module.js';
+import { CandidatesModule } from './candidates/candidates.module.js';
+import { ClockModule } from './common/clock/clock.js';
+import { CryptoModule } from './common/crypto/crypto.module.js';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from './auth/guards/roles.guard.js';
 import { VerifiedEmailGuard } from './auth/guards/verified-email.guard.js';
@@ -18,6 +21,7 @@ import { HealthModule } from './health/health.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { SettingsModule } from './settings/settings.service.js';
 import { StorageModule } from './storage/storage.module.js';
 
 @Module({
@@ -31,11 +35,15 @@ import { StorageModule } from './storage/storage.module.js';
     ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ...RATE_LIMITS.default }] }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    ClockModule,
+    CryptoModule,
+    SettingsModule,
     MailModule,
     StorageModule,
     AuthModule,
     AdminModule,
     JobsModule,
+    CandidatesModule,
     HealthModule,
   ],
   providers: [

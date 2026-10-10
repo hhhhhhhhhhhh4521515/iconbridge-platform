@@ -20,6 +20,8 @@ export const EMAIL_LINK_PATHS = {
   'reset-password': 'reset-password',
   invitation: 'set-password',
   'account-exists': 'forgot-password',
+  'application-received': 'me/applications',
+  'new-application': 'admin/applications',
 } as const satisfies Record<EmailTemplate, string>;
 
 export interface RenderedEmail {
@@ -43,8 +45,9 @@ export class MailService {
   }
 
   /** Link to a localised page of the web app, e.g. https://site/fr/verify-email?token=... */
-  linkFor(template: EmailTemplate, locale: Locale, token?: string): string {
-    const url = new URL(`/${locale}/${EMAIL_LINK_PATHS[template]}`, this.webOrigin);
+  linkFor(template: EmailTemplate, locale: Locale, token?: string, subPath?: string): string {
+    const path = [locale, EMAIL_LINK_PATHS[template], ...(subPath ? [subPath] : [])].join('/');
+    const url = new URL(`/${path}`, this.webOrigin);
     if (token) {
       url.searchParams.set('token', token);
     }

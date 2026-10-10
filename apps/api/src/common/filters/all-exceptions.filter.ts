@@ -19,11 +19,12 @@ const CODE_BY_STATUS: Partial<Record<number, ApiErrorCode>> = {
   403: 'FORBIDDEN',
   404: 'NOT_FOUND',
   409: 'CONFLICT',
-  413: 'VALIDATION_ERROR',
+  413: 'FILE_TOO_LARGE',
   429: 'RATE_LIMITED',
 };
 
 const GENERIC_MESSAGE: Partial<Record<number, string>> = {
+  413: 'The file is too large',
   429: 'Too many requests. Try again later.',
 };
 
@@ -76,6 +77,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           code: exception.code,
           message: exception.message,
           ...(exception.details === undefined ? {} : { details: exception.details }),
+          ...exception.extra,
         },
       };
     }

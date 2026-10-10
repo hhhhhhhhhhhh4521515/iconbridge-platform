@@ -1,64 +1,38 @@
-import { BlobServiceClient, type ContainerClient } from '@azure/storage-blob';
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { Env } from '../config/env.js';
+import type { Readable } from 'node:stream';
 
 /** Container readable by anyone: job covers, slides, story photos. Never candidate documents. */
 export const PUBLIC_MEDIA_CONTAINER = 'public-media';
+/** Private container: passports, CVs, certificates. Read only through short-lived signed links. */
+export const CANDIDATE_DOCUMENTS_CONTAINER = 'candidate-documents';
 
-/** Azure Blob Storage (Azurite locally). */
-@Injectable()
-export class StorageService {
-  private readonly logger = new Logger(StorageService.name);
-  private readonly publicMedia: ContainerClient;
-  private readonly publicBaseUrl: string;
-  private ready: Promise<void> | undefined;
+export const DOWNLOAD_LINK_TTL_SECONDS = 5 * 60;
 
-  constructor(config: ConfigService<Env, true>) {
-    this.publicMedia = BlobServiceClient.fromConnectionString(
-      config.get('AZURE_STORAGE_CONNECTION_STRING', { infer: true }),
-    ).getContainerClient(PUBLIC_MEDIA_CONTAINER);
-    this.publicBaseUrl = config.get('PUBLIC_MEDIA_BASE_URL', { infer: true });
-  }
+export interface DownloadLinkOptions {
+  /** Name proposed by the browser when saving the file. */
+  fileName: string;
+  contentType: string;
+  /** Defaults to 5 minutes. */
+  expiresInSeconds?: number;
+}
 
+/**
+ * File storage, as the rest of the API sees it. The Azure implementation
+ * (azure-storage.service.ts) works with Azurite, an account key or a managed
+ * identity; tests replace it with an in-memory one. Nothing outside the
+ * implementation ever sees a storage key.
+ */
+export abstract class StorageService {
   /** Absolute URL of a file of the public container; null for no file. */
-  publicUrl(path: string | null): string | null {
-    return path
-      ? `${this.publicBaseUrl}/${path.split('/').map(encodeURIComponent).join('/')}`
-      : null;
-  }
+  abstract publicUrl(path: string | null): string | null;
+  abstract uploadPublic(path: string, content: Buffer, contentType: string): Promise<void>;
+  /** A missing file is not an error; a failure is logged, not thrown. */
+  abstract deletePublic(path: string): Promise<void>;
 
-  /** Stores a public file. Paths contain a content hash, so files are cached for a year. */
-  async uploadPublic(path: string, content: Buffer, contentType: string): Promise<void> {
-    await this.ensurePublicContainer();
-    await this.publicMedia.getBlockBlobClient(path).uploadData(content, {
-      blobHTTPHeaders: {
-        blobContentType: contentType,
-        blobCacheControl: 'public, max-age=31536000, immutable',
-      },
-    });
-  }
-
-  /** Removes a public file. A missing file is not an error; a failure is logged, not thrown. */
-  async deletePublic(path: string): Promise<void> {
-    try {
-      await this.publicMedia.getBlockBlobClient(path).deleteIfExists();
-    } catch (error) {
-      this.logger.warn(
-        `Public file not deleted: ${error instanceof Error ? error.name : 'unknown error'}`,
-      );
-    }
-  }
-
-  /** Creates the container on first use, readable anonymously blob by blob (no listing). */
-  private ensurePublicContainer(): Promise<void> {
-    this.ready ??= this.publicMedia
-      .createIfNotExists({ access: 'blob' })
-      .then(() => undefined)
-      .catch((error: unknown) => {
-        this.ready = undefined;
-        throw error;
-      });
-    return this.ready;
-  }
+  abstract uploadPrivate(path: string, content: Buffer, contentType: string): Promise<void>;
+  /** A missing file is not an error. Throws when the storage cannot be reached. */
+  abstract deletePrivate(path: string): Promise<void>;
+  /** Content of a private file, for the server only (GDPR export). */
+  abstract readPrivate(path: string): Promise<Readable>;
+  /** Read-only link to one private file, valid for a few minutes. */
+  abstract privateDownloadUrl(path: string, options: DownloadLinkOptions): Promise<string>;
 }

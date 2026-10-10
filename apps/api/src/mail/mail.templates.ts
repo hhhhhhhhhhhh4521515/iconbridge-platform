@@ -5,15 +5,19 @@ export const EMAIL_TEMPLATES = [
   'reset-password',
   'invitation',
   'account-exists',
+  'application-received',
+  'new-application',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
-/** Variables available to every template. */
+/** Variables available to the templates. */
 export interface EmailVariables {
   /** Absolute link for the button; its target depends on the template. */
   actionUrl: string;
-  /** How long the link works, in hours. */
-  expiresInHours: number;
+  /** How long the link works, in hours (templates with a one-time link). */
+  expiresInHours?: number;
+  /** Title of the job (application templates). */
+  jobTitle?: string;
 }
 
 export interface EmailContent {
@@ -36,7 +40,7 @@ const NEVER_PAY: Record<Locale, string> = {
 };
 
 const en: Record<EmailTemplate, Builder> = {
-  'verify-email': ({ expiresInHours }) => ({
+  'verify-email': ({ expiresInHours = 0 }) => ({
     subject: `Confirm your email address - ${BRAND}`,
     heading: 'Confirm your email address',
     paragraphs: [
@@ -50,7 +54,7 @@ const en: Record<EmailTemplate, Builder> = {
       NEVER_PAY.en,
     ],
   }),
-  'reset-password': ({ expiresInHours }) => ({
+  'reset-password': ({ expiresInHours = 0 }) => ({
     subject: `Reset your password - ${BRAND}`,
     heading: 'Reset your password',
     paragraphs: ['We received a request to reset the password of your account.'],
@@ -60,7 +64,7 @@ const en: Record<EmailTemplate, Builder> = {
       'If you did not ask for this, ignore this email: your password stays the same.',
     ],
   }),
-  invitation: ({ expiresInHours }) => ({
+  invitation: ({ expiresInHours = 0 }) => ({
     subject: `You are invited to ${BRAND}`,
     heading: 'Your administrator account',
     paragraphs: [
@@ -80,10 +84,27 @@ const en: Record<EmailTemplate, Builder> = {
     buttonLabel: 'Reset my password',
     footnotes: ['If it was not you, ignore this email: nothing was changed.'],
   }),
+  'application-received': ({ jobTitle = '' }) => ({
+    subject: `We received your application - ${BRAND}`,
+    heading: 'Application received',
+    paragraphs: [
+      `Your application for "${jobTitle}" has been received.`,
+      'We will email you each time its status changes. You can follow it in your account.',
+    ],
+    buttonLabel: 'View my applications',
+    footnotes: [NEVER_PAY.en],
+  }),
+  'new-application': ({ jobTitle = '' }) => ({
+    subject: `New application: ${jobTitle} - ${BRAND}`,
+    heading: 'New application',
+    paragraphs: [`A candidate applied for "${jobTitle}".`],
+    buttonLabel: 'Open the application',
+    footnotes: ['You receive this email because you are a recruiter on the platform.'],
+  }),
 };
 
 const fr: Record<EmailTemplate, Builder> = {
-  'verify-email': ({ expiresInHours }) => ({
+  'verify-email': ({ expiresInHours = 0 }) => ({
     subject: `Confirmez votre adresse e-mail - ${BRAND}`,
     heading: 'Confirmez votre adresse e-mail',
     paragraphs: [
@@ -97,7 +118,7 @@ const fr: Record<EmailTemplate, Builder> = {
       NEVER_PAY.fr,
     ],
   }),
-  'reset-password': ({ expiresInHours }) => ({
+  'reset-password': ({ expiresInHours = 0 }) => ({
     subject: `Réinitialisez votre mot de passe - ${BRAND}`,
     heading: 'Réinitialisez votre mot de passe',
     paragraphs: [
@@ -109,7 +130,7 @@ const fr: Record<EmailTemplate, Builder> = {
       "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé.",
     ],
   }),
-  invitation: ({ expiresInHours }) => ({
+  invitation: ({ expiresInHours = 0 }) => ({
     subject: `Vous êtes invité(e) sur ${BRAND}`,
     heading: 'Votre compte administrateur',
     paragraphs: [
@@ -129,10 +150,27 @@ const fr: Record<EmailTemplate, Builder> = {
     buttonLabel: 'Réinitialiser mon mot de passe',
     footnotes: ["Si ce n'était pas vous, ignorez cet e-mail : rien n'a été modifié."],
   }),
+  'application-received': ({ jobTitle = '' }) => ({
+    subject: `Nous avons bien reçu votre candidature - ${BRAND}`,
+    heading: 'Candidature reçue',
+    paragraphs: [
+      `Votre candidature pour « ${jobTitle} » a bien été reçue.`,
+      'Vous recevrez un e-mail à chaque changement de statut. Vous pouvez la suivre dans votre compte.',
+    ],
+    buttonLabel: 'Voir mes candidatures',
+    footnotes: [NEVER_PAY.fr],
+  }),
+  'new-application': ({ jobTitle = '' }) => ({
+    subject: `Nouvelle candidature : ${jobTitle} - ${BRAND}`,
+    heading: 'Nouvelle candidature',
+    paragraphs: [`Un candidat a postulé pour « ${jobTitle} ».`],
+    buttonLabel: 'Ouvrir la candidature',
+    footnotes: ['Vous recevez cet e-mail car vous êtes recruteur sur la plateforme.'],
+  }),
 };
 
 const ar: Record<EmailTemplate, Builder> = {
-  'verify-email': ({ expiresInHours }) => ({
+  'verify-email': ({ expiresInHours = 0 }) => ({
     subject: `أكّد عنوان بريدك الإلكتروني - ${BRAND}`,
     heading: 'أكّد عنوان بريدك الإلكتروني',
     paragraphs: [
@@ -146,7 +184,7 @@ const ar: Record<EmailTemplate, Builder> = {
       NEVER_PAY.ar,
     ],
   }),
-  'reset-password': ({ expiresInHours }) => ({
+  'reset-password': ({ expiresInHours = 0 }) => ({
     subject: `إعادة تعيين كلمة المرور - ${BRAND}`,
     heading: 'إعادة تعيين كلمة المرور',
     paragraphs: ['تلقّينا طلبًا لإعادة تعيين كلمة المرور الخاصة بحسابك.'],
@@ -156,7 +194,7 @@ const ar: Record<EmailTemplate, Builder> = {
       'إذا لم تطلب ذلك، تجاهل هذه الرسالة: كلمة المرور لن تتغيّر.',
     ],
   }),
-  invitation: ({ expiresInHours }) => ({
+  invitation: ({ expiresInHours = 0 }) => ({
     subject: `دعوة للانضمام إلى ${BRAND}`,
     heading: 'حسابك كمسؤول',
     paragraphs: [`أنشأ أحد المسؤولين حسابًا لك على ${BRAND}.`, 'اختر كلمة مرور لتفعيله.'],
@@ -172,6 +210,23 @@ const ar: Record<EmailTemplate, Builder> = {
     ],
     buttonLabel: 'إعادة تعيين كلمة المرور',
     footnotes: ['إذا لم تكن أنت، تجاهل هذه الرسالة: لم يتم تغيير أي شيء.'],
+  }),
+  'application-received': ({ jobTitle = '' }) => ({
+    subject: `لقد استلمنا طلبك - ${BRAND}`,
+    heading: 'تم استلام الطلب',
+    paragraphs: [
+      `تم استلام طلبك لوظيفة «${jobTitle}».`,
+      'سنرسل إليك بريدًا إلكترونيًا عند كل تغيير في حالة الطلب. يمكنك متابعته من حسابك.',
+    ],
+    buttonLabel: 'عرض طلباتي',
+    footnotes: [NEVER_PAY.ar],
+  }),
+  'new-application': ({ jobTitle = '' }) => ({
+    subject: `طلب جديد: ${jobTitle} - ${BRAND}`,
+    heading: 'طلب جديد',
+    paragraphs: [`تقدّم مترشح لوظيفة «${jobTitle}».`],
+    buttonLabel: 'فتح الطلب',
+    footnotes: ['تصلك هذه الرسالة لأنك مسؤول توظيف على المنصة.'],
   }),
 };
 

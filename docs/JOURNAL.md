@@ -196,3 +196,60 @@ The jobs created by the live checks were deleted afterwards.
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/3>
 
 **Remaining**: candidate profile and documents (private storage), applications and the re-application rule, back-office screens, web pages, Dockerfiles, Terraform, CI/CD.
+
+## 2026-10-10 - Candidate side
+
+**What**
+
+- Profile: `GET` / `PUT /me/profile` with every field of the specification, validated with zod (18 or older, ISO 3166 country list, E.164 phones, passport not expired), passport number encrypted at rest, completeness percentage and missing items.
+- Documents: `POST /me/documents` (format checked from the content with `file-type`, size limit from the settings, random blob name, SHA-256), `GET /me/documents`, `DELETE /me/documents/:id`, and `GET /documents/:id/download` answering 302 to a 5-minute read-only signed link. Back-office downloads are audited.
+- Storage behind an interface, with an Azure implementation that works with Azurite or an account key (service SAS) and with a managed identity (user-delegation SAS). New variable `AZURE_STORAGE_ACCOUNT_URL`; exactly one of it and the connection string must be set.
+- Applications: `POST /jobs/:id/apply`, `GET /jobs/:id/eligibility`, `GET /me/applications`, `POST /me/applications/:id/withdraw`. The 6-month rule runs in a transaction under PostgreSQL advisory locks and reads its duration from the settings.
+- Profile and document snapshot at apply time; confirmation email to the candidate and a notice to recruiters, in three languages.
+- GDPR: `GET /me/export` (zip with `data.json` and the documents) and `DELETE /me/account` (files deleted, profile and applications anonymised).
+- Supporting pieces: injectable `Clock`, `SettingsService`, the full ISO 3166-1 country list in `packages/shared`, audit of selected reads, top-level `nextAllowedAt` in the error body.
+- Docs: candidate section in `ARCHITECTURE.md`, ADR-005, Terraform notes.
+
+**Why**
+
+This is the purpose of the platform: a candidate fills in a profile, uploads a CV and a passport, and applies. The 6-month rule is the business rule the specification insists on, so it is enforced in the database transaction and tested at its exact boundary.
+
+**Choices worth knowing** (details in ADR-005)
+
+- One function decides eligibility for both the eligibility endpoint and `apply`.
+- Two advisory locks: per candidate (exact limit of active applications) and per candidate + job (the rule).
+- Applying needs a CAPTCHA token, as the specification asks for apply, although the prompt did not list it.
+- The selected documents must include a CV and a passport scan.
+- A candidate does not see the comment of a status change, since recruiters may write internal remarks there.
+- A missing or draft job answers 404; a closed, expired or full one answers `409 JOB_NOT_OPEN`.
+- Recruiter notices go only to accounts that accepted their invitation.
+- Account deletion asks for the password and deletes files before touching the database.
+- Not done: malware scanning of uploads; back-office endpoints to read candidates and applications.
+- **For the infrastructure step**: the managed identity needs `Storage Blob Data Contributor` and `Storage Blob Delegator`; set `AZURE_STORAGE_ACCOUNT_URL` instead of a connection string.
+
+**Checks**
+
+| Check                                                 | Result                                                                                                                                  |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`           | Pass                                                                                                                                    |
+| `pnpm test`                                           | Pass: 340 unit tests (shared 102, api 235, web 3)                                                                                       |
+| `pnpm test:e2e`                                       | Pass: 308 tests in 11 files                                                                                                             |
+| Required: apply twice the same day                    | 409 `REAPPLY_COOLDOWN` with `nextAllowedAt`                                                                                             |
+| Required: after 5 months 29 days / exactly 6 months   | 409 / 201 (also 409 one millisecond before)                                                                                             |
+| Required: first application Rejected or Withdrawn     | Still 409                                                                                                                               |
+| Required: a different job                             | 201                                                                                                                                     |
+| Required: two parallel requests                       | One 201, one 409, one row (also checked with eight)                                                                                     |
+| Required: `.pdf` name with EXE content                | 415 `UNSUPPORTED_FILE`, nothing stored                                                                                                  |
+| Required: candidate A on candidate B's document       | 404, no link                                                                                                                            |
+| Live (Azurite): upload a CV, follow the download link | 302; link read-only, valid 300 s; the downloaded file is identical; without or with a tampered signature 403; a write with the link 403 |
+| Live: passport number                                 | Returned in clear to the owner; the database column starts with `v1.` and does not contain the number                                   |
+| Live: apply, apply again, withdraw, apply again       | 201, 409 with `nextAllowedAt` six months later, withdrawn, 409                                                                          |
+| Live: emails in Mailpit                               | Confirmation to the candidate and "New application" to the seed super admin                                                             |
+| Live: export and account deletion                     | Zip with `data.json` and both files; after deletion the session answers 401 and the old link 404                                        |
+| Swagger                                               | The OpenAPI document lists the 10 new paths (checked through the JSON)                                                                  |
+
+The accounts created by the live checks were removed from the development database afterwards.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/5>
+
+**Remaining**: back-office candidate and application management (status changes with emails, notes, Kanban, CSV export), success stories and home content, contact form and job alerts, the web application, Dockerfiles, Terraform, CI/CD.

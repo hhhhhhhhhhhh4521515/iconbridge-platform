@@ -50,6 +50,9 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Emails: add the template in English, French and Arabic in `apps/api/src/mail/mail.templates.ts`.
 - Public job queries must use `OPEN_JOB_SQL` (`apps/api/src/jobs/public-jobs.service.ts`) or `isJobOpen` from `packages/shared`; never re-implement the visibility rule. Job status changes go through `JOB_TRANSITIONS`.
 - Raw SQL only with `Prisma.sql` and bound parameters; never build SQL or `tsquery` text from user input by concatenation.
+- Rules that depend on the date read `Clock` (`apps/api/src/common/clock/clock.ts`), never `new Date()` directly, so tests can move time. Settings are read through `SettingsService`.
+- Who may apply is decided by `ApplicationsService.evaluate` only; the eligibility endpoint and `apply` both use it. Changes to the re-application rule need tests at the exact boundary.
+- File storage goes through the abstract `StorageService`; never use the Azure SDK elsewhere.
 - New endpoints need e2e tests for the allowed and the refused roles.
 - Database: follow the conventions in the "Data model" section of `docs/ARCHITECTURE.md`. Create migrations with `--create-only` when they need hand-written SQL (CHECK constraints, generated columns), and list new constraints in that section. Never edit a migration that has been merged.
 - An enum that exists in both `schema.prisma` and `packages/shared` must be changed in both; `apps/api/src/prisma/enums.spec.ts` checks it.
@@ -71,6 +74,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Error messages about configuration name the variable, never its value.
 - Candidate files are private: serve them through short-lived SAS links, never public containers. The `public-media` container is for job covers, slides and story photos only.
 - Uploaded images are checked from their bytes and re-encoded (see `JobCoverService`); never store an upload as received.
+- Candidate documents: detect the format from the content (`inspectDocument`), store under a random name in the private container, and give access only through `GET /documents/:id/download` (5-minute read-only link, back-office downloads audited).
+- Passport numbers are returned in clear only by `ProfileService.toResponse(profile, { revealPassport: true })`, for the owner and for back-office users.
 - Internal notes are never returned to candidates.
 
 ## Autonomous workflow (mandatory after every task)

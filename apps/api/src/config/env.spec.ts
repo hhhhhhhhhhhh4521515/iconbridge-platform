@@ -9,6 +9,7 @@ const valid = {
   SMTP_PORT: '1025',
   MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
+  AZURE_STORAGE_ACCOUNT_URL: '',
   PUBLIC_MEDIA_BASE_URL: 'http://localhost:10000/devstoreaccount1/public-media',
   PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
   JWT_ACCESS_SECRET: 'x'.repeat(32),
@@ -56,6 +57,30 @@ describe('validateEnv', () => {
       testSecret,
     );
     expect(validateEnv({ ...valid, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
+  });
+
+  it('needs exactly one way to reach blob storage', () => {
+    const accountUrl = 'https://example.blob.core.windows.net';
+    expect(() => validateEnv({ ...valid, AZURE_STORAGE_CONNECTION_STRING: '' })).toThrow(
+      /AZURE_STORAGE_CONNECTION_STRING/,
+    );
+    expect(() => validateEnv({ ...valid, AZURE_STORAGE_ACCOUNT_URL: accountUrl })).toThrow(
+      /AZURE_STORAGE_CONNECTION_STRING/,
+    );
+    expect(
+      validateEnv({
+        ...valid,
+        AZURE_STORAGE_CONNECTION_STRING: '',
+        AZURE_STORAGE_ACCOUNT_URL: accountUrl,
+      }).AZURE_STORAGE_ACCOUNT_URL,
+    ).toBe(accountUrl);
+    expect(() =>
+      validateEnv({
+        ...valid,
+        AZURE_STORAGE_CONNECTION_STRING: '',
+        AZURE_STORAGE_ACCOUNT_URL: 'http://example.blob.core.windows.net',
+      }),
+    ).toThrow(/AZURE_STORAGE_ACCOUNT_URL/);
   });
 
   it('rejects an encryption key that is not 32 bytes', () => {

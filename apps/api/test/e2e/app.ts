@@ -2,6 +2,7 @@ import type { Type } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { Readable } from 'node:stream';
 import type { UserRole } from '@iconbridge/shared';
 import request from 'supertest';
 import type { Response } from 'supertest';
@@ -9,6 +10,9 @@ import { AppModule } from '../../src/app.module.js';
 import { setupApp } from '../../src/app.setup.js';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from '../../src/auth/auth.constants.js';
 import { TurnstileService } from '../../src/auth/turnstile.service.js';
+import { Clock } from '../../src/common/clock/clock.js';
+import { FieldCipher } from '../../src/common/crypto/field-cipher.js';
+import { protectPassportNumber } from '../../src/common/crypto/passport.js';
 import { hashPassword } from '../../src/common/crypto/password.js';
 import { MAIL_TRANSPORT } from '../../src/mail/mail.service.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
@@ -32,11 +36,32 @@ export interface TestApp {
   prisma: PrismaService;
   /** Public files "uploaded" during the tests: path -> content type and size. */
   files: Map<string, { contentType: string; size: number }>;
+  /** Private files (candidate documents) held by the fake storage: path -> content. */
+  privateFiles: Map<string, { contentType: string; content: Buffer }>;
+  /** The application clock. `set` freezes it at a date; `reset` returns to real time. */
+  clock: FakeClock;
   /** Emails "sent" since the last reset, oldest first. */
   outbox: SentEmail[];
   http: () => ReturnType<typeof request>;
   close: () => Promise<void>;
 }
+
+/** Replaces the Clock provider: real time until a test freezes it. */
+export class FakeClock {
+  private frozen: Date | null = null;
+  now(): Date {
+    return this.frozen ? new Date(this.frozen) : new Date();
+  }
+  set(date: Date): void {
+    this.frozen = new Date(date);
+  }
+  reset(): void {
+    this.frozen = null;
+  }
+}
+
+/** Host of the fake signed links returned for private files. */
+export const FAKE_PRIVATE_HOST = 'https://private.example.test';
 
 export interface TestAppOptions {
   /** Extra controllers, used to exercise guards on routes the product does not have yet. */
@@ -48,6 +73,8 @@ export interface TestAppOptions {
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
   const outbox: SentEmail[] = [];
   const files: TestApp['files'] = new Map();
+  const privateFiles: TestApp['privateFiles'] = new Map();
+  const clock = new FakeClock();
   let builder = Test.createTestingModule({
     imports: [AppModule],
     controllers: options.controllers ?? [],
@@ -70,7 +97,30 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
         files.delete(path);
         return Promise.resolve();
       },
+      uploadPrivate: (path: string, content: Buffer, contentType: string) => {
+        privateFiles.set(path, { contentType, content });
+        return Promise.resolve();
+      },
+      deletePrivate: (path: string) => {
+        privateFiles.delete(path);
+        return Promise.resolve();
+      },
+      readPrivate: (path: string) => {
+        const file = privateFiles.get(path);
+        return file
+          ? Promise.resolve(Readable.from(file.content))
+          : Promise.reject(new Error('missing blob'));
+      },
+      privateDownloadUrl: (
+        path: string,
+        options: { fileName: string; expiresInSeconds?: number },
+      ) =>
+        Promise.resolve(
+          `${FAKE_PRIVATE_HOST}/${path}?sp=r&ttl=${options.expiresInSeconds ?? 300}&name=${encodeURIComponent(options.fileName)}`,
+        ),
     })
+    .overrideProvider(Clock)
+    .useValue(clock)
     .overrideProvider(TurnstileService)
     .useValue({ verify: (token: string) => Promise.resolve(token !== BAD_CAPTCHA) });
   if (!options.throttling) {
@@ -86,6 +136,8 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     prisma: app.get(PrismaService),
     outbox,
     files,
+    privateFiles,
+    clock,
     http: () => request(app.getHttpServer()),
     close: () => app.close(),
   };
@@ -298,4 +350,66 @@ export async function insertJob(test: TestApp, catalog: Catalog, seed: JobSeed) 
       createdById: catalog.authorId,
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Candidates ready to apply
+// ---------------------------------------------------------------------------
+
+export interface ReadyCandidate extends TestUser {
+  profileId: string;
+  cvId: string;
+  passportId: string;
+}
+
+/**
+ * A verified candidate with a complete profile, a CV and a passport scan, so
+ * tests about applications start from "may apply".
+ */
+export async function createReadyCandidate(test: TestApp, email?: string): Promise<ReadyCandidate> {
+  const user = await createUser(test, 'CANDIDATE', email);
+  const profileId = user.profileId ?? '';
+  await test.prisma.candidateProfile.update({
+    where: { id: profileId },
+    data: {
+      gender: 'FEMALE',
+      dateOfBirth: new Date('1995-04-12'),
+      nationality: 'TN',
+      countryOfResidence: 'TN',
+      city: 'Tunis',
+      phone: '+21612345678',
+      ...protectPassportNumber(test.app.get(FieldCipher), 'FAKE1234567'),
+      passportIssuingCountry: 'TN',
+      passportIssueDate: new Date('2022-01-15'),
+      passportExpiryDate: daysFromNow(365 * 5),
+      currentProfession: 'Receptionist',
+      yearsOfExperience: 4,
+      educationLevel: 'BACHELOR',
+      gdprConsentAt: new Date(),
+      languages: { create: [{ language: 'en', level: 'B2' }] },
+    },
+  });
+  const document = async (type: 'CV' | 'PASSPORT', extension: string, mimeType: string) => {
+    const blobPath = `candidates/${profileId}/${type.toLowerCase()}-${Math.random().toString(36).slice(2)}.${extension}`;
+    const content = Buffer.from(`${type} of ${user.email}`);
+    test.privateFiles.set(blobPath, { contentType: mimeType, content });
+    const row = await test.prisma.document.create({
+      data: {
+        candidateId: profileId,
+        type,
+        blobPath,
+        originalName: `${type.toLowerCase()}.${extension}`,
+        mimeType,
+        sizeBytes: content.length,
+        sha256: 'a'.repeat(64),
+      },
+    });
+    return row.id;
+  };
+  return {
+    ...user,
+    profileId,
+    cvId: await document('CV', 'pdf', 'application/pdf'),
+    passportId: await document('PASSPORT', 'jpg', 'image/jpeg'),
+  };
 }

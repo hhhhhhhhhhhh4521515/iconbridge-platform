@@ -30,36 +30,39 @@ flowchart LR
 
 ## API
 
-| URL                                                                     | Purpose                                                                                                 |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `/api/v1/*`                                                             | Business endpoints (global prefix)                                                                      |
-| `/api/v1/jobs`, `/jobs/:slug`, `/destinations`, `/categories`, `/stats` | Public, no session                                                                                      |
-| `/api/v1/auth/*`                                                        | Registration and sessions                                                                               |
-| `/api/v1/admin/*`                                                       | Back office (never reachable by candidates)                                                             |
-| `/api/docs`                                                             | Swagger UI; OpenAPI JSON at `/api/docs-json`                                                            |
-| `/health/live`                                                          | Liveness: always 200 while the process runs                                                             |
-| `/health/ready`                                                         | Readiness: 200 with `{"status":"ok","checks":{"database":"ok"}}`, 503 when the database does not answer |
+| URL                                                                                   | Purpose                                                                                                 |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/api/v1/*`                                                                           | Business endpoints (global prefix)                                                                      |
+| `/api/v1/jobs`, `/jobs/:slug`, `/destinations`, `/categories`, `/stats`               | Public, no session                                                                                      |
+| `/api/v1/auth/*`                                                                      | Registration and sessions                                                                               |
+| `/api/v1/me/*`, `/jobs/:id/apply`, `/jobs/:id/eligibility`, `/documents/:id/download` | Candidate side (download also for the back office)                                                      |
+| `/api/v1/admin/*`                                                                     | Back office (never reachable by candidates)                                                             |
+| `/api/docs`                                                                           | Swagger UI; OpenAPI JSON at `/api/docs-json`                                                            |
+| `/health/live`                                                                        | Liveness: always 200 while the process runs                                                             |
+| `/health/ready`                                                                       | Readiness: 200 with `{"status":"ok","checks":{"database":"ok"}}`, 503 when the database does not answer |
 
 The health endpoints are outside the `/api/v1` prefix so container probes keep a stable, unversioned path.
 
 Structure of `apps/api/src`:
 
-| File             | Role                                                                                         |
-| ---------------- | -------------------------------------------------------------------------------------------- |
-| `main.ts`        | Starts the server                                                                            |
-| `app.setup.ts`   | Prefix, CORS, Swagger. Shared by `main.ts` and the e2e tests                                 |
-| `config/env.ts`  | zod schema of the environment; the app refuses to start if a variable is missing             |
-| `prisma/`        | `PrismaService` (global module), connects on first query                                     |
-| `common/crypto/` | Passport field encryption, masking, password hashing                                         |
-| `common/`        | `AppException`, exception filter, zod validation pipe, OpenAPI helpers, logger configuration |
-| `auth/`          | Auth endpoints, sessions, tokens, password policy, Turnstile, guards and decorators          |
-| `admin/`         | Admin accounts, audit interceptor and audit log                                              |
-| `mail/`          | Nodemailer transport, translated MJML templates                                              |
-| `jobs/`          | Public job search, admin job management, cover images, automatic closing                     |
-| `catalog/`       | Destinations, categories and home-page counters, public and admin                            |
-| `storage/`       | Azure Blob Storage client (public media container)                                           |
-| `health/`        | Probe endpoints                                                                              |
-| `generated/`     | Prisma client, generated, git-ignored                                                        |
+| File                                                     | Role                                                                                                     |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `main.ts`                                                | Starts the server                                                                                        |
+| `app.setup.ts`                                           | Prefix, CORS, Swagger. Shared by `main.ts` and the e2e tests                                             |
+| `config/env.ts`                                          | zod schema of the environment; the app refuses to start if a variable is missing                         |
+| `prisma/`                                                | `PrismaService` (global module), connects on first query                                                 |
+| `common/crypto/`                                         | Passport field encryption, masking, password hashing                                                     |
+| `common/`                                                | `AppException`, exception filter, zod validation pipe, OpenAPI helpers, logger configuration             |
+| `auth/`                                                  | Auth endpoints, sessions, tokens, password policy, Turnstile, guards and decorators                      |
+| `admin/`                                                 | Admin accounts, audit interceptor and audit log                                                          |
+| `mail/`                                                  | Nodemailer transport, translated MJML templates                                                          |
+| `jobs/`                                                  | Public job search, admin job management, cover images, automatic closing                                 |
+| `catalog/`                                               | Destinations, categories and home-page counters, public and admin                                        |
+| `storage/`                                               | `StorageService` interface and its Azure Blob implementation (public media, private candidate documents) |
+| `candidates/`, `documents/`, `applications/`, `account/` | Candidate profile, documents, applications and GDPR rights                                               |
+| `settings/`                                              | Reads the `settings` table with defaults                                                                 |
+| `health/`                                                | Probe endpoints                                                                                          |
+| `generated/`                                             | Prisma client, generated, git-ignored                                                                    |
 
 ## Data model
 
@@ -518,6 +521,84 @@ Results are ordered by `ts_rank` plus title similarity when `q` is given, otherw
 | `GET /admin/jobs`, `/admin/destinations`, `/admin/categories` | Yes    | Yes       | Yes         |
 | Every write on those routes                                   | No     | Yes       | Yes         |
 
+## Candidate side
+
+Decisions are in [ADR-005](adr/ADR-005-candidate-documents-and-applications.md). Code: `apps/api/src/candidates`, `documents`, `applications`, `account`.
+
+### Profile
+
+- `GET` / `PUT /me/profile`. `PUT` replaces the whole profile; every field is present, `null` meaning "not provided".
+- Rules (zod, `makeCandidateProfileSchema` in `packages/shared`): 18 or older, country codes from the ISO 3166-1 list, E.164 phone numbers, passport not expired, passport fields all filled or all empty.
+- The passport number is encrypted before it is stored (see Sensitive data). The API returns it in clear to its owner only; `ProfileService.toResponse(profile, { revealPassport })` is the single place that decides. Everything else (snapshots, exports for others, audit) uses the masked value.
+- `profileCompleteness` gives a percentage over 16 items, the missing items, and `missingToApply`: the subset that blocks applying (date of birth, nationality, country of residence, phone, the four passport fields, a CV, a passport scan).
+
+### Documents
+
+| Step                                   | What happens                                                                                                                                                                                                            |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upload `POST /me/documents`            | Multipart `type` + `file`. Size limit from the `MAX_UPLOAD_SIZE_MB` setting (5 MB). The format is detected from the first bytes with `file-type`; the file name and the declared type are ignored                       |
+| Accepted formats                       | CV: PDF, DOCX. Photo: JPG, PNG. Passport scan and every other type: PDF, JPG, PNG (`DOCUMENT_FORMATS` in `packages/shared`)                                                                                             |
+| Storage                                | Private container `candidate-documents`, path `candidates/<profile id>/<random uuid>.<ext>`. The original name, the SHA-256 and the size are in the database only                                                       |
+| Download `GET /documents/:id/download` | 302 to a signed link: read-only, one blob, 5 minutes, `Content-Disposition: attachment`. For the owner, and for viewers, recruiters and super admins, whose downloads are written to `audit_logs` (`document.download`) |
+| Delete `DELETE /me/documents/:id`      | Soft delete. Refused (`409 DOCUMENT_IN_USE`) while an application in progress uses the document. The file is removed when no application ever used it                                                                   |
+
+Another candidate's document answers 404, like a missing one.
+
+### Storage abstraction
+
+`StorageService` is an abstract class; the rest of the API depends on it only. `AzureStorageService` implements it and authenticates in one of two ways:
+
+| Configuration                     | Used for                                                    | Download links                                                                                                             |
+| --------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `AZURE_STORAGE_CONNECTION_STRING` | Azurite locally, or an account key                          | Service SAS signed with the account key                                                                                    |
+| `AZURE_STORAGE_ACCOUNT_URL`       | Azure, with the managed identity (`DefaultAzureCredential`) | User-delegation SAS, signed with a key Azure issues to the identity for one hour; no storage key exists in the application |
+
+Exactly one of the two variables must be set. The storage key never leaves `AzureStorageService`: clients only ever receive a signed link to one file. Tests replace the service with an in-memory implementation.
+
+### Applications
+
+`POST /jobs/:id/apply` runs in one database transaction:
+
+```mermaid
+sequenceDiagram
+  participant C as Candidate
+  participant A as API
+  participant D as PostgreSQL
+  C->>A: POST /jobs/J/apply (documents, cover letter)
+  A->>A: Turnstile check
+  A->>D: BEGIN
+  A->>D: advisory lock "candidate:P", then "application:P:J"
+  A->>D: evaluate: profile, passport, job open, last application to J, active count
+  alt a reason blocks
+    A-->>C: 409 / 403 / 404 with a code
+  else eligible
+    A->>D: insert application, documents, history, profile snapshot
+    A->>D: COMMIT (locks released)
+    A-->>C: 201
+    A->>C: confirmation email
+    A->>A: notice to recruiters
+  end
+```
+
+- **Re-application rule**: the latest application of the candidate to the same job counts, whatever its status. Applying is refused while `now < appliedAt + REAPPLY_COOLDOWN_MONTHS` calendar months, computed in UTC with date-fns (`applications/cooldown.ts`); the months come from the `settings` table, 6 by default. The answer is `409 { code: "REAPPLY_COOLDOWN", nextAllowedAt }`.
+- **Locks**: the first lock serialises all applications of one candidate (limit of active applications), the second the pair candidate + job (the rule above). A double click waits for the first request, then sees its application and gets 409.
+- **One evaluation**: `GET /jobs/:id/eligibility` and `apply` call the same function, so the button shown by the web app and the result of applying cannot disagree. Eligibility returns `canApply`, every blocking reason, `nextAllowedAt`, `lastAppliedAt`, the missing profile items and a passport-expiry warning.
+- **Preconditions**: verified email, `missingToApply` empty, passport not expired, job open, fewer active applications than `MAX_ACTIVE_APPLICATIONS` (5). The selected documents must be the candidate's own and include a CV and a passport scan.
+- **Snapshot**: the profile (masked passport number), languages and document metadata are copied into `applications.profile_snapshot`.
+- **Withdraw**: `POST /me/applications/:id/withdraw`, allowed from Submitted to Offer (`WITHDRAWABLE_STATUSES`).
+- **What a candidate sees** in `GET /me/applications`: status, dates, job, documents and the list of status changes. Never internal notes, recruiter comments or who made a change.
+- **Emails**: confirmation to the candidate; a notice without personal data to every active recruiter and super admin who has accepted their invitation.
+- **Time**: date rules read the injectable `Clock`, which tests freeze and move.
+
+### GDPR
+
+| Endpoint             | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /me/export`     | A zip streamed to the browser: `data.json` (account, profile with the clear passport number, document list, applications as the candidate sees them, with answers) and the files under `documents/`                                                                                                                                                                                                                 |
+| `DELETE /me/account` | Needs the password. Files are deleted first, so a storage failure changes nothing and the request can be repeated. Then, in one transaction: applications in progress are withdrawn; cover letters, answers, snapshots, internal notes and history comments are erased; document rows and languages are deleted; the profile is overwritten; tokens are deleted; the email becomes `deleted-<uuid>@deleted.invalid` |
+
+What remains after erasure is one anonymous row per application (job, dates, status), kept for statistics. The email address is free again.
+
 ## Configuration
 
 | File            | Read by              | Validation                                        |
@@ -541,15 +622,15 @@ All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev
 
 ## Testing
 
-| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                                                                                                                                                          |
-| -------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                       |
-| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs. Mail, CAPTCHA and blob storage are replaced by in-memory fakes |
-| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                                                                                                                                                               |
+| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                       |
+| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
+| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
 ## Not built yet
 
-Candidate profile and documents, applications, private file upload, the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.
+Back-office management of candidates and applications (status changes, notes, exports), the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.

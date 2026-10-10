@@ -11,6 +11,8 @@ export class AppException extends HttpException {
     status: HttpStatus,
     message: string,
     readonly details?: unknown,
+    /** Extra top-level fields of the response body, e.g. `nextAllowedAt` for REAPPLY_COOLDOWN. */
+    readonly extra?: Readonly<Record<string, string>>,
   ) {
     super(message, status);
   }

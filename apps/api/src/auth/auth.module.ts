@@ -46,6 +46,7 @@ import { TurnstileService } from './turnstile.service.js';
     OwnershipGuard,
   ],
   exports: [
+    TurnstileService,
     TokenService,
     SessionService,
     EmailTokenService,
