@@ -1,0 +1,53 @@
+# Local Azure context (subscription / tenant ids) - never commit
+.azure-context
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+dist/
+.next/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Build and tool caches
+.turbo/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Generated Prisma client
+apps/api/src/generated/
+
+# Test output
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+.pnpm-debug.log*
+
+# OS and editor
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Local certificates and keys
+*.pem
