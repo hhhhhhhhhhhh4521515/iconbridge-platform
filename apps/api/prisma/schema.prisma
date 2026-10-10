@@ -1,0 +1,11 @@
+// Data model of IconBridge Jobs. Models are added feature by feature (see docs/SPEC.md).
+// The connection URL comes from prisma.config.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

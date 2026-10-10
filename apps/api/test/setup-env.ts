@@ -1,0 +1,11 @@
+// Environment for the test runner. No real service is contacted: the database is mocked.
+Object.assign(process.env, {
+  NODE_ENV: 'test',
+  PORT: '4001',
+  WEB_ORIGIN: 'http://localhost:3000',
+  DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+  SMTP_HOST: 'localhost',
+  SMTP_PORT: '1025',
+  MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
+  AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
+});

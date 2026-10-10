@@ -1,0 +1,9 @@
+{
+  "extends": "@iconbridge/config/tsconfig/nest.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "test", "prisma", "*.ts"]
+}
