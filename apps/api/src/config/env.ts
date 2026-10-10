@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+/** Base64 text that decodes to exactly 32 bytes (an AES-256 key). */
+export const aes256KeySchema = z
+  .string()
+  .refine((value) => Buffer.from(value, 'base64').length === 32, '32 bytes, base64 encoded');
+
 /**
  * Environment contract of the API. Every variable is required: the process
  * refuses to start when one is missing or malformed (see `validateEnv`).
@@ -14,6 +19,7 @@ export const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().min(1).max(65535),
   MAIL_FROM: z.string().min(1),
   AZURE_STORAGE_CONNECTION_STRING: z.string().min(1),
+  PASSPORT_ENCRYPTION_KEY: aes256KeySchema,
 });
 
 export type Env = z.infer<typeof envSchema>;

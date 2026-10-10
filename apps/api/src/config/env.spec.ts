@@ -9,6 +9,7 @@ const valid = {
   SMTP_PORT: '1025',
   MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
+  PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
 };
 
 describe('validateEnv', () => {
@@ -31,6 +32,13 @@ describe('validateEnv', () => {
 
   it('rejects an out-of-range port', () => {
     expect(() => validateEnv({ ...valid, PORT: '70000' })).toThrow(/PORT/);
+  });
+
+  it('rejects an encryption key that is not 32 bytes', () => {
+    const short = Buffer.alloc(16, 7).toString('base64');
+    expect(() => validateEnv({ ...valid, PASSPORT_ENCRYPTION_KEY: short })).toThrow(
+      /PASSPORT_ENCRYPTION_KEY/,
+    );
   });
 
   it('never prints a value in the error message', () => {
