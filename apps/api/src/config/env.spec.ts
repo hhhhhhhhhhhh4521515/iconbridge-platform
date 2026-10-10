@@ -9,6 +9,7 @@ const valid = {
   SMTP_PORT: '1025',
   MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
+  PUBLIC_MEDIA_BASE_URL: 'http://localhost:10000/devstoreaccount1/public-media',
   PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
   JWT_ACCESS_SECRET: 'x'.repeat(32),
   TURNSTILE_SECRET_KEY: 'test-secret',

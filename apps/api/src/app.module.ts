@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AdminModule } from './admin/admin.module.js';
@@ -14,8 +15,10 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { loggerParams } from './common/logging/logger.config.js';
 import { validateEnv, type Env } from './config/env.js';
 import { HealthModule } from './health/health.module.js';
+import { JobsModule } from './jobs/jobs.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { StorageModule } from './storage/storage.module.js';
 
 @Module({
   imports: [
@@ -26,10 +29,13 @@ import { PrismaModule } from './prisma/prisma.module.js';
         loggerParams(config.get('NODE_ENV', { infer: true })),
     }),
     ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ...RATE_LIMITS.default }] }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     MailModule,
+    StorageModule,
     AuthModule,
     AdminModule,
+    JobsModule,
     HealthModule,
   ],
   providers: [

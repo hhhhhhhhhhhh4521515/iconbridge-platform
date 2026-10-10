@@ -398,6 +398,8 @@ model Job {
   @@index([createdById])
   @@index([requiredLanguages], type: Gin)
   @@index([searchVector], type: Gin)
+  /// Trigram index (pg_trgm): tolerant search on the title, so "welders" or "reciptionist" still match.
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "jobs_title_trgm_idx")
   @@map("jobs")
 }
 

@@ -19,6 +19,10 @@ const baseEnvSchema = z.object({
   SMTP_PORT: z.coerce.number().int().min(1).max(65535),
   MAIL_FROM: z.string().min(1),
   AZURE_STORAGE_CONNECTION_STRING: z.string().min(1),
+  /** Public URL of the `public-media` blob container, without a trailing slash. */
+  PUBLIC_MEDIA_BASE_URL: z
+    .url({ protocol: /^https?$/ })
+    .transform((url) => url.replace(/\/+$/, '')),
   PASSPORT_ENCRYPTION_KEY: aes256KeySchema,
   JWT_ACCESS_SECRET: z.string().min(32),
   TURNSTILE_SECRET_KEY: z.string().min(1),
