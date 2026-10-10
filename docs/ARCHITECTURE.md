@@ -41,15 +41,19 @@ The health endpoints are outside the `/api/v1` prefix so container probes keep a
 
 Structure of `apps/api/src`:
 
-| File             | Role                                                                             |
-| ---------------- | -------------------------------------------------------------------------------- |
-| `main.ts`        | Starts the server                                                                |
-| `app.setup.ts`   | Prefix, CORS, Swagger. Shared by `main.ts` and the e2e tests                     |
-| `config/env.ts`  | zod schema of the environment; the app refuses to start if a variable is missing |
-| `prisma/`        | `PrismaService` (global module), connects on first query                         |
-| `common/crypto/` | Passport field encryption, masking, password hashing                             |
-| `health/`        | Probe endpoints                                                                  |
-| `generated/`     | Prisma client, generated, git-ignored                                            |
+| File             | Role                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------- |
+| `main.ts`        | Starts the server                                                                            |
+| `app.setup.ts`   | Prefix, CORS, Swagger. Shared by `main.ts` and the e2e tests                                 |
+| `config/env.ts`  | zod schema of the environment; the app refuses to start if a variable is missing             |
+| `prisma/`        | `PrismaService` (global module), connects on first query                                     |
+| `common/crypto/` | Passport field encryption, masking, password hashing                                         |
+| `common/`        | `AppException`, exception filter, zod validation pipe, OpenAPI helpers, logger configuration |
+| `auth/`          | Auth endpoints, sessions, tokens, password policy, Turnstile, guards and decorators          |
+| `admin/`         | Admin accounts, audit interceptor and audit log                                              |
+| `mail/`          | Nodemailer transport, translated MJML templates                                              |
+| `health/`        | Probe endpoints                                                                              |
+| `generated/`     | Prisma client, generated, git-ignored                                                        |
 
 ## Data model
 
@@ -100,11 +104,16 @@ erDiagram
     timestamptz email_verified_at
     boolean is_active
     timestamptz last_login_at
+    varchar locale "en, fr, ar"
+    int failed_login_count
+    timestamptz locked_until
+    int token_version
     timestamptz deleted_at
   }
   refresh_tokens {
     uuid id PK
     uuid user_id FK
+    uuid family_id "rotation family"
     text token_hash UK "SHA-256"
     timestamptz expires_at
     timestamptz revoked_at
@@ -296,6 +305,7 @@ These are written by hand in the migration SQL, because Prisma cannot express th
 | `candidate_profiles`               | Encrypted and masked passport number are set or cleared together; issue date before expiry date; years of experience between 0 and 70 |
 | `success_stories`                  | `is_published` requires `consent_document_path`                                                                                       |
 | `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                 |
+| `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`                                                                             |
 | `documents`                        | `size_bytes > 0`                                                                                                                      |
 
 Rules that need the current date or a setting (18 years or older, passport expiry, re-application cooldown, automatic closing of jobs) belong to the API and arrive with the features.
@@ -353,6 +363,86 @@ The passport number is encrypted by the API before it reaches the database, so a
 
 `pnpm db:seed` creates the super admin from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`. If a user with that email exists it is left unchanged. In development it also creates 12 sample jobs, 3 home slides, 4 success stories and 5 candidates (`candidate1@example.test` to `candidate5@example.test`, same password as the seed admin). All of it is invented: faker names, `example.test` emails, `+999` phone numbers, passport numbers starting with `FAKE`, and image paths that point to no file.
 
+## Authentication and authorization
+
+Decisions are in [ADR-003](adr/ADR-003-authentication.md). Code: `apps/api/src/auth`, `apps/api/src/admin`, `apps/api/src/mail`.
+
+### Sessions
+
+| Item          | Value                                                                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Access token  | JWT (HS256, `JWT_ACCESS_SECRET`), 15 minutes, cookie `ib_access`, path `/`                                                               |
+| Refresh token | 256 random bits, 7 days, cookie `ib_refresh`, path `/api/v1/auth`; only its SHA-256 is stored                                            |
+| Cookie flags  | `HttpOnly`, `Secure`, `SameSite=Lax` (browsers accept `Secure` on `http://localhost`)                                                    |
+| Rotation      | Every refresh replaces the refresh token. A token presented a second time revokes the whole family (all tokens descended from one login) |
+| Email links   | Verification 24 h, password reset 1 h, admin invitation 72 h. One use; a new link cancels the previous one; only the hash is stored      |
+| Passwords     | argon2id; at least 10 characters and zxcvbn score 3 or more                                                                              |
+| Lockout       | 5 wrong passwords lock the account for 15 minutes                                                                                        |
+| CAPTCHA       | Cloudflare Turnstile on registration, checked server-side; refused if Cloudflare cannot be reached                                       |
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant A as API
+  participant D as PostgreSQL
+  B->>A: POST /auth/login
+  A->>D: check password, create refresh token (family F)
+  A-->>B: cookies ib_access (15 min), ib_refresh R1
+  B->>A: POST /auth/refresh (R1)
+  A->>D: revoke R1, create R2 in family F
+  A-->>B: new ib_access, ib_refresh R2
+  Note over B,A: later, a copy of R1 is replayed
+  B->>A: POST /auth/refresh (R1)
+  A->>D: R1 already revoked: revoke all of family F
+  A-->>B: 401, cookies cleared
+```
+
+The user row is read on every authenticated request. A disabled account, a role change, a password reset or a forced logout therefore takes effect on the next request, not when the access token expires. The token also carries `users.token_version`, which a password reset, a disable and a forced logout increment, so tokens issued before are rejected.
+
+### No account enumeration
+
+| Endpoint                                                       | Behaviour                                                                                                                                                                                 |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /auth/register`                                          | Same `201` body whether or not the address has an account. An existing owner receives an "you already have an account" email                                                              |
+| `POST /auth/login`                                             | One error (`401 INVALID_CREDENTIALS`) for unknown email, wrong password, disabled, invited-without-password and locked accounts. A dummy hash is verified when the account does not exist |
+| `POST /auth/forgot-password`, `POST /auth/resend-verification` | Always `202` with the same body                                                                                                                                                           |
+
+### Access rules
+
+Four guards run globally, in this order:
+
+| Guard                | Rule                                                                                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ThrottlerGuard`     | Per IP and per minute: 120 by default, 20 on `/auth/*`, 5 on login, registration and the endpoints that send email. Health probes are exempt |
+| `JwtAuthGuard`       | A valid access token is required unless the route is `@Public()`                                                                             |
+| `RolesGuard`         | `@Roles(...)` lists come from `PERMISSIONS` in `packages/shared`, which mirrors the privileges table of SPEC.md                              |
+| `VerifiedEmailGuard` | Routes marked `@RequireVerifiedEmail()` (applying to a job) refuse an unverified address                                                     |
+
+`RolesGuard` also applies three rules that do not depend on a decorator being remembered:
+
+1. A candidate never reaches a route under `/api/v1/admin`.
+2. A route under `/api/v1/admin` without `@Roles()` is refused to everybody.
+3. `VIEWER` never performs a write (anything but GET, HEAD, OPTIONS), unless the route is `@SelfService()`.
+
+`OwnershipGuard` with `@Owned('candidateProfile' | 'document' | 'application', param)` restricts a candidate to their own records. Somebody else's record answers 404, like a missing one.
+
+### Admin accounts and audit log
+
+- `/api/v1/admin/users` (super admin): list, create, change role, disable, enable, force logout. A new account has no password; the invitation email carries a set-password link handled by `POST /auth/reset-password`.
+- The last active super admin cannot be demoted or disabled, and nobody can disable their own account. The check locks the super-admin rows, so two concurrent requests cannot both pass.
+- `AuditInterceptor` records every successful write by a back-office user in `audit_logs`: actor, action, record, state before and after, IP. `@Audit({ action, entityType, idParam })` names the entry; without it the write is still recorded under `<METHOD> <route>`. Snapshots come from `AuditSnapshotService`, which selects non-secret fields only. `GET /api/v1/admin/audit-logs` lists the entries.
+
+### Errors, logs, HTTP hardening
+
+- Every error is `{ code, message, details? }`; codes are `API_ERROR_CODES` in `packages/shared`. Unexpected errors answer `INTERNAL_ERROR` with a generic message; the stack is logged, and returned only in development.
+- Request bodies, query strings and route parameters are validated with zod schemas from `packages/shared` (`ZodBody`, `ZodQuery`, `ZodParams`). The same schemas generate the OpenAPI request bodies.
+- Logs are JSON (pino), one line per request with a request id, also returned in the `x-request-id` header. Passwords, tokens, passport numbers, cookies and the `Authorization` header are redacted; query strings are not logged.
+- `helmet` sets the security headers; CORS allows only `WEB_ORIGIN`, with credentials.
+
+### Email
+
+`MailService` sends through Nodemailer (SMTP, STARTTLS required in production). Four templates (verify email, reset password, invitation, account exists) exist in English, French and Arabic; one MJML layout renders them, right-to-left for Arabic. The language is `users.locale`. Links open `WEB_ORIGIN/<locale>/verify-email`, `/reset-password`, `/set-password` and `/forgot-password`. A delivery failure is logged and does not fail the request.
+
 ## Configuration
 
 | File            | Read by              | Validation                                        |
@@ -376,12 +466,15 @@ All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev
 
 ## Testing
 
-| Workspace         | Runner             | Scope today                                                                                                                                                              |
-| ----------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `packages/shared` | Vitest             | Enums and schemas                                                                                                                                                        |
-| `apps/api`        | Vitest + supertest | Environment validation; health endpoints over HTTP with the database mocked; field encryption, passport masking, password hashing; Prisma enums equal to the shared ones |
-| `apps/web`        | Vitest             | Environment validation                                                                                                                                                   |
+| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                 |
+| -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                           |
+| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                              |
+| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits. Mail and CAPTCHA are replaced by in-memory fakes |
+| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                      |
+
+The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
 ## Not built yet
 
-Authentication, feature endpoints, file upload, email sending, i18n, Dockerfiles, Terraform and CI/CD. Tests that run against a real database arrive with the first feature that needs them.
+Feature endpoints (profile, documents, jobs, applications), file upload, the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.
