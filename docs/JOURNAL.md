@@ -85,6 +85,6 @@ Every feature of the specification reads or writes these tables. Fixing keys, co
 | Constraints                                | Updates that break the hired-count, consent, lower-case email and passport-pair rules are rejected by PostgreSQL          |
 | Full-text search                           | `search_vector @@ plainto_tsquery('simple','welder')` returns the welder job; the planner can use the GIN index           |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/1>
 
 **Remaining**: authentication, feature endpoints and their database tests, file upload, emails, i18n, Dockerfiles, Terraform, CI/CD.
