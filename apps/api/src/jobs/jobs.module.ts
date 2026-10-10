@@ -30,6 +30,6 @@ import { PublicJobsService } from './public-jobs.service.js';
     JobCoverService,
     JobAvailabilityService,
   ],
-  exports: [JobAvailabilityService, CatalogService],
+  exports: [JobAvailabilityService, CatalogService, JobCoverService],
 })
 export class JobsModule {}
