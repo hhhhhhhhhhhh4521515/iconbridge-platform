@@ -44,7 +44,13 @@ export class AuditInterceptor implements NestInterceptor {
     const routePath = (request.route as { path?: string } | undefined)?.path ?? request.path;
     const action = options?.action ?? `${request.method.toUpperCase()} ${routePath}`;
     const entityType = options?.entityType ?? 'unknown';
-    const paramId = this.param(request, options?.idParam ?? 'id');
+    // With @Audit the record is the one it names: `idParam`, or the response id for a
+    // creation (even on a route such as /jobs/:id/duplicate). Without it, guess ":id".
+    const paramId = options
+      ? options.idParam
+        ? this.param(request, options.idParam)
+        : null
+      : this.param(request, 'id');
 
     return from(this.snapshots.load(entityType, paramId)).pipe(
       concatMap((before) =>
