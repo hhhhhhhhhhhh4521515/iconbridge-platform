@@ -54,7 +54,7 @@ export function isFinalApplicationStatus(status: ApplicationStatus): boolean {
   return status === 'DEPLOYED' || status === 'REJECTED' || status === 'WITHDRAWN';
 }
 
-export const EMAIL_TOKEN_TYPES = ['VERIFY_EMAIL', 'RESET_PASSWORD'] as const;
+export const EMAIL_TOKEN_TYPES = ['VERIFY_EMAIL', 'RESET_PASSWORD', 'INVITATION'] as const;
 export const emailTokenTypeSchema = z.enum(EMAIL_TOKEN_TYPES);
 export type EmailTokenType = z.infer<typeof emailTokenTypeSchema>;
 
