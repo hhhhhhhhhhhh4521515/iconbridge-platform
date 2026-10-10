@@ -67,6 +67,21 @@ export class AuditSnapshotService {
         updatedAt: job.updatedAt.toISOString(),
       };
     },
+    // No file name: it often contains the candidate's name.
+    document: async (id) => {
+      const row = await this.prisma.document.findUnique({ where: { id } });
+      return row
+        ? {
+            id: row.id,
+            candidateId: row.candidateId,
+            type: row.type,
+            mimeType: row.mimeType,
+            sizeBytes: row.sizeBytes,
+            sha256: row.sha256,
+            deletedAt: row.deletedAt?.toISOString() ?? null,
+          }
+        : null;
+    },
     destination: async (id) => {
       const row = await this.prisma.destination.findUnique({ where: { id } });
       return row
