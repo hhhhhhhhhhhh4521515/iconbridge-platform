@@ -45,3 +45,46 @@ Base for every later feature: one place for shared validation, the same lint and
 **PR**: none. This is the initial commit, pushed directly to `main` to create the repository. Branch protection comes with the CI step; from now on every change goes through a `feat/` branch and a PR.
 
 **Remaining**: data model, authentication, features of `SPEC.md`, Dockerfiles, Terraform, CI/CD and protection of `main`.
+
+## 2026-10-10 - Data model
+
+**What**
+
+- Prisma schema with 19 tables: users and tokens, candidate profile, languages and documents, destinations, categories and jobs, applications with attached documents, status history and internal notes, success stories, home slides, job alerts, contact messages, settings and audit log.
+- First migration (`init`), applied to the local database. It includes hand-written SQL: the generated full-text column of `jobs` with its GIN index, and 11 CHECK constraints (hired count within positions, salary range, consent before publishing a story, lower-case emails...).
+- Passport number encrypted in the API with AES-256-GCM (`FieldCipher`), stored with a masked version; new required variable `PASSPORT_ENCRYPTION_KEY`.
+- Password hashing helper (argon2id), used by the seed and later by authentication.
+- Idempotent seed: 3 destinations, 7 categories, 3 settings, the super admin from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`; in development 12 sample jobs, 3 home slides, 4 success stories and 5 fake candidates.
+- `packages/shared`: enums for gender, education level, language level, document type, salary period and email token type; locales and the translated-text schema; setting keys with their schemas and defaults.
+- `pnpm env:init` now also adds variables missing from an existing `.env` and generates the local encryption key and seed password.
+- Docs: data model, ER diagram and sensitive-data sections in `ARCHITECTURE.md`; ADR-002.
+
+**Why**
+
+Every feature of the specification reads or writes these tables. Fixing keys, constraints and the handling of the passport number now avoids data migrations later.
+
+**Choices worth knowing** (details in ADR-002)
+
+- Prisma reported drift on the generated column until its expression was repeated in the schema as a `dbgenerated` default. `prisma migrate dev` no longer generates the client in Prisma 7, so `pnpm db:migrate` runs `prisma generate` afterwards.
+- Full-text search uses the `simple` configuration (no stemming) because offers are multilingual.
+- Added beyond the list in the prompt: `MAX_UPLOAD_SIZE_MB` setting (SPEC mentions upload limits), `show_employer_name`, three benefit flags plus free text, `required_languages` as an array, `handled_at` on contact messages.
+- `home_slides.cta_label` is translated JSON instead of plain text.
+- Sample image and consent paths point to blobs that do not exist yet; fake candidates have no documents.
+- The seed never updates existing rows, so sample job deadlines are not refreshed by a later run.
+
+**Checks**
+
+| Check                                      | Result                                                                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm test` | Pass; 64 tests (shared 17, api 44, web 3)                                                                                 |
+| `pnpm build`                               | Pass                                                                                                                      |
+| `pnpm db:migrate` twice                    | "Already in sync" both times, no new migration proposed                                                                   |
+| `pnpm db:seed` twice                       | Both succeed; row counts identical after the second run (6 users, 12 jobs, 3 slides, 4 stories, 5 profiles, 15 languages) |
+| Prisma Studio                              | Starts on port 5555 and its backend returns the seeded rows. Checked over HTTP, not visually in a browser                 |
+| Passport columns                           | Stored as `v1.` payloads, no clear number in the table, mask `*******001`                                                 |
+| Constraints                                | Updates that break the hired-count, consent, lower-case email and passport-pair rules are rejected by PostgreSQL          |
+| Full-text search                           | `search_vector @@ plainto_tsquery('simple','welder')` returns the welder job; the planner can use the GIN index           |
+
+**PR**: PR_LINK
+
+**Remaining**: authentication, feature endpoints and their database tests, file upload, emails, i18n, Dockerfiles, Terraform, CI/CD.
