@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Logger, Res } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -6,6 +6,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Liveness, Readiness } from '@iconbridge/shared';
+import { SkipThrottle } from '@nestjs/throttler';
+import type { Response } from 'express';
+import { Public } from '../auth/decorators/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const readinessExample = (status: 'ok' | 'error') => ({
@@ -14,6 +17,8 @@ const readinessExample = (status: 'ok' | 'error') => ({
 
 /** Probe endpoints. Served at /health/*, outside the /api/v1 prefix. */
 @ApiTags('health')
+@Public()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
@@ -31,15 +36,16 @@ export class HealthController {
   @ApiOperation({ summary: 'Readiness: the API can reach its database' })
   @ApiOkResponse({ schema: readinessExample('ok') })
   @ApiServiceUnavailableResponse({ schema: readinessExample('error') })
-  async ready(): Promise<Readiness> {
+  async ready(@Res({ passthrough: true }) response: Response): Promise<Readiness> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch (error) {
       this.logger.error(
         `Database readiness check failed: ${error instanceof Error ? error.name : 'unknown error'}`,
       );
-      const body: Readiness = { status: 'error', checks: { database: 'error' } };
-      throw new ServiceUnavailableException(body);
+      // Set directly: the probe body is not an API error and must keep its own shape.
+      response.status(HttpStatus.SERVICE_UNAVAILABLE);
+      return { status: 'error', checks: { database: 'error' } };
     }
     return { status: 'ok', checks: { database: 'ok' } };
   }
