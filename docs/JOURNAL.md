@@ -140,6 +140,6 @@ Every later feature (profile, documents, applications, back office) depends on k
 
 The accounts created by the live checks were removed from the development database afterwards.
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/2>
 
 **Remaining**: candidate profile and documents, jobs, applications and the re-application rule, back-office screens, the web pages behind the email links, Turnstile on apply and contact, Dockerfiles, Terraform, CI/CD (with a PostgreSQL service for `pnpm test:e2e`).
