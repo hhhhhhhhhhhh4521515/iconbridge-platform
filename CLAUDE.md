@@ -48,6 +48,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Validate input with `ZodBody` / `ZodQuery` / `ZodParams` and a schema from `packages/shared`; document it with `ApiZodBody`. Throw `AppException` with a code from `API_ERROR_CODES`.
 - Admin writes: add `@Audit({ action, entityType, idParam })` and a loader in `AuditSnapshotService` for new entity types.
 - Emails: add the template in English, French and Arabic in `apps/api/src/mail/mail.templates.ts`.
+- Public job queries must use `OPEN_JOB_SQL` (`apps/api/src/jobs/public-jobs.service.ts`) or `isJobOpen` from `packages/shared`; never re-implement the visibility rule. Job status changes go through `JOB_TRANSITIONS`.
+- Raw SQL only with `Prisma.sql` and bound parameters; never build SQL or `tsquery` text from user input by concatenation.
 - New endpoints need e2e tests for the allowed and the refused roles.
 - Database: follow the conventions in the "Data model" section of `docs/ARCHITECTURE.md`. Create migrations with `--create-only` when they need hand-written SQL (CHECK constraints, generated columns), and list new constraints in that section. Never edit a migration that has been merged.
 - An enum that exists in both `schema.prisma` and `packages/shared` must be changed in both; `apps/api/src/prisma/enums.spec.ts` checks it.
@@ -67,7 +69,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Never reveal whether an email has an account (register, login, forgot password, resend verification answer the same).
 - Auth cookies stay `HttpOnly`, `Secure`, `SameSite=Lax`. Add new sensitive field names to `SENSITIVE_KEYS` in `apps/api/src/common/logging/logger.config.ts`.
 - Error messages about configuration name the variable, never its value.
-- Candidate files are private: serve them through short-lived SAS links, never public containers.
+- Candidate files are private: serve them through short-lived SAS links, never public containers. The `public-media` container is for job covers, slides and story photos only.
+- Uploaded images are checked from their bytes and re-encoded (see `JobCoverService`); never store an upload as received.
 - Internal notes are never returned to candidates.
 
 ## Autonomous workflow (mandatory after every task)

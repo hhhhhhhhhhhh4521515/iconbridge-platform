@@ -30,12 +30,15 @@ flowchart LR
 
 ## API
 
-| URL             | Purpose                                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------------------- |
-| `/api/v1/*`     | Business endpoints (global prefix)                                                                      |
-| `/api/docs`     | Swagger UI; OpenAPI JSON at `/api/docs-json`                                                            |
-| `/health/live`  | Liveness: always 200 while the process runs                                                             |
-| `/health/ready` | Readiness: 200 with `{"status":"ok","checks":{"database":"ok"}}`, 503 when the database does not answer |
+| URL                                                                     | Purpose                                                                                                 |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/api/v1/*`                                                             | Business endpoints (global prefix)                                                                      |
+| `/api/v1/jobs`, `/jobs/:slug`, `/destinations`, `/categories`, `/stats` | Public, no session                                                                                      |
+| `/api/v1/auth/*`                                                        | Registration and sessions                                                                               |
+| `/api/v1/admin/*`                                                       | Back office (never reachable by candidates)                                                             |
+| `/api/docs`                                                             | Swagger UI; OpenAPI JSON at `/api/docs-json`                                                            |
+| `/health/live`                                                          | Liveness: always 200 while the process runs                                                             |
+| `/health/ready`                                                         | Readiness: 200 with `{"status":"ok","checks":{"database":"ok"}}`, 503 when the database does not answer |
 
 The health endpoints are outside the `/api/v1` prefix so container probes keep a stable, unversioned path.
 
@@ -52,6 +55,9 @@ Structure of `apps/api/src`:
 | `auth/`          | Auth endpoints, sessions, tokens, password policy, Turnstile, guards and decorators          |
 | `admin/`         | Admin accounts, audit interceptor and audit log                                              |
 | `mail/`          | Nodemailer transport, translated MJML templates                                              |
+| `jobs/`          | Public job search, admin job management, cover images, automatic closing                     |
+| `catalog/`       | Destinations, categories and home-page counters, public and admin                            |
+| `storage/`       | Azure Blob Storage client (public media container)                                           |
 | `health/`        | Probe endpoints                                                                              |
 | `generated/`     | Prisma client, generated, git-ignored                                                        |
 
@@ -317,6 +323,7 @@ Indexes worth knowing:
 | `jobs (status, destination_id, category_id, deadline)` | Public job list and its filters                                    |
 | `jobs` GIN on `search_vector`                          | Full-text search                                                   |
 | `jobs` GIN on `required_languages`                     | Language filter                                                    |
+| `jobs` GIN trigram on `title` (pg_trgm)                | Tolerant search on titles                                          |
 | `applications (candidate_id, job_id, applied_at DESC)` | Last application of a candidate to a job (re-application cooldown) |
 
 The `simple` configuration does no stemming: "welders" does not match "welder". It was chosen because offers may be written in English, French or Arabic and a generated column takes one fixed configuration.
@@ -443,6 +450,74 @@ Four guards run globally, in this order:
 
 `MailService` sends through Nodemailer (SMTP, STARTTLS required in production). Four templates (verify email, reset password, invitation, account exists) exist in English, French and Arabic; one MJML layout renders them, right-to-left for Arabic. The language is `users.locale`. Links open `WEB_ORIGIN/<locale>/verify-email`, `/reset-password`, `/set-password` and `/forgot-password`. A delivery failure is logged and does not fail the request.
 
+## Job offers
+
+Decisions are in [ADR-004](adr/ADR-004-job-search-and-media.md). Code: `apps/api/src/jobs`, `apps/api/src/catalog`, `apps/api/src/storage`.
+
+### When a job is public
+
+A job is open to candidates when all four conditions hold:
+
+1. its status is `PUBLISHED`;
+2. it is not soft-deleted;
+3. its deadline is in the future;
+4. `hired_count < positions`.
+
+The rule exists once in SQL (`OPEN_JOB_SQL` in `public-jobs.service.ts`) and once in TypeScript (`isJobOpen` in `packages/shared`). Every public query uses it, so an expired or full job disappears immediately, without waiting for the scheduled task. A job that is not open answers 404 on `GET /jobs/:slug`, exactly like an unknown slug.
+
+### Status changes
+
+```mermaid
+stateDiagram-v2
+  [*] --> DRAFT: create, duplicate
+  DRAFT --> PUBLISHED: publish
+  PUBLISHED --> CLOSED: close, or automatically
+  CLOSED --> PUBLISHED: reopen
+  DRAFT --> ARCHIVED: archive
+  PUBLISHED --> ARCHIVED: archive
+  CLOSED --> ARCHIVED: archive
+```
+
+- The table is `JOB_TRANSITIONS` in `packages/shared`; another move answers `409 INVALID_JOB_TRANSITION`.
+- Publish and reopen need a future deadline, a free position, and an active destination and category (`409 JOB_NOT_PUBLISHABLE`).
+- A new job is always a draft. Status, slug, hired count and the featured mark cannot be set through create or update.
+- Delete is a soft delete. `DELETE /admin/jobs/:id?permanent=true` removes the row and is refused with `409 JOB_HAS_APPLICATIONS` when applications exist.
+- Slug: title plus the English name of the destination (`hotel-receptionist-malta`), then `-2`, `-3`. It follows the title only while the job has never been published. Deleted jobs keep their slug.
+
+### Search (`GET /api/v1/jobs?q=`)
+
+A job matches when either part matches:
+
+| Part        | How                                                                                                                                            | Finds                                                      |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Full text   | Every word of the query, as a prefix, in `search_vector` (title weight A, description weight B). Only letters and digits of the query are kept | "recep" finds Receptionist; "hotel guest" needs both words |
+| Fuzzy title | `q <% title` (pg_trgm word similarity, threshold 0.6), served by the GIN trigram index `jobs_title_trgm_idx`                                   | "welders" finds Welder; "reciptionist" finds Receptionist  |
+
+Results are ordered by `ts_rank` plus title similarity when `q` is given, otherwise by publication date. Other sorts: `deadline`, `salary`. Salary filters compare amounts as stored, so they are meaningful together with `currency`. Typos are tolerated on the title only, not in the description.
+
+### Automatic closing
+
+`JobAvailabilityService` runs every 15 minutes (`@nestjs/schedule`). In one transaction it takes a PostgreSQL advisory lock with `pg_try_advisory_xact_lock`, closes the published jobs whose deadline has passed or whose positions are filled, and writes one `job.auto_close` audit entry per job (no actor). With several API replicas, the ones that do not get the lock skip their turn. Each closed job is logged with its slug and the reason.
+
+### Cover images and public media
+
+- `POST /admin/jobs/:id/cover` accepts one file of 5 MB at most. The real format is read from the bytes with sharp: JPEG, PNG or WebP, otherwise `415 UNSUPPORTED_FILE`.
+- The image is rotated according to EXIF, limited to 1200 px wide, and re-encoded as WebP, which also removes EXIF data.
+- It is stored in the blob container `public-media` at `jobs/<job id>/cover-<content hash>.webp`, with a one-year cache header. The API returns `PUBLIC_MEDIA_BASE_URL` + path as `coverImageUrl`.
+- `public-media` allows anonymous read of single blobs (no listing). It is for public images only. Candidate documents will use a different, private container.
+
+### Destinations, categories, counters
+
+- Public: `GET /destinations` and `GET /categories` return the active ones with their number of open jobs. `GET /stats` returns open jobs, registered candidates, visas approved (applications in `VISA_APPROVED` or `DEPLOYED`) and countries; it is cached for 10 minutes in each API instance and sent with `Cache-Control: public, max-age=600`.
+- Back office: `/admin/destinations` and `/admin/categories`. Deleting one that jobs (or stories, slides) still use deactivates it instead. The destination code and the category slug cannot be changed. Deactivating does not hide existing jobs; it removes the entry from the public lists and from the choices for new jobs.
+
+### Who can do what
+
+| Routes                                                        | Viewer | Recruiter | Super admin |
+| ------------------------------------------------------------- | ------ | --------- | ----------- |
+| `GET /admin/jobs`, `/admin/destinations`, `/admin/categories` | Yes    | Yes       | Yes         |
+| Every write on those routes                                   | No     | Yes       | Yes         |
+
 ## Configuration
 
 | File            | Read by              | Validation                                        |
@@ -455,26 +530,26 @@ Each has a documented `.env.example`. `pnpm env:init` copies the examples to `.e
 
 ## Local services
 
-| Service  | Image                                     | Host port                      | Notes                                                        |
-| -------- | ----------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
-| postgres | `postgres:16-alpine`                      | 5432                           | Volume `postgres-data`                                       |
-| azurite  | `mcr.microsoft.com/azure-storage/azurite` | 10000                          | Blob only, volume `azurite-data`                             |
-| mailpit  | `axllent/mailpit`                         | 2525 (SMTP), 8025 (UI and API) | Host port 1025 is reserved by Windows on the dev workstation |
-| pgadmin  | `dpage/pgadmin4`                          | 5050                           | Only with `docker compose --profile tools up -d`             |
+| Service  | Image                                     | Host port                      | Notes                                                                                                                 |
+| -------- | ----------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| postgres | `postgres:16-alpine`                      | 5432                           | Volume `postgres-data`                                                                                                |
+| azurite  | `mcr.microsoft.com/azure-storage/azurite` | 10000                          | Blob only, volume `azurite-data`; started with `--skipApiVersionCheck` because the Azure SDK is ahead of the emulator |
+| mailpit  | `axllent/mailpit`                         | 2525 (SMTP), 8025 (UI and API) | Host port 1025 is reserved by Windows on the dev workstation                                                          |
+| pgadmin  | `dpage/pgadmin4`                          | 5050                           | Only with `docker compose --profile tools up -d`                                                                      |
 
 All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev` waits for them.
 
 ## Testing
 
-| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                 |
-| -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                           |
-| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                              |
-| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits. Mail and CAPTCHA are replaced by in-memory fakes |
-| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                      |
+| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                       |
+| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs. Mail, CAPTCHA and blob storage are replaced by in-memory fakes |
+| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                                                                                                                                                               |
 
 The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
 ## Not built yet
 
-Feature endpoints (profile, documents, jobs, applications), file upload, the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.
+Candidate profile and documents, applications, private file upload, the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.

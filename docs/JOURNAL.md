@@ -143,3 +143,56 @@ The accounts created by the live checks were removed from the development databa
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/2>
 
 **Remaining**: candidate profile and documents, jobs, applications and the re-application rule, back-office screens, the web pages behind the email links, Turnstile on apply and contact, Dockerfiles, Terraform, CI/CD (with a PostgreSQL service for `pnpm test:e2e`).
+
+## 2026-10-10 - Job offers
+
+**What**
+
+- Public endpoints: `GET /jobs` (filters by destination, category, salary range, currency, language, featured; text search; sort by relevance, newest, deadline or salary; page pagination), `GET /jobs/:slug`, `GET /destinations`, `GET /categories`, `GET /stats` (cached 10 minutes).
+- Search: prefix full-text search on the existing `tsvector` column, combined with pg_trgm word similarity on the title. Migration `job_search_trigram` adds the extension and a GIN trigram index.
+- Back office `/admin/jobs`: list, read, create, update, delete (soft, or permanent when no application exists), publish, close, reopen, archive, duplicate, feature, unfeature, cover upload and removal.
+- Back office `/admin/destinations` and `/admin/categories`: list, create, update, remove (deactivated instead of deleted when in use).
+- Slugs generated from title and destination, unique, stable once the job has been published.
+- Cover images: format read from the bytes, resized to 1200 px, re-encoded as WebP, stored in the `public-media` blob container.
+- Scheduled task every 15 minutes that closes expired or full jobs, protected by a PostgreSQL advisory lock, with a log line and an audit entry per job.
+- Every admin write is audited with before and after snapshots of the job, destination or category.
+- Shared package: job schemas, list queries, status transition table, `isJobOpen`, slug helpers.
+- New variable `PUBLIC_MEDIA_BASE_URL`; Azurite now starts with `--skipApiVersionCheck`.
+- Docs: job section in `ARCHITECTURE.md`, ADR-004, Terraform notes.
+
+**Why**
+
+Jobs are what visitors come for and what applications attach to. The visibility rule (published, not deleted, deadline not passed, positions left) is the most important business rule of this step, so it is defined once and used by every public query.
+
+**Choices worth knowing** (details in ADR-004)
+
+- Visibility does not depend on the scheduled task: an expired job answers 404 at once, and the task only brings the stored status in line. This matters because the API will scale to zero.
+- Jobs whose positions are all filled are hidden too, in addition to what the prompt listed.
+- Typos are tolerated on titles only; descriptions get prefix matching ("guest" finds "guests").
+- Page pagination was chosen over cursors.
+- A viewer can read jobs, destinations and categories in the back office.
+- Fixed along the way: the audit entry of an action that creates a record from a route with `:id` (duplicate) pointed at the source record. With `@Audit`, the record is now `idParam` or, without it, the id of the response.
+- Not built: restoring a soft-deleted job.
+- **For the infrastructure step**: allow-list `PG_TRGM` on the PostgreSQL server, and allow anonymous read on the `public-media` container (or serve it through a CDN).
+
+**Checks**
+
+| Check                                                          | Result                                                                                                                                                                                                               |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`                    | Pass                                                                                                                                                                                                                 |
+| `pnpm test`                                                    | Pass: 259 unit tests (shared 65, api 191, web 3)                                                                                                                                                                     |
+| `pnpm test:e2e`                                                | Pass: 195 tests in 8 files                                                                                                                                                                                           |
+| `pnpm db:migrate` twice                                        | Migration applied, then "Already in sync"                                                                                                                                                                            |
+| Live: `GET /jobs` on the seeded data                           | 10 open jobs (the draft and the closed sample are absent)                                                                                                                                                            |
+| Live: `?q=welders`                                             | Finds "MIG/MAG Welder"; `?q=reciptionist` finds "Hotel Receptionist"                                                                                                                                                 |
+| Live: closed sample job `GET /jobs/sample-fruit-picker-poland` | 404                                                                                                                                                                                                                  |
+| Live: create, publish, close as the seed super admin           | Public 404 before publishing, 200 after, 404 after closing                                                                                                                                                           |
+| Live: cover upload to Azurite                                  | 2400x1600 JPEG stored as 1200x800 WebP, readable anonymously; a text file named `.png` answers 415                                                                                                                   |
+| Swagger                                                        | `/api/docs` answers 200; the OpenAPI document lists the 5 public paths, the `GET /jobs` parameters and 14 admin job, destination and category paths. Checked through the JSON document, not by clicking in a browser |
+| Live: scheduled task                                           | CRON_RESULT                                                                                                                                                                                                          |
+
+The jobs created by the live checks were deleted afterwards.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/3>
+
+**Remaining**: candidate profile and documents (private storage), applications and the re-application rule, back-office screens, web pages, Dockerfiles, Terraform, CI/CD.
