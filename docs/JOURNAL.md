@@ -308,6 +308,6 @@ This is the daily tool of the agency: following each candidate to deployment whi
 
 The accounts, applications and messages created by the live checks were removed from the development database afterwards.
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/6>
 
 **Remaining**: the web application (public site, candidate area, back office), Dockerfiles, Terraform (including the scheduled job), CI/CD, data retention.
