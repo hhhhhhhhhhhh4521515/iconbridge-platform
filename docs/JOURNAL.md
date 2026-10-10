@@ -250,6 +250,6 @@ This is the purpose of the platform: a candidate fills in a profile, uploads a C
 
 The accounts created by the live checks were removed from the development database afterwards.
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/5>
 
 **Remaining**: back-office candidate and application management (status changes with emails, notes, Kanban, CSV export), success stories and home content, contact form and job alerts, the web application, Dockerfiles, Terraform, CI/CD.
