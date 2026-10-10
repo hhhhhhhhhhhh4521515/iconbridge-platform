@@ -111,7 +111,7 @@ describe('applications (e2e)', () => {
         'PASSPORT',
       ]);
       expect(application.history).toEqual([
-        { fromStatus: null, toStatus: 'SUBMITTED', at: application.appliedAt },
+        { fromStatus: null, toStatus: 'SUBMITTED', at: application.appliedAt, message: null },
       ]);
 
       const row = await test.prisma.application.findUniqueOrThrow({

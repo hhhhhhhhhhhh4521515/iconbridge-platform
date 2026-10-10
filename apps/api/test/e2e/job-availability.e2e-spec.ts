@@ -161,8 +161,8 @@ describe('automatic closing of jobs (e2e)', () => {
     await test.http().get(`${API}/jobs/expired`).expect(200);
   });
 
-  it('is registered to run every 15 minutes', () => {
-    const job = test.app.get(SchedulerRegistry).getCronJob('close-unavailable-jobs');
+  it('is part of the scheduled tasks, which run every 15 minutes', () => {
+    const job = test.app.get(SchedulerRegistry).getCronJob('scheduled-tasks');
     expect(String(job.cronTime.source)).toBe('0 */15 * * * *');
   });
 });
