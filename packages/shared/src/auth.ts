@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ADMIN_ROLES, userRoleSchema } from './enums.js';
+import { countryCodeSchema } from './countries.js';
 import { localeSchema } from './i18n.js';
 import { paginationQuerySchema } from './schemas.js';
 
@@ -19,13 +20,6 @@ export const phoneSchema = z
   .string()
   .trim()
   .regex(/^\+[1-9]\d{6,14}$/, 'Use the international format, e.g. +21612345678');
-
-/** ISO 3166-1 alpha-2, upper case. */
-export const countryCodeSchema = z
-  .string()
-  .trim()
-  .toUpperCase()
-  .regex(/^[A-Z]{2}$/, 'Use a two-letter country code');
 
 const nameSchema = z.string().trim().min(1).max(100);
 /** Opaque token from an email link. */

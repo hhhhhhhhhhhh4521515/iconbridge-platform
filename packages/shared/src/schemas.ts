@@ -19,6 +19,13 @@ export const API_ERROR_CODES = [
   'JOB_NOT_PUBLISHABLE',
   'JOB_HAS_APPLICATIONS',
   'UNSUPPORTED_FILE',
+  'FILE_TOO_LARGE',
+  'DOCUMENT_IN_USE',
+  'PROFILE_INCOMPLETE',
+  'PASSPORT_EXPIRED',
+  'JOB_NOT_OPEN',
+  'MAX_ACTIVE_APPLICATIONS',
+  'CANNOT_WITHDRAW',
   'RATE_LIMITED',
   'REAPPLY_COOLDOWN',
   'INTERNAL_ERROR',
@@ -33,6 +40,8 @@ export const apiErrorSchema = z.object({
   message: z.string(),
   /** Extra data, e.g. the list of invalid fields for VALIDATION_ERROR. */
   details: z.unknown().optional(),
+  /** Only with REAPPLY_COOLDOWN: first moment the candidate may apply to this job again (ISO 8601). */
+  nextAllowedAt: z.iso.datetime().optional(),
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
 
