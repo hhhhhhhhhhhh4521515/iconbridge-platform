@@ -67,6 +67,65 @@ export class AuditSnapshotService {
         updatedAt: job.updatedAt.toISOString(),
       };
     },
+    application: async (id) => {
+      const row = await this.prisma.application.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          status: true,
+          jobId: true,
+          candidateId: true,
+          _count: { select: { notes: true } },
+        },
+      });
+      return row
+        ? {
+            id: row.id,
+            status: row.status,
+            jobId: row.jobId,
+            candidateId: row.candidateId,
+            notes: row._count.notes,
+          }
+        : null;
+    },
+    // Identifiers and state only: the entry says who looked at or changed whom, not their data.
+    candidate: async (id) => {
+      const row = await this.prisma.candidateProfile.findUnique({
+        where: { id },
+        select: { id: true, userId: true, user: { select: { isActive: true } } },
+      });
+      return row ? { id: row.id, userId: row.userId, isActive: row.user.isActive } : null;
+    },
+    successStory: async (id) => {
+      const row = await this.prisma.successStory.findUnique({ where: { id } });
+      return row
+        ? {
+            id: row.id,
+            jobTitle: row.jobTitle,
+            destinationId: row.destinationId,
+            showFullName: row.showFullName,
+            hasPhoto: row.photoPath !== null,
+            hasConsentDocument: row.consentDocumentPath !== null,
+            isPublished: row.isPublished,
+            sortOrder: row.sortOrder,
+            applicationId: row.applicationId,
+          }
+        : null;
+    },
+    homeSlide: async (id) => {
+      const row = await this.prisma.homeSlide.findUnique({ where: { id } });
+      return row
+        ? {
+            id: row.id,
+            title: row.title as Prisma.InputJsonValue,
+            imagePath: row.imagePath,
+            ctaUrl: row.ctaUrl,
+            destinationId: row.destinationId,
+            sortOrder: row.sortOrder,
+            isActive: row.isActive,
+          }
+        : null;
+    },
     // No file name: it often contains the candidate's name.
     document: async (id) => {
       const row = await this.prisma.document.findUnique({ where: { id } });

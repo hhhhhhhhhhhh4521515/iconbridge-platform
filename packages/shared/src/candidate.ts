@@ -424,6 +424,8 @@ export const candidateApplicationSchema = z.object({
       fromStatus: applicationStatusSchema.nullable(),
       toStatus: applicationStatusSchema,
       at: z.iso.datetime(),
+      /** Text the recruiter wrote for the candidate at this step, if any. */
+      message: z.string().nullable(),
     }),
   ),
 });

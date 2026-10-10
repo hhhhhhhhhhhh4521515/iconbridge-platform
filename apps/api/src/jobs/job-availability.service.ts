@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 /** Arbitrary constant identifying this task among PostgreSQL advisory locks. */
@@ -16,24 +15,13 @@ export type AvailabilityRun = { ran: true; closed: ClosedJob[] } | { ran: false;
 /**
  * Closes published jobs whose deadline has passed or whose positions are all
  * filled (SPEC, availability rules). Public queries already hide such jobs; this
- * task makes the status say so.
+ * task makes the status say so. Started by TasksService (scheduler or command line).
  */
 @Injectable()
 export class JobAvailabilityService {
   private readonly logger = new Logger(JobAvailabilityService.name);
 
   constructor(private readonly prisma: PrismaService) {}
-
-  @Cron('0 */15 * * * *', { name: 'close-unavailable-jobs' })
-  async scheduled(): Promise<void> {
-    try {
-      await this.closeUnavailableJobs();
-    } catch (error) {
-      this.logger.error(
-        `Closing unavailable jobs failed: ${error instanceof Error ? error.name : 'unknown error'}`,
-      );
-    }
-  }
 
   /**
    * Safe on several replicas: the work happens in one transaction that first takes

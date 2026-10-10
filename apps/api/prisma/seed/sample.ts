@@ -364,7 +364,8 @@ export async function seedSampleData(
       update: {},
       create: {
         id,
-        displayName: `${faker.person.firstName()} (sample)`,
+        firstName: faker.person.firstName(),
+        lastName: 'Sample',
         jobTitle: story.jobTitle,
         destinationId: destinationId(story.code),
         visaApprovedAt: daysFromNow(-30 * (index + 2)),

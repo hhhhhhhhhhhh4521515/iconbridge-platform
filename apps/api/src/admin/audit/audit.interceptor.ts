@@ -4,7 +4,7 @@ import { concatMap, from, Observable } from 'rxjs';
 import type { RequestWithUser } from '../../auth/auth.types.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditSnapshotService, type AuditSnapshot } from './audit-snapshot.service.js';
-import { AUDIT_KEY, type AuditOptions } from './audit.decorator.js';
+import { AUDIT_KEY, SKIP_AUDIT_KEY, type AuditOptions } from './audit.decorator.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -40,7 +40,8 @@ export class AuditInterceptor implements NestInterceptor {
     const options = this.reflector.get<AuditOptions | undefined>(AUDIT_KEY, context.getHandler());
     // Reads are recorded only when the route asks for it with @Audit (document downloads).
     const isRead = SAFE_METHODS.has(request.method.toUpperCase());
-    if (!actor || actor.role === 'CANDIDATE' || (isRead && !options)) {
+    const skip = this.reflector.get<boolean | undefined>(SKIP_AUDIT_KEY, context.getHandler());
+    if (!actor || actor.role === 'CANDIDATE' || skip || (isRead && !options)) {
       return next.handle();
     }
     const routePath = (request.route as { path?: string } | undefined)?.path ?? request.path;

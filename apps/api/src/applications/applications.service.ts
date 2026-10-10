@@ -53,6 +53,7 @@ function toCandidateApplication(row: ApplicationRow): CandidateApplication {
       fromStatus: entry.fromStatus,
       toStatus: entry.toStatus,
       at: entry.createdAt.toISOString(),
+      message: entry.messageToCandidate,
     })),
   };
 }

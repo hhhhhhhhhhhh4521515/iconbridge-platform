@@ -363,7 +363,7 @@ model Job {
   contractDurationMonths Int?          @map("contract_duration_months") @db.SmallInt
   workingHours           String?       @map("working_hours")
   positions              Int           @default(1)
-  /// Applications that reached CONTRACT_SIGNED or later; the job closes when it equals `positions`.
+  /// Applications that reached DEPLOYED; the job closes when it equals `positions`.
   hiredCount             Int           @default(0) @map("hired_count")
   /// ISO 639-1 codes.
   requiredLanguages      String[]      @default([]) @map("required_languages")
@@ -387,10 +387,11 @@ model Job {
   /// hand-written migration (drop and re-create the column).
   searchVector Unsupported("tsvector")? @default(dbgenerated("(setweight(to_tsvector('simple'::regconfig, COALESCE(title, ''::text)), 'A'::\"char\") || setweight(to_tsvector('simple'::regconfig, COALESCE(description, ''::text)), 'B'::\"char\"))")) @map("search_vector")
 
-  destination  Destination   @relation(fields: [destinationId], references: [id], onDelete: Restrict)
-  category     JobCategory   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdBy    User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  applications Application[]
+  destination        Destination            @relation(fields: [destinationId], references: [id], onDelete: Restrict)
+  category           JobCategory            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdBy          User                   @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  applications       Application[]
+  alertNotifications JobAlertNotification[]
 
   @@index([status, destinationId, categoryId, deadline])
   @@index([destinationId])
@@ -455,15 +456,18 @@ model ApplicationDocument {
 
 /// Append-only: one row per status change.
 model ApplicationStatusHistory {
-  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  applicationId String             @map("application_id") @db.Uuid
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId      String             @map("application_id") @db.Uuid
   /// Null for the first row (submission).
-  fromStatus    ApplicationStatus? @map("from_status")
-  toStatus      ApplicationStatus  @map("to_status")
+  fromStatus         ApplicationStatus? @map("from_status")
+  toStatus           ApplicationStatus  @map("to_status")
   /// Null when the author's account was deleted.
-  changedById   String?            @map("changed_by_id") @db.Uuid
-  comment       String?
-  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  changedById        String?            @map("changed_by_id") @db.Uuid
+  /// Internal remark of the recruiter. Never shown to the candidate.
+  comment            String?
+  /// Optional text for the candidate: shown in their timeline and included in the email.
+  messageToCandidate String?            @map("message_to_candidate")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   changedBy   User?       @relation(fields: [changedById], references: [id], onDelete: SetNull)
@@ -496,8 +500,10 @@ model ApplicationNote {
 
 model SuccessStory {
   id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  /// Name as shown publicly (may be a first name only).
-  displayName         String    @map("display_name")
+  firstName           String    @map("first_name")
+  lastName            String    @default("") @map("last_name")
+  /// False: the site shows the first name and the initial of the last name. True needs the candidate's consent to the full name.
+  showFullName        Boolean   @default(false) @map("show_full_name")
   photoPath           String?   @map("photo_path")
   jobTitle            String    @map("job_title")
   destinationId       String    @map("destination_id") @db.Uuid
@@ -527,7 +533,8 @@ model HomeSlide {
   title         Json
   /// { "en": "...", "fr": "...", "ar": "..." }
   subtitle      Json?
-  imagePath     String   @map("image_path")
+  /// Null until an image is uploaded; a slide without image cannot be active (CHECK constraint).
+  imagePath     String?  @map("image_path")
   /// { "en": "...", "fr": "...", "ar": "..." }
   ctaLabel      Json?    @map("cta_label")
   ctaUrl        String?  @map("cta_url")
@@ -555,11 +562,32 @@ model JobAlertSubscription {
   /// Null until the address is confirmed (double opt-in); no alert is sent before.
   confirmedAt      DateTime? @map("confirmed_at") @db.Timestamptz(3)
   unsubscribeToken String    @unique @map("unsubscribe_token")
+  /// SHA-256 of the confirmation token of the double opt-in; null once confirmed.
+  confirmTokenHash String?   @unique @map("confirm_token_hash")
+  /// Language of the alert emails.
+  locale           String    @default("en") @db.VarChar(2)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  notifications JobAlertNotification[]
+
   @@index([email])
   @@map("job_alert_subscriptions")
+}
+
+/// One row per (subscription, job) already announced, so a job is never sent twice to the same person.
+model JobAlertNotification {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String   @map("subscription_id") @db.Uuid
+  jobId          String   @map("job_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  subscription JobAlertSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  job          Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, jobId])
+  @@index([jobId])
+  @@map("job_alert_notifications")
 }
 
 model ContactMessage {

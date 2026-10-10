@@ -22,14 +22,14 @@ const unsupported = (message: string) =>
   new AppException('UNSUPPORTED_FILE', HttpStatus.UNSUPPORTED_MEDIA_TYPE, message);
 
 /**
- * Turns an uploaded image into the stored cover: the format is read from the
+ * Turns an uploaded image (job cover, story photo, home slide) into the stored file: the format is read from the
  * bytes (not from the file name or the declared type), the image is rotated as
  * its EXIF says, limited to 1200 px wide and re-encoded as WebP. Re-encoding
  * also drops EXIF data such as GPS coordinates.
  */
 @Injectable()
 export class JobCoverService {
-  async process(file: Buffer): Promise<ProcessedCover> {
+  async process(file: Buffer, maxWidth: number = COVER_MAX_WIDTH): Promise<ProcessedCover> {
     if (file.length === 0 || file.length > COVER_MAX_BYTES) {
       throw unsupported('The image must be between 1 byte and 5 MB');
     }
@@ -41,7 +41,7 @@ export class JobCoverService {
       }
       const { data, info } = await image
         .rotate()
-        .resize({ width: COVER_MAX_WIDTH, withoutEnlargement: true })
+        .resize({ width: maxWidth, withoutEnlargement: true })
         .webp({ quality: 82 })
         .toBuffer({ resolveWithObject: true });
       const hash = createHash('sha256').update(data).digest('hex').slice(0, 16);

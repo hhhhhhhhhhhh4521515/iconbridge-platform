@@ -1,4 +1,4 @@
-import type { Locale } from '@iconbridge/shared';
+import type { ApplicationStatus, Locale } from '@iconbridge/shared';
 
 export const EMAIL_TEMPLATES = [
   'verify-email',
@@ -7,6 +7,10 @@ export const EMAIL_TEMPLATES = [
   'account-exists',
   'application-received',
   'new-application',
+  'application-status',
+  'job-alert-confirm',
+  'job-alert',
+  'contact-message',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -18,6 +22,16 @@ export interface EmailVariables {
   expiresInHours?: number;
   /** Title of the job (application templates). */
   jobTitle?: string;
+  /** New status of the application (application-status). */
+  status?: ApplicationStatus;
+  /** Free text: the recruiter's message to the candidate, or a contact-form message. */
+  message?: string | null;
+  /** Links listed in the email (job alerts): one per job. */
+  links?: { label: string; url: string }[];
+  /** Link to stop receiving these emails (job alerts). */
+  unsubscribeUrl?: string;
+  /** Who wrote through the contact form. */
+  sender?: { name: string; email: string; phone: string | null; subject: string | null };
 }
 
 export interface EmailContent {
@@ -27,6 +41,10 @@ export interface EmailContent {
   buttonLabel: string;
   /** Shown under the button; anti-phishing and anti-scam reminders. */
   footnotes: string[];
+  /** A quoted block (message written by a person), shown as is. */
+  quote?: string | null;
+  /** A list of links above the button. */
+  links?: { label: string; url: string }[];
 }
 
 type Builder = (variables: EmailVariables) => EmailContent;
@@ -37,6 +55,49 @@ const NEVER_PAY: Record<Locale, string> = {
   en: `${BRAND} never asks candidates for money to apply.`,
   fr: `${BRAND} ne demande jamais d'argent aux candidats pour postuler.`,
   ar: `${BRAND} لا تطلب أبدًا أي مبلغ مالي من المترشحين للتقديم.`,
+};
+
+/** Names of the application statuses, as candidates read them. */
+export const STATUS_LABELS: Record<Locale, Record<ApplicationStatus, string>> = {
+  en: {
+    SUBMITTED: 'Submitted',
+    UNDER_REVIEW: 'Under review',
+    SHORTLISTED: 'Shortlisted',
+    INTERVIEW: 'Interview',
+    OFFER: 'Offer',
+    CONTRACT_SIGNED: 'Contract signed',
+    VISA_PROCESSING: 'Visa processing',
+    VISA_APPROVED: 'Visa approved',
+    DEPLOYED: 'Deployed',
+    REJECTED: 'Not selected',
+    WITHDRAWN: 'Withdrawn',
+  },
+  fr: {
+    SUBMITTED: 'Envoyée',
+    UNDER_REVIEW: "En cours d'examen",
+    SHORTLISTED: 'Présélectionnée',
+    INTERVIEW: 'Entretien',
+    OFFER: 'Offre',
+    CONTRACT_SIGNED: 'Contrat signé',
+    VISA_PROCESSING: 'Visa en cours',
+    VISA_APPROVED: 'Visa approuvé',
+    DEPLOYED: 'En poste',
+    REJECTED: 'Non retenue',
+    WITHDRAWN: 'Retirée',
+  },
+  ar: {
+    SUBMITTED: 'تم الإرسال',
+    UNDER_REVIEW: 'قيد المراجعة',
+    SHORTLISTED: 'ضمن القائمة المختصرة',
+    INTERVIEW: 'مقابلة',
+    OFFER: 'عرض عمل',
+    CONTRACT_SIGNED: 'تم توقيع العقد',
+    VISA_PROCESSING: 'التأشيرة قيد المعالجة',
+    VISA_APPROVED: 'تمت الموافقة على التأشيرة',
+    DEPLOYED: 'التحق بالعمل',
+    REJECTED: 'لم يتم الاختيار',
+    WITHDRAWN: 'تم السحب',
+  },
 };
 
 const en: Record<EmailTemplate, Builder> = {
@@ -100,6 +161,45 @@ const en: Record<EmailTemplate, Builder> = {
     paragraphs: [`A candidate applied for "${jobTitle}".`],
     buttonLabel: 'Open the application',
     footnotes: ['You receive this email because you are a recruiter on the platform.'],
+  }),
+  'application-status': ({ jobTitle = '', status = 'UNDER_REVIEW', message }) => ({
+    subject: `Your application: ${STATUS_LABELS.en[status]} - ${BRAND}`,
+    heading: `Status: ${STATUS_LABELS.en[status]}`,
+    paragraphs: [
+      `The status of your application for "${jobTitle}" is now: ${STATUS_LABELS.en[status]}.`,
+    ],
+    quote: message ?? null,
+    buttonLabel: 'View my applications',
+    footnotes: [NEVER_PAY.en],
+  }),
+  'job-alert-confirm': ({ expiresInHours = 0 }) => ({
+    subject: `Confirm your job alert - ${BRAND}`,
+    heading: 'Confirm your job alert',
+    paragraphs: ['Confirm your email address to receive new job offers that match your choices.'],
+    buttonLabel: 'Confirm my alert',
+    footnotes: [
+      `This link works for ${expiresInHours} hours.`,
+      'If you did not ask for this, ignore this email: you will receive nothing.',
+    ],
+  }),
+  'job-alert': ({ links = [], unsubscribeUrl = '' }) => ({
+    subject: `${links.length} new job${links.length === 1 ? '' : 's'} for you - ${BRAND}`,
+    heading: 'New jobs matching your alert',
+    paragraphs: ['These offers were published recently:'],
+    links,
+    buttonLabel: 'See all jobs',
+    footnotes: [NEVER_PAY.en, `To stop these emails: ${unsubscribeUrl}`],
+  }),
+  'contact-message': ({ sender, message }) => ({
+    subject: `Contact form: ${sender?.subject ?? 'new message'} - ${BRAND}`,
+    heading: 'Message from the contact form',
+    paragraphs: [
+      `From: ${sender?.name ?? ''} <${sender?.email ?? ''}>`,
+      ...(sender?.phone ? [`Phone: ${sender.phone}`] : []),
+    ],
+    quote: message ?? null,
+    buttonLabel: 'Open the site',
+    footnotes: ['Reply to this email to answer the sender.'],
   }),
 };
 
@@ -167,6 +267,47 @@ const fr: Record<EmailTemplate, Builder> = {
     buttonLabel: 'Ouvrir la candidature',
     footnotes: ['Vous recevez cet e-mail car vous êtes recruteur sur la plateforme.'],
   }),
+  'application-status': ({ jobTitle = '', status = 'UNDER_REVIEW', message }) => ({
+    subject: `Votre candidature : ${STATUS_LABELS.fr[status]} - ${BRAND}`,
+    heading: `Statut : ${STATUS_LABELS.fr[status]}`,
+    paragraphs: [
+      `Le statut de votre candidature pour « ${jobTitle} » est désormais : ${STATUS_LABELS.fr[status]}.`,
+    ],
+    quote: message ?? null,
+    buttonLabel: 'Voir mes candidatures',
+    footnotes: [NEVER_PAY.fr],
+  }),
+  'job-alert-confirm': ({ expiresInHours = 0 }) => ({
+    subject: `Confirmez votre alerte emploi - ${BRAND}`,
+    heading: 'Confirmez votre alerte emploi',
+    paragraphs: [
+      'Confirmez votre adresse e-mail pour recevoir les nouvelles offres qui correspondent à vos choix.',
+    ],
+    buttonLabel: 'Confirmer mon alerte',
+    footnotes: [
+      `Ce lien est valable ${expiresInHours} heures.`,
+      "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : vous ne recevrez rien.",
+    ],
+  }),
+  'job-alert': ({ links = [], unsubscribeUrl = '' }) => ({
+    subject: `${links.length} ${links.length === 1 ? 'nouvelle offre' : 'nouvelles offres'} pour vous - ${BRAND}`,
+    heading: 'Nouvelles offres correspondant à votre alerte',
+    paragraphs: ['Ces offres ont été publiées récemment :'],
+    links,
+    buttonLabel: 'Voir toutes les offres',
+    footnotes: [NEVER_PAY.fr, `Pour ne plus recevoir ces e-mails : ${unsubscribeUrl}`],
+  }),
+  'contact-message': ({ sender, message }) => ({
+    subject: `Formulaire de contact : ${sender?.subject ?? 'nouveau message'} - ${BRAND}`,
+    heading: 'Message du formulaire de contact',
+    paragraphs: [
+      `De : ${sender?.name ?? ''} <${sender?.email ?? ''}>`,
+      ...(sender?.phone ? [`Téléphone : ${sender.phone}`] : []),
+    ],
+    quote: message ?? null,
+    buttonLabel: 'Ouvrir le site',
+    footnotes: ["Répondez à cet e-mail pour répondre à l'expéditeur."],
+  }),
 };
 
 const ar: Record<EmailTemplate, Builder> = {
@@ -228,6 +369,43 @@ const ar: Record<EmailTemplate, Builder> = {
     buttonLabel: 'فتح الطلب',
     footnotes: ['تصلك هذه الرسالة لأنك مسؤول توظيف على المنصة.'],
   }),
+  'application-status': ({ jobTitle = '', status = 'UNDER_REVIEW', message }) => ({
+    subject: `طلبك: ${STATUS_LABELS.ar[status]} - ${BRAND}`,
+    heading: `الحالة: ${STATUS_LABELS.ar[status]}`,
+    paragraphs: [`أصبحت حالة طلبك لوظيفة «${jobTitle}»: ${STATUS_LABELS.ar[status]}.`],
+    quote: message ?? null,
+    buttonLabel: 'عرض طلباتي',
+    footnotes: [NEVER_PAY.ar],
+  }),
+  'job-alert-confirm': ({ expiresInHours = 0 }) => ({
+    subject: `أكّد تنبيه الوظائف - ${BRAND}`,
+    heading: 'أكّد تنبيه الوظائف',
+    paragraphs: ['أكّد عنوان بريدك الإلكتروني لتصلك عروض العمل الجديدة المطابقة لاختياراتك.'],
+    buttonLabel: 'تأكيد التنبيه',
+    footnotes: [
+      `هذا الرابط صالح لمدة ${expiresInHours} ساعة.`,
+      'إذا لم تطلب ذلك، تجاهل هذه الرسالة: لن يصلك أي شيء.',
+    ],
+  }),
+  'job-alert': ({ links = [], unsubscribeUrl = '' }) => ({
+    subject: `وظائف جديدة لك (${links.length}) - ${BRAND}`,
+    heading: 'وظائف جديدة مطابقة لتنبيهك',
+    paragraphs: ['تم نشر هذه العروض مؤخرًا:'],
+    links,
+    buttonLabel: 'عرض كل الوظائف',
+    footnotes: [NEVER_PAY.ar, `لإيقاف هذه الرسائل: ${unsubscribeUrl}`],
+  }),
+  'contact-message': ({ sender, message }) => ({
+    subject: `نموذج الاتصال: ${sender?.subject ?? 'رسالة جديدة'} - ${BRAND}`,
+    heading: 'رسالة من نموذج الاتصال',
+    paragraphs: [
+      `من: ${sender?.name ?? ''} <${sender?.email ?? ''}>`,
+      ...(sender?.phone ? [`الهاتف: ${sender.phone}`] : []),
+    ],
+    quote: message ?? null,
+    buttonLabel: 'فتح الموقع',
+    footnotes: ['ردّ على هذه الرسالة للإجابة على المرسل.'],
+  }),
 };
 
 const CONTENT: Record<Locale, Record<EmailTemplate, Builder>> = { en, fr, ar };
@@ -272,6 +450,8 @@ export function emailMjml(content: EmailContent, locale: Locale, actionUrl: stri
       <mj-column>
         ${text(content.heading, 'font-size="20px" font-weight="700"')}
         ${content.paragraphs.map((paragraph) => text(paragraph)).join('\n        ')}
+        ${content.quote ? `<mj-text align="${align}" padding="12px 16px" container-background-color="#f3f4f6" font-style="italic">${escapeHtml(content.quote).replaceAll('\n', '<br />')}</mj-text>` : ''}
+        ${(content.links ?? []).map((link) => `<mj-text align="${align}" padding-top="0" padding-bottom="4px"><a href="${escapeHtml(link.url)}" style="color:#0f3d5c;font-weight:700;">${escapeHtml(link.label)}</a></mj-text>`).join('\n        ')}
         <mj-button href="${escapeHtml(actionUrl)}" background-color="#0f3d5c" color="#ffffff" border-radius="6px" font-size="15px" align="${align}">${escapeHtml(content.buttonLabel)}</mj-button>
         ${content.footnotes.map((note) => text(note, 'font-size="13px" color="#6b7280"')).join('\n        ')}
         <mj-text align="${align}" font-size="12px" color="#6b7280" css-class="link"><span dir="ltr">${escapeHtml(actionUrl)}</span></mj-text>
@@ -287,6 +467,8 @@ export function emailText(content: EmailContent, actionUrl: string): string {
     content.heading,
     '',
     ...content.paragraphs,
+    ...(content.quote ? ['', content.quote] : []),
+    ...(content.links ?? []).map((link) => `- ${link.label}: ${link.url}`),
     '',
     `${content.buttonLabel}: ${actionUrl}`,
     '',

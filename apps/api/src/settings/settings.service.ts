@@ -33,7 +33,7 @@ export class SettingsService {
       this.logger.error(`Setting ${key} has an invalid value; using the default`);
       return DEFAULT_SETTINGS[key];
     }
-    return parsed.data;
+    return parsed.data as SettingValues[K];
   }
 }
 
