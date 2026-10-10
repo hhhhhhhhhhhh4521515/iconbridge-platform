@@ -8,6 +8,7 @@ Object.assign(process.env, {
   SMTP_PORT: '1025',
   MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
+  AZURE_STORAGE_ACCOUNT_URL: '',
   PUBLIC_MEDIA_BASE_URL: 'http://localhost:10000/devstoreaccount1/public-media',
   // Fixed, public test key: never used outside the test runner.
   PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
