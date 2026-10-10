@@ -189,7 +189,7 @@ Jobs are what visitors come for and what applications attach to. The visibility 
 | Live: create, publish, close as the seed super admin           | Public 404 before publishing, 200 after, 404 after closing                                                                                                                                                           |
 | Live: cover upload to Azurite                                  | 2400x1600 JPEG stored as 1200x800 WebP, readable anonymously; a text file named `.png` answers 415                                                                                                                   |
 | Swagger                                                        | `/api/docs` answers 200; the OpenAPI document lists the 5 public paths, the `GET /jobs` parameters and 14 admin job, destination and category paths. Checked through the JSON document, not by clicking in a browser |
-| Live: scheduled task                                           | CRON_RESULT                                                                                                                                                                                                          |
+| Live: scheduled task                                           | A published job whose deadline was moved to the past was closed by the 23:30 run; the log shows its slug and `deadline_passed`, and the audit log has a `job.auto_close` entry without actor                         |
 
 The jobs created by the live checks were deleted afterwards.
 
