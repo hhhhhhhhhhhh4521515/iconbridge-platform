@@ -12,6 +12,7 @@ import { TurnstileService } from '../../src/auth/turnstile.service.js';
 import { hashPassword } from '../../src/common/crypto/password.js';
 import { MAIL_TRANSPORT } from '../../src/mail/mail.service.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
+import { StorageService } from '../../src/storage/storage.service.js';
 import { databaseName } from './test-database.js';
 
 export const API = '/api/v1';
@@ -29,6 +30,8 @@ export interface SentEmail {
 export interface TestApp {
   app: NestExpressApplication;
   prisma: PrismaService;
+  /** Public files "uploaded" during the tests: path -> content type and size. */
+  files: Map<string, { contentType: string; size: number }>;
   /** Emails "sent" since the last reset, oldest first. */
   outbox: SentEmail[];
   http: () => ReturnType<typeof request>;
@@ -44,6 +47,7 @@ export interface TestAppOptions {
 
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
   const outbox: SentEmail[] = [];
+  const files: TestApp['files'] = new Map();
   let builder = Test.createTestingModule({
     imports: [AppModule],
     controllers: options.controllers ?? [],
@@ -53,6 +57,18 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
       sendMail: (message: SentEmail) => {
         outbox.push(message);
         return Promise.resolve({});
+      },
+    })
+    .overrideProvider(StorageService)
+    .useValue({
+      publicUrl: (path: string | null) => (path ? `https://media.example.test/${path}` : null),
+      uploadPublic: (path: string, content: Buffer, contentType: string) => {
+        files.set(path, { contentType, size: content.length });
+        return Promise.resolve();
+      },
+      deletePublic: (path: string) => {
+        files.delete(path);
+        return Promise.resolve();
       },
     })
     .overrideProvider(TurnstileService)
@@ -69,6 +85,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     app,
     prisma: app.get(PrismaService),
     outbox,
+    files,
     http: () => request(app.getHttpServer()),
     close: () => app.close(),
   };
@@ -187,4 +204,98 @@ export function tokenFrom(email: SentEmail | undefined): string {
     throw new Error('No token link in the email');
   }
   return token;
+}
+
+// ---------------------------------------------------------------------------
+// Jobs
+// ---------------------------------------------------------------------------
+
+const DAY_MS = 86_400_000;
+export const daysFromNow = (days: number) => new Date(Date.now() + days * DAY_MS);
+
+export interface Catalog {
+  destinations: Record<'MALTA' | 'POLAND' | 'CRUISE_SHIP', string>;
+  categories: Record<'hospitality' | 'construction' | 'transport', string>;
+  /** A user who can own jobs. */
+  authorId: string;
+}
+
+/** Destinations, categories and an author, inserted directly. */
+export async function seedCatalog(test: TestApp): Promise<Catalog> {
+  const destination = async (code: string, en: string, sortOrder: number) =>
+    (
+      await test.prisma.destination.create({
+        data: { code, name: { en, fr: en, ar: en }, sortOrder },
+      })
+    ).id;
+  const category = async (slug: string, en: string) =>
+    (await test.prisma.jobCategory.create({ data: { slug, name: { en, fr: en, ar: en } } })).id;
+  const author = await test.prisma.user.create({
+    data: {
+      email: `author-${Math.random().toString(36).slice(2, 10)}@example.test`,
+      role: 'RECRUITER',
+    },
+  });
+  return {
+    destinations: {
+      MALTA: await destination('MALTA', 'Malta', 1),
+      POLAND: await destination('POLAND', 'Poland', 2),
+      CRUISE_SHIP: await destination('CRUISE_SHIP', 'Cruise ship', 3),
+    },
+    categories: {
+      hospitality: await category('hospitality', 'Hospitality'),
+      construction: await category('construction', 'Construction'),
+      transport: await category('transport', 'Transport'),
+    },
+    authorId: author.id,
+  };
+}
+
+export interface JobSeed {
+  slug: string;
+  title?: string;
+  description?: string;
+  destination?: keyof Catalog['destinations'];
+  category?: keyof Catalog['categories'];
+  status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ARCHIVED';
+  deadline?: Date;
+  positions?: number;
+  hiredCount?: number;
+  deletedAt?: Date | null;
+  featured?: boolean;
+  salary?: [min: number, max: number, currency: string];
+  languages?: string[];
+  publishedAt?: Date;
+  employerName?: string;
+  showEmployerName?: boolean;
+}
+
+/** Inserts a job directly; by default it is published and open. */
+export async function insertJob(test: TestApp, catalog: Catalog, seed: JobSeed) {
+  const status = seed.status ?? 'PUBLISHED';
+  return test.prisma.job.create({
+    data: {
+      slug: seed.slug,
+      title: seed.title ?? seed.slug,
+      description: seed.description ?? 'A description long enough for a job offer.',
+      destinationId: catalog.destinations[seed.destination ?? 'MALTA'],
+      categoryId: catalog.categories[seed.category ?? 'hospitality'],
+      status,
+      deadline: seed.deadline ?? daysFromNow(30),
+      positions: seed.positions ?? 5,
+      hiredCount: seed.hiredCount ?? 0,
+      deletedAt: seed.deletedAt ?? null,
+      featured: seed.featured ?? false,
+      salaryMin: seed.salary?.[0] ?? null,
+      salaryMax: seed.salary?.[1] ?? null,
+      salaryCurrency: seed.salary?.[2] ?? null,
+      salaryPeriod: seed.salary ? 'MONTH' : null,
+      requiredLanguages: seed.languages ?? [],
+      publishedAt: status === 'DRAFT' ? null : (seed.publishedAt ?? daysFromNow(-1)),
+      closedAt: status === 'CLOSED' ? new Date() : null,
+      employerName: seed.employerName ?? null,
+      showEmployerName: seed.showEmployerName ?? false,
+      createdById: catalog.authorId,
+    },
+  });
 }
