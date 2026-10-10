@@ -88,3 +88,58 @@ Every feature of the specification reads or writes these tables. Fixing keys, co
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/1>
 
 **Remaining**: authentication, feature endpoints and their database tests, file upload, emails, i18n, Dockerfiles, Terraform, CI/CD.
+
+## 2026-10-10 - Authentication and authorization
+
+**What**
+
+- Auth endpoints under `/api/v1/auth`: register (candidates only, Turnstile, zxcvbn), verify email, resend verification, login, refresh, logout, forgot password, reset password, me.
+- Sessions: 15-minute access JWT and 7-day rotating refresh token in `HttpOnly`, `Secure`, `SameSite=Lax` cookies. Refresh tokens are stored hashed; reuse of a rotated token revokes its whole family.
+- Protections: argon2id, identical answers for known and unknown emails, lock of 15 minutes after 5 wrong passwords, rate limits (120/min, 20/min on `/auth`, 5/min on sensitive routes).
+- RBAC: permission table in `packages/shared` mirroring SPEC.md, `@Roles()`, `@Public()`, global `JwtAuthGuard`, `RolesGuard` and `VerifiedEmailGuard`, plus `OwnershipGuard` for candidate-owned records.
+- Admin accounts (`/api/v1/admin/users`, super admin only): list, create with invitation email, change role, disable, enable, force logout; the last super admin is protected and nobody can disable themselves.
+- Audit: global interceptor recording every back-office write with before and after; `GET /api/v1/admin/audit-logs`.
+- Global: helmet, CORS limited to `WEB_ORIGIN`, zod validation pipe, exception filter returning `{ code, message, details }`, pino logs with request id and redaction.
+- Mail: Nodemailer + MJML, four templates in English, French and Arabic (right-to-left).
+- Migration `auth`: `users.locale`, `failed_login_count`, `locked_until`, `token_version`, nullable `password_hash`; `refresh_tokens.family_id`; email token type `INVITATION`.
+- New variables: `JWT_ACCESS_SECRET`, `TURNSTILE_SECRET_KEY`, `SMTP_USER`, `SMTP_PASSWORD`, `TRUST_PROXY_HOPS`.
+- Tests: `pnpm test:e2e` runs the API over HTTP against a PostgreSQL test database created automatically.
+- Swagger documents every auth and admin route, with request bodies generated from the zod schemas and cookie authentication.
+
+**Why**
+
+Every later feature (profile, documents, applications, back office) depends on knowing who is calling and what they may do. Building the guards with fail-closed defaults now means a forgotten decorator on a future route refuses access instead of granting it.
+
+**Choices worth knowing** (details in ADR-003)
+
+- The user is read from the database on each request, so disabling an account or forcing a logout is immediate.
+- Candidates can sign in before verifying their email; `@RequireVerifiedEmail()` will block applying.
+- A locked account answers the same error as a wrong password, to avoid revealing which emails exist.
+- The invitation link and the reset link use the same endpoint, `POST /auth/reset-password`.
+- No profile, document, job or application endpoint exists yet. Ownership and the role matrix are tested through test-only controllers that use the real guards and decorators.
+- Health probes no longer go through the error format: `/health/ready` keeps its `{ status, checks }` body on 503.
+- During verification the workstation lost internet access and registration failed because Cloudflare could not be reached. Outside production the API now accepts Cloudflare's always-pass test secret without a network call, and production refuses to start with a test secret.
+- **To settle in the infrastructure step**: with `SameSite=Lax` cookies the web app and the API must be on the same site in production (custom domain or a proxy); the default Container Apps hostnames are not.
+
+**Checks**
+
+| Check                                                          | Result                                                                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`                                  | Pass                                                                                                                      |
+| `pnpm test`                                                    | Pass: 211 unit tests (shared 39, api 169, web 3)                                                                          |
+| `pnpm test:e2e`                                                | Pass: 83 tests in 5 files, against `iconbridge_test`                                                                      |
+| `pnpm build`                                                   | Pass                                                                                                                      |
+| `pnpm db:migrate` twice                                        | Migration `auth` applied, then "Already in sync"                                                                          |
+| Live: register with `locale=fr`                                | 201; the French verification email is in Mailpit (read through its API); the link verifies once, a second use answers 400 |
+| Live: candidate on `/admin/users` (GET and POST)               | 403                                                                                                                       |
+| Live: viewer invited by the seed super admin                   | Arabic invitation in Mailpit, password set, login 200; GET, POST, PATCH on `/admin/users` answer 403                      |
+| Live: force logout                                             | The viewer's next request answers 401                                                                                     |
+| Live: super admin disables self / demotes the last super admin | 409 `CANNOT_DISABLE_SELF` / 409 `LAST_SUPER_ADMIN`                                                                        |
+| Live: cookies                                                  | `HttpOnly`, `Secure`, refresh cookie limited to `/api/v1/auth`                                                            |
+| Live: logs                                                     | Request id on each line; no password or cookie value found in the log file                                                |
+
+The accounts created by the live checks were removed from the development database afterwards.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/2>
+
+**Remaining**: candidate profile and documents, jobs, applications and the re-application rule, back-office screens, the web pages behind the email links, Turnstile on apply and contact, Dockerfiles, Terraform, CI/CD (with a PostgreSQL service for `pnpm test:e2e`).

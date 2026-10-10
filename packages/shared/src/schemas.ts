@@ -1,9 +1,40 @@
 import { z } from 'zod';
 
 /** Machine-readable error codes returned by the API in `ApiError.code`. */
-export const API_ERROR_CODES = ['VALIDATION_ERROR', 'REAPPLY_COOLDOWN'] as const;
+export const API_ERROR_CODES = [
+  'VALIDATION_ERROR',
+  'UNAUTHENTICATED',
+  'INVALID_CREDENTIALS',
+  'FORBIDDEN',
+  'EMAIL_NOT_VERIFIED',
+  'NOT_FOUND',
+  'CONFLICT',
+  'EMAIL_TAKEN',
+  'INVALID_TOKEN',
+  'WEAK_PASSWORD',
+  'CAPTCHA_FAILED',
+  'LAST_SUPER_ADMIN',
+  'CANNOT_DISABLE_SELF',
+  'RATE_LIMITED',
+  'REAPPLY_COOLDOWN',
+  'INTERNAL_ERROR',
+] as const;
 export const apiErrorCodeSchema = z.enum(API_ERROR_CODES);
 export type ApiErrorCode = z.infer<typeof apiErrorCodeSchema>;
+
+/** Body of every error response of the API. */
+export const apiErrorSchema = z.object({
+  code: apiErrorCodeSchema,
+  /** English, for developers and logs. The web app translates from `code`. */
+  message: z.string(),
+  /** Extra data, e.g. the list of invalid fields for VALIDATION_ERROR. */
+  details: z.unknown().optional(),
+});
+export type ApiError = z.infer<typeof apiErrorSchema>;
+
+/** One entry of `details` for VALIDATION_ERROR. */
+export const validationIssueSchema = z.object({ path: z.string(), message: z.string() });
+export type ValidationIssue = z.infer<typeof validationIssueSchema>;
 
 export const healthStatusSchema = z.enum(['ok', 'error']);
 export type HealthStatus = z.infer<typeof healthStatusSchema>;

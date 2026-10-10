@@ -10,4 +10,9 @@ Object.assign(process.env, {
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
   // Fixed, public test key: never used outside the test runner.
   PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
+  JWT_ACCESS_SECRET: 'test-only-jwt-secret-0123456789abcdef',
+  TURNSTILE_SECRET_KEY: 'test-secret',
+  SMTP_USER: '',
+  SMTP_PASSWORD: '',
+  TRUST_PROXY_HOPS: '0',
 });

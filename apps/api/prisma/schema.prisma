@@ -32,6 +32,8 @@ enum UserRole {
 enum EmailTokenType {
   VERIFY_EMAIL
   RESET_PASSWORD
+  /// Set-password link sent to an admin account created by a super admin.
+  INVITATION
 
   @@map("email_token_type")
 }
@@ -122,18 +124,26 @@ enum ApplicationStatus {
 // ---------------------------------------------------------------------------
 
 model User {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Always stored in lower case (CHECK constraint).
-  email           String    @unique
-  /// argon2id hash.
-  passwordHash    String    @map("password_hash")
-  role            UserRole  @default(CANDIDATE)
-  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(3)
-  isActive        Boolean   @default(true) @map("is_active")
-  lastLoginAt     DateTime? @map("last_login_at") @db.Timestamptz(3)
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  email            String    @unique
+  /// argon2id hash. Null until an invited admin has set a password.
+  passwordHash     String?   @map("password_hash")
+  role             UserRole  @default(CANDIDATE)
+  emailVerifiedAt  DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  isActive         Boolean   @default(true) @map("is_active")
+  lastLoginAt      DateTime? @map("last_login_at") @db.Timestamptz(3)
+  /// Language of the emails sent to the user: en, fr or ar (CHECK constraint).
+  locale           String    @default("en") @db.VarChar(2)
+  /// Consecutive failed logins; reset by a successful login or a password reset.
+  failedLoginCount Int       @default(0) @map("failed_login_count")
+  /// Logins are refused until this time (set after too many failures).
+  lockedUntil      DateTime? @map("locked_until") @db.Timestamptz(3)
+  /// Copied into access tokens; incrementing it invalidates every token already issued.
+  tokenVersion     Int       @default(0) @map("token_version")
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   refreshTokens    RefreshToken[]
   emailTokens      EmailToken[]
@@ -150,6 +160,8 @@ model User {
 model RefreshToken {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String    @map("user_id") @db.Uuid
+  /// Tokens issued by successive rotations of one login share a family; reuse of a rotated token revokes it all.
+  familyId  String    @map("family_id") @db.Uuid
   /// SHA-256 of the token; the token itself is never stored.
   tokenHash String    @unique @map("token_hash")
   expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
@@ -162,6 +174,7 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([familyId])
   @@index([expiresAt])
   @@map("refresh_tokens")
 }

@@ -13,6 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const generated = {
   PASSPORT_ENCRYPTION_KEY: () => randomBytes(32).toString('base64'),
   SEED_ADMIN_PASSWORD: () => randomBytes(18).toString('base64url'),
+  JWT_ACCESS_SECRET: () => randomBytes(48).toString('base64url'),
 };
 
 const assignment = /^([A-Z][A-Z0-9_]*)=(.*)$/;
