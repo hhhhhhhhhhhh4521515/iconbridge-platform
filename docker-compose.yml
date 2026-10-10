@@ -24,7 +24,8 @@ services:
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     restart: unless-stopped
-    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data
+    # --skipApiVersionCheck: the Azure SDK is often one API version ahead of the emulator.
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --skipApiVersionCheck
     ports:
       - '127.0.0.1:${AZURITE_BLOB_PORT:-10000}:10000'
     volumes:
