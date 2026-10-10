@@ -19,4 +19,5 @@ Object.assign(process.env, {
   JWT_ACCESS_SECRET: 'e2e-only-jwt-secret-0123456789abcdef',
   TURNSTILE_SECRET_KEY: 'e2e-secret',
   TRUST_PROXY_HOPS: '0',
+  SCHEDULER_ENABLED: 'false',
 });

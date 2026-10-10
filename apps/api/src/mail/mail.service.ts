@@ -22,6 +22,10 @@ export const EMAIL_LINK_PATHS = {
   'account-exists': 'forgot-password',
   'application-received': 'me/applications',
   'new-application': 'admin/applications',
+  'application-status': 'me/applications',
+  'job-alert-confirm': 'job-alerts/confirm',
+  'job-alert': 'jobs',
+  'contact-message': '',
 } as const satisfies Record<EmailTemplate, string>;
 
 export interface RenderedEmail {
@@ -46,10 +50,19 @@ export class MailService {
 
   /** Link to a localised page of the web app, e.g. https://site/fr/verify-email?token=... */
   linkFor(template: EmailTemplate, locale: Locale, token?: string, subPath?: string): string {
-    const path = [locale, EMAIL_LINK_PATHS[template], ...(subPath ? [subPath] : [])].join('/');
+    const path = [locale, EMAIL_LINK_PATHS[template], subPath].filter(Boolean).join('/');
     const url = new URL(`/${path}`, this.webOrigin);
     if (token) {
       url.searchParams.set('token', token);
+    }
+    return url.toString();
+  }
+
+  /** Link to any localised page of the web app. */
+  pageUrl(locale: Locale, path: string, query: Record<string, string> = {}): string {
+    const url = new URL(`/${locale}/${path}`, this.webOrigin);
+    for (const [key, value] of Object.entries(query)) {
+      url.searchParams.set(key, value);
     }
     return url.toString();
   }
@@ -76,10 +89,16 @@ export class MailService {
     template: EmailTemplate,
     locale: Locale,
     variables: EmailVariables,
+    options: { replyTo?: string } = {},
   ): Promise<boolean> {
     try {
       const email = await this.render(template, locale, variables);
-      await this.transport.sendMail({ from: this.from, to, ...email });
+      await this.transport.sendMail({
+        from: this.from,
+        to,
+        ...(options.replyTo ? { replyTo: options.replyTo } : {}),
+        ...email,
+      });
       this.logger.log(`Email sent: ${template} (${locale})`);
       return true;
     } catch (error) {

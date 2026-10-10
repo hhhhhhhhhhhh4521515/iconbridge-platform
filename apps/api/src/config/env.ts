@@ -34,6 +34,8 @@ const baseEnvSchema = z.object({
   SMTP_PASSWORD: z.string(),
   /** Reverse proxies in front of the API whose X-Forwarded-For is trusted (0 locally). */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5),
+  /** "true" runs the scheduled tasks inside the API (local). "false" in Azure, where a Container Apps Job runs them. */
+  SCHEDULER_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true'),
 });
 
 /** Cloudflare's public Turnstile test secrets; they accept (or refuse) every token. */

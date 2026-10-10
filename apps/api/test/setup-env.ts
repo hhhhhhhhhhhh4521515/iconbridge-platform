@@ -17,4 +17,5 @@ Object.assign(process.env, {
   SMTP_USER: '',
   SMTP_PASSWORD: '',
   TRUST_PROXY_HOPS: '0',
+  SCHEDULER_ENABLED: 'false',
 });
