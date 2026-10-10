@@ -21,20 +21,21 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 
 Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, never OneDrive).
 
-| Command                                   | Effect                                                                                                        |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `pnpm env:init`                           | Create missing `.env` files from the `.env.example` files                                                     |
-| `pnpm dev`                                | Start the compose services, wait until healthy, then run web, api and shared in watch mode                    |
-| `pnpm build`                              | Build every workspace                                                                                         |
-| `pnpm test`                               | Unit tests of every workspace (Vitest, no database needed)                                                    |
-| `pnpm test:e2e`                           | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`) |
-| `pnpm lint`                               | ESLint in every workspace                                                                                     |
-| `pnpm typecheck`                          | `tsc --noEmit` in every workspace                                                                             |
-| `pnpm format`                             | Prettier on the whole repository                                                                              |
-| `pnpm db:migrate`                         | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                        |
-| `pnpm db:seed`                            | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again  |
-| `pnpm --filter @iconbridge/api db:studio` | Prisma Studio on <http://localhost:5555>                                                                      |
-| `pnpm infra:up` / `pnpm infra:down`       | Start / stop the compose services only                                                                        |
+| Command                                     | Effect                                                                                                        |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                     |
+| `pnpm dev`                                  | Start the compose services, wait until healthy, then run web, api and shared in watch mode                    |
+| `pnpm build`                                | Build every workspace                                                                                         |
+| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                    |
+| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`) |
+| `pnpm lint`                                 | ESLint in every workspace                                                                                     |
+| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                             |
+| `pnpm format`                               | Prettier on the whole repository                                                                              |
+| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                        |
+| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again  |
+| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                      |
+| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                 |
+| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                        |
 
 One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://localhost:3000>, Swagger <http://localhost:4000/api/docs>, Mailpit <http://localhost:8025> (SMTP on 2525), Azurite blob `localhost:10000`.
 
@@ -53,6 +54,9 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Rules that depend on the date read `Clock` (`apps/api/src/common/clock/clock.ts`), never `new Date()` directly, so tests can move time. Settings are read through `SettingsService`.
 - Who may apply is decided by `ApplicationsService.evaluate` only; the eligibility endpoint and `apply` both use it. Changes to the re-application rule need tests at the exact boundary.
 - File storage goes through the abstract `StorageService`; never use the Azure SDK elsewhere.
+- Application status changes go through `AdminApplicationsService` and `allowedApplicationTransitions` (`packages/shared`). Text for the candidate goes in `messageToCandidate`; `comment` and notes are internal and must never appear in a candidate endpoint, an email or an export for candidates.
+- Scheduled work is a task in `apps/api/src/tasks/tasks.service.ts` (callable from the CLI and protected by an advisory lock), never a bare `@Cron`: in Azure the API scales to zero and a Container Apps Job runs the CLI.
+- Routes that write their own audit entries use `@SkipAudit()` and `AuditService.record`; sensitive reads (clear passport numbers, consent documents) get `@Audit`.
 - New endpoints need e2e tests for the allowed and the refused roles.
 - Database: follow the conventions in the "Data model" section of `docs/ARCHITECTURE.md`. Create migrations with `--create-only` when they need hand-written SQL (CHECK constraints, generated columns), and list new constraints in that section. Never edit a migration that has been merged.
 - An enum that exists in both `schema.prisma` and `packages/shared` must be changed in both; `apps/api/src/prisma/enums.spec.ts` checks it.
@@ -76,6 +80,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Uploaded images are checked from their bytes and re-encoded (see `JobCoverService`); never store an upload as received.
 - Candidate documents: detect the format from the content (`inspectDocument`), store under a random name in the private container, and give access only through `GET /documents/:id/download` (5-minute read-only link, back-office downloads audited).
 - Passport numbers are returned in clear only by `ProfileService.toResponse(profile, { revealPassport: true })`, for the owner and for back-office users.
+- Exports never contain full passport numbers unless a SUPER_ADMIN sets `includeFullPassportNumber`; every export is logged. Neutralise spreadsheet formulas in any new export.
+- Success stories are published only with a consent document; the public name is `publicStoryName()`.
 - Internal notes are never returned to candidates.
 
 ## Autonomous workflow (mandatory after every task)

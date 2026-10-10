@@ -61,6 +61,9 @@ Structure of `apps/api/src`:
 | `storage/`                                               | `StorageService` interface and its Azure Blob implementation (public media, private candidate documents) |
 | `candidates/`, `documents/`, `applications/`, `account/` | Candidate profile, documents, applications and GDPR rights                                               |
 | `settings/`                                              | Reads the `settings` table with defaults                                                                 |
+| `admin/applications/`, `admin/candidates/`               | Back-office management of applications (state machine, notes, exports) and candidates                    |
+| `content/`, `public-forms/`                              | Success stories, home slides, site info; job alerts and the contact form                                 |
+| `tasks/`, `cli.ts`                                       | Scheduled tasks, their lock, and the command line that runs them                                         |
 | `health/`                                                | Probe endpoints                                                                                          |
 | `generated/`                                             | Prisma client, generated, git-ignored                                                                    |
 
@@ -599,6 +602,92 @@ sequenceDiagram
 
 What remains after erasure is one anonymous row per application (job, dates, status), kept for statistics. The email address is free again.
 
+## Back office
+
+Decisions are in [ADR-006](adr/ADR-006-back-office-and-scheduled-tasks.md). Code: `apps/api/src/admin`, `content`, `public-forms`, `tasks`.
+
+### Application state machine
+
+`allowedApplicationTransitions(from, role)` in `packages/shared` is the only definition; the API enforces it and returns it with each application (`allowedTransitions`) so the interface shows the right buttons.
+
+```mermaid
+stateDiagram-v2
+  [*] --> SUBMITTED: candidate applies
+  SUBMITTED --> UNDER_REVIEW
+  UNDER_REVIEW --> SHORTLISTED
+  SHORTLISTED --> INTERVIEW
+  INTERVIEW --> OFFER
+  OFFER --> CONTRACT_SIGNED
+  CONTRACT_SIGNED --> VISA_PROCESSING
+  VISA_PROCESSING --> VISA_APPROVED
+  VISA_APPROVED --> DEPLOYED
+  DEPLOYED --> [*]
+  SUBMITTED --> REJECTED
+  OFFER --> REJECTED: from any step before Deployed
+  SUBMITTED --> WITHDRAWN: candidate, until Offer
+  REJECTED --> UNDER_REVIEW: super admin reopens
+  WITHDRAWN --> UNDER_REVIEW: super admin reopens
+```
+
+- One step forward at a time, or Rejected. No jump (Submitted to Visa approved answers `409 INVALID_APPLICATION_TRANSITION`), no step back.
+- Rejected and Withdrawn are final for recruiters; a super admin can reopen them to Under review. Deployed is final for everybody. Only the candidate sets Withdrawn.
+- A change runs in one transaction with the application row locked: check, update, history row, hired count, audit entry. The email is sent after the commit.
+- **Deployed** increments `jobs.hired_count`, never beyond `positions` (`409 NO_POSITION_LEFT`). A job whose positions are all filled disappears from the site at once and is closed by the scheduled task.
+- Each change takes an optional internal `comment` and an optional `messageToCandidate`. The candidate sees the message in their timeline and in the email; the comment, the notes and the name of the recruiter never leave the back office.
+- The candidate gets one email per change, in their language.
+- Bulk change: each application is its own transaction; the answer lists what changed and why the rest did not.
+
+### What each role can do
+
+| Area                                             | Viewer | Recruiter | Super admin                |
+| ------------------------------------------------ | ------ | --------- | -------------------------- |
+| Applications and candidates: list, detail        | Read   | Read      | Read                       |
+| Status changes, notes, bulk, disable a candidate | No     | Yes       | Yes                        |
+| Reopen a rejected or withdrawn application       | No     | No        | Yes                        |
+| Export applications (CSV, XLSX)                  | No     | Yes       | Yes                        |
+| Export with full passport numbers                | No     | No        | Yes, with an explicit flag |
+| Success stories, home slides                     | No     | Yes       | Yes                        |
+| Dashboard figures                                | Read   | Read      | Read                       |
+| Settings                                         | No     | No        | Yes                        |
+
+### Passport numbers in the back office
+
+| Place                                                         | What is shown                                                                                                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lists, application detail, profile snapshot, ordinary exports | Masked (`********567`)                                                                                                                                                    |
+| Candidate detail `GET /admin/candidates/:id`                  | Clear; every view writes a `candidate.view` audit entry                                                                                                                   |
+| Export with the `passportNumber` column                       | Clear, for a super admin who also sets `includeFullPassportNumber: true`; logged as `application.export_with_passport_numbers` with the number of rows, never the numbers |
+
+Every export is logged with its format, columns, filters and row count. Cells that could be read as formulas by a spreadsheet are neutralised.
+
+### Site content
+
+- **Success stories**: created unpublished. Publishing needs the candidate's signed consent on file (`409 CONSENT_REQUIRED`, and a database constraint). The consent goes to private storage; the photo to public media. The site shows the first name and the initial of the last name unless `showFullName` is set. "Create from application" prefills a draft once the application is Visa approved or Deployed.
+- **Home slides**: created inactive; a slide needs an image before it can be activated. Links are site paths or https URLs.
+- **Settings**: cooldown months, maximum active applications, upload limit, and the contact details shown on the site (`GET /site-info`). A change applies at once and is audited with the old and the new value.
+
+### Public forms
+
+- **Job alerts**: `POST /job-alerts` records a request and emails a confirmation link (72 hours). Nothing is sent to an unconfirmed address. The batch sends each subscriber one email with the open jobs published since they confirmed that match their destinations and categories, and records each (subscriber, job) pair after the email left, so nothing is sent twice. Every email carries an unsubscribe link.
+- **Contact**: `POST /contact` stores the message, then emails it to the `CONTACT_EMAIL` setting with the sender as reply-to.
+- Both need a Turnstile token and are limited to 5 requests per minute and per IP.
+
+### Scheduled tasks
+
+| Task         | What it does                                                              |
+| ------------ | ------------------------------------------------------------------------- |
+| `close-jobs` | Closes published jobs whose deadline passed or whose positions are filled |
+| `job-alerts` | Sends job alerts; removes requests never confirmed                        |
+
+Two ways to start them, running the same code:
+
+| Where             | How                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Local development | Inside the API, every 15 minutes, when `SCHEDULER_ENABLED=true`                                                                                              |
+| Azure             | `SCHEDULER_ENABLED=false`; a scheduled Container Apps Job runs `node dist/cli.js all`, because the API scales to zero and its timers stop when nobody visits |
+
+Locally: `pnpm --filter @iconbridge/api task <close-jobs|job-alerts|all>`. The command prints one JSON report per task and exits with 1 if a task failed. Each task takes a PostgreSQL advisory lock, so the scheduler, the command and several replicas can overlap: one runs, the others skip. A new task is added to `TASK_NAMES` in `tasks/tasks.service.ts`.
+
 ## Configuration
 
 | File            | Read by              | Validation                                        |
@@ -622,15 +711,15 @@ All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev
 
 ## Testing
 
-| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| -------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                       |
-| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
-| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Workspace                        | Runner             | Scope today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared`                | Vitest             | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `apps/api` unit (`pnpm test`)    | Vitest             | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `apps/api` e2e (`pnpm test:e2e`) | Vitest + supertest | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure, the application state machine and hired count, export permissions, the consent rule of success stories, job alerts, contact form and task locking. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
+| `apps/web`                       | Vitest             | Environment validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
 ## Not built yet
 
-Back-office management of candidates and applications (status changes, notes, exports), the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.
+Data retention task, a back-office view of contact messages, the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.

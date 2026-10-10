@@ -253,3 +253,61 @@ The accounts created by the live checks were removed from the development databa
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/5>
 
 **Remaining**: back-office candidate and application management (status changes with emails, notes, Kanban, CSV export), success stories and home content, contact form and job alerts, the web application, Dockerfiles, Terraform, CI/CD.
+
+## 2026-10-11 - Back office
+
+**What**
+
+- Applications management (`/admin/applications`): list with filters (job, destination, status, dates, nationality, language, name or email), sort and pagination; detail with snapshot, documents, history and notes; status change through a state machine; bulk status change; internal notes; CSV and XLSX export.
+- State machine in `packages/shared`: one step forward or Rejected; Rejected and Withdrawn final unless a super admin reopens; Deployed final and counted in `jobs.hired_count`.
+- Each change stores an internal comment and an optional message to the candidate, writes a history row and an audit entry, and emails the candidate in their language.
+- Candidates (`/admin/candidates`): search, detail with profile, documents and applications, disable and enable.
+- Success stories and home slides: CRUD, photo and image upload, consent upload required before publishing, reorder, "create from application", public `GET /success-stories` and `GET /home-slides`.
+- Settings for the super admin, public `GET /site-info`, dashboard `GET /admin/stats`.
+- Job alerts with double opt-in and unsubscribe, sent by a batch; contact form stored and emailed to the agency.
+- Scheduled tasks as CLI commands (`pnpm --filter @iconbridge/api task <name|all>`), with the in-process scheduler behind `SCHEDULER_ENABLED`; both protected by advisory locks.
+- Migration `back_office`: message to candidate in the history, story first and last name with a full-name flag, optional slide image, job-alert confirmation and notification tables, two CHECK constraints.
+- Docs: back-office section in `ARCHITECTURE.md`, ADR-006, Terraform notes.
+
+**Why**
+
+This is the daily tool of the agency: following each candidate to deployment while keeping them informed. The scheduled-task change prepares the Azure deployment, where the API scales to zero.
+
+**Choices worth knowing** (details in ADR-006)
+
+- The pipeline is strict: no skipping and no stepping back. A super admin reopens a rejected or withdrawn application to Under review.
+- Deployed is refused when every position of the job is filled (`409 NO_POSITION_LEFT`).
+- The candidate detail shows the clear passport number, to viewers too, and each view is audited. Lists, snapshots and ordinary exports show the masked number.
+- An export with full passport numbers needs a super admin, the column and a separate flag; it is logged without the numbers.
+- Phone numbers are not altered by the spreadsheet-formula protection; other cells starting with `= + - @` are.
+- A job-alert subscription is one row per request; several alerts per address are possible.
+- Recruiter notices and alert emails are sent in sequence inside the request or the batch.
+- Not built: a screen for contact messages, undo of a status change, the data-retention task.
+- The migration renames `success_stories.display_name` to `first_name`; existing sample rows keep their name.
+
+**Checks**
+
+| Check                                                           | Result                                                                                                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`                     | Pass                                                                                                                            |
+| `pnpm test`                                                     | Pass: 384 unit tests (shared 122, api 259, web 3)                                                                               |
+| `pnpm test:e2e`                                                 | Pass: 376 tests in 14 files                                                                                                     |
+| `pnpm db:migrate` twice                                         | Migration applied, then "Already in sync"                                                                                       |
+| Required tests: state machine                                   | Shared unit tests and e2e: no jump, no step back, final statuses, reopen by super admin only                                    |
+| Required tests: hired count                                     | Incremented on Deployed only; last position; two concurrent deployments give one success                                        |
+| Required tests: export permissions                              | Viewer and candidate 403; recruiter gets masked numbers and 403 for full ones; super admin needs the explicit flag; audit entry |
+| Required tests: consent rule                                    | Publish refused without consent (API and database), allowed after upload                                                        |
+| Live: recruiter moves an application from Submitted to Deployed | 8 changes accepted; a jump to Visa approved refused with the allowed list                                                       |
+| Live: candidate emails in Mailpit                               | 8 emails, one per step, in French, each with the message for the candidate; no internal comment                                 |
+| Live: hired count of the job                                    | 0 to 1                                                                                                                          |
+| Live: exports                                                   | CSV with masked numbers for the recruiter, 403 for full numbers; super admin export logged; XLSX opens with exceljs             |
+| Live: story from the deployed application                       | Draft "Pipeline C."; publish refused, then accepted after the consent upload; visible on `GET /success-stories`                 |
+| Live: contact form and job alert                                | Email to the agency address with reply-to; confirmation email, then confirm 204                                                 |
+| Live: `pnpm --filter @iconbridge/api task all`                  | Two JSON reports, exit code 0; unknown task prints the usage                                                                    |
+| Swagger                                                         | Checked through the OpenAPI document, not by clicking in a browser                                                              |
+
+The accounts, applications and messages created by the live checks were removed from the development database afterwards.
+
+**PR**: PR_LINK
+
+**Remaining**: the web application (public site, candidate area, back office), Dockerfiles, Terraform (including the scheduled job), CI/CD, data retention.
