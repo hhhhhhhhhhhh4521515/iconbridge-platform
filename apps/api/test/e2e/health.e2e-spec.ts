@@ -1,14 +1,13 @@
-import { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { livenessSchema, readinessSchema } from '@iconbridge/shared';
 import request from 'supertest';
-import type { App } from 'supertest/types.js';
-import { AppModule } from '../src/app.module.js';
-import { setupApp } from '../src/app.setup.js';
-import { PrismaService } from '../src/prisma/prisma.service.js';
+import { AppModule } from '../../src/app.module.js';
+import { setupApp } from '../../src/app.setup.js';
+import { PrismaService } from '../../src/prisma/prisma.service.js';
 
 describe('health endpoints (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
   const queryRaw = vi.fn();
 
   beforeAll(async () => {
@@ -17,7 +16,7 @@ describe('health endpoints (e2e)', () => {
       .useValue({ $queryRaw: queryRaw })
       .compile();
 
-    app = moduleRef.createNestApplication();
+    app = moduleRef.createNestApplication<NestExpressApplication>();
     setupApp(app);
     await app.init();
   });
