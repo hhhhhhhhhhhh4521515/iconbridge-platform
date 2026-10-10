@@ -1,4 +1,4 @@
-import { envSchema, validateEnv } from './env.js';
+import { validateEnv } from './env.js';
 
 const valid = {
   NODE_ENV: 'development',
@@ -10,6 +10,11 @@ const valid = {
   MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
   PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
+  JWT_ACCESS_SECRET: 'x'.repeat(32),
+  TURNSTILE_SECRET_KEY: 'test-secret',
+  SMTP_USER: '',
+  SMTP_PASSWORD: '',
+  TRUST_PROXY_HOPS: '0',
 };
 
 describe('validateEnv', () => {
@@ -19,7 +24,7 @@ describe('validateEnv', () => {
     expect(env.SMTP_PORT).toBe(1025);
   });
 
-  it.each(Object.keys(envSchema.shape))('refuses to start when %s is missing', (name) => {
+  it.each(Object.keys(valid))('refuses to start when %s is missing', (name) => {
     const { [name]: _removed, ...rest } = valid as Record<string, string>;
     expect(() => validateEnv(rest)).toThrow(new RegExp(`- ${name}: missing`));
   });
@@ -32,6 +37,24 @@ describe('validateEnv', () => {
 
   it('rejects an out-of-range port', () => {
     expect(() => validateEnv({ ...valid, PORT: '70000' })).toThrow(/PORT/);
+  });
+
+  it('accepts empty SMTP credentials (Mailpit) and rejects a short JWT secret', () => {
+    expect(validateEnv(valid).SMTP_USER).toBe('');
+    expect(() => validateEnv({ ...valid, JWT_ACCESS_SECRET: 'too-short' })).toThrow(
+      /JWT_ACCESS_SECRET/,
+    );
+  });
+
+  it('refuses a Cloudflare test secret in production, and accepts it elsewhere', () => {
+    const testSecret = '1x0000000000000000000000000000000AA';
+    expect(() =>
+      validateEnv({ ...valid, NODE_ENV: 'production', TURNSTILE_SECRET_KEY: testSecret }),
+    ).toThrow(/TURNSTILE_SECRET_KEY/);
+    expect(validateEnv({ ...valid, TURNSTILE_SECRET_KEY: testSecret }).TURNSTILE_SECRET_KEY).toBe(
+      testSecret,
+    );
+    expect(validateEnv({ ...valid, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
   });
 
   it('rejects an encryption key that is not 32 bytes', () => {

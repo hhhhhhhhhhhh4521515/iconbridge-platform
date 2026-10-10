@@ -10,7 +10,7 @@ export const aes256KeySchema = z
  * refuses to start when one is missing or malformed (see `validateEnv`).
  * Keep apps/api/.env.example in sync with this schema.
  */
-export const envSchema = z.object({
+const baseEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']),
   PORT: z.coerce.number().int().min(1).max(65535),
   WEB_ORIGIN: z.url(),
@@ -20,7 +20,25 @@ export const envSchema = z.object({
   MAIL_FROM: z.string().min(1),
   AZURE_STORAGE_CONNECTION_STRING: z.string().min(1),
   PASSPORT_ENCRYPTION_KEY: aes256KeySchema,
+  JWT_ACCESS_SECRET: z.string().min(32),
+  TURNSTILE_SECRET_KEY: z.string().min(1),
+  /** Empty for a server without authentication (Mailpit). */
+  SMTP_USER: z.string(),
+  SMTP_PASSWORD: z.string(),
+  /** Reverse proxies in front of the API whose X-Forwarded-For is trusted (0 locally). */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5),
 });
+
+/** Cloudflare's public Turnstile test secrets; they accept (or refuse) every token. */
+const TURNSTILE_TEST_SECRET = /^[123]x0{10,}/;
+
+export const envSchema = baseEnvSchema.refine(
+  (env) => env.NODE_ENV !== 'production' || !TURNSTILE_TEST_SECRET.test(env.TURNSTILE_SECRET_KEY),
+  {
+    path: ['TURNSTILE_SECRET_KEY'],
+    message: 'A Turnstile test secret cannot be used in production',
+  },
+);
 
 export type Env = z.infer<typeof envSchema>;
 
