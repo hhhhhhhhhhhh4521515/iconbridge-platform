@@ -17,6 +17,7 @@ import { VerifiedEmailGuard } from './auth/guards/verified-email.guard.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { loggerParams } from './common/logging/logger.config.js';
 import { validateEnv, type Env } from './config/env.js';
+import { ContentModule } from './content/content.module.js';
 import { HealthModule } from './health/health.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { MailModule } from './mail/mail.module.js';
@@ -44,6 +45,7 @@ import { StorageModule } from './storage/storage.module.js';
     AdminModule,
     JobsModule,
     CandidatesModule,
+    ContentModule,
     HealthModule,
   ],
   providers: [
