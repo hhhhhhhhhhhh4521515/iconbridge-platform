@@ -468,6 +468,37 @@ export const adminHomeSlideSchema = homeSlideSchema.extend({
 export type AdminHomeSlide = z.infer<typeof adminHomeSlideSchema>;
 
 // ---------------------------------------------------------------------------
+// Audit log
+// ---------------------------------------------------------------------------
+
+export const auditLogQuerySchema = paginationQuerySchema.extend({
+  /** Part of the action name, e.g. "job." or "undo". */
+  action: z.string().trim().min(2).max(60).optional(),
+  entityType: z.string().trim().min(1).max(40).optional(),
+  /** Part of the email address of the person who acted. */
+  actor: z.string().trim().min(2).max(100).optional(),
+  /** On or after this day (UTC). */
+  from: calendarDate.optional(),
+  /** On or before this day (UTC). */
+  to: calendarDate.optional(),
+});
+export type AuditLogQuery = z.infer<typeof auditLogQuerySchema>;
+
+export const auditLogEntrySchema = z.object({
+  id: z.uuid(),
+  actorId: z.uuid().nullable(),
+  actorEmail: z.string().nullable(),
+  action: z.string(),
+  entityType: z.string(),
+  entityId: z.string().nullable(),
+  before: z.unknown(),
+  after: z.unknown(),
+  ip: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
+
+// ---------------------------------------------------------------------------
 // Settings, dashboard
 // ---------------------------------------------------------------------------
 

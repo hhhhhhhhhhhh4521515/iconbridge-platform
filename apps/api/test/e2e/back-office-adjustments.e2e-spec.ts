@@ -502,4 +502,34 @@ describe('back-office adjustments (e2e)', () => {
       expect(info.SOCIAL_FACEBOOK).toBe('');
     });
   });
+
+  describe('audit log filters', () => {
+    it('filters by action, record type, actor and day, for a super admin only', async () => {
+      const job = await insertJob(test, catalog, { slug: 'job', status: 'DRAFT' });
+      await as(test, recruiter).post(`/admin/jobs/${job.id}/publish`).expect(200);
+      await as(test, superAdmin)
+        .put('/admin/settings/CONTACT_PHONE', { value: '+356 2100 0000' })
+        .expect(200);
+      interface Page {
+        total: number;
+        items: { action: string; actorEmail: string | null; entityType: string }[];
+      }
+      const list = async (query: string) =>
+        (await as(test, superAdmin).get(`/admin/audit-logs?${query}`).expect(200)).body as Page;
+
+      expect((await list('action=publish')).items.map((item) => item.action)).toEqual([
+        'job.publish',
+      ]);
+      expect((await list('entityType=job')).total).toBe(1);
+      const byActor = await list(`actor=${encodeURIComponent(recruiter.email.slice(0, 12))}`);
+      expect(byActor.items.every((item) => item.actorEmail === recruiter.email)).toBe(true);
+      expect(byActor.total).toBeGreaterThan(0);
+      const today = new Date().toISOString().slice(0, 10);
+      expect((await list(`from=${today}&to=${today}`)).total).toBeGreaterThanOrEqual(2);
+      expect((await list('to=2000-01-01')).total).toBe(0);
+
+      await as(test, recruiter).get('/admin/audit-logs?action=job').expect(403);
+      await as(test, superAdmin).get('/admin/audit-logs?from=yesterday').expect(400);
+    });
+  });
 });

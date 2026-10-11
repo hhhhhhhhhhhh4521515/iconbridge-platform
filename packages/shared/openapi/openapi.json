@@ -1631,8 +1631,134 @@
     "/api/v1/admin/users": {
       "get": {
         "operationId": "AdminUsersController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "VIEWER",
+                "RECRUITER",
+                "SUPER_ADMIN"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "email": {
+                            "type": "string",
+                            "format": "email",
+                            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                          },
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "VIEWER",
+                              "RECRUITER",
+                              "SUPER_ADMIN"
+                            ]
+                          },
+                          "isActive": {
+                            "type": "boolean"
+                          },
+                          "hasPassword": {
+                            "type": "boolean"
+                          },
+                          "locale": {
+                            "type": "string",
+                            "enum": [
+                              "en",
+                              "fr",
+                              "ar"
+                            ]
+                          },
+                          "lastLoginAt": {
+                            "nullable": true,
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "role",
+                          "isActive",
+                          "hasPassword",
+                          "locale",
+                          "lastLoginAt",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
@@ -3480,8 +3606,213 @@
     "/api/v1/admin/audit-logs": {
       "get": {
         "operationId": "AuditLogsController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {}
+          },
+          {
+            "name": "actor",
+            "required": false,
+            "in": "query",
+            "description": "Part of the email of who acted",
+            "schema": {}
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "description": "Part of the action name",
+            "schema": {}
+          }
+        ],
         "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "actorId": {
+                            "nullable": true,
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "actorEmail": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "entityType": {
+                            "type": "string"
+                          },
+                          "entityId": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "before": {},
+                          "after": {},
+                          "ip": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "actorId",
+                          "actorEmail",
+                          "action",
+                          "entityType",
+                          "entityId",
+                          "before",
+                          "after",
+                          "ip",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
@@ -3614,7 +3945,7 @@
             "cookie": []
           }
         ],
-        "summary": "Audit log, newest first (super admin)",
+        "summary": "Audit log, newest first, with filters (super admin)",
         "tags": [
           "admin: audit log"
         ]
@@ -10162,6 +10493,85 @@
         "operationId": "AdminSettingsController_list",
         "parameters": [],
         "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "REAPPLY_COOLDOWN_MONTHS": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 60
+                    },
+                    "MAX_ACTIVE_APPLICATIONS": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100
+                    },
+                    "MAX_UPLOAD_SIZE_MB": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 25
+                    },
+                    "CONTACT_EMAIL": {
+                      "type": "string",
+                      "maxLength": 254,
+                      "format": "email",
+                      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                    },
+                    "CONTACT_PHONE": {
+                      "type": "string",
+                      "maxLength": 30
+                    },
+                    "CONTACT_WHATSAPP": {
+                      "type": "string",
+                      "maxLength": 30
+                    },
+                    "CONTACT_ADDRESS": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "SOCIAL_FACEBOOK": {
+                      "type": "string",
+                      "maxLength": 300,
+                      "pattern": "^(https:\\/\\/\\S+)?$"
+                    },
+                    "SOCIAL_INSTAGRAM": {
+                      "type": "string",
+                      "maxLength": 300,
+                      "pattern": "^(https:\\/\\/\\S+)?$"
+                    },
+                    "SOCIAL_TIKTOK": {
+                      "type": "string",
+                      "maxLength": 300,
+                      "pattern": "^(https:\\/\\/\\S+)?$"
+                    },
+                    "SOCIAL_LINKEDIN": {
+                      "type": "string",
+                      "maxLength": 300,
+                      "pattern": "^(https:\\/\\/\\S+)?$"
+                    }
+                  },
+                  "required": [
+                    "REAPPLY_COOLDOWN_MONTHS",
+                    "MAX_ACTIVE_APPLICATIONS",
+                    "MAX_UPLOAD_SIZE_MB",
+                    "CONTACT_EMAIL",
+                    "CONTACT_PHONE",
+                    "CONTACT_WHATSAPP",
+                    "CONTACT_ADDRESS",
+                    "SOCIAL_FACEBOOK",
+                    "SOCIAL_INSTAGRAM",
+                    "SOCIAL_TIKTOK",
+                    "SOCIAL_LINKEDIN"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {

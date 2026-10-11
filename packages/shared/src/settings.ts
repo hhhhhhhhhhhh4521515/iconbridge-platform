@@ -42,6 +42,9 @@ export const PUBLIC_SETTING_KEYS = [
   'SOCIAL_LINKEDIN',
 ] as const satisfies readonly (keyof typeof settingSchemas)[];
 
+/** Every setting with its value: body of GET /admin/settings. */
+export const settingValuesSchema = z.object(settingSchemas);
+
 export type SettingKey = keyof typeof settingSchemas;
 export type SettingValues = { [K in SettingKey]: z.infer<(typeof settingSchemas)[K]> };
 

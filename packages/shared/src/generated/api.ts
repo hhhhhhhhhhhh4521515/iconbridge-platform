@@ -285,7 +285,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Audit log, newest first (super admin) */
+        /** Audit log, newest first, with filters (super admin) */
         get: operations["AuditLogsController_list"];
         put?: never;
         post?: never;
@@ -2200,13 +2200,45 @@ export interface operations {
     };
     AdminUsersController_list: {
         parameters: {
-            query?: never;
+            query?: {
+                pageSize?: number;
+                page?: number;
+                role?: "VIEWER" | "RECRUITER" | "SUPER_ADMIN";
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: email */
+                            email: string;
+                            /** @enum {string} */
+                            role: "VIEWER" | "RECRUITER" | "SUPER_ADMIN";
+                            isActive: boolean;
+                            hasPassword: boolean;
+                            /** @enum {string} */
+                            locale: "en" | "fr" | "ar";
+                            /** Format: date-time */
+                            lastLoginAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        page: number;
+                        pageSize: number;
+                        total: number;
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2724,13 +2756,67 @@ export interface operations {
     };
     AuditLogsController_list: {
         parameters: {
-            query?: never;
+            query?: {
+                pageSize?: number;
+                page?: number;
+                /** @description YYYY-MM-DD */
+                to?: unknown;
+                /** @description YYYY-MM-DD */
+                from?: unknown;
+                /** @description Part of the email of who acted */
+                actor?: unknown;
+                entityType?: unknown;
+                /** @description Part of the action name */
+                action?: unknown;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            actorId: string | null;
+                            actorEmail: string | null;
+                            action: string;
+                            entityType: string;
+                            entityId: string | null;
+                            before: unknown;
+                            after: unknown;
+                            ip: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        page: number;
+                        pageSize: number;
+                        total: number;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -4435,6 +4521,27 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        REAPPLY_COOLDOWN_MONTHS: number;
+                        MAX_ACTIVE_APPLICATIONS: number;
+                        MAX_UPLOAD_SIZE_MB: number;
+                        /** Format: email */
+                        CONTACT_EMAIL: string;
+                        CONTACT_PHONE: string;
+                        CONTACT_WHATSAPP: string;
+                        CONTACT_ADDRESS: string;
+                        SOCIAL_FACEBOOK: string;
+                        SOCIAL_INSTAGRAM: string;
+                        SOCIAL_TIKTOK: string;
+                        SOCIAL_LINKEDIN: string;
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;

@@ -7,6 +7,7 @@ import {
   PERMISSIONS,
   SETTING_KEYS,
   settingSchemas,
+  settingValuesSchema,
   updateSettingSchema,
   type AdminStats,
   type SettingKey,
@@ -54,6 +55,7 @@ export class AdminSettingsController {
   @Get('settings')
   @Roles(...PERMISSIONS.MANAGE_SETTINGS)
   @ApiOperation({ summary: 'Every global setting with its current value (super admin)' })
+  @ApiZodResponse(200, settingValuesSchema)
   @ApiErrors(401, 403)
   async list(): Promise<SettingValues> {
     const entries = await Promise.all(
