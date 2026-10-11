@@ -119,6 +119,7 @@ export type AdminUser = Body<'/api/v1/admin/users', 'get'>['items'][number];
 export type ContactMessage = Body<'/api/v1/admin/contact-messages', 'get'>['items'][number];
 export type AuditEntry = Body<'/api/v1/admin/audit-logs', 'get'>['items'][number];
 export type SettingValues = Body<'/api/v1/admin/settings', 'get'>;
+export type HistoricalFigure = Body<'/api/v1/admin/historical-figures', 'get'>[number];
 export type ApplicationStatus = AdminApplication['status'];
 export type JobQuestion = Job['questions'][number];
 

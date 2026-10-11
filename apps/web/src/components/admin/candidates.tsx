@@ -1,17 +1,19 @@
 'use client';
 
-import type { ColumnDef } from '@tanstack/react-table';
-import { Eye, EyeOff } from 'lucide-react';
+import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
+import { Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
 import { LoadFailed, Loading } from '@/components/forms/fields';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { api, type AdminCandidate } from '@/lib/client-api';
 import { countryName, flag } from '@/lib/countries';
 import { languageName } from '@/lib/format';
 import { card, cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
+import { DeleteDialog } from './delete-dialog';
 import { DocumentsList } from './documents-list';
 import { ApplicationBadge } from './status';
 import {
@@ -34,6 +36,10 @@ export function CandidatesList() {
   const [q, setQ] = useState('');
   const [active, setActive] = useState('');
   const [page, setPage] = useState(1);
+  const call = useCall();
+  const { canDelete } = useAdmin();
+  const [selection, setSelection] = useState<RowSelectionState>({});
+  const [deleting, setDeleting] = useState(false);
   const fetcher = useCallback(
     async () =>
       (
@@ -53,6 +59,34 @@ export function CandidatesList() {
   const { data, loading, failed, reload } = useLoaded(fetcher);
   const columns = useMemo<ColumnDef<AdminCandidate>[]>(
     () => [
+      ...(canDelete
+        ? [
+            {
+              id: 'select',
+              enableSorting: false,
+              header: ({ table }) => (
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  aria-label={t('candidates.selectAll')}
+                  checked={table.getIsAllRowsSelected()}
+                  onChange={table.getToggleAllRowsSelectedHandler()}
+                />
+              ),
+              cell: ({ row }) => (
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  aria-label={t('candidates.selectOne', {
+                    name: `${row.original.firstName} ${row.original.lastName}`,
+                  })}
+                  checked={row.getIsSelected()}
+                  onChange={row.getToggleSelectedHandler()}
+                />
+              ),
+            } satisfies ColumnDef<AdminCandidate>,
+          ]
+        : []),
       {
         id: 'name',
         accessorFn: (row) => `${row.lastName} ${row.firstName}`,
@@ -110,8 +144,28 @@ export function CandidatesList() {
           ),
       },
     ],
-    [locale, t],
+    [canDelete, locale, t],
   );
+  const selected = (data?.items ?? []).filter((candidate) => selection[candidate.id]);
+  const removeSelected = async (reason: string) => {
+    const result = await call(
+      api.POST('/api/v1/admin/candidates/bulk-delete', {
+        body: { ids: selected.map((candidate) => candidate.id), reason },
+      }),
+    );
+    if (!result.ok) {
+      return;
+    }
+    const { changed, failed: refused } = result.data;
+    if (refused > 0) {
+      toast.warning(t('deletion.partly', { changed, refused }));
+    } else {
+      toast.success(t('candidates.deletedMany', { count: changed }));
+    }
+    setDeleting(false);
+    setSelection({});
+    reload();
+  };
   return (
     <>
       <PageHeader title={t('candidates.title')} intro={t('candidates.intro')} />
@@ -138,6 +192,45 @@ export function CandidatesList() {
           <option value="false">{t('candidates.disabledOnly')}</option>
         </select>
       </div>
+      {canDelete && selected.length > 0 ? (
+        <div
+          className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3"
+          data-testid="bulk-bar"
+        >
+          <span className="text-sm font-medium">
+            {t('candidates.selected', { count: selected.length })}
+          </span>
+          <button
+            type="button"
+            className={`${cta.outline} border-destructive text-destructive`}
+            onClick={() => {
+              setDeleting(true);
+            }}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            {t('deletion.delete')}
+          </button>
+        </div>
+      ) : null}
+      <DeleteDialog
+        open={deleting}
+        title={t('candidates.deleteManyTitle', { count: selected.length })}
+        removed={[
+          t('candidates.removedProfiles', { count: selected.length }),
+          t('candidates.removedDocuments', {
+            count: selected.reduce((total, candidate) => total + candidate.documentCount, 0),
+          }),
+          t('candidates.removedApplications', {
+            count: selected.reduce((total, candidate) => total + candidate.applicationCount, 0),
+          }),
+        ]}
+        notes={[t('candidates.keptNote')]}
+        confirmLabel={t('deletion.delete')}
+        onClose={() => {
+          setDeleting(false);
+        }}
+        onConfirm={removeSelected}
+      />
       {failed ? (
         <LoadFailed onRetry={reload} />
       ) : (
@@ -149,6 +242,8 @@ export function CandidatesList() {
             rowId={(row) => row.id}
             loading={loading}
             empty={t('candidates.empty')}
+            selection={selection}
+            {...(canDelete ? { onSelectionChange: setSelection } : {})}
           />
           <Pager page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPage={setPage} />
         </>
@@ -218,7 +313,9 @@ export function CandidateDetail({ id }: { id: string }) {
   const locale = useLocale();
   const call = useCall();
   const confirm = useConfirm();
-  const { can } = useAdmin();
+  const { can, canDelete } = useAdmin();
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
   const fetcher = useCallback(
     async () => (await api.GET('/api/v1/admin/candidates/{id}', { params: { path: { id } } })).data,
     [id],
@@ -299,7 +396,45 @@ export function CandidateDetail({ id }: { id: string }) {
             {data.isActive ? t('candidates.disable') : t('candidates.enable')}
           </button>
         ) : null}
+        {canDelete ? (
+          <button
+            type="button"
+            className={`${cta.primary} bg-destructive text-white hover:bg-destructive/90`}
+            onClick={() => {
+              setDeleting(true);
+            }}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            {t('candidates.delete')}
+          </button>
+        ) : null}
       </PageHeader>
+      <DeleteDialog
+        open={deleting}
+        title={t('candidates.deleteTitle', { name: `${data.firstName} ${data.lastName}` })}
+        removed={[
+          t('candidates.removedProfiles', { count: 1 }),
+          t('candidates.removedDocuments', { count: data.documents.length }),
+          t('candidates.removedApplications', { count: data.applications.length }),
+        ]}
+        notes={[t('candidates.keptNote')]}
+        confirmLabel={t('candidates.delete')}
+        onClose={() => {
+          setDeleting(false);
+        }}
+        onConfirm={async (reason) => {
+          const result = await call(
+            api.DELETE('/api/v1/admin/candidates/{id}', {
+              params: { path: { id } },
+              body: { reason },
+            }),
+            t('candidates.deleted'),
+          );
+          if (result.ok) {
+            router.replace('/admin/candidates');
+          }
+        }}
+      />
       <div className="grid gap-5 xl:grid-cols-2">
         <section className={`${card} p-5`}>
           <h2 className="mb-3 text-lg font-semibold">{t('candidates.profile')}</h2>
