@@ -1,5 +1,6 @@
 import {
   localizedTextSchema,
+  parseJobQuestions,
   type AdminJob,
   type LocalizedText,
   type PublicJob,
@@ -53,6 +54,7 @@ function commonFields(job: JobRow, mediaUrl: MediaUrl) {
     coverImageUrl: mediaUrl(job.coverImagePath),
     featured: job.featured,
     publishedAt: job.publishedAt?.toISOString() ?? null,
+    questions: parseJobQuestions(job.questions),
   };
 }
 

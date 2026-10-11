@@ -97,7 +97,7 @@ export class ContentService {
         candidate: { select: { firstName: true, lastName: true } },
         job: { select: { title: true, destinationId: true } },
         statusHistory: {
-          where: { toStatus: 'VISA_APPROVED' },
+          where: { toStatus: 'VISA_APPROVED', revertedAt: null },
           orderBy: { createdAt: 'asc' },
           take: 1,
         },

@@ -4,6 +4,13 @@ import { z } from 'zod';
  * Global settings stored in the `settings` table (key + JSON value) and edited by
  * the super admin. Each key has its own schema; the defaults are what the seed inserts.
  */
+/** An https address, or empty when the agency has no page there. */
+const socialUrl = z
+  .string()
+  .trim()
+  .max(300)
+  .regex(/^(https:\/\/\S+)?$/, 'Use an https address, or leave it empty');
+
 export const settingSchemas = {
   /** Calendar months before a candidate may apply to the same job again. */
   REAPPLY_COOLDOWN_MONTHS: z.number().int().min(0).max(60),
@@ -16,14 +23,23 @@ export const settingSchemas = {
   CONTACT_PHONE: z.string().trim().max(30),
   CONTACT_WHATSAPP: z.string().trim().max(30),
   CONTACT_ADDRESS: z.string().trim().max(300),
+  /** Pages of the agency on the social networks, shown in the footer. Empty: the link is hidden. */
+  SOCIAL_FACEBOOK: socialUrl,
+  SOCIAL_INSTAGRAM: socialUrl,
+  SOCIAL_TIKTOK: socialUrl,
+  SOCIAL_LINKEDIN: socialUrl,
 } as const;
 
-/** Settings anyone may read: the contact block of the site. */
+/** Settings anyone may read: the contact block and the social links of the site. */
 export const PUBLIC_SETTING_KEYS = [
   'CONTACT_EMAIL',
   'CONTACT_PHONE',
   'CONTACT_WHATSAPP',
   'CONTACT_ADDRESS',
+  'SOCIAL_FACEBOOK',
+  'SOCIAL_INSTAGRAM',
+  'SOCIAL_TIKTOK',
+  'SOCIAL_LINKEDIN',
 ] as const satisfies readonly (keyof typeof settingSchemas)[];
 
 export type SettingKey = keyof typeof settingSchemas;
@@ -39,4 +55,8 @@ export const DEFAULT_SETTINGS: SettingValues = {
   CONTACT_PHONE: '',
   CONTACT_WHATSAPP: '',
   CONTACT_ADDRESS: '',
+  SOCIAL_FACEBOOK: '',
+  SOCIAL_INSTAGRAM: '',
+  SOCIAL_TIKTOK: '',
+  SOCIAL_LINKEDIN: '',
 };

@@ -1,11 +1,14 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
+  answerText,
+  parseJobQuestions,
   EXPORT_MAX_ROWS,
   RESTRICTED_EXPORT_COLUMN,
   type ExportApplicationsInput,
   type ExportColumn,
 } from '@iconbridge/shared';
 import ExcelJS from 'exceljs';
+import { z } from 'zod';
 import type { AuthUser } from '../../auth/auth.types.js';
 import { FieldCipher } from '../../common/crypto/field-cipher.js';
 import { revealPassportNumber } from '../../common/crypto/passport.js';
@@ -32,6 +35,7 @@ export const EXPORT_HEADERS: Record<ExportColumn, string> = {
   currentProfession: 'Profession',
   yearsOfExperience: 'Years of experience',
   languages: 'Languages',
+  answers: 'Answers',
   passportNumber: 'Passport number',
 };
 
@@ -70,6 +74,26 @@ export function toCsv(headers: string[], rows: Cell[][]): string {
   // Byte-order mark so Excel reads UTF-8 (Arabic and accented names).
   const bom = String.fromCharCode(0xfeff);
   return `${bom}${[headers, ...rows].map((row) => row.map(cell).join(',')).join('\r\n')}\r\n`;
+}
+
+/**
+ * "Question: answer" for each answer, on one line each. Questions are named by their
+ * English label; answers given before a job had questions keep the key they were sent with.
+ */
+export function answersCell(questions: unknown, answers: unknown): string | null {
+  const given = z.record(z.string(), z.string()).safeParse(answers ?? {});
+  if (!given.success || Object.keys(given.data).length === 0) {
+    return null;
+  }
+  const asked = new Map(parseJobQuestions(questions).map((question) => [question.id, question]));
+  return Object.entries(given.data)
+    .map(([key, answer]) => {
+      const question = asked.get(key);
+      return question
+        ? `${question.label.en}: ${answerText(question, answer, 'en')}`
+        : `${key}: ${answer}`;
+    })
+    .join('\n');
 }
 
 @Injectable()
@@ -134,6 +158,7 @@ export class ApplicationExportService {
         currentProfession: candidate.currentProfession,
         yearsOfExperience: candidate.yearsOfExperience,
         languages: candidate.languages.map((l) => `${l.language}:${l.level}`).join(' '),
+        answers: answersCell(application.questions, application.answers),
         // Decrypted only when the column was requested and allowed above.
         passportNumber:
           withPassport && candidate.passportNumberEncrypted

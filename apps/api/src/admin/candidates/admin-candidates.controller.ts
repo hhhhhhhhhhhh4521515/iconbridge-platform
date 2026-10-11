@@ -1,13 +1,17 @@
 import { Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
+  adminCandidateDetailSchema,
   adminCandidateListQuerySchema,
   adminCandidateSummarySchema,
   PERMISSIONS,
+  revealedPassportSchema,
   uuidParamSchema,
+  type AdminCandidateDetail,
   type AdminCandidateListQuery,
   type AdminCandidateSummary,
   type Paginated,
+  type RevealedPassport,
 } from '@iconbridge/shared';
 import { z } from 'zod';
 import type { AuthUser } from '../../auth/auth.types.js';
@@ -15,7 +19,7 @@ import { CurrentUser, Roles } from '../../auth/decorators/index.js';
 import { ZodParams, ZodQuery } from '../../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodResponse } from '../../common/swagger/zod-openapi.js';
 import { Audit } from '../audit/audit.decorator.js';
-import { AdminCandidatesService, type AdminCandidateDetail } from './admin-candidates.service.js';
+import { AdminCandidatesService } from './admin-candidates.service.js';
 
 interface IdParam {
   id: string;
@@ -53,18 +57,35 @@ export class AdminCandidatesController {
 
   @Get(':id')
   @Roles(...PERMISSIONS.VIEW_CANDIDATES)
-  @Audit({ action: 'candidate.view', entityType: 'candidate', idParam: 'id' })
   @ApiOperation({
     summary: 'One candidate: profile, documents and all applications',
-    description: 'Shows the full passport number, so each view is written to the audit log.',
+    description:
+      'The passport number is masked for every role. Recruiters and super admins get the clear ' +
+      'number through `POST /admin/candidates/{id}/reveal-passport`.',
   })
   @ApiParam({ name: 'id', format: 'uuid', description: 'Candidate profile id' })
+  @ApiZodResponse(200, adminCandidateDetailSchema)
   @ApiErrors(401, 403, 404)
   get(
     @ZodParams(uuidParamSchema) params: IdParam,
     @CurrentUser() user: AuthUser,
   ): Promise<AdminCandidateDetail> {
     return this.candidates.get(params.id, user);
+  }
+
+  @Post(':id/reveal-passport')
+  @HttpCode(HttpStatus.OK)
+  @Audit({ action: 'candidate.reveal_passport', entityType: 'candidate', idParam: 'id' })
+  @ApiOperation({
+    summary: 'Show the full passport number of a candidate',
+    description:
+      'For recruiters and super admins only; a viewer always sees the masked number. Every call is written to the audit log.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'Candidate profile id' })
+  @ApiZodResponse(200, revealedPassportSchema)
+  @ApiErrors(401, 403, 404)
+  async revealPassport(@ZodParams(uuidParamSchema) params: IdParam): Promise<RevealedPassport> {
+    return { passportNumber: await this.candidates.revealPassport(params.id) };
   }
 
   @Post(':id/disable')

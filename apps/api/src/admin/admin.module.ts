@@ -11,6 +11,7 @@ import { AuditInterceptor } from './audit/audit.interceptor.js';
 import { AuditService } from './audit/audit.service.js';
 import { AdminCandidatesController } from './candidates/admin-candidates.controller.js';
 import { AdminCandidatesService } from './candidates/admin-candidates.service.js';
+import { ContactMessagesController } from './contact-messages.controller.js';
 import { AdminUsersController } from './users/admin-users.controller.js';
 import { AdminUsersService } from './users/admin-users.service.js';
 
@@ -23,6 +24,7 @@ import { AdminUsersService } from './users/admin-users.service.js';
     AdminApplicationsController,
     AdminCandidatesController,
     AdminSettingsController,
+    ContactMessagesController,
   ],
   providers: [
     AdminUsersService,

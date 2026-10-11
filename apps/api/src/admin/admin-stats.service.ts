@@ -15,11 +15,19 @@ export class AdminStatsService {
   async get(): Promise<AdminStats> {
     const now = this.clock.now();
     const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    // Monday 00:00 UTC of the current week.
+    const weekStart = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() - ((now.getUTCDay() + 6) % 7),
+      ),
+    );
     // First day of the month, 11 months ago: the window is the current month and the 11 before.
     const windowStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
 
-    const [open, byStatus, byDestination, byMonth, visas, average] = await this.prisma.$transaction(
-      [
+    const [open, byStatus, byDestination, byMonth, visas, average, week] =
+      await this.prisma.$transaction([
         this.prisma.$queryRaw<
           { count: number }[]
         >`SELECT count(*)::int AS count FROM jobs j WHERE ${OPEN_JOB_SQL}`,
@@ -40,20 +48,23 @@ export class AdminStatsService {
         this.prisma.$queryRaw<{ count: number }[]>`
         SELECT count(DISTINCT application_id)::int AS count
         FROM application_status_history
-        WHERE to_status = 'VISA_APPROVED' AND created_at >= ${yearStart}`,
+        WHERE to_status = 'VISA_APPROVED' AND reverted_at IS NULL AND created_at >= ${yearStart}`,
         this.prisma.$queryRaw<{ days: number | null }[]>`
         SELECT round(avg(extract(epoch FROM (v.approved_at - a.applied_at)) / 86400)::numeric, 1)::float8 AS days
         FROM applications a
         JOIN (
           SELECT application_id, min(created_at) AS approved_at
-          FROM application_status_history WHERE to_status = 'VISA_APPROVED' GROUP BY application_id
+          FROM application_status_history
+          WHERE to_status = 'VISA_APPROVED' AND reverted_at IS NULL GROUP BY application_id
         ) v ON v.application_id = a.id`,
-      ],
-    );
+        this.prisma.$queryRaw<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM applications WHERE applied_at >= ${weekStart}`,
+      ]);
 
     const counts = new Map(byStatus.map((row) => [row.status, row.count]));
     return {
       openJobs: open[0]?.count ?? 0,
+      newApplicationsThisWeek: week[0]?.count ?? 0,
       applicationsByStatus: Object.fromEntries(
         APPLICATION_STATUSES.map((status) => [status, counts.get(status) ?? 0]),
       ) as AdminStats['applicationsByStatus'],

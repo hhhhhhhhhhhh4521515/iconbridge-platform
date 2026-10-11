@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { JOB_STATUSES, jobStatusSchema, salaryPeriodSchema, type JobStatus } from './enums.js';
 import { localizedTextSchema } from './i18n.js';
+import { jobQuestionSchema, jobQuestionsSchema } from './questions.js';
 import { paginationQuerySchema } from './schemas.js';
 
 // ---------------------------------------------------------------------------
@@ -170,6 +171,8 @@ const jobFieldsSchema = z.object({
   requiredLanguages: z.array(languageCode).max(10).default([]),
   /** Application deadline (ISO 8601). Must be in the future to publish. */
   deadline: z.iso.datetime({ offset: true }),
+  /** Questions asked when applying, besides the cover letter. */
+  questions: jobQuestionsSchema.default([]),
 });
 
 function checkSalary(
@@ -360,6 +363,7 @@ export const publicJobSchema = z.object({
   coverImageUrl: z.string().nullable(),
   featured: z.boolean(),
   publishedAt: z.iso.datetime().nullable(),
+  questions: z.array(jobQuestionSchema),
 });
 export type PublicJob = z.infer<typeof publicJobSchema>;
 

@@ -4,6 +4,7 @@ import {
   JOB_TRANSITIONS,
   jobSalarySchema,
   jobSlugBase,
+  parseJobQuestions,
   SLUG_MAX_LENGTH,
   type AdminJob,
   type AdminJobListQuery,
@@ -18,6 +19,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { JobCoverService } from './job-cover.service.js';
+import { cleanRichText } from './rich-text.js';
 import { ADMIN_JOB_INCLUDE, localized, toAdminJob, type AdminJobRow } from './job.mapper.js';
 
 const invalid = (details: ValidationIssue[]) =>
@@ -25,6 +27,19 @@ const invalid = (details: ValidationIssue[]) =>
 
 const isUniqueViolation = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'P2002';
+
+/** The long texts of a job, cleaned of anything but simple formatting. */
+function cleanTexts(input: {
+  description?: string | undefined;
+  requirements?: string | null | undefined;
+  benefits?: string | null | undefined;
+}) {
+  return {
+    ...(input.description === undefined ? {} : { description: cleanRichText(input.description) }),
+    ...(input.requirements == null ? {} : { requirements: cleanRichText(input.requirements) }),
+    ...(input.benefits == null ? {} : { benefits: cleanRichText(input.benefits) }),
+  };
+}
 
 @Injectable()
 export class AdminJobsService {
@@ -76,6 +91,7 @@ export class AdminJobsService {
     const destination = await this.requireCatalog(input.destinationId, input.categoryId);
     const job = await this.insertWithSlug(input.title, destination.name, (slug) => ({
       ...input,
+      ...cleanTexts(input),
       slug,
       deadline: new Date(input.deadline),
       createdById: actorId,
@@ -130,7 +146,7 @@ export class AdminJobsService {
     const neverPublished = current.status === 'DRAFT' && current.publishedAt === null;
     const renamed = input.title !== undefined && input.title !== current.title;
     const moved = destinationId !== current.destinationId;
-    const data = { ...input, deadline };
+    const data = { ...input, ...cleanTexts(input), deadline };
 
     if (neverPublished && (renamed || moved)) {
       const job = await this.writeWithSlug(
@@ -214,6 +230,7 @@ export class AdminJobsService {
       workingHours: source.workingHours,
       positions: source.positions,
       requiredLanguages: source.requiredLanguages,
+      questions: parseJobQuestions(source.questions),
       deadline: source.deadline,
       createdById: actorId,
     }));

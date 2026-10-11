@@ -3,6 +3,8 @@ import {
   allowedApplicationTransitions,
   canTransitionApplication,
   localeSchema,
+  parseJobQuestions,
+  UNDO_STATUS_MINUTES,
   type AdminApplicationDetail,
   type AdminApplicationListQuery,
   type AdminApplicationSummary,
@@ -38,7 +40,7 @@ const DETAIL_INCLUDE = {
   ...SUMMARY_INCLUDE,
   documents: { include: { document: true }, orderBy: { createdAt: 'asc' } },
   statusHistory: {
-    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    orderBy: { seq: 'asc' },
     include: { changedBy: { select: { email: true } } },
   },
   notes: { orderBy: { createdAt: 'asc' }, include: { author: { select: { email: true } } } },
@@ -91,6 +93,8 @@ const ORDER: Record<
 
 interface StatusChange {
   id: string;
+  /** Row of the history written for this change; null for an undo, which writes none. */
+  historyId: string | null;
   from: ApplicationStatus;
   to: ApplicationStatus;
   email: string;
@@ -144,6 +148,7 @@ export class AdminApplicationsService {
       withdrawnAt: row.withdrawnAt?.toISOString() ?? null,
       coverLetter: row.coverLetter,
       answers: (row.answers as Record<string, string> | null) ?? null,
+      questions: parseJobQuestions(row.questions),
       profileSnapshot: (row.profileSnapshot as Record<string, unknown> | null) ?? {},
       documents: row.documents.map(({ document }) => ({
         id: document.id,
@@ -161,7 +166,9 @@ export class AdminApplicationsService {
         changedByEmail: entry.changedBy?.email ?? null,
         comment: entry.comment,
         messageToCandidate: entry.messageToCandidate,
+        revertedAt: entry.revertedAt?.toISOString() ?? null,
       })),
+      undo: this.undoable(row.status, row.statusHistory, user),
       notes: row.notes.map((note) => ({
         id: note.id,
         body: note.body,
@@ -183,6 +190,120 @@ export class AdminApplicationsService {
     const change = await this.applyChange(id, input, user, ip);
     await this.notifyCandidate(change);
     return this.get(id, user);
+  }
+
+  /**
+   * Takes back the last status change: only its author, only during
+   * UNDO_STATUS_MINUTES, and only while it is still the current status. The
+   * application returns to the status it had before; the undone row stays in the
+   * history, marked, and disappears from the candidate's timeline. If the email
+   * about the change had been sent, a short correction follows.
+   */
+  async undoStatus(id: string, user: AuthUser, ip: string | null): Promise<AdminApplicationDetail> {
+    const now = this.clock.now();
+    const undone = await this.prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<{ status: ApplicationStatus; job_id: string }[]>`
+        SELECT status::text AS status, job_id FROM applications WHERE id = ${id}::uuid FOR UPDATE`;
+      const current = locked[0];
+      if (!current) {
+        throw notFound('Application not found');
+      }
+      const history = await tx.applicationStatusHistory.findMany({
+        where: { applicationId: id, revertedAt: null },
+        orderBy: { seq: 'asc' },
+      });
+      const last = history.at(-1);
+      const previous = this.undoable(current.status, history, user, now)?.toStatus;
+      if (!last || !previous) {
+        throw new AppException(
+          'UNDO_NOT_ALLOWED',
+          HttpStatus.CONFLICT,
+          `Only your own last status change can be undone, within ${UNDO_STATUS_MINUTES} minutes`,
+        );
+      }
+
+      if (last.toStatus === 'DEPLOYED') {
+        // The position the candidate had taken is free again.
+        await tx.job.updateMany({
+          where: { id: current.job_id, hiredCount: { gt: 0 } },
+          data: { hiredCount: { decrement: 1 } },
+        });
+      }
+      // Back to Withdrawn (a super admin undoing a reopening): the date of the withdrawal returns too.
+      const withdrawal =
+        previous === 'WITHDRAWN'
+          ? history.findLast((entry) => entry.toStatus === 'WITHDRAWN')?.createdAt
+          : undefined;
+      const updated = await tx.application.update({
+        where: { id },
+        data: { status: previous, ...(withdrawal ? { withdrawnAt: withdrawal } : {}) },
+        include: SUMMARY_INCLUDE,
+      });
+      await tx.applicationStatusHistory.update({
+        where: { id: last.id },
+        data: { revertedAt: now },
+      });
+      await this.audit.record(
+        {
+          actorId: user.id,
+          action: 'application.undo_status',
+          entityType: 'application',
+          entityId: id,
+          before: { status: last.toStatus },
+          after: { status: previous, candidateWasNotified: last.notifiedAt !== null },
+          ip,
+        },
+        tx,
+      );
+      return {
+        notified: last.notifiedAt !== null,
+        status: previous,
+        email: updated.candidate.user.email,
+        locale: updated.candidate.user.locale,
+        jobTitle: updated.job.title,
+      };
+    });
+    if (undone.notified) {
+      const locale = localeSchema.catch('en').parse(undone.locale);
+      await this.mail.send(undone.email, 'application-status-correction', locale, {
+        actionUrl: this.mail.linkFor('application-status-correction', locale),
+        jobTitle: undone.jobTitle,
+        status: undone.status,
+      });
+    }
+    return this.get(id, user);
+  }
+
+  /**
+   * What the current user could undo right now, or null. `history` is the list of
+   * changes that still count (not reverted), oldest first.
+   */
+  private undoable(
+    status: ApplicationStatus,
+    history: {
+      fromStatus: ApplicationStatus | null;
+      toStatus: ApplicationStatus;
+      changedById: string | null;
+      createdAt: Date;
+      revertedAt: Date | null;
+    }[],
+    user: AuthUser,
+    now: Date = this.clock.now(),
+  ): { toStatus: ApplicationStatus; until: string } | null {
+    const last = history.findLast((entry) => entry.revertedAt === null);
+    const until = last ? new Date(last.createdAt.getTime() + UNDO_STATUS_MINUTES * 60_000) : null;
+    if (
+      !last ||
+      !until ||
+      last.fromStatus === null ||
+      last.changedById !== user.id ||
+      last.toStatus !== status ||
+      now > until ||
+      (user.role !== 'RECRUITER' && user.role !== 'SUPER_ADMIN')
+    ) {
+      return null;
+    }
+    return { toStatus: last.fromStatus, until: until.toISOString() };
   }
 
   /**
@@ -263,7 +384,7 @@ export class AdminApplicationsService {
         },
         include: SUMMARY_INCLUDE,
       });
-      await tx.applicationStatusHistory.create({
+      const entry = await tx.applicationStatusHistory.create({
         data: {
           applicationId: id,
           fromStatus: current.status,
@@ -273,6 +394,7 @@ export class AdminApplicationsService {
           messageToCandidate: input.messageToCandidate ?? null,
           createdAt: now,
         },
+        select: { id: true },
       });
       await this.audit.record(
         {
@@ -288,6 +410,7 @@ export class AdminApplicationsService {
       );
       return {
         id,
+        historyId: entry.id,
         from: current.status,
         to: input.status,
         email: updated.candidate.user.email,
@@ -301,12 +424,19 @@ export class AdminApplicationsService {
   /** One email per step, in the candidate's language, with the optional message. Never the internal comment. */
   private async notifyCandidate(change: StatusChange): Promise<void> {
     const locale = localeSchema.catch('en').parse(change.locale);
-    await this.mail.send(change.email, 'application-status', locale, {
+    const sent = await this.mail.send(change.email, 'application-status', locale, {
       actionUrl: this.mail.linkFor('application-status', locale),
       jobTitle: change.jobTitle,
       status: change.to,
       message: change.message,
     });
+    if (sent && change.historyId) {
+      // Remembered so that undoing this change knows whether a correction email is owed.
+      await this.prisma.applicationStatusHistory.update({
+        where: { id: change.historyId },
+        data: { notifiedAt: this.clock.now() },
+      });
+    }
   }
 
   // --- Internal notes -------------------------------------------------------

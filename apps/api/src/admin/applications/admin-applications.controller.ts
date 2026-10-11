@@ -186,6 +186,26 @@ export class AdminApplicationsController {
     return this.applications.changeStatus(params.id, body, user, requestMeta(request).ip);
   }
 
+  @Post(':id/undo-status')
+  @HttpCode(HttpStatus.OK)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Undo my last status change',
+    description:
+      'Within 15 minutes, by the user who made the change, and only while it is still the current status. ' +
+      'The application returns to the previous status; if the candidate had been emailed, a correction is sent.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiZodResponse(200, adminApplicationDetailSchema)
+  @ApiErrors(401, 403, 404, 409)
+  undoStatus(
+    @ZodParams(uuidParamSchema) params: IdParam,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<AdminApplicationDetail> {
+    return this.applications.undoStatus(params.id, user, requestMeta(request).ip);
+  }
+
   @Post(':id/notes')
   @Audit({ action: 'application.add_note', entityType: 'application', idParam: 'id' })
   @ApiOperation({ summary: 'Add an internal note (never visible to the candidate)' })

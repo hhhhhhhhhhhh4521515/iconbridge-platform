@@ -1,5 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
+  checkAnswers,
+  parseJobQuestions,
   ACTIVE_APPLICATION_STATUSES,
   canWithdrawApplication,
   isPassportExpired,
@@ -28,7 +30,8 @@ import { isInCooldown, nextAllowedApplicationDate } from './cooldown.js';
 const APPLICATION_INCLUDE = {
   job: { select: { id: true, slug: true, title: true, destination: { select: { code: true } } } },
   documents: { select: { document: { select: { id: true, type: true, originalName: true } } } },
-  statusHistory: { orderBy: { createdAt: 'asc' } },
+  // A change the recruiter undid never reached the candidate's timeline.
+  statusHistory: { where: { revertedAt: null }, orderBy: { seq: 'asc' } },
 } satisfies Prisma.ApplicationInclude;
 
 type ApplicationRow = Prisma.ApplicationGetPayload<{ include: typeof APPLICATION_INCLUDE }>;
@@ -141,6 +144,30 @@ export class ApplicationsService {
           );
         }
 
+        // The questions of the job decide which answers are expected.
+        const { questions: asked } = await tx.job.findUniqueOrThrow({
+          where: { id: jobId },
+          select: { questions: true },
+        });
+        const questions = parseJobQuestions(asked);
+        const problems = questions.length > 0 ? checkAnswers(questions, input.answers ?? {}) : [];
+        if (problems.length > 0) {
+          throw new AppException(
+            'VALIDATION_ERROR',
+            HttpStatus.BAD_REQUEST,
+            'The request is invalid',
+            problems.map(({ question, problem }) => ({
+              path: `answers.${question}`,
+              message:
+                problem === 'required'
+                  ? 'This question must be answered'
+                  : problem === 'unknown'
+                    ? 'This job has no such question'
+                    : 'This answer is not one of the choices',
+            })),
+          );
+        }
+
         const now = this.clock.now();
         const application = await tx.application.create({
           data: {
@@ -148,6 +175,7 @@ export class ApplicationsService {
             candidateId: profile.id,
             coverLetter: input.coverLetter ?? null,
             ...(input.answers ? { answers: input.answers } : {}),
+            ...(questions.length > 0 ? { questions } : {}),
             appliedAt: now,
             profileSnapshot: this.snapshot(evaluation.profile, documents),
             documents: { create: documents.map((document) => ({ documentId: document.id })) },

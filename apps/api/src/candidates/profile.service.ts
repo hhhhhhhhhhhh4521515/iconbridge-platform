@@ -132,8 +132,20 @@ export class ProfileService {
     };
   }
 
+  /** The clear passport number of a profile, for the audited "reveal" action of the back office. */
+  async revealPassportNumber(profileId: string): Promise<string | null> {
+    const profile = await this.prisma.candidateProfile.findFirst({
+      where: { id: profileId, user: { role: 'CANDIDATE', deletedAt: null } },
+      select: { id: true, passportNumberEncrypted: true },
+    });
+    if (!profile) {
+      throw notFound('Candidate not found');
+    }
+    return this.reveal(profile);
+  }
+
   /** Clear passport number, or null when there is none or it cannot be decrypted (logged). */
-  private reveal(profile: ProfileRow): string | null {
+  private reveal(profile: Pick<ProfileRow, 'id' | 'passportNumberEncrypted'>): string | null {
     if (!profile.passportNumberEncrypted) {
       return null;
     }

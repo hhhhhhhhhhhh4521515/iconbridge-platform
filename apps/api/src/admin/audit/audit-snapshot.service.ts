@@ -141,6 +141,16 @@ export class AuditSnapshotService {
           }
         : null;
     },
+    // Only the state: the text of a message and the sender's details stay out of the audit log.
+    contactMessage: async (id) => {
+      const message = await this.prisma.contactMessage.findUnique({
+        where: { id },
+        select: { id: true, handledAt: true },
+      });
+      return message
+        ? { id: message.id, handledAt: message.handledAt?.toISOString() ?? null }
+        : null;
+    },
     destination: async (id) => {
       const row = await this.prisma.destination.findUnique({ where: { id } });
       return row

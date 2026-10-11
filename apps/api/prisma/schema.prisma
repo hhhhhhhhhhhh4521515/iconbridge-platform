@@ -373,6 +373,8 @@ model Job {
   /// Application deadline; the job is no longer visible once it has passed.
   deadline               DateTime      @db.Timestamptz(3)
   coverImagePath         String?       @map("cover_image_path")
+  /// Questions asked when applying: [{ id, type, required, label, options }] (see packages/shared).
+  questions              Json          @default("[]")
 
   status      JobStatus @default(DRAFT)
   featured    Boolean   @default(false)
@@ -418,8 +420,10 @@ model Application {
   candidateId     String            @map("candidate_id") @db.Uuid
   status          ApplicationStatus @default(SUBMITTED)
   coverLetter     String?           @map("cover_letter")
-  /// Answers to job-specific questions.
+  /// Answers to job-specific questions, keyed by question id.
   answers         Json?
+  /// The questions of the job as they were when applying, so later edits do not change what was asked.
+  questions       Json?
   /// Candidate profile as it was when applying. Holds the masked passport number only.
   profileSnapshot Json              @map("profile_snapshot")
   appliedAt       DateTime          @default(now()) @map("applied_at") @db.Timestamptz(3)
@@ -470,6 +474,12 @@ model ApplicationStatusHistory {
   comment            String?
   /// Optional text for the candidate: shown in their timeline and included in the email.
   messageToCandidate String?            @map("message_to_candidate")
+  /// When the email about this change was sent to the candidate; null if none went out.
+  notifiedAt         DateTime?          @map("notified_at") @db.Timestamptz(3)
+  /// Insertion order. Two changes can carry the same timestamp; this number tells which came last.
+  seq                Int                @default(autoincrement())
+  /// Set when the author undid this change. A reverted row is kept for the record but no longer counts.
+  revertedAt         DateTime?          @map("reverted_at") @db.Timestamptz(3)
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
