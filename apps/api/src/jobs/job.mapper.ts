@@ -6,6 +6,7 @@ import {
   type PublicJob,
 } from '@iconbridge/shared';
 import type { Prisma } from '../generated/prisma/client.js';
+import { cleanRichText } from './rich-text.js';
 
 export const JOB_INCLUDE = {
   destination: true,
@@ -36,9 +37,10 @@ function commonFields(job: JobRow, mediaUrl: MediaUrl) {
     id: job.id,
     slug: job.slug,
     title: job.title,
-    description: job.description,
-    requirements: job.requirements,
-    benefits: job.benefits,
+    // Cleaned again on the way out: the site renders these as HTML, whenever they were written.
+    description: cleanRichText(job.description),
+    requirements: job.requirements === null ? null : cleanRichText(job.requirements),
+    benefits: job.benefits === null ? null : cleanRichText(job.benefits),
     accommodationProvided: job.accommodationProvided,
     transportProvided: job.transportProvided,
     mealsProvided: job.mealsProvided,

@@ -224,6 +224,8 @@ export class AdminApplicationsController {
   @Patch(':id/notes/:noteId')
   @Audit({ action: 'application.update_note', entityType: 'application', idParam: 'id' })
   @ApiOperation({ summary: 'Edit an internal note (its author, or a super admin)' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'noteId', format: 'uuid' })
   @ApiZodBody(noteSchema)
   @ApiZodResponse(200, idSchema)
   @ApiErrors(400, 401, 403, 404)
@@ -239,6 +241,8 @@ export class AdminApplicationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Audit({ action: 'application.delete_note', entityType: 'application', idParam: 'id' })
   @ApiOperation({ summary: 'Delete an internal note (its author, or a super admin)' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'noteId', format: 'uuid' })
   @ApiResponse({ status: 204 })
   @ApiErrors(401, 403, 404)
   async removeNote(

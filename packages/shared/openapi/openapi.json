@@ -7797,7 +7797,24 @@
     "/api/v1/admin/applications/{id}/notes/{noteId}": {
       "patch": {
         "operationId": "AdminApplicationsController_updateNote",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -8105,7 +8122,24 @@
       },
       "delete": {
         "operationId": "AdminApplicationsController_removeNote",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "204": {
             "description": ""

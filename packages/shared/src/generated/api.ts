@@ -3808,7 +3808,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                noteId: unknown;
+                id: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3870,7 +3873,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                noteId: unknown;
+                id: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
