@@ -25518,13 +25518,19 @@
                     },
                     "CONTACT_ADDRESS": {
                       "type": "string"
+                    },
+                    "MAX_UPLOAD_SIZE_MB": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "CONTACT_EMAIL",
                     "CONTACT_PHONE",
                     "CONTACT_WHATSAPP",
-                    "CONTACT_ADDRESS"
+                    "CONTACT_ADDRESS",
+                    "MAX_UPLOAD_SIZE_MB"
                   ],
                   "additionalProperties": false
                 }
@@ -25532,7 +25538,7 @@
             }
           }
         },
-        "summary": "Contact details shown on the site",
+        "summary": "Contact details shown on the site, and the upload size limit",
         "tags": [
           "public"
         ]

@@ -1231,7 +1231,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Contact details shown on the site */
+        /** Contact details shown on the site, and the upload size limit */
         get: operations["PublicContentController_siteInfo"];
         put?: never;
         post?: never;
@@ -8545,6 +8545,7 @@ export interface operations {
                         CONTACT_PHONE: string;
                         CONTACT_WHATSAPP: string;
                         CONTACT_ADDRESS: string;
+                        MAX_UPLOAD_SIZE_MB: number;
                     };
                 };
             };

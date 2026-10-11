@@ -211,8 +211,11 @@ describe('Account settings (e2e)', () => {
         unknown
       >;
       expect(current.preferredDestinations).toEqual([]);
-      const { profileCompleteness, gdprConsentAt, passportNumberMasked, ...fields } = current;
-      (void profileCompleteness, gdprConsentAt, passportNumberMasked);
+      // The answer carries a few read-only fields; the request is the editable ones.
+      const readOnly = ['id', 'profileCompleteness', 'gdprConsentAt', 'passportNumberMasked'];
+      const fields = Object.fromEntries(
+        Object.entries(current).filter(([name]) => !readOnly.includes(name)),
+      );
       const saved = await as(candidate.cookies)
         .put('/me/profile')
         .send({ ...fields, passportNumber: 'FAKE1234567', preferredDestinations: ['cruise_ship'] })

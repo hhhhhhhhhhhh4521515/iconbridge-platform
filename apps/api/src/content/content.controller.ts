@@ -60,7 +60,10 @@ const siteInfoSchema = z.object({
   CONTACT_PHONE: z.string(),
   CONTACT_WHATSAPP: z.string(),
   CONTACT_ADDRESS: z.string(),
+  /** Largest accepted upload, so the site can refuse a file before sending it. */
+  MAX_UPLOAD_SIZE_MB: z.number().int(),
 });
+type SiteInfo = z.infer<typeof siteInfoSchema>;
 
 interface IdParam {
   id: string;
@@ -119,13 +122,19 @@ export class PublicContentController {
   }
 
   @Get('site-info')
-  @ApiOperation({ summary: 'Contact details shown on the site' })
+  @ApiOperation({ summary: 'Contact details shown on the site, and the upload size limit' })
   @ApiZodResponse(200, siteInfoSchema)
-  async siteInfo(): Promise<Record<(typeof PUBLIC_SETTING_KEYS)[number], string>> {
-    const entries = await Promise.all(
-      PUBLIC_SETTING_KEYS.map(async (key) => [key, await this.settings.get(key)] as const),
-    );
-    return Object.fromEntries(entries) as Record<(typeof PUBLIC_SETTING_KEYS)[number], string>;
+  async siteInfo(): Promise<SiteInfo> {
+    const [contact, maxUploadMb] = await Promise.all([
+      Promise.all(
+        PUBLIC_SETTING_KEYS.map(async (key) => [key, await this.settings.get(key)] as const),
+      ),
+      this.settings.get('MAX_UPLOAD_SIZE_MB'),
+    ]);
+    return {
+      ...(Object.fromEntries(contact) as Record<(typeof PUBLIC_SETTING_KEYS)[number], string>),
+      MAX_UPLOAD_SIZE_MB: maxUploadMb,
+    };
   }
 }
 

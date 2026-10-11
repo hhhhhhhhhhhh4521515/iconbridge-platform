@@ -170,7 +170,10 @@ export class AuthController {
     await this.auth.resetPassword(body);
   }
 
+  // Read on every page that shows "Apply" or the account menu: it only reads, so it gets the
+  // general limit, not the strict one of the endpoints that take a password or a token.
   @OptionalAuth()
+  @Throttle({ default: RATE_LIMITS.default })
   @Get('session')
   @ApiOperation({
     summary: 'Who is signed in, if anyone',
@@ -183,6 +186,7 @@ export class AuthController {
     return { user: request.user ? await this.auth.currentUser(request.user.id) : null };
   }
 
+  @Throttle({ default: RATE_LIMITS.default })
   @Get('me')
   @ApiCookieAuth()
   @ApiOperation({ summary: 'The signed-in user' })
