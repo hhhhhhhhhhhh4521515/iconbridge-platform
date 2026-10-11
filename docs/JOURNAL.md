@@ -360,6 +360,6 @@ This is what visitors and search engines see first. Server rendering with per-la
 
 Lighthouse was run on the production build with `--disable-full-page-screenshot`. With the default screenshot step, this GPU-less workstation delays the first paint of the home page by about 2 seconds and the score drops to about 70; a browser measures that first paint at 0.3 s. The performance figures are therefore indicative and should be measured again on the deployed site. "Animates smoothly" was checked by automated tests and screenshots on desktop and phone profiles, not on a physical phone.
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/7>
 
 **Remaining**: login, registration and the candidate area in the web app, the back-office interface, real photos at higher resolution and real consent documents for the stories, legal review of the policy texts, Dockerfiles, Terraform, CI/CD.
