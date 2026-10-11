@@ -750,6 +750,57 @@ Each page has its title, description, canonical link, `hreflang` alternates and 
 
 `apps/web/public/brand` holds the logo, `hero-*.webp` and `story-*.webp`, optimised by `pnpm --filter @iconbridge/web brand:optimize`. The static hero slides (when the back office has none) and the destination cards use `hero-*`. The development seed uploads `hero-*` and `story-*` to blob storage as sample slides and stories.
 
+## Web application (candidate area)
+
+Decisions and reasons: [ADR-008](adr/ADR-008-candidate-area.md).
+
+### Session in the browser
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant W as Web (proxy.ts)
+    participant A as API
+    B->>W: GET /fr/account
+    alt no ib_session cookie
+        W-->>B: 307 /fr/login?next=/account
+    else
+        W-->>B: page shell (no personal data)
+        B->>A: GET /api/v1/me/profile (access cookie)
+        alt access token expired
+            A-->>B: 401
+            B->>A: POST /api/v1/auth/refresh (refresh cookie)
+            A-->>B: 200 + new cookies
+            B->>A: GET /api/v1/me/profile again
+        end
+        A-->>B: 200
+    end
+```
+
+- `ib_session` is set and cleared by the API together with the two session cookies. It holds `1`, is readable by scripts and gives access to nothing.
+- `lib/client-api.ts` exports the `api` client every client component uses. It renews the session once on a 401 (concurrent calls share the same refresh) and repeats the call. When the refresh fails it removes the marker and opens the login page with `next`.
+- The header shows "My account" and "Log out" when the marker exists; pages stay cacheable because the server always renders the visitor version.
+
+### Pages
+
+| Route                                                 | Content                                                                                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/login`, `/register`                                 | Sign-in (returns to `next`); registration with strength meter, consent linked to the privacy policy, Turnstile, then "check your inbox"            |
+| `/verify-email`, `/forgot-password`                   | The token of the email is sent once; the reset request always answers the same thing                                                               |
+| `/reset-password`, `/set-password`                    | New password with the token of a reset or of a back-office invitation                                                                              |
+| `/account`                                            | Completeness bar and list of missing items (each links to its step), applications in progress, jobs of the preferred destinations                  |
+| `/account/profile?step=`                              | Wizard: identity, passport, experience and education, languages, driving licence, cruise ships (only if chosen as a destination), documents        |
+| `/account/documents`                                  | Drag-and-drop upload with progress, type, checks before sending, preview of PDF and images, download, delete, passport expiry banner               |
+| `/account/apply/[slug]`                               | Eligibility, documents (CV and passport ticked), cover letter and questions, review, success; a refusal shows its reason and the next allowed date |
+| `/account/applications`, `/account/applications/[id]` | List with status; timeline from "Submitted" to "Deployed", messages from the recruiter, withdraw with confirmation                                 |
+| `/account/settings`                                   | Language, password, job alerts, download my data, delete my account (type `DELETE` and the password)                                               |
+
+### Forms
+
+- Schemas come from `packages/shared` (`@iconbridge/shared/auth`, `/candidate`). `lib/forms.ts` turns zod issues into message keys under `forms.errors`; API error codes are translated from `forms.api`.
+- `Field` links each control to its label, hint and error (`aria-describedby`, `aria-invalid`, `role="alert"`).
+- Client components receive only the message groups they use, through `ClientMessages`.
+
 ## Configuration
 
 | File            | Read by              | Validation                                        |
@@ -778,11 +829,11 @@ All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev
 | `packages/shared`                        | Vitest                                  | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `apps/api` unit (`pnpm test`)            | Vitest                                  | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `apps/api` e2e (`pnpm test:e2e`)         | Vitest + supertest                      | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure, the application state machine and hired count, export permissions, the consent rule of success stories, job alerts, contact form and task locking. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
-| `apps/web` unit (`pnpm test`)            | Vitest                                  | Environment validation; the three message files have the same keys and placeholders                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `apps/web` browser (`pnpm test:browser`) | Playwright (desktop and phone profiles) | Hero slider (autoplay, pause, reduced motion), success stories, job filters in the URL, job page with JSON-LD and the Apply state, 404 for closed jobs, language switch and `dir="rtl"`, dark mode, sitemap and robots. Needs the API and the seeded data                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `apps/web` unit (`pnpm test`)            | Vitest                                  | Environment validation; the three message files have the same keys and placeholders; form validation against the shared schemas; upload checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `apps/web` browser (`pnpm test:browser`) | Playwright (desktop and phone profiles) | Hero slider (autoplay, pause, reduced motion), success stories, job filters in the URL, job page with JSON-LD and the Apply state, 404 for closed jobs, language switch and `dir="rtl"`, dark mode, sitemap and robots. Candidate area: redirect to login, registration errors, and the whole road (register, verify by the Mailpit link, profile, upload, apply, timeline, waiting period, withdraw, delete account). Needs the API, the seeded data and Mailpit                                                                                                                                                                                                                                                                       |
 
 The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
 ## Not built yet
 
-Data retention task, a back-office view of contact messages, the web pages behind the email links, i18n of the web app, Dockerfiles, Terraform and CI/CD.
+Data retention task, a back-office view of contact messages, the back-office interface (including the page behind the `admin/applications` email link), per-job questions, Dockerfiles, Terraform and CI/CD.

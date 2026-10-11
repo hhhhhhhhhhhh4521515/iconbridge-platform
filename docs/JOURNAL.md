@@ -363,3 +363,46 @@ Lighthouse was run on the production build with `--disable-full-page-screenshot`
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/7>
 
 **Remaining**: login, registration and the candidate area in the web app, the back-office interface, real photos at higher resolution and real consent documents for the stories, legal review of the policy texts, Dockerfiles, Terraform, CI/CD.
+
+## 2026-10-11 - Candidate area of the web application
+
+**What**
+
+- Setup: the `LD_LIBRARY_PATH` workaround for Playwright is gone (system libraries are installed); `pnpm test:browser` runs without it.
+- Auth pages on the routes of the emails: `/login`, `/register` (strength meter, consent linked to the privacy policy, Turnstile), `/verify-email`, `/forgot-password`, `/reset-password`, `/set-password`.
+- Session: `proxy.ts` protects `/account/*` using the new `ib_session` marker cookie; every API call from the browser renews the session silently on a 401.
+- `/account`: completeness bar with the missing items, applications in progress, recommended jobs.
+- Profile wizard in seven steps, each saved on "Save and continue"; country lists with flags, phone input with calling code, native date pickers.
+- Documents: drag and drop, progress bar, checks before sending, preview, download, delete, passport expiry banner.
+- Apply flow: eligibility, documents, cover letter and questions, review, success; the waiting period shows the next allowed date.
+- Applications: list, timeline, withdraw with confirmation. Settings: language, password, job alerts, data export, account deletion.
+- API additions: `ib_session` cookie, `PATCH /me/settings`, `POST /me/password`, `GET/POST/DELETE /me/job-alerts`, `preferredDestinations` on the profile (migration), `?inline=true` on document downloads, `MAX_UPLOAD_SIZE_MB` in `GET /site-info`.
+- All texts in French, English and Arabic (354 new keys).
+
+**Why**
+
+Candidates could read the offers but not register or apply. The reasons for the technical choices are in [ADR-008](adr/ADR-008-candidate-area.md).
+
+**Notes**
+
+- Found by the browser tests and fixed: text typed in a server-rendered form before its scripts started was lost; on phones, hidden labels in the scrolling step list widened the page; `GET /auth/session` shared the strict rate limit of the password endpoints, so a signed-in candidate could be shown "Login to apply"; country names differed between server and browser rendering.
+- The Apply button now renews an expired access token before deciding that the visitor is signed out.
+- Application emails link to `/account/applications` instead of `/me/applications`.
+- Jobs have no question list: two general questions are asked with every application and stored in `answers`.
+- Date pickers are the browser's own. They follow the browser language, which may differ from the page language.
+- The candidate area was checked in Chromium (desktop and Pixel 7 profiles), not in Safari or Firefox.
+
+**Checks**
+
+| Check                                       | Result                                                                                                                                                                                                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | Pass                                                                                                                                                                                                                                                                     |
+| `pnpm test`                                 | Pass: 410 unit tests (shared 123, api 259, web 28)                                                                                                                                                                                                                       |
+| `pnpm test:e2e`                             | Pass: 395 tests (16 new for the account endpoints)                                                                                                                                                                                                                       |
+| `pnpm test:browser`                         | Pass: 19 tests on a desktop and on a phone profile (38 runs), against the production build, without `LD_LIBRARY_PATH`                                                                                                                                                    |
+| Done when: the full scenario                | Pass on both profiles: register, verify the email with the link read from the Mailpit API, complete the profile, upload a CV and a passport, apply, see the application and its timeline, second application blocked with the date; then withdraw and delete the account |
+| Screens                                     | Dashboard, wizard, documents, settings, registration checked on screenshots at phone and desktop widths, in English and Arabic; no sideways overflow, no console error                                                                                                   |
+
+**PR**: PR_LINK
+
+**Remaining**: the back-office interface, per-job questions, real legal texts, Dockerfiles, Terraform, CI/CD.
