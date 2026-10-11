@@ -93,9 +93,10 @@
   "stats": {
     "title": "IconBridge in numbers",
     "openJobs": "Open jobs",
-    "candidates": "Registered candidates",
+    "candidates": "Candidates",
     "visas": "Visas approved",
-    "countries": "Destinations"
+    "countries": "Countries",
+    "companies": "Partner companies"
   },
   "destinations": {
     "title": "Where would you like to work?",

@@ -9,6 +9,7 @@ import { LoadFailed, Loading } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
 import { api, type AuditEntry, type SettingValues } from '@/lib/client-api';
 import { card, cta } from '@/lib/ui';
+import { HistoricalResults } from './historical-results';
 import {
   DataTable,
   dateTime,
@@ -32,7 +33,9 @@ const GROUPS: { group: string; keys: Key[] }[] = [
     group: 'social',
     keys: ['SOCIAL_FACEBOOK', 'SOCIAL_INSTAGRAM', 'SOCIAL_TIKTOK', 'SOCIAL_LINKEDIN'],
   },
+  { group: 'deletion', keys: ['ALLOW_RECRUITER_DELETE'] },
 ];
+const BOOLEANS: Key[] = ['ALLOW_RECRUITER_DELETE'];
 
 function SettingsForm({ initial }: { initial: SettingValues }) {
   const t = useTranslations('admin.settings');
@@ -54,7 +57,11 @@ function SettingsForm({ initial }: { initial: SettingValues }) {
     setBusy(true);
     let next = saved;
     for (const key of changed) {
-      const value = NUMBERS.includes(key) ? Number(values[key]) : values[key].trim();
+      const value = BOOLEANS.includes(key)
+        ? values[key] === 'true'
+        : NUMBERS.includes(key)
+          ? Number(values[key])
+          : values[key].trim();
       const result = await call(
         api.PUT('/api/v1/admin/settings/{key}', {
           params: { path: { key } },
@@ -86,23 +93,41 @@ function SettingsForm({ initial }: { initial: SettingValues }) {
           <h2 className="text-lg font-semibold">{t(`groups.${group}`)}</h2>
           <p className="mb-4 text-sm text-muted-foreground">{t(`groupHelp.${group}`)}</p>
           <div className="grid gap-4 md:grid-cols-2">
-            {keys.map((key) => (
-              <Labelled key={key} label={t(`keys.${key}`)} hint={t(`help.${key}`)}>
-                <input
-                  className={input}
-                  type={
-                    NUMBERS.includes(key) ? 'number' : key === 'CONTACT_EMAIL' ? 'email' : 'text'
-                  }
-                  min={NUMBERS.includes(key) ? 0 : undefined}
-                  dir={key === 'CONTACT_ADDRESS' ? undefined : 'ltr'}
-                  name={key}
-                  value={values[key]}
-                  onChange={(event) => {
-                    setValues({ ...values, [key]: event.target.value });
-                  }}
-                />
-              </Labelled>
-            ))}
+            {keys.map((key) =>
+              BOOLEANS.includes(key) ? (
+                <label key={key} className="flex items-start gap-3 text-sm md:col-span-2">
+                  <input
+                    type="checkbox"
+                    name={key}
+                    className="mt-0.5 size-5 accent-primary"
+                    checked={values[key] === 'true'}
+                    onChange={(event) => {
+                      setValues({ ...values, [key]: String(event.target.checked) });
+                    }}
+                  />
+                  <span>
+                    <span className="block font-medium">{t(`keys.${key}`)}</span>
+                    <span className="block text-muted-foreground">{t(`help.${key}`)}</span>
+                  </span>
+                </label>
+              ) : (
+                <Labelled key={key} label={t(`keys.${key}`)} hint={t(`help.${key}`)}>
+                  <input
+                    className={input}
+                    type={
+                      NUMBERS.includes(key) ? 'number' : key === 'CONTACT_EMAIL' ? 'email' : 'text'
+                    }
+                    min={NUMBERS.includes(key) ? 0 : undefined}
+                    dir={key === 'CONTACT_ADDRESS' ? undefined : 'ltr'}
+                    name={key}
+                    value={values[key]}
+                    onChange={(event) => {
+                      setValues({ ...values, [key]: event.target.value });
+                    }}
+                  />
+                </Labelled>
+              ),
+            )}
           </div>
         </section>
       ))}
@@ -124,13 +149,19 @@ export function SettingsManager() {
       <PageHeader title={t('title')} intro={t('intro')} />
       {loading && !data ? <Loading lines={6} /> : null}
       {failed ? <LoadFailed onRetry={reload} /> : null}
-      {data ? <SettingsForm initial={data} /> : null}
+      {data ? (
+        <div className="space-y-5">
+          <SettingsForm initial={data} />
+          <HistoricalResults />
+        </div>
+      ) : null}
     </>
   );
 }
 
 const PAGE_SIZE = 30;
 const ENTITY_TYPES = [
+  'historicalFigure',
   'application',
   'candidate',
   'job',

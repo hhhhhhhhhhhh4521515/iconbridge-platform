@@ -58,7 +58,8 @@
     "CONFLICT": "This cannot be done in the current state.",
     "VALIDATION_ERROR": "Some values are not valid. Check the form.",
     "UNSUPPORTED_FILE": "This kind of file is not accepted here.",
-    "FILE_TOO_LARGE": "This file is too large (5 MB at most)."
+    "FILE_TOO_LARGE": "This file is too large (5 MB at most).",
+    "NOT_FOUND": "This record no longer exists."
   },
   "status": {
     "SUBMITTED": "Submitted",
@@ -107,7 +108,22 @@
     "funnel": "Applications by status",
     "applications": "Applications",
     "latest": "Latest applications",
-    "allApplications": "All applications"
+    "allApplications": "All applications",
+    "historyToggle": "Figures shown",
+    "includingHistory": "Including history",
+    "platformOnly": "Platform only",
+    "split": "{total} = {history} historical + {platform} platform",
+    "seriesHistory": "Historical (before the platform)",
+    "seriesPlatform": "Platform",
+    "resultsTitle": "Results",
+    "activityTitle": "Activity on the platform",
+    "visasTotal": "Visas approved",
+    "deployedTotal": "Candidates deployed",
+    "candidatesTotal": "Candidates",
+    "companiesTotal": "Partner companies",
+    "countriesTotal": "Countries",
+    "visasPerYear": "Visas approved per year",
+    "visasPerDestination": "Visas approved per destination"
   },
   "editor": {
     "toolbar": "Formatting",
@@ -299,7 +315,17 @@
     "noNotes": "No note yet.",
     "addNote": "Add a note",
     "notePlaceholder": "Visible to the team only, never to the candidate.",
-    "deleteNote": "Delete this note"
+    "deleteNote": "Delete this note",
+    "delete": "Delete the application",
+    "deleteTitle": "Delete this application?",
+    "deleteManyTitle": "{count, plural, one {Delete # application?} other {Delete # applications?}}",
+    "removedApplications": "{count, plural, one {The application} other {# applications}}",
+    "removedHistory": "Its status history and its internal notes",
+    "keptDocuments": "The documents stay in the candidate's profile.",
+    "cooldownLifted": "The candidate will be able to apply to this job again at once: the 6-month waiting period no longer applies.",
+    "hiredKept": "A deployed candidate keeps the position: the number of hired candidates of the job does not decrease.",
+    "deleted": "The application is deleted.",
+    "deletedMany": "{count, plural, one {# application deleted} other {# applications deleted}}."
   },
   "snapshot": {
     "dateOfBirth": "Date of birth",
@@ -378,7 +404,19 @@
       "experience": "Years of experience",
       "languages": "Languages",
       "completeness": "Profile completeness"
-    }
+    },
+    "selectAll": "Select every candidate of the page",
+    "selectOne": "Select {name}",
+    "selected": "{count, plural, one {# candidate selected} other {# candidates selected}}",
+    "delete": "Delete the candidate",
+    "deleteTitle": "Delete {name}?",
+    "deleteManyTitle": "{count, plural, one {Delete # candidate?} other {Delete # candidates?}}",
+    "removedProfiles": "{count, plural, one {The profile and the account} other {# profiles and accounts}}",
+    "removedDocuments": "{count, plural, =0 {No document} one {# document, removed from storage} other {# documents, removed from storage}}",
+    "removedApplications": "{count, plural, =0 {No application} one {The personal content of # application} other {The personal content of # applications}}",
+    "keptNote": "Applications stay as anonymous rows, so the totals of the dashboard and the hired positions of jobs do not change. Applications in progress become Withdrawn.",
+    "deleted": "The candidate is deleted.",
+    "deletedMany": "{count, plural, one {# candidate deleted} other {# candidates deleted}}."
   },
   "stories": {
     "title": "Success stories",
@@ -541,12 +579,14 @@
     "groups": {
       "rules": "Rules",
       "contact": "Contact details",
-      "social": "Social networks"
+      "social": "Social networks",
+      "deletion": "Deleting records"
     },
     "groupHelp": {
       "rules": "Applied by the API at once.",
       "contact": "Shown in the top bar, the footer and the contact page.",
-      "social": "Links shown in the footer. Leave a field empty to hide the link."
+      "social": "Links shown in the footer. Leave a field empty to hide the link.",
+      "deletion": "A super admin can always delete candidates and applications."
     },
     "keys": {
       "REAPPLY_COOLDOWN_MONTHS": "Months before applying again",
@@ -559,7 +599,8 @@
       "SOCIAL_FACEBOOK": "Facebook",
       "SOCIAL_INSTAGRAM": "Instagram",
       "SOCIAL_TIKTOK": "TikTok",
-      "SOCIAL_LINKEDIN": "LinkedIn"
+      "SOCIAL_LINKEDIN": "LinkedIn",
+      "ALLOW_RECRUITER_DELETE": "Recruiters may delete candidates and applications"
     },
     "help": {
       "REAPPLY_COOLDOWN_MONTHS": "0 to 60. A candidate must wait this long before applying to the same job again.",
@@ -572,7 +613,8 @@
       "SOCIAL_FACEBOOK": "https://www.facebook.com/…",
       "SOCIAL_INSTAGRAM": "https://www.instagram.com/…",
       "SOCIAL_TIKTOK": "https://www.tiktok.com/@…",
-      "SOCIAL_LINKEDIN": "https://www.linkedin.com/company/…"
+      "SOCIAL_LINKEDIN": "https://www.linkedin.com/company/…",
+      "ALLOW_RECRUITER_DELETE": "Off: only a super admin can. Each deletion needs a reason and is written to the audit log."
     }
   },
   "audit": {
@@ -590,5 +632,41 @@
     "after": "After",
     "system": "System",
     "empty": "No entry matches."
+  },
+  "deletion": {
+    "willRemove": "This will be removed for good:",
+    "reason": "Reason",
+    "reasonHint": "Kept in the audit log with your name. Do not write names, addresses or other personal data here.",
+    "type": "Type {word} to confirm",
+    "irreversible": "This cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "partly": "{changed} deleted, {refused} could not be deleted."
+  },
+  "history": {
+    "title": "Historical results",
+    "intro": "Results IconBridge obtained before this platform existed. They are kept apart from the applications and added to them in the dashboard totals and in the counters of the home page.",
+    "year": "Year",
+    "yearsWithFigures": "Years with figures:",
+    "tableLabel": "Historical results of {year}",
+    "destination": "Destination",
+    "note": "Note",
+    "notePlaceholder": "Source of the figure (optional)",
+    "metrics": {
+      "VISAS_APPROVED": "Visas approved",
+      "CANDIDATES_DEPLOYED": "Candidates deployed",
+      "CANDIDATES_REGISTERED": "Candidates registered or processed",
+      "PARTNER_COMPANIES": "Partner companies",
+      "COUNTRIES_SERVED": "Countries served"
+    },
+    "globalTitle": "Global figures",
+    "globalIntro": "One figure for all years and destinations.",
+    "help": {
+      "PARTNER_COMPANIES": "Added to the employers of the jobs published on the platform.",
+      "COUNTRIES_SERVED": "The total number of countries. The site shows it when it is larger than the number of active destinations; the two are not added."
+    },
+    "audited": "Every change is written to the audit log with the value before and after.",
+    "save": "Save the figures",
+    "saved": "{count, plural, one {# figure saved} other {# figures saved}}. The counters of the site are updated."
   }
 }

@@ -39,6 +39,8 @@ Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, neve
 | `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                                            |
 | `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                                   |
 
+Do not run `pnpm build` while `pnpm dev` is running: the build rewrites `apps/web/.next` and the dev server then answers 500 until it is restarted. For the browser tests, stop `pnpm dev` and let Playwright start the production build.
+
 One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://localhost:3000>, Swagger <http://localhost:4000/api/docs>, Mailpit <http://localhost:8025> (SMTP on 2525), Azurite blob `localhost:10000`.
 
 ## Coding conventions
@@ -57,6 +59,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Who may apply is decided by `ApplicationsService.evaluate` only; the eligibility endpoint and `apply` both use it. Changes to the re-application rule need tests at the exact boundary.
 - File storage goes through the abstract `StorageService`; never use the Azure SDK elsewhere.
 - Application status changes go through `AdminApplicationsService` and `allowedApplicationTransitions` (`packages/shared`). Text for the candidate goes in `messageToCandidate`; `comment` and notes are internal and must never appear in a candidate endpoint, an email or an export for candidates.
+- Figures from before the platform live in `historical_figures` and are added to live data only by `ResultsService`; never write them into applications or count them in a query on applications.
 - Scheduled work is a task in `apps/api/src/tasks/tasks.service.ts` (callable from the CLI and protected by an advisory lock), never a bare `@Cron`: in Azure the API scales to zero and a Container Apps Job runs the CLI.
 - Routes that write their own audit entries use `@SkipAudit()` and `AuditService.record`; sensitive reads (clear passport numbers, consent documents) get `@Audit`.
 - New endpoints need e2e tests for the allowed and the refused roles.
@@ -90,6 +93,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Exports never contain full passport numbers unless a SUPER_ADMIN sets `includeFullPassportNumber`; every export is logged. Neutralise spreadsheet formulas in any new export.
 - Success stories are published only with a consent document; the public name is `publicStoryName()`.
 - Internal notes are never returned to candidates.
+- Deleting a candidate goes through `AccountService.eraseCandidate` (files first, then the data); deleting from the back office goes through `DeletionService`, which checks `ALLOW_RECRUITER_DELETE` and writes the audit entry. Audit entries of deletions hold a reason and counts, never personal data.
 - Back-office answers carry the masked passport number only. The clear number leaves the API through `POST /admin/candidates/:id/reveal-passport` (audited, never for a viewer) or the super-admin export.
 - Rich text of a job passes `cleanRichText` (`apps/api/src/jobs/rich-text.ts`) on writing and on reading; never render other HTML from the database.
 
