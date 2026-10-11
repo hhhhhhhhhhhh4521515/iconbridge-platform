@@ -501,6 +501,6 @@ The agency's results from before the platform were missing from its counters, an
 | Done when: 250 historical visas for Malta   | Pass in the browser: the dashboard card shows the total and "total = 250 historical + platform", "Platform only" shows the platform figure alone, the home page counter shows the same total                                                                                        |
 | Done when: deleting a test candidate        | Pass in the browser: the signed links to the two files answer 200 before and 404 after, the account answers 401, the number of applications and of approved visas on the dashboard is unchanged, the audit entry holds the reason and the counts and neither the email nor the name |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/11>
 
 **Remaining**: Dockerfiles, Terraform, CI/CD, legal review of the policy texts, a data retention task.
