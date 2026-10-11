@@ -21,21 +21,23 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 
 Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, never OneDrive).
 
-| Command                                     | Effect                                                                                                        |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                     |
-| `pnpm dev`                                  | Start the compose services, wait until healthy, then run web, api and shared in watch mode                    |
-| `pnpm build`                                | Build every workspace                                                                                         |
-| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                    |
-| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`) |
-| `pnpm lint`                                 | ESLint in every workspace                                                                                     |
-| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                             |
-| `pnpm format`                               | Prettier on the whole repository                                                                              |
-| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                        |
-| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again  |
-| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                      |
-| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                 |
-| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                        |
+| Command                                     | Effect                                                                                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                          |
+| `pnpm dev`                                  | Start the compose services, wait until healthy, then run web, api and shared in watch mode                                         |
+| `pnpm build`                                | Build every workspace                                                                                                              |
+| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                         |
+| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                      |
+| `pnpm test:browser`                         | Playwright smoke tests of the web app (needs the API on 4000 with seeded data; builds and starts the web app if port 3000 is free) |
+| `pnpm api:types`                            | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint              |
+| `pnpm lint`                                 | ESLint in every workspace                                                                                                          |
+| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                                                  |
+| `pnpm format`                               | Prettier on the whole repository                                                                                                   |
+| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                             |
+| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                       |
+| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                                           |
+| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                                      |
+| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                             |
 
 One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://localhost:3000>, Swagger <http://localhost:4000/api/docs>, Mailpit <http://localhost:8025> (SMTP on 2525), Azurite blob `localhost:10000`.
 
@@ -62,6 +64,9 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - An enum that exists in both `schema.prisma` and `packages/shared` must be changed in both; `apps/api/src/prisma/enums.spec.ts` checks it.
 - New environment variable: add it to the zod schema and to the matching `.env.example`, with a comment.
 - shadcn/ui components are added with `pnpm dlx shadcn@latest add <name>` from `apps/web`.
+- Web: every text goes in `apps/web/src/messages/{fr,en,ar}.json` (same keys in the three files); links use `Link` from `@/i18n/navigation`; use logical CSS (`ps-`, `ms-`, `start-`) so Arabic mirrors correctly.
+- Web: the browser calls the API only through `/api/v1/*` on the web origin (`createApiClient()` from `@iconbridge/shared/api-client`); server components use `src/lib/api.ts`. Never expose `API_INTERNAL_URL` or call the API host from client code.
+- Web: content must be readable without JavaScript and with `prefers-reduced-motion`; animations are an enhancement. Use `next/image` (`MediaImage` for pictures from blob storage) and keep calls to action at 44 px or more.
 - Versions shared by workspaces are set in the `catalog` of `pnpm-workspace.yaml`.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`); commitlint checks them. Small logical commits.
 - Feature branches named `feat/<task-name>`; never commit directly to `main`.
@@ -88,7 +93,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 
 a) Create a branch `feat/<task-name>` from an up-to-date `main` before starting.
 
-b) When the work is done, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e` and `pnpm build`; start the stack and verify every "Done when" item of the prompt yourself (curl the endpoints, run Playwright, read Mailpit through its API, query the database). Never mark something done without running it.
+b) When the work is done, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm test:browser` (when the web app changed) and `pnpm build`; start the stack and verify every "Done when" item of the prompt yourself (curl the endpoints, run Playwright, read Mailpit through its API, query the database). Never mark something done without running it.
 
 c) If a check fails, fix the cause and re-run (never skip, disable or weaken a test to make it pass). After 3 failed attempts on the same problem, stop and report BLOCKED with the error and your hypotheses.
 

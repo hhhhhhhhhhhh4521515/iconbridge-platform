@@ -19,6 +19,8 @@ pnpm dev        # compose services + web + api
 | <http://localhost:4000/health/ready> | API readiness (checks the database) |
 | <http://localhost:8025>              | Mailpit inbox                       |
 
+Browser tests need Chromium and its system libraries once: `pnpm --filter @iconbridge/web exec playwright install chromium`, then `sudo pnpm --filter @iconbridge/web exec playwright install-deps chromium`.
+
 Other commands: `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm format`, `pnpm db:migrate`, `pnpm db:seed`.
 
 ## Documentation

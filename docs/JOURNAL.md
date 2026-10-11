@@ -311,3 +311,55 @@ The accounts, applications and messages created by the live checks were removed 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/6>
 
 **Remaining**: the web application (public site, candidate area, back office), Dockerfiles, Terraform (including the scheduled job), CI/CD, data retention.
+
+## 2026-10-11 - Public web application
+
+**What**
+
+- Brand assets cleaned up: double extensions removed, extensions matching the real file type, lower-case names without spaces (`story-candidate-26`, `story-candidate-27`), then converted to WebP (7.6 MB to 4.3 MB). The logo keeps a PNG for icons.
+- Design system from the logo and posters (navy, royal blue, gold), Inter and Cairo fonts, light and dark mode, 44 px touch targets, visible focus, skip link.
+- next-intl with `/fr` (default), `/en` and `/ar` (right-to-left), language switcher, all texts in message files.
+- Layout: top bar with the contact details of the settings, sticky header, footer with categories, contact, social links and legal pages.
+- Home page: hero slider (Swiper, 6 s autoplay, fade, slow zoom, Motion text entrance, progress bar, pause on hover and with a button, swipe, reduced motion), search bar, count-up counters, destination cards, categories, latest jobs, "How it works" timeline, success stories with a "Visa approved" badge, trust section with the anti-scam notice, FAQ, job alert form, contact call to action.
+- Jobs: list with filters in the URL, search, pagination, skeleton and empty state; job page with benefits, countdown, share buttons, JSON-LD `JobPosting` and an Apply button driven by the eligibility endpoint.
+- Pages: success stories with a destination filter, about, contact (form with Turnstile), privacy, terms, 404 and error pages; placeholders for login, registration and the candidate area.
+- SEO: metadata, canonical and `hreflang` per page and language, Open Graph images, `sitemap.xml` and `robots.txt` built from the open jobs.
+- Same-origin API through `proxy.ts`, and a typed client generated from the OpenAPI document (`pnpm api:types`).
+- API: `GET /auth/session` (200 for visitors), an OpenAPI export command, a schema for `/site-info`; the development seed now builds the sample slides and stories from the brand images and uploads them to blob storage.
+- Playwright smoke tests on a desktop and a phone profile.
+
+**Why**
+
+This is what visitors and search engines see first. Server rendering with per-language URLs serves search engines; the same-origin proxy makes the session cookies of the API work without CORS.
+
+**Choices worth knowing** (details in ADR-007)
+
+- The proxy is a `proxy.ts` rewrite reading `API_INTERNAL_URL` at run time, rather than `rewrites()` in `next.config.ts`, which would freeze the address at build time.
+- `cacheComponents` (enabled by the Next.js template) is turned off; pages use `fetch` revalidation.
+- Only the hero uses Swiper; the jobs and stories carousels are scroll-snap rows with buttons.
+- The first hero slide is server HTML and the carousel code loads a few seconds later; the first change of slide still happens after about 6 seconds.
+- A cruise photo exists in the brand folder, so the cruise slide uses it and no gradient was needed.
+- Success stories from the brand posters: the first name comes from the file name as asked, which gives odd names for some files (`Fie`, `Fir`, `Name`, `Grand`, `Candidate 26`). Job title, destination (Malta for all) and caption are placeholders; no date is set. They are seeded in development only, with a placeholder instead of a consent document.
+- The brand images had been committed with the previous pull request by its final `git add -A`; this one renames and optimises them.
+- Hero source images are small (Poland is 612 px wide) and look soft on large screens.
+- Login, registration and the candidate area are placeholders; the legal texts are models to be reviewed.
+
+**Checks**
+
+| Check                                       | Result                                                                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | Pass                                                                                                                           |
+| `pnpm test`                                 | Pass: 391 unit tests (shared 122, api 259, web 10)                                                                             |
+| `pnpm test:e2e`                             | Pass: 379 tests                                                                                                                |
+| `pnpm test:browser`                         | Pass: 16 tests on a desktop and on a phone profile (32 runs), against the production build                                     |
+| Required browser tests                      | Home renders the slider and the success stories; the jobs filter works and keeps the URL; switching to Arabic sets `dir="rtl"` |
+| Three languages                             | `/fr`, `/en`, `/ar` answer 200 with the right `lang` and `dir`; `/` redirects to the visitor's language, French otherwise      |
+| API proxy                                   | `POST /api/v1/contact` through port 3000 reaches the API; a request id is added; closed jobs answer 404                        |
+| Lighthouse mobile, home `/fr`, five runs    | Performance 84, 85, 88, 87, 85; accessibility 100; best practices 100; SEO 100                                                 |
+| Lighthouse mobile, other pages              | `/en` 89, `/ar` 73 to 91 between runs, jobs list 87, job page 89, contact 88; accessibility 100 on all                         |
+
+Lighthouse was run on the production build with `--disable-full-page-screenshot`. With the default screenshot step, this GPU-less workstation delays the first paint of the home page by about 2 seconds and the score drops to about 70; a browser measures that first paint at 0.3 s. The performance figures are therefore indicative and should be measured again on the deployed site. "Animates smoothly" was checked by automated tests and screenshots on desktop and phone profiles, not on a physical phone.
+
+**PR**: PR_LINK
+
+**Remaining**: login, registration and the candidate area in the web app, the back-office interface, real photos at higher resolution and real consent documents for the stories, legal review of the policy texts, Dockerfiles, Terraform, CI/CD.
