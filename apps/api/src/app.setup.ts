@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { API_PREFIX, DOCS_PATH } from './app.constants.js';
 import { ACCESS_COOKIE } from './auth/auth.constants.js';
+import { originCheck } from './common/http/origin-check.js';
 import type { Env } from './config/env.js';
 
 export { API_PREFIX, DOCS_PATH };
@@ -28,6 +29,8 @@ export function configureHttp(app: NestExpressApplication): void {
     }),
   );
   app.use(cookieParser());
+  // State-changing requests started by a page of another site are refused (CSRF).
+  app.use(originCheck([config.get('WEB_ORIGIN', { infer: true })]));
 
   app.setGlobalPrefix(API_PREFIX, {
     exclude: [

@@ -46,6 +46,7 @@
     "exceljs": "^4.4.0",
     "file-type": "^22.1.1",
     "helmet": "^8.3.0",
+    "isomorphic-dompurify": "^4.5.0",
     "mjml": "^5.4.1",
     "nestjs-pino": "^5.3.1",
     "nodemailer": "^10.0.16",
@@ -54,7 +55,6 @@
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "sanitize-html": "^2.18.0",
     "sharp": "^0.35.5",
     "zod": "catalog:"
   },
@@ -71,7 +71,6 @@
     "@types/node": "catalog:",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
-    "@types/sanitize-html": "^2.16.2",
     "@types/supertest": "^7.2.1",
     "dotenv": "^18.0.6",
     "eslint": "catalog:",
