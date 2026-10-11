@@ -31,6 +31,6 @@ describe('Prisma enums match packages/shared', () => {
   });
 
   it('covers every enum of the schema', () => {
-    expect(Object.keys(prismaEnums)).toHaveLength(9);
+    expect(Object.keys(prismaEnums)).toHaveLength(10);
   });
 });
