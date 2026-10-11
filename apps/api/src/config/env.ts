@@ -33,6 +33,15 @@ const baseEnvSchema = z.object({
     .transform((url) => url.replace(/\/+$/, '')),
   PASSPORT_ENCRYPTION_KEY: aes256KeySchema,
   JWT_ACCESS_SECRET: z.string().min(32),
+  /** Lifetime of an access token, in seconds. 15 minutes; shorter only to test the silent refresh. */
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(1).max(3600).default(900),
+  /**
+   * Address of the web app as the API reaches it, to tell it that public content changed.
+   * Empty: WEB_ORIGIN is used.
+   */
+  WEB_INTERNAL_URL: z.union([z.literal(''), z.url({ protocol: /^https?$/ })]).default(''),
+  /** Shared with the web app (same variable there). Empty: the web app is not told; its cache ends after a minute. */
+  REVALIDATE_SECRET: z.union([z.literal(''), z.string().min(24)]).default(''),
   TURNSTILE_SECRET_KEY: z.string().min(1),
   /** Empty for a server without authentication (Mailpit). */
   SMTP_USER: z.string(),

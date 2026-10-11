@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   ADMIN_ROLES,
@@ -151,6 +152,39 @@ export class AdminUsersService {
       return toAdminUser(
         await tx.user.update({ where: { id }, data: { isActive: true }, select: ADMIN_SELECT }),
       );
+    });
+  }
+
+  /**
+   * Removes a back-office account for good: it is signed out, loses its password and
+   * its address (which becomes free again), and no longer appears in the list. The
+   * row stays, without the address, so the audit log still has an author to point to.
+   */
+  async remove(id: string, actorId: string): Promise<void> {
+    if (id === actorId) {
+      throw new AppException(
+        'CANNOT_DISABLE_SELF',
+        HttpStatus.CONFLICT,
+        'You cannot delete your own account',
+      );
+    }
+    await this.prisma.$transaction(async (tx) => {
+      const target = await this.lockAdmin(tx, id);
+      if (target.role === 'SUPER_ADMIN' && target.isActive) {
+        await this.assertAnotherSuperAdmin(tx, id);
+      }
+      await this.sessions.endAll(id, tx);
+      await tx.emailToken.deleteMany({ where: { userId: id } });
+      await tx.user.update({
+        where: { id },
+        data: {
+          email: `deleted-${randomUUID()}@deleted.invalid`,
+          passwordHash: null,
+          isActive: false,
+          tokenVersion: { increment: 1 },
+          deletedAt: new Date(),
+        },
+      });
     });
   }
 

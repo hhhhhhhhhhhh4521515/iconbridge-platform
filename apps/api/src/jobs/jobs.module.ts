@@ -7,6 +7,8 @@ import { AdminCatalogService } from '../catalog/admin-catalog.service.js';
 import { CatalogController } from '../catalog/catalog.controller.js';
 import { CatalogService } from '../catalog/catalog.service.js';
 import { ResultsService } from '../catalog/results.service.js';
+import { RevalidateInterceptor } from '../site-cache/revalidate.interceptor.js';
+import { SiteCacheService } from '../site-cache/site-cache.service.js';
 import { AdminJobsController } from './admin-jobs.controller.js';
 import { AdminJobsService } from './admin-jobs.service.js';
 import { JobAvailabilityService } from './job-availability.service.js';
@@ -27,11 +29,20 @@ import { PublicJobsService } from './public-jobs.service.js';
     PublicJobsService,
     CatalogService,
     ResultsService,
+    SiteCacheService,
+    RevalidateInterceptor,
     AdminJobsService,
     AdminCatalogService,
     JobCoverService,
     JobAvailabilityService,
   ],
-  exports: [JobAvailabilityService, CatalogService, ResultsService, JobCoverService],
+  exports: [
+    JobAvailabilityService,
+    CatalogService,
+    ResultsService,
+    JobCoverService,
+    SiteCacheService,
+    RevalidateInterceptor,
+  ],
 })
 export class JobsModule {}

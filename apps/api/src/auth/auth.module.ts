@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import type { Env } from '../config/env.js';
-import { ACCESS_TOKEN_TTL_MS, JWT_ISSUER } from './auth.constants.js';
+import { JWT_ISSUER } from './auth.constants.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { EmailTokenService } from './email-token.service.js';
@@ -26,7 +26,7 @@ import { TurnstileService } from './turnstile.service.js';
         signOptions: {
           algorithm: 'HS256',
           issuer: JWT_ISSUER,
-          expiresIn: ACCESS_TOKEN_TTL_MS / 1000,
+          expiresIn: config.get('ACCESS_TOKEN_TTL_SECONDS', { infer: true }),
         },
         verifyOptions: { algorithms: ['HS256'], issuer: JWT_ISSUER },
       }),

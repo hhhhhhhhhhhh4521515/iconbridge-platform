@@ -20,6 +20,7 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SkipAudit } from './audit/audit.decorator.js';
 import { AuditService } from './audit/audit.service.js';
+import { Revalidates } from '../site-cache/revalidate.interceptor.js';
 
 const INCLUDE = {
   destination: { select: { code: true } },
@@ -56,6 +57,7 @@ const snapshot = (row: Row | null) =>
 @ApiTags('admin: historical results')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_SETTINGS)
+@Revalidates('stats')
 @Controller('admin/historical-figures')
 export class HistoricalFiguresController {
   constructor(

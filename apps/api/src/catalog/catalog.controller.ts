@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { Public } from '../auth/decorators/index.js';
 import { ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { CatalogService } from './catalog.service.js';
+import { PUBLIC_CACHE } from '../common/http/public-cache.js';
 
 @ApiTags('public')
 @Public()
@@ -20,6 +21,7 @@ export class CatalogController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get('destinations')
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({ summary: 'Active destinations with their number of open jobs' })
   @ApiZodResponse(200, z.array(destinationSchema))
   destinations(): Promise<Destination[]> {
@@ -27,6 +29,7 @@ export class CatalogController {
   }
 
   @Get('categories')
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({ summary: 'Active job categories with their number of open jobs' })
   @ApiZodResponse(200, z.array(categorySchema))
   categories(): Promise<Category[]> {

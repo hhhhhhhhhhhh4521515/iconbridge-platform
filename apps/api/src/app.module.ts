@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AdminModule } from './admin/admin.module.js';
 import { AuditInterceptor } from './admin/audit/audit.interceptor.js';
+import { RevalidateInterceptor } from './site-cache/revalidate.interceptor.js';
 import { RATE_LIMITS } from './auth/auth.constants.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CandidatesModule } from './candidates/candidates.module.js';
@@ -57,6 +58,7 @@ import { StorageModule } from './storage/storage.module.js';
     { provide: APP_GUARD, useExisting: RolesGuard },
     { provide: APP_GUARD, useExisting: VerifiedEmailGuard },
     { provide: APP_INTERCEPTOR, useExisting: AuditInterceptor },
+    { provide: APP_INTERCEPTOR, useExisting: RevalidateInterceptor },
   ],
 })
 export class AppModule {}

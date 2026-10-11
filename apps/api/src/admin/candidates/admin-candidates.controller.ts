@@ -30,6 +30,7 @@ import { ApiErrors, ApiZodBody, ApiZodResponse } from '../../common/swagger/zod-
 import { Audit, SkipAudit } from '../audit/audit.decorator.js';
 import { DeletionService } from '../deletion.service.js';
 import { AdminCandidatesService } from './admin-candidates.service.js';
+import { Revalidates } from '../../site-cache/revalidate.interceptor.js';
 
 interface IdParam {
   id: string;
@@ -44,6 +45,7 @@ const pageSchema = z.object({
 @ApiTags('admin: candidates')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_APPLICATIONS)
+@Revalidates('stats')
 @Controller('admin/candidates')
 export class AdminCandidatesController {
   constructor(

@@ -25,6 +25,7 @@ import { Roles } from '../auth/decorators/index.js';
 import { ZodBody, ZodParams } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { AdminCatalogService } from './admin-catalog.service.js';
+import { Revalidates } from '../site-cache/revalidate.interceptor.js';
 
 interface IdParam {
   id: string;
@@ -33,6 +34,7 @@ interface IdParam {
 @ApiTags('admin: destinations')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_CONTENT)
+@Revalidates('catalog', 'jobs', 'stats')
 @Controller('admin/destinations')
 export class AdminDestinationsController {
   constructor(private readonly catalog: AdminCatalogService) {}
@@ -89,6 +91,7 @@ export class AdminDestinationsController {
 @ApiTags('admin: categories')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_CONTENT)
+@Revalidates('catalog', 'jobs')
 @Controller('admin/categories')
 export class AdminCategoriesController {
   constructor(private readonly catalog: AdminCatalogService) {}
