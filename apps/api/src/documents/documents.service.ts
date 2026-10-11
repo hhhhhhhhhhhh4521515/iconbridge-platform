@@ -133,7 +133,7 @@ export class DocumentsService {
   }
 
   /** A read-only link to the file, valid 5 minutes. Access is decided before, by the guards. */
-  async downloadUrl(id: string): Promise<string> {
+  async downloadUrl(id: string, inline = false): Promise<string> {
     const document = await this.prisma.document.findFirst({ where: { id, deletedAt: null } });
     if (!document) {
       throw notFound('Document not found');
@@ -141,6 +141,7 @@ export class DocumentsService {
     return this.storage.privateDownloadUrl(document.blobPath, {
       fileName: document.originalName,
       contentType: document.mimeType,
+      inline,
     });
   }
 }

@@ -118,6 +118,7 @@ export class ProfileService {
       educationLevel: profile.educationLevel,
       languages: profile.languages.map(({ language, level }) => ({ language, level })),
       drivingLicenceCategories: profile.drivingLicenceCategories,
+      preferredDestinations: profile.preferredDestinations,
       hasStcwTraining: profile.hasStcwTraining,
       hasSeamanBook: profile.hasSeamanBook,
       hasMedicalCertificate: profile.hasMedicalCertificate,

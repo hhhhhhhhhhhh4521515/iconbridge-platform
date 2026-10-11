@@ -13,6 +13,8 @@ export interface DownloadLinkOptions {
   contentType: string;
   /** Defaults to 5 minutes. */
   expiresInSeconds?: number;
+  /** True: the browser displays the file (preview). False or absent: it saves it. */
+  inline?: boolean;
 }
 
 /**

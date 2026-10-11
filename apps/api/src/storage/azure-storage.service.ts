@@ -27,9 +27,9 @@ const DELEGATION_KEY_TTL_MS = 60 * 60 * 1000;
 const DELEGATION_KEY_MARGIN_MS = 10 * 60 * 1000;
 
 /** RFC 6266 header value; the ASCII fallback has no quote, backslash or control character. */
-export function contentDisposition(fileName: string): string {
+export function contentDisposition(fileName: string, inline = false): string {
   const ascii = fileName.replace(/[^\x20-\x7e]|["\\]/g, '_');
-  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+  return `${inline ? 'inline' : 'attachment'}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
 /**
@@ -128,7 +128,7 @@ export class AzureStorageService extends StorageService {
       expiresOn: new Date(now + (options.expiresInSeconds ?? DOWNLOAD_LINK_TTL_SECONDS) * 1000),
       // HTTPS only, except for the local emulator which speaks plain HTTP.
       protocol: blob.url.startsWith('https:') ? SASProtocol.Https : SASProtocol.HttpsAndHttp,
-      contentDisposition: contentDisposition(options.fileName),
+      contentDisposition: contentDisposition(options.fileName, options.inline),
       contentType: options.contentType,
       cacheControl: 'private, no-store',
     };
