@@ -13,6 +13,7 @@ import { countryName } from '@/lib/countries';
 import { languageName } from '@/lib/format';
 import { cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
+import { DeleteDialog } from './delete-dialog';
 import { DocumentsList } from './documents-list';
 import { ApplicationBadge } from './status';
 import { dateTime, input, smallButton, useCall, useConfirm } from './ui';
@@ -290,17 +291,20 @@ function Detail({
   setDetail,
   reload,
   onChanged,
+  onDeleted,
 }: {
   detail: AdminApplicationDetail;
   setDetail: (detail: AdminApplicationDetail) => void;
   reload: () => void;
   onChanged: () => void;
+  onDeleted: () => void;
 }) {
   const t = useTranslations('admin');
   const locale = useLocale();
   const call = useCall();
   const router = useRouter();
-  const { can } = useAdmin();
+  const { can, canDelete } = useAdmin();
+  const [deleting, setDeleting] = useState(false);
   const answerLocale = locale === 'fr' ? 'fr' : 'en';
 
   const createStory = async () => {
@@ -444,6 +448,51 @@ function Detail({
         <h3 className={heading}>{t('applications.notes')}</h3>
         <Notes detail={detail} onChanged={reload} />
       </section>
+
+      {canDelete ? (
+        <section className="border-t border-border pt-4">
+          <button
+            type="button"
+            className={`${cta.outline} border-destructive text-destructive`}
+            onClick={() => {
+              setDeleting(true);
+            }}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            {t('applications.delete')}
+          </button>
+          <DeleteDialog
+            open={deleting}
+            title={t('applications.deleteTitle')}
+            removed={[
+              t('applications.removedApplications', { count: 1 }),
+              t('applications.removedHistory'),
+            ]}
+            notes={[
+              t('applications.keptDocuments'),
+              t('applications.cooldownLifted'),
+              ...(detail.status === 'DEPLOYED' ? [t('applications.hiredKept')] : []),
+            ]}
+            confirmLabel={t('applications.delete')}
+            onClose={() => {
+              setDeleting(false);
+            }}
+            onConfirm={async (reason) => {
+              const result = await call(
+                api.DELETE('/api/v1/admin/applications/{id}', {
+                  params: { path: { id: detail.id } },
+                  body: { reason },
+                }),
+                t('applications.deleted'),
+              );
+              if (result.ok) {
+                setDeleting(false);
+                onDeleted();
+              }
+            }}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -480,7 +529,16 @@ export function ApplicationDrawer({
       side
     >
       {id === null ? null : detail ? (
-        <Detail detail={detail} setDetail={setData} reload={reload} onChanged={onChanged} />
+        <Detail
+          detail={detail}
+          setDetail={setData}
+          reload={reload}
+          onChanged={onChanged}
+          onDeleted={() => {
+            onChanged();
+            onClose();
+          }}
+        />
       ) : failed && !loading ? (
         <LoadFailed onRetry={reload} />
       ) : (

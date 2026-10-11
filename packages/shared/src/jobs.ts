@@ -386,9 +386,12 @@ export type AdminJob = z.infer<typeof adminJobSchema>;
 /** Counters of the home page. */
 export const publicStatsSchema = z.object({
   openJobs: z.number().int(),
+  /** Active accounts plus the candidates handled before the platform. */
   registeredCandidates: z.number().int(),
+  /** Employers of published jobs plus the partner companies from before the platform. */
+  partnerCompanies: z.number().int(),
   visasApproved: z.number().int(),
-  /** Active destinations. */
+  /** Active destinations, or the number of countries served entered by the super admin when it is larger. */
   countries: z.number().int(),
 });
 export type PublicStats = z.infer<typeof publicStatsSchema>;

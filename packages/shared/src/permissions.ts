@@ -36,3 +36,11 @@ export function hasPermission(role: UserRole, permission: Permission): boolean {
 
 /** VIEWER is read only: it never appears in a capability that writes. */
 export const READ_ONLY_ROLES = ['VIEWER'] as const satisfies readonly UserRole[];
+
+/**
+ * Deleting a candidate or an application: a super admin always; a recruiter only
+ * when the setting ALLOW_RECRUITER_DELETE is on; nobody else.
+ */
+export function canDeleteRecords(role: UserRole, allowRecruiterDelete: boolean): boolean {
+  return role === 'SUPER_ADMIN' || (role === 'RECRUITER' && allowRecruiterDelete);
+}

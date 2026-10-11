@@ -823,6 +823,24 @@ Decisions and reasons: [ADR-009](adr/ADR-009-back-office.md).
 | `/admin/users`                      | super admin             | Invite, change role, disable, log out everywhere                                                                                                             |
 | `/admin/settings`, `/admin/audit`   | super admin             | Rules, contact details, social links; audit log with filters and before/after                                                                                |
 
+### Historical results
+
+Decisions and reasons: [ADR-010](adr/ADR-010-historical-results-and-deletions.md).
+
+- Table `historical_figures`: `metric` (`VISAS_APPROVED`, `CANDIDATES_DEPLOYED`, `CANDIDATES_REGISTERED` per year and destination; `PARTNER_COMPANIES`, `COUNTRIES_SERVED` global), `year`, `destination_id`, `value`, `note`. Constraints: unique (metric, year, destination) with NULLs counted as equal; `value >= 0`; global metrics have neither year nor destination, the others have both and a year from 1990 to 2100.
+- `GET/PUT/DELETE /admin/historical-figures` (super admin). Each change writes `historical_figure.set` or `historical_figure.delete` to the audit log with the value before and after, and empties the cache of `GET /stats`.
+- `ResultsService` (`apps/api/src/catalog/results.service.ts`) computes `platform` (from applications, accounts, jobs) and `history` (from the table). `GET /admin/stats` returns both; `GET /stats` returns their sum (the larger of the two for countries).
+- The dashboard adds them, shows "total = historical + platform" on each card and as a tooltip, draws the history as its own series in the charts per year and per destination, and has a switch "Including history / Platform only".
+
+### Deleting candidates and applications
+
+| Action                | Endpoint                                                                 | Effect                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Delete a candidate    | `DELETE /admin/candidates/:id`, `POST /admin/candidates/bulk-delete`     | Files removed from storage, then the GDPR erasure of the account; applications stay anonymous; `candidate.delete` audit entry with the reason and the counts       |
+| Delete an application | `DELETE /admin/applications/:id`, `POST /admin/applications/bulk-delete` | Row, status history and notes removed; documents stay; `hiredCount` unchanged; the waiting period for that job no longer applies; `application.delete` audit entry |
+
+A super admin always may; a recruiter when `ALLOW_RECRUITER_DELETE` is on; a viewer never (403). `GET /admin/capabilities` gives `canDeleteRecords` to the screens.
+
 ### Undo of a status change
 
 `POST /admin/applications/:id/undo-status` succeeds when the last change that still counts was made by the caller less than 15 minutes ago (`UNDO_STATUS_MINUTES`) and is still the current status. The application returns to the previous status, the history row gets `reverted_at` (candidates no longer see it, the dashboard no longer counts it), a deployment gives its position back, and an `application.undo_status` audit entry is written. If the email of the undone change had been sent (`notified_at`), the candidate receives `application-status-correction`.

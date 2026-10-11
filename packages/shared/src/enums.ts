@@ -97,3 +97,26 @@ export type DocumentType = z.infer<typeof documentTypeSchema>;
 export const SALARY_PERIODS = ['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] as const;
 export const salaryPeriodSchema = z.enum(SALARY_PERIODS);
 export type SalaryPeriod = z.infer<typeof salaryPeriodSchema>;
+
+/**
+ * Figures from before the platform existed, entered by the super admin.
+ * The first three are per year and destination; the last two are single global figures.
+ */
+export const HISTORICAL_METRICS = [
+  'VISAS_APPROVED',
+  'CANDIDATES_DEPLOYED',
+  'CANDIDATES_REGISTERED',
+  'PARTNER_COMPANIES',
+  'COUNTRIES_SERVED',
+] as const;
+export const historicalMetricSchema = z.enum(HISTORICAL_METRICS);
+export type HistoricalMetric = z.infer<typeof historicalMetricSchema>;
+
+export const GLOBAL_HISTORICAL_METRICS = [
+  'PARTNER_COMPANIES',
+  'COUNTRIES_SERVED',
+] as const satisfies readonly HistoricalMetric[];
+
+export function isGlobalHistoricalMetric(metric: HistoricalMetric): boolean {
+  return (GLOBAL_HISTORICAL_METRICS as readonly HistoricalMetric[]).includes(metric);
+}

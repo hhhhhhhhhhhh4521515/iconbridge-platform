@@ -438,6 +438,8 @@ describe('public jobs (e2e)', () => {
       expect(publicStatsSchema.parse(first.body)).toEqual({
         openJobs: 5,
         registeredCandidates: 1,
+        // Two employers have published jobs; one of them is hidden on the site, but it counts.
+        partnerCompanies: 2,
         visasApproved: 0,
         countries: 3,
       });

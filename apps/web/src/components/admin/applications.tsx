@@ -17,7 +17,7 @@ import {
 } from '@iconbridge/shared/admin';
 import { APPLICATION_PIPELINE, APPLICATION_STATUSES } from '@iconbridge/shared/enums';
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
-import { Columns3, Download, Table2 } from 'lucide-react';
+import { Columns3, Download, Table2, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
@@ -37,6 +37,7 @@ import { pick } from '@/lib/format';
 import { cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
 import { ApplicationDrawer } from './application-drawer';
+import { DeleteDialog } from './delete-dialog';
 import { ApplicationBadge } from './status';
 import {
   DataTable,
@@ -358,8 +359,10 @@ export function Applications() {
   const pathname = usePathname();
   const search = useSearchParams();
   const call = useCall();
-  const { can } = useAdmin();
+  const { can, canDelete } = useAdmin();
   const editable = can('MANAGE_APPLICATIONS');
+  // The applications about to be deleted: one from its row, or the selection.
+  const [deleting, setDeleting] = useState<AdminApplication[] | null>(null);
   const view = search.get('view') === 'board' ? 'board' : 'table';
   const opened = search.get('open');
   const [filters, setFilters] = useState<Filters>({
@@ -549,8 +552,47 @@ export function Applications() {
         cell: ({ row }) => <ApplicationBadge status={row.original.status} />,
       },
     ];
-    return editable ? [select, ...base] : base;
-  }, [editable, locale, open, t]);
+    const remove: ColumnDef<AdminApplication> = {
+      id: 'delete',
+      enableSorting: false,
+      header: () => <span className="sr-only">{t('common.actions')}</span>,
+      cell: ({ row }) => (
+        <button
+          type="button"
+          className={`${smallButton} text-destructive`}
+          aria-label={`${t('applications.delete')}: ${row.original.candidate.firstName} ${row.original.candidate.lastName}`}
+          title={t('applications.delete')}
+          onClick={() => {
+            setDeleting([row.original]);
+          }}
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      ),
+    };
+    return [...(editable ? [select] : []), ...base, ...(canDelete ? [remove] : [])];
+  }, [canDelete, editable, locale, open, t]);
+
+  const removeApplications = async (reason: string) => {
+    const targets = deleting ?? [];
+    const result = await call(
+      api.POST('/api/v1/admin/applications/bulk-delete', {
+        body: { ids: targets.map((application) => application.id), reason },
+      }),
+    );
+    if (!result.ok) {
+      return;
+    }
+    const { changed, failed: refused } = result.data;
+    if (refused > 0) {
+      toast.warning(t('deletion.partly', { changed, refused }));
+    } else {
+      toast.success(t('applications.deletedMany', { count: changed }));
+    }
+    setDeleting(null);
+    setSelection({});
+    reload();
+  };
 
   return (
     <>
@@ -682,6 +724,18 @@ export function Applications() {
           >
             {t('applications.apply')}
           </button>
+          {canDelete ? (
+            <button
+              type="button"
+              className={`${cta.outline} ms-auto border-destructive text-destructive`}
+              onClick={() => {
+                setDeleting(rows.filter((row) => selection[row.id]));
+              }}
+            >
+              <Trash2 className="size-4" aria-hidden />
+              {t('deletion.delete')}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -721,6 +775,26 @@ export function Applications() {
           setParam('open', null);
         }}
         onChanged={reload}
+      />
+      <DeleteDialog
+        open={deleting !== null}
+        title={t('applications.deleteManyTitle', { count: deleting?.length ?? 0 })}
+        removed={[
+          t('applications.removedApplications', { count: deleting?.length ?? 0 }),
+          t('applications.removedHistory'),
+        ]}
+        notes={[
+          t('applications.keptDocuments'),
+          t('applications.cooldownLifted'),
+          ...((deleting ?? []).some((application) => application.status === 'DEPLOYED')
+            ? [t('applications.hiredKept')]
+            : []),
+        ]}
+        confirmLabel={t('deletion.delete')}
+        onClose={() => {
+          setDeleting(null);
+        }}
+        onConfirm={removeApplications}
       />
       <ExportDialog
         open={exporting}

@@ -1,14 +1,6 @@
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import {
-  expect,
-  test,
-  type APIRequestContext,
-  type Browser,
-  type BrowserContext,
-  type Locator,
-  type Page,
-} from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { BRAND, inviteStaff, PASSWORD, PDF, readyCandidate, STAMP } from './support';
 
 /**
  * The back office, in a real browser against the real stack.
@@ -22,162 +14,6 @@ import {
  * The recruiter and the viewer are invited by the seeded super admin of
  * `apps/api/.env` and choose their password with the link read from Mailpit.
  */
-
-const MAILPIT = process.env.MAILPIT_URL ?? 'http://localhost:8025';
-const PASSWORD = 'harbour-violet-compass-58';
-const STAMP = Date.now().toString(36);
-const BRAND = path.join(__dirname, '..', 'public', 'brand');
-const PDF = Buffer.from(
-  '%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n',
-);
-const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-  'base64',
-);
-
-/** The super admin created by `pnpm db:seed`, read from the local API configuration. */
-function seededAdmin(): { email: string; password: string } {
-  const file = readFileSync(path.join(__dirname, '..', '..', 'api', '.env'), 'utf8');
-  const read = (name: string) =>
-    (new RegExp(`^${name}=(.*)$`, 'm').exec(file)?.[1] ?? '').trim().replace(/^["']|["']$/g, '');
-  return {
-    email: process.env.E2E_ADMIN_EMAIL ?? read('SEED_ADMIN_EMAIL'),
-    password: process.env.E2E_ADMIN_PASSWORD ?? read('SEED_ADMIN_PASSWORD'),
-  };
-}
-
-/** Signs in through the API of the site. Sign-ins are rate-limited: a 429 is waited out. */
-async function signIn(request: APIRequestContext, email: string, password: string): Promise<void> {
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const response = await request.post('/api/v1/auth/login', { data: { email, password } });
-    if (response.status() !== 429) {
-      expect(response.status(), `sign-in of ${email}`).toBe(200);
-      return;
-    }
-    const wait = Number(response.headers()['retry-after'] ?? '15');
-    await new Promise((resolve) => setTimeout(resolve, (Math.min(wait, 60) + 1) * 1000));
-  }
-  throw new Error(`Could not sign in as ${email}: still rate-limited`);
-}
-
-/** The token of the newest email with a link to `page` sent to an address. */
-async function emailToken(request: APIRequestContext, to: string, page: string): Promise<string> {
-  let token = '';
-  await expect
-    .poll(
-      async () => {
-        const search = await request.get(`${MAILPIT}/api/v1/search`, {
-          params: { query: `to:"${to}"` },
-        });
-        const { messages } = (await search.json()) as { messages: { ID: string }[] };
-        for (const { ID } of messages) {
-          const message = await request.get(`${MAILPIT}/api/v1/message/${ID}`);
-          const { Text } = (await message.json()) as { Text: string };
-          token = new RegExp(`/${page}\\?token=([\\w-]+)`).exec(Text)?.[1] ?? '';
-          if (token) {
-            return true;
-          }
-        }
-        return false;
-      },
-      { message: `an email with a ${page} link for ${to}`, timeout: 20_000 },
-    )
-    .toBe(true);
-  return token;
-}
-
-/** A back-office account: invited by the super admin, password chosen with the emailed link. */
-async function inviteStaff(
-  browser: Browser,
-  role: 'RECRUITER' | 'VIEWER',
-): Promise<{ context: BrowserContext; email: string }> {
-  const email = `e2e-${role.toLowerCase()}-${STAMP}@example.test`;
-  const admin = await browser.newContext();
-  const credentials = seededAdmin();
-  await signIn(admin.request, credentials.email, credentials.password);
-  const created = await admin.request.post('/api/v1/admin/users', {
-    data: { email, role, locale: 'en' },
-  });
-  expect(created.status(), `invitation of the ${role}`).toBe(201);
-  await admin.close();
-
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const token = await emailToken(context.request, email, 'set-password');
-  // The page behind the invitation email.
-  await page.goto(`/en/set-password?token=${token}`);
-  await page.getByLabel(/^New password/).fill(PASSWORD);
-  await page.getByRole('button', { name: 'Save my password' }).click();
-  await expect(page).toHaveURL(/\/en\/login\?reset=done/);
-  await page.close();
-  await signIn(context.request, email, PASSWORD);
-  return { context, email };
-}
-
-/** A verified candidate with a complete profile, a CV and a passport scan, made through the API. */
-async function readyCandidate(
-  browser: Browser,
-  firstName: string,
-): Promise<{ context: BrowserContext; email: string }> {
-  const email = `e2e-candidate-${STAMP}@example.test`;
-  const context = await browser.newContext();
-  const { request } = context;
-  const registered = await request.post('/api/v1/auth/register', {
-    data: {
-      email,
-      password: PASSWORD,
-      firstName,
-      lastName: 'Khelifi',
-      phone: '+21620123456',
-      country: 'TN',
-      gdprConsent: true,
-      turnstileToken: 'turnstile-test-key',
-      locale: 'en',
-    },
-  });
-  expect(registered.status()).toBe(201);
-  const token = await emailToken(request, email, 'verify-email');
-  expect((await request.post('/api/v1/auth/verify-email', { data: { token } })).status()).toBe(204);
-  await signIn(request, email, PASSWORD);
-  const profile = await request.put('/api/v1/me/profile', {
-    data: {
-      firstName,
-      lastName: 'Khelifi',
-      gender: 'FEMALE',
-      dateOfBirth: '1995-04-12',
-      nationality: 'TN',
-      countryOfResidence: 'TN',
-      city: 'Tunis',
-      phone: '+21620123456',
-      whatsapp: null,
-      passportNumber: 'X1234567',
-      passportIssuingCountry: 'TN',
-      passportIssueDate: '2022-01-15',
-      passportExpiryDate: '2032-01-14',
-      currentProfession: 'Welder',
-      yearsOfExperience: 6,
-      educationLevel: 'VOCATIONAL',
-      languages: [{ language: 'en', level: 'B2' }],
-      drivingLicenceCategories: [],
-      preferredDestinations: ['MALTA'],
-      hasStcwTraining: false,
-      hasSeamanBook: false,
-      hasMedicalCertificate: false,
-      seaExperience: null,
-    },
-  });
-  expect(profile.status()).toBe(200);
-  for (const [type, name, mimeType, buffer] of [
-    ['CV', 'cv.pdf', 'application/pdf', PDF],
-    ['PASSPORT', 'passport.png', 'image/png', PNG],
-  ] as const) {
-    const uploaded = await request.post('/api/v1/me/documents', {
-      multipart: { type, file: { name, mimeType, buffer } },
-    });
-    expect(uploaded.status(), `upload of ${name}`).toBe(201);
-  }
-  return { context, email };
-}
 
 /** Presses on a card, moves it over a column and releases: a drag with a real mouse. */
 async function drag(page: Page, card: Locator, column: Locator): Promise<void> {
@@ -563,6 +399,7 @@ test.describe('back office', () => {
       const table = page.getByRole('table', { name: 'Applications' });
       await expect(table.getByRole('row').nth(1)).toBeVisible();
       await expect(table.getByRole('checkbox')).toHaveCount(0);
+      await expect(table.getByRole('button', { name: /^Delete the application/ })).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Export' })).toHaveCount(0);
       await table.getByRole('row').nth(1).getByRole('button').first().click();
       const detail = page.getByTestId('application-detail');
@@ -590,6 +427,7 @@ test.describe('back office', () => {
       await expect(page.getByTestId('candidate-profile')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Show' })).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Disable the account' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Delete the candidate' })).toHaveCount(0);
       const profile = (await (
         await request.get(`/api/v1/admin/candidates/${candidateId}`)
       ).json()) as {
@@ -643,6 +481,22 @@ test.describe('back office', () => {
         'change a setting',
       );
       await refused(request.get('/api/v1/admin/audit-logs'), 'read the audit log');
+      await refused(
+        request.delete(`/api/v1/admin/applications/${applicationId}`, {
+          data: { reason: 'Forced' },
+        }),
+        'delete an application',
+      );
+      await refused(
+        request.delete(`/api/v1/admin/candidates/${candidateId}`, { data: { reason: 'Forced' } }),
+        'delete a candidate',
+      );
+      await refused(
+        request.put('/api/v1/admin/historical-figures', {
+          data: { metric: 'PARTNER_COMPANIES', year: null, destinationId: null, value: 999 },
+        }),
+        'change a historical figure',
+      );
     });
 
     await staff.context.close();

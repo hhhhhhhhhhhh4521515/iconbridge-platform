@@ -24,13 +24,13 @@ export default defineConfig({
     actionTimeout: 15_000,
   },
   projects: [
-    { name: 'desktop', testIgnore: /admin\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },
-    { name: 'phone', testIgnore: /admin\.spec\.ts$/, use: { ...devices['Pixel 7'] } },
+    { name: 'desktop', testIgnore: /admin.*\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },
+    { name: 'phone', testIgnore: /admin.*\.spec\.ts$/, use: { ...devices['Pixel 7'] } },
     {
       // The back office is made for a desk or a tablet. It runs after the two others: every
       // test here signs several people in, and sign-ins are rate-limited per address.
       name: 'admin',
-      testMatch: /admin\.spec\.ts$/,
+      testMatch: /admin.*\.spec\.ts$/,
       dependencies: ['desktop', 'phone'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },

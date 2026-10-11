@@ -2,6 +2,7 @@ import { Controller, Get, HttpStatus, Param, Put, Req } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
   ADMIN_ROLES,
+  adminCapabilitiesSchema,
   adminStatsSchema,
   DEFAULT_SETTINGS,
   PERMISSIONS,
@@ -9,6 +10,7 @@ import {
   settingSchemas,
   settingValuesSchema,
   updateSettingSchema,
+  type AdminCapabilities,
   type AdminStats,
   type SettingKey,
   type SettingValues,
@@ -22,6 +24,7 @@ import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-ope
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SettingsService } from '../settings/settings.service.js';
 import { AdminStatsService } from './admin-stats.service.js';
+import { DeletionService } from './deletion.service.js';
 import { SkipAudit } from './audit/audit.decorator.js';
 import { AuditService } from './audit/audit.service.js';
 
@@ -36,6 +39,7 @@ export class AdminSettingsController {
     private readonly settings: SettingsService,
     private readonly audit: AuditService,
     private readonly stats: AdminStatsService,
+    private readonly deletion: DeletionService,
   ) {}
 
   @Get('stats')
@@ -50,6 +54,19 @@ export class AdminSettingsController {
   @ApiErrors(401, 403)
   getStats(): Promise<AdminStats> {
     return this.stats.get();
+  }
+
+  @Get('capabilities')
+  @Roles(...ADMIN_ROLES)
+  @ApiOperation({
+    summary: 'What I may do beyond the fixed rights of my role',
+    description:
+      '`canDeleteRecords`: true for a super admin, and for a recruiter when ALLOW_RECRUITER_DELETE is on.',
+  })
+  @ApiZodResponse(200, adminCapabilitiesSchema)
+  @ApiErrors(401, 403)
+  async capabilities(@CurrentUser() user: AuthUser): Promise<AdminCapabilities> {
+    return { canDeleteRecords: await this.deletion.mayDelete(user) };
   }
 
   @Get('settings')
@@ -71,7 +88,7 @@ export class AdminSettingsController {
     summary: 'Change a setting (super admin)',
     description:
       'Keys: REAPPLY_COOLDOWN_MONTHS, MAX_ACTIVE_APPLICATIONS, MAX_UPLOAD_SIZE_MB, CONTACT_EMAIL, CONTACT_PHONE, ' +
-      'CONTACT_WHATSAPP, CONTACT_ADDRESS. The value is checked against the rules of its key and applies at once.',
+      'CONTACT_WHATSAPP, CONTACT_ADDRESS, SOCIAL_*, ALLOW_RECRUITER_DELETE. The value is checked against the rules of its key and applies at once.',
   })
   @ApiParam({ name: 'key', enum: Object.keys(DEFAULT_SETTINGS) })
   @ApiZodBody(updateSettingSchema)

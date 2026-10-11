@@ -1,4 +1,5 @@
 import {
+  Building2,
   Anchor,
   BadgeCheck,
   Briefcase,
@@ -137,10 +138,31 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   ].slice(0, 8);
 
   const counters = [
-    { label: t('stats.openJobs'), value: stats?.openJobs ?? 0, icon: Briefcase },
-    { label: t('stats.candidates'), value: stats?.registeredCandidates ?? 0, icon: UserRoundPlus },
-    { label: t('stats.visas'), value: stats?.visasApproved ?? 0, icon: BadgeCheck },
-    { label: t('stats.countries'), value: stats?.countries ?? destinations.length, icon: Anchor },
+    { id: 'open-jobs', label: t('stats.openJobs'), value: stats?.openJobs ?? 0, icon: Briefcase },
+    {
+      id: 'candidates',
+      label: t('stats.candidates'),
+      value: stats?.registeredCandidates ?? 0,
+      icon: UserRoundPlus,
+    },
+    { id: 'visas', label: t('stats.visas'), value: stats?.visasApproved ?? 0, icon: BadgeCheck },
+    // Shown once the agency has partner companies to count, on the platform or before it.
+    ...(stats && stats.partnerCompanies > 0
+      ? [
+          {
+            id: 'companies',
+            label: t('stats.companies'),
+            value: stats.partnerCompanies,
+            icon: Building2,
+          },
+        ]
+      : []),
+    {
+      id: 'countries',
+      label: t('stats.countries'),
+      value: stats?.countries ?? destinations.length,
+      icon: Anchor,
+    },
   ];
 
   const storyLabels = {
@@ -206,14 +228,21 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         <h2 id="stats-title" className="sr-only">
           {t('stats.title')}
         </h2>
-        <dl className="container-page grid grid-cols-2 gap-6 py-10 lg:grid-cols-4">
+        <dl
+          className={`container-page grid grid-cols-2 gap-6 py-10 ${counters.length > 4 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'lg:grid-cols-4'}`}
+          data-testid="home-counters"
+        >
           {counters.map((counter) => (
             <div
               key={counter.label}
               className="flex flex-col-reverse items-center gap-1 text-center"
             >
               <dt className="text-sm font-medium text-muted-foreground">{counter.label}</dt>
-              <dd className="flex items-center gap-2 text-3xl font-bold sm:text-4xl">
+              <dd
+                className="flex items-center gap-2 text-3xl font-bold sm:text-4xl"
+                data-testid={`counter-${counter.id}`}
+                data-value={counter.value}
+              >
                 <counter.icon className="size-7 text-brand-gold" aria-hidden />
                 <Counter value={counter.value} locale={locale} />
               </dd>

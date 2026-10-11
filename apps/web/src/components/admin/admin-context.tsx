@@ -15,6 +15,11 @@ interface Admin {
   user: SessionUser;
   /** What the menus and buttons show. The API decides again on every call. */
   can: (permission: Permission) => boolean;
+  /**
+   * Deleting candidates and applications: a super admin, or a recruiter when the
+   * setting allows it. Told by the API, which checks again on every deletion.
+   */
+  canDelete: boolean;
 }
 
 const AdminContext = createContext<Admin | null>(null);
@@ -31,7 +36,7 @@ type State =
   | { status: 'loading' }
   | { status: 'failed' }
   | { status: 'forbidden' }
-  | { status: 'ready'; user: SessionUser };
+  | { status: 'ready'; user: SessionUser; canDelete: boolean };
 
 async function load(): Promise<State> {
   let session = await attempt(api.GET('/api/v1/auth/session'));
@@ -47,7 +52,11 @@ async function load(): Promise<State> {
     goToLogin();
     return { status: 'loading' };
   }
-  return user.role === 'CANDIDATE' ? { status: 'forbidden' } : { status: 'ready', user };
+  if (user.role === 'CANDIDATE') {
+    return { status: 'forbidden' };
+  }
+  const capabilities = await attempt(api.GET('/api/v1/admin/capabilities'));
+  return { status: 'ready', user, canDelete: capabilities.data?.canDeleteRecords ?? false };
 }
 
 export function AdminProvider({
@@ -74,10 +83,17 @@ export function AdminProvider({
     };
   }, []);
   const user = state.status === 'ready' ? state.user : null;
+  const canDelete = state.status === 'ready' && state.canDelete;
   const admin = useMemo(
     () =>
-      user ? { user, can: (permission: Permission) => hasPermission(user.role, permission) } : null,
-    [user],
+      user
+        ? {
+            user,
+            can: (permission: Permission) => hasPermission(user.role, permission),
+            canDelete,
+          }
+        : null,
+    [user, canDelete],
   );
   if (!admin) {
     return state.status === 'forbidden' ? forbidden : state.status === 'failed' ? failed : loading;

@@ -25,8 +25,10 @@ import {
   APPLICATION_SORTS,
   APPLICATION_STATUSES,
   bulkApplicationStatusSchema,
+  bulkDeleteSchema,
   bulkResultSchema,
   changeApplicationStatusSchema,
+  deleteRecordSchema,
   exportApplicationsSchema,
   noteSchema,
   PERMISSIONS,
@@ -35,8 +37,10 @@ import {
   type AdminApplicationListQuery,
   type AdminApplicationSummary,
   type BulkApplicationStatusInput,
+  type BulkDeleteInput,
   type BulkResult,
   type ChangeApplicationStatusInput,
+  type DeleteRecordInput,
   type ExportApplicationsInput,
   type NoteInput,
   type Paginated,
@@ -48,6 +52,7 @@ import { CurrentUser, Roles } from '../../auth/decorators/index.js';
 import { ZodBody, ZodParams, ZodQuery } from '../../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodBody, ApiZodResponse } from '../../common/swagger/zod-openapi.js';
 import { Audit, SkipAudit } from '../audit/audit.decorator.js';
+import { DeletionService } from '../deletion.service.js';
 import { AdminApplicationsService } from './admin-applications.service.js';
 import { ApplicationExportService } from './export.service.js';
 
@@ -72,6 +77,7 @@ export class AdminApplicationsController {
   constructor(
     private readonly applications: AdminApplicationsService,
     private readonly exports: ApplicationExportService,
+    private readonly deletion: DeletionService,
   ) {}
 
   @Get()
@@ -121,6 +127,29 @@ export class AdminApplicationsController {
     return this.applications.bulkChangeStatus(body, user, requestMeta(request).ip);
   }
 
+  @Post('bulk-delete')
+  @HttpCode(HttpStatus.OK)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Delete several applications',
+    description: 'Same rule as deleting one. One audit entry per application deleted.',
+  })
+  @ApiZodBody(bulkDeleteSchema)
+  @ApiZodResponse(200, bulkResultSchema)
+  @ApiErrors(400, 401, 403)
+  bulkDelete(
+    @ZodBody(bulkDeleteSchema) body: BulkDeleteInput,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<BulkResult> {
+    const { ip } = requestMeta(request);
+    return this.deletion.bulk(
+      body,
+      (id) => this.deletion.deleteApplication(id, body.reason, user, ip),
+      user,
+    );
+  }
+
   @Post('export')
   @HttpCode(HttpStatus.OK)
   @Roles(...PERMISSIONS.EXPORT_APPLICATIONS)
@@ -162,6 +191,29 @@ export class AdminApplicationsController {
     @CurrentUser() user: AuthUser,
   ): Promise<AdminApplicationDetail> {
     return this.applications.get(params.id, user);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Delete an application',
+    description:
+      'For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history ' +
+      'and the internal notes go with it; the documents stay with the candidate. A position taken by a deployed ' +
+      'candidate stays taken (hiredCount does not change), and the candidate may apply to the job again at once.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiZodBody(deleteRecordSchema)
+  @ApiResponse({ status: 204 })
+  @ApiErrors(400, 401, 403, 404)
+  async remove(
+    @ZodParams(uuidParamSchema) params: IdParam,
+    @ZodBody(deleteRecordSchema) body: DeleteRecordInput,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.deletion.deleteApplication(params.id, body.reason, user, requestMeta(request).ip);
   }
 
   @Patch(':id/status')

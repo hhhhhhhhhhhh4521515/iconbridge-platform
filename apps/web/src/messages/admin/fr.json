@@ -58,7 +58,8 @@
     "CONFLICT": "Cette action est impossible dans l'état actuel.",
     "VALIDATION_ERROR": "Certaines valeurs ne sont pas valides. Vérifiez le formulaire.",
     "UNSUPPORTED_FILE": "Ce type de fichier n'est pas accepté ici.",
-    "FILE_TOO_LARGE": "Ce fichier est trop volumineux (5 Mo au maximum)."
+    "FILE_TOO_LARGE": "Ce fichier est trop volumineux (5 Mo au maximum).",
+    "NOT_FOUND": "Cet élément n'existe plus."
   },
   "status": {
     "SUBMITTED": "Envoyée",
@@ -107,7 +108,22 @@
     "funnel": "Candidatures par statut",
     "applications": "Candidatures",
     "latest": "Dernières candidatures",
-    "allApplications": "Toutes les candidatures"
+    "allApplications": "Toutes les candidatures",
+    "historyToggle": "Chiffres affichés",
+    "includingHistory": "Avec l'historique",
+    "platformOnly": "Plateforme seule",
+    "split": "{total} = {history} historiques + {platform} plateforme",
+    "seriesHistory": "Historique (avant la plateforme)",
+    "seriesPlatform": "Plateforme",
+    "resultsTitle": "Résultats",
+    "activityTitle": "Activité sur la plateforme",
+    "visasTotal": "Visas approuvés",
+    "deployedTotal": "Candidats en poste",
+    "candidatesTotal": "Candidats",
+    "companiesTotal": "Entreprises partenaires",
+    "countriesTotal": "Pays",
+    "visasPerYear": "Visas approuvés par année",
+    "visasPerDestination": "Visas approuvés par destination"
   },
   "editor": {
     "toolbar": "Mise en forme",
@@ -299,7 +315,17 @@
     "noNotes": "Aucune note pour l'instant.",
     "addNote": "Ajouter une note",
     "notePlaceholder": "Visible par l'équipe seulement, jamais par le candidat.",
-    "deleteNote": "Supprimer cette note"
+    "deleteNote": "Supprimer cette note",
+    "delete": "Supprimer la candidature",
+    "deleteTitle": "Supprimer cette candidature ?",
+    "deleteManyTitle": "{count, plural, one {Supprimer # candidature ?} other {Supprimer # candidatures ?}}",
+    "removedApplications": "{count, plural, one {La candidature} other {# candidatures}}",
+    "removedHistory": "Son historique de statuts et ses notes internes",
+    "keptDocuments": "Les documents restent dans le profil du candidat.",
+    "cooldownLifted": "Le candidat pourra postuler de nouveau à cette offre immédiatement : le délai d'attente de 6 mois ne s'applique plus.",
+    "hiredKept": "Un candidat en poste garde son poste : le nombre de recrutés de l'offre ne diminue pas.",
+    "deleted": "La candidature est supprimée.",
+    "deletedMany": "{count, plural, one {# candidature supprimée} other {# candidatures supprimées}}."
   },
   "snapshot": {
     "dateOfBirth": "Date de naissance",
@@ -378,7 +404,19 @@
       "experience": "Années d'expérience",
       "languages": "Langues",
       "completeness": "Profil complété"
-    }
+    },
+    "selectAll": "Sélectionner tous les candidats de la page",
+    "selectOne": "Sélectionner {name}",
+    "selected": "{count, plural, one {# candidat sélectionné} other {# candidats sélectionnés}}",
+    "delete": "Supprimer le candidat",
+    "deleteTitle": "Supprimer {name} ?",
+    "deleteManyTitle": "{count, plural, one {Supprimer # candidat ?} other {Supprimer # candidats ?}}",
+    "removedProfiles": "{count, plural, one {Le profil et le compte} other {# profils et comptes}}",
+    "removedDocuments": "{count, plural, =0 {Aucun document} one {# document, retiré du stockage} other {# documents, retirés du stockage}}",
+    "removedApplications": "{count, plural, =0 {Aucune candidature} one {Le contenu personnel de # candidature} other {Le contenu personnel de # candidatures}}",
+    "keptNote": "Les candidatures restent sous forme de lignes anonymes : les totaux du tableau de bord et les postes pourvus des offres ne changent pas. Les candidatures en cours deviennent Retirées.",
+    "deleted": "Le candidat est supprimé.",
+    "deletedMany": "{count, plural, one {# candidat supprimé} other {# candidats supprimés}}."
   },
   "stories": {
     "title": "Témoignages",
@@ -541,12 +579,14 @@
     "groups": {
       "rules": "Règles",
       "contact": "Coordonnées",
-      "social": "Réseaux sociaux"
+      "social": "Réseaux sociaux",
+      "deletion": "Suppression"
     },
     "groupHelp": {
       "rules": "Appliquées immédiatement par l'API.",
       "contact": "Affichées dans la barre supérieure, le pied de page et la page de contact.",
-      "social": "Liens affichés dans le pied de page. Laissez un champ vide pour masquer le lien."
+      "social": "Liens affichés dans le pied de page. Laissez un champ vide pour masquer le lien.",
+      "deletion": "Un super administrateur peut toujours supprimer des candidats et des candidatures."
     },
     "keys": {
       "REAPPLY_COOLDOWN_MONTHS": "Mois avant de postuler de nouveau",
@@ -559,7 +599,8 @@
       "SOCIAL_FACEBOOK": "Facebook",
       "SOCIAL_INSTAGRAM": "Instagram",
       "SOCIAL_TIKTOK": "TikTok",
-      "SOCIAL_LINKEDIN": "LinkedIn"
+      "SOCIAL_LINKEDIN": "LinkedIn",
+      "ALLOW_RECRUITER_DELETE": "Les recruteurs peuvent supprimer des candidats et des candidatures"
     },
     "help": {
       "REAPPLY_COOLDOWN_MONTHS": "De 0 à 60. Un candidat doit attendre ce délai avant de postuler de nouveau à la même offre.",
@@ -572,7 +613,8 @@
       "SOCIAL_FACEBOOK": "https://www.facebook.com/…",
       "SOCIAL_INSTAGRAM": "https://www.instagram.com/…",
       "SOCIAL_TIKTOK": "https://www.tiktok.com/@…",
-      "SOCIAL_LINKEDIN": "https://www.linkedin.com/company/…"
+      "SOCIAL_LINKEDIN": "https://www.linkedin.com/company/…",
+      "ALLOW_RECRUITER_DELETE": "Désactivé : seul un super administrateur le peut. Chaque suppression demande un motif et est inscrite au journal d'audit."
     }
   },
   "audit": {
@@ -590,5 +632,41 @@
     "after": "Après",
     "system": "Système",
     "empty": "Aucune entrée ne correspond."
+  },
+  "deletion": {
+    "willRemove": "Ceci sera supprimé définitivement :",
+    "reason": "Motif",
+    "reasonHint": "Conservé dans le journal d'audit avec votre nom. N'écrivez ici ni nom, ni adresse, ni autre donnée personnelle.",
+    "type": "Saisissez {word} pour confirmer",
+    "irreversible": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "partly": "{changed} supprimés, {refused} n'ont pas pu l'être."
+  },
+  "history": {
+    "title": "Résultats historiques",
+    "intro": "Résultats obtenus par IconBridge avant l'existence de cette plateforme. Ils sont conservés à part des candidatures et s'y ajoutent dans les totaux du tableau de bord et dans les compteurs de la page d'accueil.",
+    "year": "Année",
+    "yearsWithFigures": "Années renseignées :",
+    "tableLabel": "Résultats historiques de {year}",
+    "destination": "Destination",
+    "note": "Note",
+    "notePlaceholder": "Source du chiffre (facultatif)",
+    "metrics": {
+      "VISAS_APPROVED": "Visas approuvés",
+      "CANDIDATES_DEPLOYED": "Candidats en poste",
+      "CANDIDATES_REGISTERED": "Candidats inscrits ou traités",
+      "PARTNER_COMPANIES": "Entreprises partenaires",
+      "COUNTRIES_SERVED": "Pays desservis"
+    },
+    "globalTitle": "Chiffres globaux",
+    "globalIntro": "Un seul chiffre pour toutes les années et destinations.",
+    "help": {
+      "PARTNER_COMPANIES": "Ajouté aux employeurs des offres publiées sur la plateforme.",
+      "COUNTRIES_SERVED": "Le nombre total de pays. Le site l'affiche quand il dépasse le nombre de destinations actives ; les deux ne s'additionnent pas."
+    },
+    "audited": "Chaque modification est inscrite au journal d'audit avec la valeur avant et après.",
+    "save": "Enregistrer les chiffres",
+    "saved": "{count, plural, one {# chiffre enregistré} other {# chiffres enregistrés}}. Les compteurs du site sont mis à jour."
   }
 }

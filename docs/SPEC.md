@@ -39,19 +39,22 @@ The reasons are recorded in [ADR-001](adr/ADR-001-stack-choice.md).
 | Recruiter (admin) | `RECRUITER`               | Back-office user           |
 | Super admin       | `SUPER_ADMIN`             | Platform owner             |
 
-| Capability                                                    | Visitor | Candidate | Viewer    | Recruiter | Super admin |
-| ------------------------------------------------------------- | ------- | --------- | --------- | --------- | ----------- |
-| Browse jobs, home, success stories                            | Yes     | Yes       | Yes       | Yes       | Yes         |
-| Register, verify email, manage own profile and documents      | -       | Yes       | -         | -         | -           |
-| Apply to a job, withdraw, track status                        | -       | Yes       | -         | -         | -           |
-| Download / delete own data (GDPR)                             | -       | Yes       | -         | -         | -           |
-| See candidates, applications, documents                       | -       | -         | Read only | Yes       | Yes         |
-| Create / edit / publish / close / delete job offers           | -       | -         | -         | Yes       | Yes         |
-| Change application status, add internal notes                 | -       | -         | -         | Yes       | Yes         |
-| Manage success stories, home slides, categories, destinations | -       | -         | -         | Yes       | Yes         |
-| Export applications to CSV / Excel                            | -       | -         | -         | Yes       | Yes         |
-| Create / disable admin accounts, assign roles                 | -       | -         | -         | -         | Yes         |
-| Global settings (cooldown period, upload limits), audit log   | -       | -         | -         | -         | Yes         |
+| Capability                                                    | Visitor | Candidate | Viewer    | Recruiter                                                           | Super admin |
+| ------------------------------------------------------------- | ------- | --------- | --------- | ------------------------------------------------------------------- | ----------- |
+| Browse jobs, home, success stories                            | Yes     | Yes       | Yes       | Yes                                                                 | Yes         |
+| Register, verify email, manage own profile and documents      | -       | Yes       | -         | -                                                                   | -           |
+| Apply to a job, withdraw, track status                        | -       | Yes       | -         | -                                                                   | -           |
+| Download / delete own data (GDPR)                             | -       | Yes       | -         | -                                                                   | -           |
+| See candidates, applications, documents                       | -       | -         | Read only | Yes                                                                 | Yes         |
+| Create / edit / publish / close / delete job offers           | -       | -         | -         | Yes                                                                 | Yes         |
+| Change application status, add internal notes                 | -       | -         | -         | Yes                                                                 | Yes         |
+| Manage success stories, home slides, categories, destinations | -       | -         | -         | Yes                                                                 | Yes         |
+| Export applications to CSV / Excel                            | -       | -         | -         | Yes                                                                 | Yes         |
+| Create / disable admin accounts, assign roles                 | -       | -         | -         | -                                                                   | Yes         |
+| Global settings (cooldown period, upload limits), audit log   | -       | -         | -         | -                                                                   | Yes         |
+| Enter historical results (figures from before the platform)   | -       | -         | -         | -                                                                   | Yes         |
+| See the split "historical + platform" on the dashboard        | -       | -         | Yes       | Yes                                                                 | Yes         |
+| Delete a candidate or an application (with a reason, audited) | -       | -         | -         | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
 
 - The first super admin is created by a seed script from environment variables.
 - There is no public sign-up for admins.
@@ -120,6 +123,18 @@ Exit statuses: Rejected (`REJECTED`) and Withdrawn (`WITHDRAWN`, by the candidat
 ### 7.1 Home page
 
 Animated hero slider (Malta, Poland, cruise ship slides managed by admin), job search bar, animated counters, destinations, categories, latest jobs, "How it works" in 3 steps, success-stories carousel, testimonials, FAQ, contact form, job-alert subscription.
+
+**Counters.** The home page shows open jobs, registered candidates, visas approved, partner companies and countries. IconBridge placed candidates before this platform existed, so the counters add **historical results** entered by the super admin to the live data:
+
+| Counter               | Live data of the platform                      | Historical figure added                                                             |
+| --------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Visas approved        | Applications in Visa approved or Deployed      | Visas approved, per year and destination                                            |
+| Registered candidates | Active candidate accounts                      | Candidates registered/processed, per year and destination                           |
+| Partner companies     | Distinct employers of jobs that were published | Partner companies (one global figure)                                               |
+| Countries             | Active destinations                            | Countries served (one global figure); the larger of the two is shown, not their sum |
+| Open jobs             | Jobs open now                                  | None                                                                                |
+
+Historical figures are stored apart from applications (year, destination, metric, value, note), every change is written to the audit log, and the back-office dashboard shows each total with its split (for example 253 = 250 historical + 3 platform) and can switch to "Platform only". Candidates deployed is a dashboard figure only.
 
 A success story has a photo, name, job, destination, visa date and short quote. It is published only with the candidate's written consent.
 

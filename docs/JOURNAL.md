@@ -466,3 +466,41 @@ Recruiters had an API and no screen. Reasons for the choices: [ADR-009](adr/ADR-
 | `pnpm build`, `pnpm test:browser` | Not run: no application code changed, and the dev servers were left running on the ports they need             |
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/10>
+
+## 2026-10-11 - Historical results, deleting candidates and applications
+
+**What**
+
+- `docs/SPEC.md` first: three rows in the privileges table and a "Counters" section.
+- Historical results: table `historical_figures` (migration), `GET/PUT/DELETE /admin/historical-figures` for the super admin, audited with before and after. `GET /admin/stats` returns `platform` and `history` separately; `GET /stats` returns their sum, with a new `partnerCompanies` counter, and its cache is emptied when a figure changes.
+- Settings page: section "Historical results" (per year and destination, plus two global figures) and the switch `ALLOW_RECRUITER_DELETE`.
+- Dashboard: totals with the split on each card ("252 = 250 historical + 2 platform") and as a tooltip, switch "Including history / Platform only", two charts where the history is its own series.
+- Home page: counters use the totals; a "Partner companies" counter appears when there is something to count.
+- Deleting a candidate (detail page and bulk) and an application (drawer, table row, bulk), with a dialog that lists what is removed, needs a reason and the word DELETE. `GET /admin/capabilities` tells the screens whether the user may delete.
+
+**Why**
+
+The agency's results from before the platform were missing from its counters, and records created by mistake could not be removed. Reasons for the choices: [ADR-010](adr/ADR-010-historical-results-and-deletions.md).
+
+**Notes**
+
+- Countries are not added: the site shows the larger of "active destinations" and the historical "countries served".
+- Deleting an application lowers the application counts (it is a removal); deleting a candidate keeps them, with applications in progress turned into Withdrawn.
+- One existing API test was updated for the new `partnerCompanies` field of `GET /stats`.
+- Running `pnpm build` while `pnpm dev` was running corrupted the dev server (it answered 500). It was restarted, and the rule is now in `CLAUDE.md`. The browser suite was run on a production build.
+- Not covered by a browser test: bulk deletion of candidates and of applications, deletion from the drawer, the recruiter switch in the settings screen, the two global figures in the form. Their endpoints are covered by API tests.
+
+**Checks**
+
+| Check                                       | Result                                                                                                                                                                                                                                                                              |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | Pass                                                                                                                                                                                                                                                                                |
+| `pnpm test`                                 | Pass: 429 unit tests (shared 133, api 267, web 29)                                                                                                                                                                                                                                  |
+| `pnpm test:e2e`                             | Pass: 447 tests (24 new)                                                                                                                                                                                                                                                            |
+| `pnpm test:browser`                         | Pass: 42 runs (19 tests on desktop and phone, 4 back-office tests)                                                                                                                                                                                                                  |
+| Done when: 250 historical visas for Malta   | Pass in the browser: the dashboard card shows the total and "total = 250 historical + platform", "Platform only" shows the platform figure alone, the home page counter shows the same total                                                                                        |
+| Done when: deleting a test candidate        | Pass in the browser: the signed links to the two files answer 200 before and 404 after, the account answers 401, the number of applications and of approved visas on the dashboard is unchanged, the audit entry holds the reason and the counts and neither the email nor the name |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/11>
+
+**Remaining**: Dockerfiles, Terraform, CI/CD, legal review of the policy texts, a data retention task.

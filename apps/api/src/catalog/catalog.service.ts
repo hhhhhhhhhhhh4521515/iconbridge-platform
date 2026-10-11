@@ -3,6 +3,7 @@ import type { Category, Destination, PublicStats } from '@iconbridge/shared';
 import { localized } from '../jobs/job.mapper.js';
 import { OPEN_JOB_SQL } from '../jobs/public-jobs.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ResultsService } from './results.service.js';
 
 export const STATS_TTL_MS = 10 * 60 * 1000;
 
@@ -11,7 +12,10 @@ export const STATS_TTL_MS = 10 * 60 * 1000;
 export class CatalogService {
   private stats: { value: PublicStats; expiresAt: number } | undefined;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly results: ResultsService,
+  ) {}
 
   async destinations(): Promise<Destination[]> {
     const [rows, counts] = await Promise.all([
@@ -59,20 +63,26 @@ export class CatalogService {
     if (this.stats && this.stats.expiresAt > now) {
       return this.stats.value;
     }
-    const [row] = await this.prisma.$queryRaw<PublicStats[]>`
-      SELECT
-        (SELECT count(*)::int FROM jobs j WHERE ${OPEN_JOB_SQL}) AS "openJobs",
-        (SELECT count(*)::int FROM users u
-          WHERE u.role = 'CANDIDATE' AND u.deleted_at IS NULL AND u.is_active) AS "registeredCandidates",
-        (SELECT count(*)::int FROM applications a
-          WHERE a.status IN ('VISA_APPROVED', 'DEPLOYED')) AS "visasApproved",
-        (SELECT count(*)::int FROM destinations d WHERE d.is_active) AS "countries"`;
-    const value = row ?? { openJobs: 0, registeredCandidates: 0, visasApproved: 0, countries: 0 };
+    const [[open], platform, history] = await Promise.all([
+      this.prisma.$queryRaw<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM jobs j WHERE ${OPEN_JOB_SQL}`,
+      this.results.platform(),
+      this.results.history(),
+    ]);
+    // The site shows what the agency achieved in all: on this platform and before it.
+    const value: PublicStats = {
+      openJobs: open?.count ?? 0,
+      registeredCandidates: platform.registeredCandidates + history.registeredCandidates,
+      visasApproved: platform.visasApproved + history.visasApproved,
+      partnerCompanies: platform.partnerCompanies + history.partnerCompanies,
+      // Not a sum: the historical figure is the total number of countries served.
+      countries: Math.max(platform.countries, history.countries),
+    };
     this.stats = { value, expiresAt: now + STATS_TTL_MS };
     return value;
   }
 
-  /** For tests. */
+  /** Called when a historical figure changes, and by tests: the next read computes the counters again. */
   clearStatsCache(): void {
     this.stats = undefined;
   }

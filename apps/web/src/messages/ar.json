@@ -93,9 +93,10 @@
   "stats": {
     "title": "IconBridge بالأرقام",
     "openJobs": "وظائف متاحة",
-    "candidates": "مترشحون مسجّلون",
+    "candidates": "مترشحون",
     "visas": "تأشيرات تمت الموافقة عليها",
-    "countries": "وجهات"
+    "countries": "دول",
+    "companies": "شركات شريكة"
   },
   "destinations": {
     "title": "أين تودّ أن تعمل؟",
