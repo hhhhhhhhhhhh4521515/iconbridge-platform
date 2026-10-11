@@ -8,6 +8,7 @@ export const EMAIL_TEMPLATES = [
   'application-received',
   'new-application',
   'application-status',
+  'application-status-correction',
   'job-alert-confirm',
   'job-alert',
   'contact-message',
@@ -172,6 +173,15 @@ const en: Record<EmailTemplate, Builder> = {
     buttonLabel: 'View my applications',
     footnotes: [NEVER_PAY.en],
   }),
+  'application-status-correction': ({ jobTitle = '', status = 'UNDER_REVIEW' }) => ({
+    subject: `Correction about your application - ${BRAND}`,
+    heading: 'Correction',
+    paragraphs: [
+      `Our last message about your application for "${jobTitle}" was sent by mistake. Please ignore it. The status of your application is: ${STATUS_LABELS.en[status]}.`,
+    ],
+    buttonLabel: 'View my applications',
+    footnotes: [NEVER_PAY.en],
+  }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `Confirm your job alert - ${BRAND}`,
     heading: 'Confirm your job alert',
@@ -277,6 +287,15 @@ const fr: Record<EmailTemplate, Builder> = {
     buttonLabel: 'Voir mes candidatures',
     footnotes: [NEVER_PAY.fr],
   }),
+  'application-status-correction': ({ jobTitle = '', status = 'UNDER_REVIEW' }) => ({
+    subject: `Rectification concernant votre candidature - ${BRAND}`,
+    heading: 'Rectification',
+    paragraphs: [
+      `Notre dernier message concernant votre candidature pour « ${jobTitle} » a été envoyé par erreur. Merci de ne pas en tenir compte. Le statut de votre candidature est : ${STATUS_LABELS.fr[status]}.`,
+    ],
+    buttonLabel: 'Voir mes candidatures',
+    footnotes: [NEVER_PAY.fr],
+  }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `Confirmez votre alerte emploi - ${BRAND}`,
     heading: 'Confirmez votre alerte emploi',
@@ -374,6 +393,15 @@ const ar: Record<EmailTemplate, Builder> = {
     heading: `الحالة: ${STATUS_LABELS.ar[status]}`,
     paragraphs: [`أصبحت حالة طلبك لوظيفة «${jobTitle}»: ${STATUS_LABELS.ar[status]}.`],
     quote: message ?? null,
+    buttonLabel: 'عرض طلباتي',
+    footnotes: [NEVER_PAY.ar],
+  }),
+  'application-status-correction': ({ jobTitle = '', status = 'UNDER_REVIEW' }) => ({
+    subject: `تصحيح بخصوص طلبك - ${BRAND}`,
+    heading: 'تصحيح',
+    paragraphs: [
+      `أُرسلت رسالتنا الأخيرة بخصوص طلبك لوظيفة «${jobTitle}» عن طريق الخطأ. نرجو تجاهلها. حالة طلبك هي: ${STATUS_LABELS.ar[status]}.`,
+    ],
     buttonLabel: 'عرض طلباتي',
     footnotes: [NEVER_PAY.ar],
   }),

@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type {
-  AdminApplicationSummary,
+  AdminCandidateDetail,
   AdminCandidateListQuery,
   AdminCandidateSummary,
-  CandidateDocument,
-  CandidateProfileResponse,
   Paginated,
 } from '@iconbridge/shared';
 import { allowedApplicationTransitions } from '@iconbridge/shared';
@@ -40,13 +38,6 @@ const toSummary = (row: SummaryRow): AdminCandidateSummary => ({
   applicationCount: row._count.applications,
   registeredAt: row.user.createdAt.toISOString(),
 });
-
-export interface AdminCandidateDetail extends AdminCandidateSummary {
-  /** Full profile. The passport number is in clear: this view is written to the audit log. */
-  profile: CandidateProfileResponse;
-  documents: CandidateDocument[];
-  applications: AdminApplicationSummary[];
-}
 
 /** Candidates as the back office sees them. Erased accounts are not listed. */
 @Injectable()
@@ -120,7 +111,8 @@ export class AdminCandidatesService {
     const summary = toSummary(row);
     return {
       ...summary,
-      profile: this.profiles.toResponse(row, { revealPassport: true }),
+      // Masked here for every role; the clear number is given by the audited reveal action.
+      profile: this.profiles.toResponse(row, { revealPassport: false }),
       documents: documents.map(toCandidateDocument),
       applications: row.applications.map((application) => ({
         id: application.id,
@@ -142,6 +134,10 @@ export class AdminCandidatesService {
         allowedTransitions: allowedApplicationTransitions(application.status, viewer.role),
       })),
     };
+  }
+
+  revealPassport(id: string): Promise<string | null> {
+    return this.profiles.revealPassportNumber(id);
   }
 
   /** Disabling signs the candidate out at once; their data and applications stay. */

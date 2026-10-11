@@ -54,6 +54,7 @@
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "sanitize-html": "^2.18.0",
     "sharp": "^0.35.5",
     "zod": "catalog:"
   },
@@ -70,6 +71,7 @@
     "@types/node": "catalog:",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
+    "@types/sanitize-html": "^2.16.2",
     "@types/supertest": "^7.2.1",
     "dotenv": "^18.0.6",
     "eslint": "catalog:",

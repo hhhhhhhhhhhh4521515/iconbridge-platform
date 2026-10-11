@@ -59,7 +59,8 @@
     "privacy": "Privacy policy",
     "terms": "Terms of use",
     "follow": "Follow us",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "whatsapp": "WhatsApp"
   },
   "hero": {
     "label": "Featured destinations",
@@ -673,7 +674,9 @@
       "successTitle": "Your application has been sent",
       "successText": "We received your application to “{title}”. You will get an email at each step.",
       "viewApplication": "Follow my application",
-      "moreJobs": "See other jobs"
+      "moreJobs": "See other jobs",
+      "yes": "Yes",
+      "no": "No"
     },
     "settings": {
       "title": "Settings",
@@ -710,7 +713,8 @@
       "deleteType": "Type {word} to confirm",
       "deleteForever": "Delete my account for good",
       "cancel": "Cancel"
-    }
+    },
+    "openAdmin": "Open the back office"
   },
   "forms": {
     "saving": "Saving…",

@@ -655,7 +655,8 @@ stateDiagram-v2
 | Place                                                         | What is shown                                                                                                                                                             |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Lists, application detail, profile snapshot, ordinary exports | Masked (`********567`)                                                                                                                                                    |
-| Candidate detail `GET /admin/candidates/:id`                  | Clear; every view writes a `candidate.view` audit entry                                                                                                                   |
+| Candidate detail `GET /admin/candidates/:id`                  | Masked, for every role                                                                                                                                                    |
+| `POST /admin/candidates/:id/reveal-passport`                  | Clear, for a recruiter or a super admin (a viewer gets 403); every call writes a `candidate.reveal_passport` audit entry without the number                               |
 | Export with the `passportNumber` column                       | Clear, for a super admin who also sets `includeFullPassportNumber: true`; logged as `application.export_with_passport_numbers` with the number of rows, never the numbers |
 
 Every export is logged with its format, columns, filters and row count. Cells that could be read as formulas by a spreadsheet are neutralised.
@@ -801,6 +802,35 @@ sequenceDiagram
 - `Field` links each control to its label, hint and error (`aria-describedby`, `aria-invalid`, `role="alert"`).
 - Client components receive only the message groups they use, through `ClientMessages`.
 
+## Web application (back office)
+
+Decisions and reasons: [ADR-009](adr/ADR-009-back-office.md).
+
+- `app/[locale]/admin` has its own layout (`AdminShell`: sidebar, top bar, toasts, confirmation dialogs). The public pages live in the route group `app/[locale]/(site)`.
+- Texts: `messages/admin/en.json` and `fr.json`, loaded by the admin layout only.
+- `useAdmin().can(permission)` reads `PERMISSIONS` of `packages/shared`; it shows or hides menus and buttons. The API checks every call.
+- `useCall()` runs a call of the typed client and shows a toast; `useConfirm()` asks before a destructive action.
+
+| Route                               | Who sees it in the menu | Content                                                                                                                                                      |
+| ----------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/admin`                            | all three roles         | KPI cards, applications per month, per destination, by status, latest applications                                                                           |
+| `/admin/jobs`, `/new`, `/[id]`      | all (viewer: read only) | Table with filters and quick actions; form with rich text, cover crop, questions, preview, positions, deadline and the auto-close note                       |
+| `/admin/applications`               | all (viewer: read only) | Table or Kanban board; drawer with snapshot, answers, documents preview, history, notes, status change, undo, "create success story"; bulk change and export |
+| `/admin/candidates`, `/[id]`        | all (viewer: read only) | Search; profile, documents, applications; passport reveal for recruiters and super admins                                                                    |
+| `/admin/messages`                   | all (viewer: read only) | Inbox of the contact form: read, mark as handled, reopen                                                                                                     |
+| `/admin/content/stories`, `/slides` | recruiter, super admin  | Stories (photo, consent, publish, drag to reorder); slides with a live preview of the real slider                                                            |
+| `/admin/content/catalog`            | all (viewer: read only) | Destinations and categories                                                                                                                                  |
+| `/admin/users`                      | super admin             | Invite, change role, disable, log out everywhere                                                                                                             |
+| `/admin/settings`, `/admin/audit`   | super admin             | Rules, contact details, social links; audit log with filters and before/after                                                                                |
+
+### Undo of a status change
+
+`POST /admin/applications/:id/undo-status` succeeds when the last change that still counts was made by the caller less than 15 minutes ago (`UNDO_STATUS_MINUTES`) and is still the current status. The application returns to the previous status, the history row gets `reverted_at` (candidates no longer see it, the dashboard no longer counts it), a deployment gives its position back, and an `application.undo_status` audit entry is written. If the email of the undone change had been sent (`notified_at`), the candidate receives `application-status-correction`.
+
+### Questions of a job
+
+`jobs.questions` holds up to ten questions (`packages/shared/src/questions.ts`). `POST /jobs/:id/apply` checks the answers with `checkAnswers` (required, yes/no, one of the choices, no unknown key) and stores the questions as asked in `applications.questions`. The detail and the export read that copy. A job without questions accepts free answers, and the form asks its two general questions.
+
 ## Configuration
 
 | File            | Read by              | Validation                                        |
@@ -830,10 +860,10 @@ All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev
 | `apps/api` unit (`pnpm test`)            | Vitest                                  | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `apps/api` e2e (`pnpm test:e2e`)         | Vitest + supertest                      | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure, the application state machine and hired count, export permissions, the consent rule of success stories, job alerts, contact form and task locking. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
 | `apps/web` unit (`pnpm test`)            | Vitest                                  | Environment validation; the three message files have the same keys and placeholders; form validation against the shared schemas; upload checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/web` browser (`pnpm test:browser`) | Playwright (desktop and phone profiles) | Hero slider (autoplay, pause, reduced motion), success stories, job filters in the URL, job page with JSON-LD and the Apply state, 404 for closed jobs, language switch and `dir="rtl"`, dark mode, sitemap and robots. Candidate area: redirect to login, registration errors, and the whole road (register, verify by the Mailpit link, profile, upload, apply, timeline, waiting period, withdraw, delete account). Needs the API, the seeded data and Mailpit                                                                                                                                                                                                                                                                       |
+| `apps/web` browser (`pnpm test:browser`) | Playwright (desktop and phone profiles) | Hero slider (autoplay, pause, reduced motion), success stories, job filters in the URL, job page with JSON-LD and the Apply state, 404 for closed jobs, language switch and `dir="rtl"`, dark mode, sitemap and robots. Back office (project `admin`, run last): recruiter scenario from a new job to a success story on the home page, viewer role checks with forced writes answered 403. Candidate area: redirect to login, registration errors, and the whole road (register, verify by the Mailpit link, profile, upload, apply, timeline, waiting period, withdraw, delete account). Needs the API, the seeded data and Mailpit                                                                                                   |
 
 The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
 ## Not built yet
 
-Data retention task, a back-office view of contact messages, the back-office interface (including the page behind the `admin/applications` email link), per-job questions, Dockerfiles, Terraform and CI/CD.
+Data retention task, Dockerfiles, Terraform and CI/CD.

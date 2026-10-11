@@ -72,12 +72,14 @@ export class ContentService {
     applicationId: string | null = null,
   ): Promise<AdminSuccessStory> {
     await this.requireDestination(input.destinationId);
-    const last = await this.prisma.successStory.aggregate({ _max: { sortOrder: true } });
+    // A new story goes first: once published it is among those the home page shows.
+    // The manager can drag it elsewhere.
+    const first = await this.prisma.successStory.aggregate({ _min: { sortOrder: true } });
     const row = await this.prisma.successStory.create({
       data: {
         ...input,
         visaApprovedAt: toDate(input.visaApprovedAt) ?? null,
-        sortOrder: (last._max.sortOrder ?? 0) + 1,
+        sortOrder: (first._min.sortOrder ?? 1) - 1,
         applicationId,
       },
       include: STORY_INCLUDE,
@@ -97,7 +99,7 @@ export class ContentService {
         candidate: { select: { firstName: true, lastName: true } },
         job: { select: { title: true, destinationId: true } },
         statusHistory: {
-          where: { toStatus: 'VISA_APPROVED' },
+          where: { toStatus: 'VISA_APPROVED', revertedAt: null },
           orderBy: { createdAt: 'asc' },
           take: 1,
         },

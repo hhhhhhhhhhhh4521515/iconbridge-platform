@@ -161,7 +161,8 @@ describe('success stories and home slides (e2e)', () => {
       await published({ firstName: 'Youssef', lastName: 'Trabelsi', showFullName: true });
       await published({ firstName: 'Lina', lastName: '' });
       const stories = await publicStories();
-      expect(stories.map((item) => item.name)).toEqual(['Amira B.', 'Youssef Trabelsi', 'Lina']);
+      // The newest story comes first until somebody reorders them.
+      expect(stories.map((item) => item.name)).toEqual(['Lina', 'Youssef Trabelsi', 'Amira B.']);
       const raw = JSON.stringify(stories);
       expect(raw).not.toContain('Ben Salah');
       expect(raw).not.toContain('lastName');
@@ -178,8 +179,10 @@ describe('success stories and home slides (e2e)', () => {
         .upload(`/admin/success-stories/${first.id}/photo`, await jpg(), 'p.jpg')
         .expect(200);
 
-      const stories = await publicStories();
-      expect(stories.map((item) => item.name)).toEqual(['Amira B.', 'Second B.']);
+      const [newest, oldest] = await publicStories();
+      // A new story is placed first, so that it is among those the home page shows.
+      expect([newest?.name, oldest?.name]).toEqual(['Second B.', 'Amira B.']);
+      const stories = [oldest, newest];
       expect(stories[0]).toMatchObject({
         jobTitle: 'Hotel Receptionist',
         destination: { code: 'MALTA' },
@@ -198,10 +201,10 @@ describe('success stories and home slides (e2e)', () => {
       }[];
       await as(test, recruiter)
         .put('/admin/success-stories/order', {
-          ids: [second.id, ...all.map((s) => s.id).filter((id) => id !== second.id)],
+          ids: [first.id, ...all.map((s) => s.id).filter((id) => id !== first.id)],
         })
         .expect(200);
-      expect((await publicStories()).map((item) => item.name)).toEqual(['Second B.', 'Amira B.']);
+      expect((await publicStories()).map((item) => item.name)).toEqual(['Amira B.', 'Second B.']);
       await as(test, recruiter)
         .put('/admin/success-stories/order', { ids: [second.id] })
         .expect(400);

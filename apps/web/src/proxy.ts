@@ -32,21 +32,32 @@ function proxyToApi(request: NextRequest): NextResponse {
 
 /** Set by the API with the session cookies; see SESSION_MARKER_COOKIE in the API. */
 const SESSION_MARKER = 'ib_session';
-const ACCOUNT_AREA = new RegExp(`^/(${routing.locales.join('|')})/account(/.*)?$`);
+const PRIVATE_AREA = new RegExp(`^/(${routing.locales.join('|')})/(account|admin)(/.*)?$`);
+/** The back office exists in English and French; other languages open it in English. */
+const ADMIN_LOCALES = ['en', 'fr'];
 
 /**
- * The candidate area needs a session. Without the marker cookie the visitor goes to
- * the login page, which sends them back afterwards. This is a convenience, not the
- * protection: every piece of data comes from the API, which checks the real tokens.
+ * The candidate area and the back office need a session. Without the marker cookie
+ * the visitor goes to the login page, which sends them back afterwards. This is a
+ * convenience, not the protection: every piece of data comes from the API, which
+ * checks the real tokens and the role.
  */
-function loginRedirect(request: NextRequest): NextResponse | null {
-  const match = ACCOUNT_AREA.exec(request.nextUrl.pathname);
-  if (!match || request.cookies.has(SESSION_MARKER)) {
+function privateAreaRedirect(request: NextRequest): NextResponse | null {
+  const match = PRIVATE_AREA.exec(request.nextUrl.pathname);
+  if (!match) {
     return null;
   }
+  const [, locale = routing.defaultLocale, area = 'account', rest = ''] = match;
   const url = request.nextUrl.clone();
-  url.pathname = `/${match[1] ?? routing.defaultLocale}/login`;
-  url.search = `?next=${encodeURIComponent(`/account${match[2] ?? ''}${request.nextUrl.search}`)}`;
+  if (area === 'admin' && !ADMIN_LOCALES.includes(locale)) {
+    url.pathname = `/en/admin${rest}`;
+    return NextResponse.redirect(url);
+  }
+  if (request.cookies.has(SESSION_MARKER)) {
+    return null;
+  }
+  url.pathname = `/${locale}/login`;
+  url.search = `?next=${encodeURIComponent(`/${area}${rest}${request.nextUrl.search}`)}`;
   return NextResponse.redirect(url);
 }
 
@@ -54,7 +65,7 @@ export default function proxy(request: NextRequest): NextResponse {
   if (request.nextUrl.pathname.startsWith(API_PREFIX)) {
     return proxyToApi(request);
   }
-  return loginRedirect(request) ?? handleI18n(request);
+  return privateAreaRedirect(request) ?? handleI18n(request);
 }
 
 export const config = {

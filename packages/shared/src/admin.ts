@@ -8,6 +8,8 @@ import {
   type UserRole,
 } from './enums.js';
 import { localeSchema, localizedTextSchema } from './i18n.js';
+import { candidateDocumentSchema, candidateProfileResponseSchema } from './candidate.js';
+import { jobQuestionSchema } from './questions.js';
 import { paginationQuerySchema } from './schemas.js';
 
 // ---------------------------------------------------------------------------
@@ -132,6 +134,9 @@ export const bulkResultSchema = z.object({
 });
 export type BulkResult = z.infer<typeof bulkResultSchema>;
 
+/** A recruiter may undo their own last status change during this many minutes. */
+export const UNDO_STATUS_MINUTES = 15;
+
 export const noteSchema = z.object({ body: z.string().trim().min(1).max(5000) });
 export type NoteInput = z.infer<typeof noteSchema>;
 
@@ -156,6 +161,8 @@ export const adminApplicationDetailSchema = adminApplicationSummarySchema.extend
   withdrawnAt: z.iso.datetime().nullable(),
   coverLetter: z.string().nullable(),
   answers: z.record(z.string(), z.string()).nullable(),
+  /** The questions of the job as they were when the candidate applied; `answers` is keyed by their ids. */
+  questions: z.array(jobQuestionSchema),
   /** The profile as submitted (masked passport number). */
   profileSnapshot: z.record(z.string(), z.unknown()),
   documents: z.array(
@@ -177,8 +184,15 @@ export const adminApplicationDetailSchema = adminApplicationSummarySchema.extend
       changedByEmail: z.string().nullable(),
       comment: z.string().nullable(),
       messageToCandidate: z.string().nullable(),
+      /** Set when the author undid this change: it no longer counts and candidates do not see it. */
+      revertedAt: z.iso.datetime().nullable(),
     }),
   ),
+  /**
+   * Present when the current user may undo the last status change (their own, made
+   * less than 15 minutes ago): the status it would go back to, and until when.
+   */
+  undo: z.object({ toStatus: applicationStatusSchema, until: z.iso.datetime() }).nullable(),
   notes: z.array(
     z.object({
       id: z.uuid(),
@@ -214,6 +228,7 @@ export const EXPORT_COLUMNS = [
   'currentProfession',
   'yearsOfExperience',
   'languages',
+  'answers',
   'passportNumber',
 ] as const;
 export type ExportColumn = (typeof EXPORT_COLUMNS)[number];
@@ -285,6 +300,41 @@ export const adminCandidateSummarySchema = z.object({
   registeredAt: z.iso.datetime(),
 });
 export type AdminCandidateSummary = z.infer<typeof adminCandidateSummarySchema>;
+
+/** One candidate as the back office sees it. The passport number is masked; see the reveal action. */
+export const adminCandidateDetailSchema = adminCandidateSummarySchema.extend({
+  profile: candidateProfileResponseSchema,
+  documents: z.array(candidateDocumentSchema),
+  applications: z.array(adminApplicationSummarySchema),
+});
+export type AdminCandidateDetail = z.infer<typeof adminCandidateDetailSchema>;
+
+/** Answer of the audited "reveal passport number" action. */
+export const revealedPassportSchema = z.object({ passportNumber: z.string().nullable() });
+export type RevealedPassport = z.infer<typeof revealedPassportSchema>;
+
+// ---------------------------------------------------------------------------
+// Contact messages
+// ---------------------------------------------------------------------------
+
+export const contactMessageListQuerySchema = paginationQuerySchema.extend({
+  /** "true": handled messages only; "false": those still to handle; absent: all. */
+  handled: queryBoolean.optional(),
+  q: searchText.optional(),
+});
+export type ContactMessageListQuery = z.infer<typeof contactMessageListQuerySchema>;
+
+export const adminContactMessageSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  subject: z.string().nullable(),
+  message: z.string(),
+  handledAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type AdminContactMessage = z.infer<typeof adminContactMessageSchema>;
 
 // ---------------------------------------------------------------------------
 // Success stories and home slides
@@ -418,6 +468,37 @@ export const adminHomeSlideSchema = homeSlideSchema.extend({
 export type AdminHomeSlide = z.infer<typeof adminHomeSlideSchema>;
 
 // ---------------------------------------------------------------------------
+// Audit log
+// ---------------------------------------------------------------------------
+
+export const auditLogQuerySchema = paginationQuerySchema.extend({
+  /** Part of the action name, e.g. "job." or "undo". */
+  action: z.string().trim().min(2).max(60).optional(),
+  entityType: z.string().trim().min(1).max(40).optional(),
+  /** Part of the email address of the person who acted. */
+  actor: z.string().trim().min(2).max(100).optional(),
+  /** On or after this day (UTC). */
+  from: calendarDate.optional(),
+  /** On or before this day (UTC). */
+  to: calendarDate.optional(),
+});
+export type AuditLogQuery = z.infer<typeof auditLogQuerySchema>;
+
+export const auditLogEntrySchema = z.object({
+  id: z.uuid(),
+  actorId: z.uuid().nullable(),
+  actorEmail: z.string().nullable(),
+  action: z.string(),
+  entityType: z.string(),
+  entityId: z.string().nullable(),
+  before: z.unknown(),
+  after: z.unknown(),
+  ip: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
+
+// ---------------------------------------------------------------------------
 // Settings, dashboard
 // ---------------------------------------------------------------------------
 
@@ -425,6 +506,8 @@ export const updateSettingSchema = z.object({ value: z.unknown() });
 
 export const adminStatsSchema = z.object({
   openJobs: z.number().int(),
+  /** Applications received since Monday 00:00 UTC. */
+  newApplicationsThisWeek: z.number().int(),
   applicationsByStatus: z.record(applicationStatusSchema, z.number().int()),
   applicationsByDestination: z.array(z.object({ code: z.string(), count: z.number().int() })),
   /** The last 12 months, oldest first, months without application included. */

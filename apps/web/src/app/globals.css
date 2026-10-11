@@ -320,3 +320,38 @@ html[lang='ar'] body {
     U+E0077, U+E007F;
   font-display: swap;
 }
+
+/* Texts written with the editor of the back office (job description, requirements, benefits). */
+.rich-text {
+  line-height: 1.7;
+  color: color-mix(in oklab, var(--foreground) 90%, transparent);
+}
+.rich-text > * + * {
+  margin-block-start: 0.75rem;
+}
+.rich-text h3,
+.rich-text h4 {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.rich-text h3 {
+  font-size: 1.125rem;
+}
+.rich-text ul,
+.rich-text ol {
+  padding-inline-start: 1.5rem;
+}
+.rich-text ul {
+  list-style: disc;
+}
+.rich-text ol {
+  list-style: decimal;
+}
+.rich-text a {
+  text-decoration: underline;
+  font-weight: 500;
+}
+.rich-text blockquote {
+  border-inline-start: 3px solid var(--border);
+  padding-inline-start: 1rem;
+}

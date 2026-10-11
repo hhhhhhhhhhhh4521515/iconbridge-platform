@@ -1,6 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
+  ADMIN_ROLES,
   adminUserSchema,
   changeAdminRoleSchema,
   createAdminUserSchema,
@@ -13,6 +14,7 @@ import {
   type ListAdminUsersQuery,
   type Paginated,
 } from '@iconbridge/shared';
+import { z } from 'zod';
 import type { AuthUser } from '../../auth/auth.types.js';
 import { CurrentUser, Roles } from '../../auth/decorators/index.js';
 import { ZodBody, ZodParams, ZodQuery } from '../../common/pipes/zod-validation.pipe.js';
@@ -23,6 +25,12 @@ import { AdminUsersService } from './admin-users.service.js';
 interface IdParam {
   id: string;
 }
+const pageSchema = z.object({
+  items: z.array(adminUserSchema),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+  total: z.number().int(),
+});
 
 @ApiTags('admin: users')
 @ApiCookieAuth()
@@ -33,6 +41,10 @@ export class AdminUsersController {
 
   @Get()
   @ApiOperation({ summary: 'List back-office accounts (super admin)' })
+  @ApiQuery({ name: 'role', required: false, enum: ADMIN_ROLES })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiZodResponse(200, pageSchema)
   @ApiErrors(401, 403)
   list(
     @ZodQuery(listAdminUsersQuerySchema) query: ListAdminUsersQuery,

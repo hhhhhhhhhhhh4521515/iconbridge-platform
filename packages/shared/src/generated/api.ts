@@ -285,7 +285,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Audit log, newest first (super admin) */
+        /** Audit log, newest first, with filters (super admin) */
         get: operations["AuditLogsController_list"];
         put?: never;
         post?: never;
@@ -389,6 +389,26 @@ export interface paths {
         patch: operations["AdminApplicationsController_changeStatus"];
         trace?: never;
     };
+    "/api/v1/admin/applications/{id}/undo-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Undo my last status change
+         * @description Within 15 minutes, by the user who made the change, and only while it is still the current status. The application returns to the previous status; if the candidate had been emailed, a correction is sent.
+         */
+        post: operations["AdminApplicationsController_undoStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/applications/{id}/notes": {
         parameters: {
             query?: never;
@@ -450,11 +470,31 @@ export interface paths {
         };
         /**
          * One candidate: profile, documents and all applications
-         * @description Shows the full passport number, so each view is written to the audit log.
+         * @description The passport number is masked for every role. Recruiters and super admins get the clear number through `POST /admin/candidates/{id}/reveal-passport`.
          */
         get: operations["AdminCandidatesController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/candidates/{id}/reveal-passport": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Show the full passport number of a candidate
+         * @description For recruiters and super admins only; a viewer always sees the masked number. Every call is written to the audit log.
+         */
+        post: operations["AdminCandidatesController_revealPassport"];
         delete?: never;
         options?: never;
         head?: never;
@@ -546,6 +586,57 @@ export interface paths {
          */
         put: operations["AdminSettingsController_update"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/contact-messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Messages of the contact form, newest first */
+        get: operations["ContactMessagesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/contact-messages/{id}/handle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a message as handled */
+        post: operations["ContactMessagesController_handle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/contact-messages/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a message back among those to handle */
+        post: operations["ContactMessagesController_reopen"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1231,7 +1322,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Contact details shown on the site, and the upload size limit */
+        /** Contact details and social links shown on the site, and the upload size limit */
         get: operations["PublicContentController_siteInfo"];
         put?: never;
         post?: never;
@@ -1621,7 +1712,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1636,7 +1727,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1674,7 +1765,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1689,7 +1780,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1731,7 +1822,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1746,7 +1837,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1799,7 +1890,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1814,7 +1905,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1829,7 +1920,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1875,7 +1966,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1890,7 +1981,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1949,7 +2040,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -1964,7 +2055,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2003,7 +2094,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2018,7 +2109,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2097,7 +2188,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2109,13 +2200,45 @@ export interface operations {
     };
     AdminUsersController_list: {
         parameters: {
-            query?: never;
+            query?: {
+                pageSize?: number;
+                page?: number;
+                role?: "VIEWER" | "RECRUITER" | "SUPER_ADMIN";
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: email */
+                            email: string;
+                            /** @enum {string} */
+                            role: "VIEWER" | "RECRUITER" | "SUPER_ADMIN";
+                            isActive: boolean;
+                            hasPassword: boolean;
+                            /** @enum {string} */
+                            locale: "en" | "fr" | "ar";
+                            /** Format: date-time */
+                            lastLoginAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        page: number;
+                        pageSize: number;
+                        total: number;
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2123,7 +2246,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2138,7 +2261,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2200,7 +2323,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2215,7 +2338,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2230,7 +2353,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2245,7 +2368,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2303,7 +2426,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2318,7 +2441,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2333,7 +2456,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2348,7 +2471,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2363,7 +2486,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2414,7 +2537,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2429,7 +2552,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2444,7 +2567,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2459,7 +2582,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2510,7 +2633,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2525,7 +2648,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2540,7 +2663,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2591,7 +2714,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2606,7 +2729,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2621,7 +2744,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2633,13 +2756,67 @@ export interface operations {
     };
     AuditLogsController_list: {
         parameters: {
-            query?: never;
+            query?: {
+                pageSize?: number;
+                page?: number;
+                /** @description YYYY-MM-DD */
+                to?: unknown;
+                /** @description YYYY-MM-DD */
+                from?: unknown;
+                /** @description Part of the email of who acted */
+                actor?: unknown;
+                entityType?: unknown;
+                /** @description Part of the action name */
+                action?: unknown;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            actorId: string | null;
+                            actorEmail: string | null;
+                            action: string;
+                            entityType: string;
+                            entityId: string | null;
+                            before: unknown;
+                            after: unknown;
+                            ip: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        page: number;
+                        pageSize: number;
+                        total: number;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2647,7 +2824,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2662,7 +2839,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2742,7 +2919,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2757,7 +2934,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2772,7 +2949,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2826,7 +3003,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2841,7 +3018,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2856,7 +3033,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2896,10 +3073,11 @@ export interface operations {
                      *       "passportExpiryDate",
                      *       "currentProfession",
                      *       "yearsOfExperience",
-                     *       "languages"
+                     *       "languages",
+                     *       "answers"
                      *     ]
                      */
-                    columns?: ("applicationId" | "status" | "appliedAt" | "jobTitle" | "destination" | "firstName" | "lastName" | "email" | "phone" | "nationality" | "countryOfResidence" | "dateOfBirth" | "passportNumberMasked" | "passportExpiryDate" | "currentProfession" | "yearsOfExperience" | "languages" | "passportNumber")[];
+                    columns?: ("applicationId" | "status" | "appliedAt" | "jobTitle" | "destination" | "firstName" | "lastName" | "email" | "phone" | "nationality" | "countryOfResidence" | "dateOfBirth" | "passportNumberMasked" | "passportExpiryDate" | "currentProfession" | "yearsOfExperience" | "languages" | "answers" | "passportNumber")[];
                     ids?: string[];
                     filters?: {
                         /** Format: uuid */
@@ -2935,7 +3113,7 @@ export interface operations {
                 content: {
                     "text/csv": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2943,7 +3121,7 @@ export interface operations {
                     };
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2958,7 +3136,7 @@ export interface operations {
                 content: {
                     "text/csv": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2966,7 +3144,7 @@ export interface operations {
                     };
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2981,7 +3159,7 @@ export interface operations {
                 content: {
                     "text/csv": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -2989,7 +3167,7 @@ export interface operations {
                     };
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3044,6 +3222,27 @@ export interface operations {
                         answers: {
                             [key: string]: string;
                         } | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         profileSnapshot: {
                             [key: string]: unknown;
                         };
@@ -3068,7 +3267,15 @@ export interface operations {
                             changedByEmail: string | null;
                             comment: string | null;
                             messageToCandidate: string | null;
+                            /** Format: date-time */
+                            revertedAt: string | null;
                         }[];
+                        undo: {
+                            /** @enum {string} */
+                            toStatus: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN";
+                            /** Format: date-time */
+                            until: string;
+                        } | null;
                         notes: {
                             /** Format: uuid */
                             id: string;
@@ -3091,7 +3298,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3106,7 +3313,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3121,7 +3328,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3185,6 +3392,27 @@ export interface operations {
                         answers: {
                             [key: string]: string;
                         } | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         profileSnapshot: {
                             [key: string]: unknown;
                         };
@@ -3209,7 +3437,15 @@ export interface operations {
                             changedByEmail: string | null;
                             comment: string | null;
                             messageToCandidate: string | null;
+                            /** Format: date-time */
+                            revertedAt: string | null;
                         }[];
+                        undo: {
+                            /** @enum {string} */
+                            toStatus: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN";
+                            /** Format: date-time */
+                            until: string;
+                        } | null;
                         notes: {
                             /** Format: uuid */
                             id: string;
@@ -3232,7 +3468,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3247,7 +3483,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3262,7 +3498,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3277,7 +3513,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3292,7 +3528,183 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    AdminApplicationsController_undoStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** @enum {string} */
+                        status: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN";
+                        /** Format: date-time */
+                        appliedAt: string;
+                        job: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            slug: string;
+                            destinationCode: string;
+                        };
+                        candidate: {
+                            /** Format: uuid */
+                            id: string;
+                            firstName: string;
+                            lastName: string;
+                            email: string;
+                            nationality: string | null;
+                        };
+                        allowedTransitions: ("SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN")[];
+                        /** Format: date-time */
+                        withdrawnAt: string | null;
+                        coverLetter: string | null;
+                        answers: {
+                            [key: string]: string;
+                        } | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
+                        profileSnapshot: {
+                            [key: string]: unknown;
+                        };
+                        documents: {
+                            /** Format: uuid */
+                            id: string;
+                            type: string;
+                            originalName: string;
+                            mimeType: string;
+                            sizeBytes: number;
+                            deleted: boolean;
+                        }[];
+                        history: {
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string|null} */
+                            fromStatus: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN" | null;
+                            /** @enum {string} */
+                            toStatus: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN";
+                            /** Format: date-time */
+                            at: string;
+                            changedByEmail: string | null;
+                            comment: string | null;
+                            messageToCandidate: string | null;
+                            /** Format: date-time */
+                            revertedAt: string | null;
+                        }[];
+                        undo: {
+                            /** @enum {string} */
+                            toStatus: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN";
+                            /** Format: date-time */
+                            until: string;
+                        } | null;
+                        notes: {
+                            /** Format: uuid */
+                            id: string;
+                            body: string;
+                            /** Format: uuid */
+                            authorId: string;
+                            authorEmail: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3337,7 +3749,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3352,7 +3764,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3367,7 +3779,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3382,7 +3794,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3396,7 +3808,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                noteId: unknown;
+                id: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3414,7 +3829,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3429,7 +3844,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3444,7 +3859,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3458,7 +3873,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                noteId: unknown;
+                id: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -3487,7 +3905,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3502,7 +3920,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3517,7 +3935,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3532,7 +3950,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3596,7 +4014,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3611,7 +4029,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3626,7 +4044,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3648,6 +4066,111 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        userId: string;
+                        firstName: string;
+                        lastName: string;
+                        email: string;
+                        nationality: string | null;
+                        countryOfResidence: string | null;
+                        currentProfession: string | null;
+                        passportNumberMasked: string | null;
+                        isActive: boolean;
+                        emailVerified: boolean;
+                        applicationCount: number;
+                        /** Format: date-time */
+                        registeredAt: string;
+                        profile: {
+                            /** Format: uuid */
+                            id: string;
+                            firstName: string;
+                            lastName: string;
+                            /** @enum {string|null} */
+                            gender: "MALE" | "FEMALE" | "OTHER" | null;
+                            /** Format: date */
+                            dateOfBirth: string | null;
+                            nationality: string | null;
+                            countryOfResidence: string | null;
+                            city: string | null;
+                            phone: string | null;
+                            whatsapp: string | null;
+                            passportNumber: string | null;
+                            passportIssuingCountry: string | null;
+                            /** Format: date */
+                            passportIssueDate: string | null;
+                            /** Format: date */
+                            passportExpiryDate: string | null;
+                            currentProfession: string | null;
+                            yearsOfExperience: number | null;
+                            /** @enum {string|null} */
+                            educationLevel: "NONE" | "PRIMARY" | "SECONDARY" | "VOCATIONAL" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
+                            languages: {
+                                language: string;
+                                /** @enum {string} */
+                                level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "NATIVE";
+                            }[];
+                            drivingLicenceCategories: string[];
+                            preferredDestinations: string[];
+                            hasStcwTraining: boolean;
+                            hasSeamanBook: boolean;
+                            hasMedicalCertificate: boolean;
+                            seaExperience: string | null;
+                            passportNumberMasked: string | null;
+                            passportExpiringSoon: boolean;
+                            /** Format: date-time */
+                            gdprConsentAt: string | null;
+                            profileCompleteness: {
+                                percentage: number;
+                                missing: ("gender" | "dateOfBirth" | "nationality" | "countryOfResidence" | "city" | "phone" | "passportNumber" | "passportIssuingCountry" | "passportIssueDate" | "passportExpiryDate" | "currentProfession" | "yearsOfExperience" | "educationLevel" | "languages" | "cvDocument" | "passportDocument")[];
+                                missingToApply: ("gender" | "dateOfBirth" | "nationality" | "countryOfResidence" | "city" | "phone" | "passportNumber" | "passportIssuingCountry" | "passportIssueDate" | "passportExpiryDate" | "currentProfession" | "yearsOfExperience" | "educationLevel" | "languages" | "cvDocument" | "passportDocument")[];
+                            };
+                        };
+                        documents: {
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string} */
+                            type: "CV" | "PASSPORT" | "PHOTO" | "DIPLOMA" | "CERTIFICATE" | "STCW" | "SEAMAN_BOOK" | "MEDICAL" | "OTHER";
+                            originalName: string;
+                            mimeType: string;
+                            sizeBytes: number;
+                            /** Format: date-time */
+                            uploadedAt: string;
+                        }[];
+                        applications: {
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string} */
+                            status: "SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN";
+                            /** Format: date-time */
+                            appliedAt: string;
+                            job: {
+                                /** Format: uuid */
+                                id: string;
+                                title: string;
+                                slug: string;
+                                destinationCode: string;
+                            };
+                            candidate: {
+                                /** Format: uuid */
+                                id: string;
+                                firstName: string;
+                                lastName: string;
+                                email: string;
+                                nationality: string | null;
+                            };
+                            allowedTransitions: ("SUBMITTED" | "UNDER_REVIEW" | "SHORTLISTED" | "INTERVIEW" | "OFFER" | "CONTRACT_SIGNED" | "VISA_PROCESSING" | "VISA_APPROVED" | "DEPLOYED" | "REJECTED" | "WITHDRAWN")[];
+                        }[];
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -3655,7 +4178,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3670,7 +4193,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3685,7 +4208,76 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    AdminCandidatesController_revealPassport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Candidate profile id */
+                id: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        passportNumber: string | null;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3738,7 +4330,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3753,7 +4345,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3768,7 +4360,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3821,7 +4413,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3836,7 +4428,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3851,7 +4443,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3877,6 +4469,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         openJobs: number;
+                        newApplicationsThisWeek: number;
                         applicationsByStatus: {
                             [key: string]: number;
                         };
@@ -3900,7 +4493,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3915,7 +4508,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3934,6 +4527,27 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        REAPPLY_COOLDOWN_MONTHS: number;
+                        MAX_ACTIVE_APPLICATIONS: number;
+                        MAX_UPLOAD_SIZE_MB: number;
+                        /** Format: email */
+                        CONTACT_EMAIL: string;
+                        CONTACT_PHONE: string;
+                        CONTACT_WHATSAPP: string;
+                        CONTACT_ADDRESS: string;
+                        SOCIAL_FACEBOOK: string;
+                        SOCIAL_INSTAGRAM: string;
+                        SOCIAL_TIKTOK: string;
+                        SOCIAL_LINKEDIN: string;
+                    };
+                };
+            };
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -3941,7 +4555,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3956,7 +4570,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -3971,7 +4585,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                key: "REAPPLY_COOLDOWN_MONTHS" | "MAX_ACTIVE_APPLICATIONS" | "MAX_UPLOAD_SIZE_MB" | "CONTACT_EMAIL" | "CONTACT_PHONE" | "CONTACT_WHATSAPP" | "CONTACT_ADDRESS";
+                key: "REAPPLY_COOLDOWN_MONTHS" | "MAX_ACTIVE_APPLICATIONS" | "MAX_UPLOAD_SIZE_MB" | "CONTACT_EMAIL" | "CONTACT_PHONE" | "CONTACT_WHATSAPP" | "CONTACT_ADDRESS" | "SOCIAL_FACEBOOK" | "SOCIAL_INSTAGRAM" | "SOCIAL_TIKTOK" | "SOCIAL_LINKEDIN";
             };
             cookie?: never;
         };
@@ -3990,7 +4604,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4005,7 +4619,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4020,7 +4634,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4035,7 +4649,251 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    ContactMessagesController_list: {
+        parameters: {
+            query?: {
+                pageSize?: number;
+                page?: number;
+                /** @description Part of the name, email or subject */
+                q?: unknown;
+                handled?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            email: string;
+                            phone: string | null;
+                            subject: string | null;
+                            message: string;
+                            /** Format: date-time */
+                            handledAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        page: number;
+                        pageSize: number;
+                        total: number;
+                        unhandled: number;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    ContactMessagesController_handle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        email: string;
+                        phone: string | null;
+                        subject: string | null;
+                        message: string;
+                        /** Format: date-time */
+                        handledAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    ContactMessagesController_reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        email: string;
+                        phone: string | null;
+                        subject: string | null;
+                        message: string;
+                        /** Format: date-time */
+                        handledAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4113,7 +4971,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4128,7 +4986,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4244,7 +5102,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4259,7 +5117,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4274,7 +5132,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4318,7 +5176,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4333,7 +5191,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4386,7 +5244,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4401,7 +5259,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4416,7 +5274,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4431,7 +5289,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4446,7 +5304,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4461,7 +5319,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4495,7 +5353,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4510,7 +5368,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4525,7 +5383,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4540,7 +5398,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4578,7 +5436,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4593,7 +5451,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4608,7 +5466,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4654,7 +5512,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4669,7 +5527,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4684,7 +5542,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4766,7 +5624,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4781,7 +5639,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4796,7 +5654,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4811,7 +5669,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4826,7 +5684,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4894,7 +5752,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4909,7 +5767,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4979,7 +5837,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -4994,7 +5852,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5009,7 +5867,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5024,7 +5882,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5068,7 +5926,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5083,7 +5941,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5122,7 +5980,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5137,7 +5995,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5152,7 +6010,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5167,7 +6025,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5209,7 +6067,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5224,7 +6082,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5275,7 +6133,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5290,7 +6148,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5305,7 +6163,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5320,7 +6178,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5354,7 +6212,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5369,7 +6227,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5384,7 +6242,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5417,7 +6275,7 @@ export interface operations {
                 content: {
                     "application/zip": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5432,7 +6290,7 @@ export interface operations {
                 content: {
                     "application/zip": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5447,7 +6305,7 @@ export interface operations {
                 content: {
                     "application/zip": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5485,7 +6343,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5500,7 +6358,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5515,7 +6373,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5530,7 +6388,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5622,6 +6480,27 @@ export interface operations {
                             featured: boolean;
                             /** Format: date-time */
                             publishedAt: string | null;
+                            questions: {
+                                id: string;
+                                /** @enum {string} */
+                                type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                                /** @default false */
+                                required: boolean;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                                /** @default [] */
+                                options: {
+                                    value: string;
+                                    label: {
+                                        en: string;
+                                        fr: string;
+                                        ar: string;
+                                    };
+                                }[];
+                            }[];
                         }[];
                         page: number;
                         pageSize: number;
@@ -5636,7 +6515,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5707,6 +6586,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -5717,7 +6617,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5864,6 +6764,27 @@ export interface operations {
                             featured: boolean;
                             /** Format: date-time */
                             publishedAt: string | null;
+                            questions: {
+                                id: string;
+                                /** @enum {string} */
+                                type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                                /** @default false */
+                                required: boolean;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                                /** @default [] */
+                                options: {
+                                    value: string;
+                                    label: {
+                                        en: string;
+                                        fr: string;
+                                        ar: string;
+                                    };
+                                }[];
+                            }[];
                             destination: {
                                 /** Format: uuid */
                                 id: string;
@@ -5913,7 +6834,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5928,7 +6849,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5943,7 +6864,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -5993,6 +6914,28 @@ export interface operations {
                     requiredLanguages?: string[];
                     /** Format: date-time */
                     deadline: string;
+                    /** @default [] */
+                    questions?: {
+                        id: string;
+                        /** @enum {string} */
+                        type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                        /** @default false */
+                        required?: boolean;
+                        label: {
+                            en: string;
+                            fr: string;
+                            ar: string;
+                        };
+                        /** @default [] */
+                        options?: {
+                            value: string;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                        }[];
+                    }[];
                 };
             };
         };
@@ -6029,6 +6972,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -6074,7 +7038,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6089,7 +7053,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6104,7 +7068,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6157,6 +7121,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -6202,7 +7187,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6217,7 +7202,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6232,7 +7217,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6268,7 +7253,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6283,7 +7268,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6298,7 +7283,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6313,7 +7298,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6359,6 +7344,27 @@ export interface operations {
                     requiredLanguages?: string[];
                     /** Format: date-time */
                     deadline?: string;
+                    questions?: {
+                        id: string;
+                        /** @enum {string} */
+                        type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                        /** @default false */
+                        required?: boolean;
+                        label: {
+                            en: string;
+                            fr: string;
+                            ar: string;
+                        };
+                        /** @default [] */
+                        options?: {
+                            value: string;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                        }[];
+                    }[];
                 };
             };
         };
@@ -6395,6 +7401,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -6440,7 +7467,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6455,7 +7482,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6470,7 +7497,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6485,7 +7512,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6538,6 +7565,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -6583,7 +7631,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6598,7 +7646,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6613,7 +7661,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6628,7 +7676,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6681,6 +7729,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -6726,7 +7795,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6741,7 +7810,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6756,7 +7825,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6771,7 +7840,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6824,6 +7893,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -6869,7 +7959,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6884,7 +7974,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6899,7 +7989,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6914,7 +8004,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -6967,6 +8057,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -7012,7 +8123,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7027,7 +8138,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7042,7 +8153,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7057,7 +8168,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7110,6 +8221,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -7155,7 +8287,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7170,7 +8302,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7185,7 +8317,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7238,6 +8370,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -7283,7 +8436,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7298,7 +8451,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7313,7 +8466,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7366,6 +8519,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -7411,7 +8585,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7426,7 +8600,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7441,7 +8615,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7501,6 +8675,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -7546,7 +8741,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7561,7 +8756,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7576,7 +8771,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7591,7 +8786,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7606,7 +8801,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7621,7 +8816,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7674,6 +8869,27 @@ export interface operations {
                         featured: boolean;
                         /** Format: date-time */
                         publishedAt: string | null;
+                        questions: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "TEXT" | "YES_NO" | "SINGLE_CHOICE";
+                            /** @default false */
+                            required: boolean;
+                            label: {
+                                en: string;
+                                fr: string;
+                                ar: string;
+                            };
+                            /** @default [] */
+                            options: {
+                                value: string;
+                                label: {
+                                    en: string;
+                                    fr: string;
+                                    ar: string;
+                                };
+                            }[];
+                        }[];
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -7719,7 +8935,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7734,7 +8950,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7749,7 +8965,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7796,7 +9012,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7811,7 +9027,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7874,7 +9090,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7889,7 +9105,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7904,7 +9120,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7919,7 +9135,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7958,7 +9174,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7973,7 +9189,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -7988,7 +9204,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8050,7 +9266,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8065,7 +9281,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8080,7 +9296,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8095,7 +9311,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8141,7 +9357,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8156,7 +9372,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8216,7 +9432,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8231,7 +9447,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8246,7 +9462,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8261,7 +9477,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8300,7 +9516,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8315,7 +9531,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8330,7 +9546,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8390,7 +9606,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8405,7 +9621,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8420,7 +9636,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8435,7 +9651,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8545,6 +9761,10 @@ export interface operations {
                         CONTACT_PHONE: string;
                         CONTACT_WHATSAPP: string;
                         CONTACT_ADDRESS: string;
+                        SOCIAL_FACEBOOK: string;
+                        SOCIAL_INSTAGRAM: string;
+                        SOCIAL_TIKTOK: string;
+                        SOCIAL_LINKEDIN: string;
                         MAX_UPLOAD_SIZE_MB: number;
                     };
                 };
@@ -8606,7 +9826,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8621,7 +9841,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8706,7 +9926,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8721,7 +9941,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8736,7 +9956,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8804,7 +10024,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8819,7 +10039,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8834,7 +10054,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8849,7 +10069,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8920,7 +10140,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8935,7 +10155,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8950,7 +10170,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8984,7 +10204,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -8999,7 +10219,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9014,7 +10234,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9099,7 +10319,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9114,7 +10334,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9129,7 +10349,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9144,7 +10364,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9218,7 +10438,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9233,7 +10453,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9248,7 +10468,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9263,7 +10483,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9278,7 +10498,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9293,7 +10513,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9327,7 +10547,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9342,7 +10562,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9357,7 +10577,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9431,7 +10651,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9446,7 +10666,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9461,7 +10681,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9476,7 +10696,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9491,7 +10711,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9506,7 +10726,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9573,7 +10793,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9588,7 +10808,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9603,7 +10823,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9618,7 +10838,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9685,7 +10905,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9700,7 +10920,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9715,7 +10935,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9774,7 +10994,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9789,7 +11009,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9871,7 +11091,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9886,7 +11106,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9901,7 +11121,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9966,7 +11186,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9981,7 +11201,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -9996,7 +11216,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10030,7 +11250,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10045,7 +11265,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10060,7 +11280,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10145,7 +11365,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10160,7 +11380,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10175,7 +11395,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10190,7 +11410,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10205,7 +11425,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10273,7 +11493,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10288,7 +11508,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10303,7 +11523,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10318,7 +11538,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10333,7 +11553,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10348,7 +11568,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10400,7 +11620,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10415,7 +11635,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10453,7 +11673,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10468,7 +11688,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10506,7 +11726,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10521,7 +11741,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10568,7 +11788,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */
@@ -10583,7 +11803,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "INTERNAL_ERROR";
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
                         message: string;
                         details?: unknown;
                         /** Format: date-time */

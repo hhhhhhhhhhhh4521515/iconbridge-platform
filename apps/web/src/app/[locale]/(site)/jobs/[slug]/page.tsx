@@ -17,6 +17,7 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 import { ApplyButton, DeadlineCountdown, ShareButtons } from '@/components/jobs/job-actions';
 import { salaryText } from '@/components/jobs/job-card';
 import { MediaImage } from '@/components/ui/media-image';
+import { plainText, RichText } from '@/components/ui/rich-text';
 import { Link } from '@/i18n/navigation';
 import { api, type PublicJob } from '@/lib/api';
 import { DESTINATION_IMAGES, languageName, pick } from '@/lib/format';
@@ -45,7 +46,7 @@ export async function generateMetadata({
     locale,
     path: `/jobs/${job.slug}`,
     title: `${job.title} - ${pick(job.destination.name, locale)}`,
-    description: summarize(job.description),
+    description: summarize(plainText(job.description)),
     siteName: t('siteName'),
   });
 }
@@ -60,7 +61,7 @@ function jobPostingJsonLd(job: PublicJob, locale: string) {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
-    description: job.description,
+    description: plainText(job.description),
     identifier: { '@type': 'PropertyValue', name: 'IconBridge Jobs', value: job.id },
     datePosted: job.publishedAt ?? undefined,
     validThrough: job.deadline,
@@ -133,8 +134,6 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
     job.employerName && { icon: MapPin, label: t('detail.employer'), value: job.employerName },
   ].filter((fact) => fact !== false && fact !== null && fact !== '');
 
-  const prose = 'whitespace-pre-line text-base leading-relaxed text-foreground';
-
   return (
     <article className="container-page py-8">
       <script
@@ -191,14 +190,14 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
             <h2 id="description-title" className="mb-3 text-xl font-semibold">
               {t('detail.description')}
             </h2>
-            <p className={prose}>{job.description}</p>
+            <RichText text={job.description} />
           </section>
           {job.requirements ? (
             <section aria-labelledby="requirements-title">
               <h2 id="requirements-title" className="mb-3 text-xl font-semibold">
                 {t('detail.requirements')}
               </h2>
-              <p className={prose}>{job.requirements}</p>
+              <RichText text={job.requirements} />
             </section>
           ) : null}
           {benefits.length > 0 || job.benefits ? (
@@ -219,7 +218,7 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
                   ))}
                 </ul>
               ) : null}
-              {job.benefits ? <p className={prose}>{job.benefits}</p> : null}
+              {job.benefits ? <RichText text={job.benefits} /> : null}
             </section>
           ) : null}
         </div>

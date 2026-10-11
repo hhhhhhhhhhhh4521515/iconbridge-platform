@@ -109,7 +109,14 @@ export function AccountShell({ children }: { children: ReactNode }) {
           <AccountProvider
             loading={<Loading lines={5} />}
             failed={(retry) => <LoadFailed onRetry={retry} />}
-            staff={<Notice>{t('staffOnly')}</Notice>}
+            staff={
+              <div className="space-y-3">
+                <Notice>{t('staffOnly')}</Notice>
+                <Link href="/admin" className={cta.primary}>
+                  {t('openAdmin')}
+                </Link>
+              </div>
+            }
           >
             <VerifyBanner />
             {children}

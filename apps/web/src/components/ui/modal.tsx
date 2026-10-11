@@ -14,6 +14,7 @@ export function Modal({
   closeLabel,
   children,
   wide,
+  side,
 }: {
   open: boolean;
   onClose: () => void;
@@ -21,6 +22,8 @@ export function Modal({
   closeLabel: string;
   children: ReactNode;
   wide?: boolean;
+  /** A panel along the edge of the screen instead of a centred box. */
+  side?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -39,8 +42,18 @@ export function Modal({
     <dialog
       ref={dialog}
       aria-labelledby={titleId}
-      onClose={onClose}
-      className={`m-auto w-[calc(100%-2rem)] rounded-2xl border border-border bg-background p-0 text-foreground shadow-xl backdrop:bg-black/60 ${wide ? 'max-w-4xl' : 'max-w-lg'}`}
+      // A dialog opened from inside this one tells React it closed, and React passes
+      // that on to its ancestors: only the closing of this very dialog counts.
+      onClose={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+      className={`border-border bg-background p-0 text-foreground shadow-xl backdrop:bg-black/60 ${
+        side
+          ? 'ms-auto me-0 my-0 h-dvh max-h-dvh w-full max-w-3xl border-s'
+          : `m-auto w-[calc(100%-2rem)] rounded-2xl border ${wide ? 'max-w-4xl' : 'max-w-lg'}`
+      }`}
     >
       {open ? (
         <div className="p-5">

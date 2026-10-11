@@ -1,6 +1,7 @@
 'use client';
 
 import { applySchema } from '@iconbridge/shared/candidate';
+import { ANSWER_NO, ANSWER_YES, answerText, checkAnswers } from '@iconbridge/shared/questions';
 import { CircleCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
@@ -9,10 +10,12 @@ import {
   LoadFailed,
   Loading,
   Notice,
+  SelectField,
   SubmitButton,
   TextAreaField,
   TextField,
   useApiErrorText,
+  useErrorText,
 } from '@/components/forms/fields';
 import { Turnstile } from '@/components/forms/turnstile';
 import { Link } from '@/i18n/navigation';
@@ -26,7 +29,7 @@ import { ITEM_LINKS } from './dashboard';
 import { useDate } from './status';
 
 /**
- * Questions asked with every application. Their keys are what recruiters read in the
+ * Questions asked when the job has none of its own. Their keys are what recruiters read in the
  * back office, so they are plain English; the candidate sees the translated question.
  */
 const QUESTIONS = [
@@ -117,10 +120,15 @@ function Wizard({
   onBlocked: () => void;
 }) {
   const t = useTranslations('account');
+  const forms = useTranslations('forms');
   const types = useTranslations('account.documentTypes');
   const apiError = useApiErrorText();
   const date = useDate();
+  const locale = useLocale() as 'en' | 'fr' | 'ar';
+  const errorText = useErrorText();
   const { documents } = useAccount();
+  // The questions the recruiter wrote for this job; without any, two general ones are asked.
+  const asked = job.questions;
   const [stage, setStage] = useState<Stage>('documents');
   // The newest CV and the newest passport scan are ticked from the start.
   const [selected, setSelected] = useState<string[]>(() =>
@@ -146,7 +154,14 @@ function Wizard({
   }, []);
   const form = useZodForm<typeof letterSchema, LetterValues>(
     letterSchema,
-    { coverLetter: '', answers: Object.fromEntries(QUESTIONS.map(({ key }) => [key, ''])) },
+    {
+      coverLetter: '',
+      answers: Object.fromEntries(
+        (asked.length > 0 ? asked.map(({ id }) => id) : QUESTIONS.map(({ key }) => key)).map(
+          (key) => [key, ''],
+        ),
+      ),
+    },
     {
       // Empty answers are left out; an empty letter is "no letter".
       prepare: (values) => ({
@@ -157,6 +172,17 @@ function Wizard({
       }),
     },
   );
+
+  /** The answers are checked with the rule the API applies; each problem is shown under its question. */
+  const answersOk = (answers: Record<string, string>): boolean => {
+    const problems = asked.length > 0 ? checkAnswers(asked, answers) : [];
+    for (const { question, problem } of problems) {
+      form.setError(`answers.${question}`, {
+        message: problem === 'required' ? 'required' : 'invalid',
+      });
+    }
+    return problems.length === 0;
+  };
 
   const chosen = documents.filter((document) => selected.includes(document.id));
   const types_ = new Set(chosen.map((document) => document.type));
@@ -299,7 +325,11 @@ function Wizard({
           className="mt-3 space-y-4"
           onSubmit={(event) =>
             void form.handleSubmit((values) => {
-              setLetter({ coverLetter: values.coverLetter ?? null, answers: values.answers ?? {} });
+              const answers = values.answers ?? {};
+              if (!answersOk(answers)) {
+                return;
+              }
+              setLetter({ coverLetter: values.coverLetter ?? null, answers });
               setStage('review');
             })(event)
           }
@@ -312,7 +342,73 @@ function Wizard({
             error={form.formState.errors.coverLetter}
             {...form.register('coverLetter')}
           />
-          {QUESTIONS.map((question) =>
+          {asked.map((question) => {
+            const name = `answers.${question.id}` as const;
+            const label = question.label[locale];
+            const error = form.formState.errors.answers?.[question.id];
+            if (question.type === 'TEXT') {
+              return (
+                <TextAreaField
+                  key={question.id}
+                  label={label}
+                  required={question.required}
+                  hint={question.required ? undefined : t('apply.optional')}
+                  error={error}
+                  {...form.register(name)}
+                />
+              );
+            }
+            if (question.type === 'SINGLE_CHOICE') {
+              return (
+                <SelectField
+                  key={question.id}
+                  label={label}
+                  required={question.required}
+                  error={error}
+                  {...form.register(name)}
+                >
+                  <option value="">{forms('choose')}</option>
+                  {question.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label[locale]}
+                    </option>
+                  ))}
+                </SelectField>
+              );
+            }
+            return (
+              <fieldset key={question.id} data-testid={`question-${question.id}`}>
+                <legend className="mb-1 text-sm font-medium">
+                  {label}
+                  {question.required ? <span className="text-destructive"> *</span> : null}
+                </legend>
+                <div className="flex gap-6">
+                  {(
+                    [
+                      [ANSWER_YES, t('apply.yes')],
+                      [ANSWER_NO, t('apply.no')],
+                    ] as const
+                  ).map(([value, text]) => (
+                    <label key={value} className="flex min-h-11 items-center gap-2 text-sm">
+                      <input
+                        type="radio"
+                        value={value}
+                        className="size-5 accent-primary"
+                        {...form.register(name)}
+                      />
+                      {text}
+                    </label>
+                  ))}
+                </div>
+                {error ? (
+                  <p role="alert" className="mt-1 text-sm font-medium text-destructive">
+                    {errorText(error)}
+                  </p>
+                ) : null}
+              </fieldset>
+            );
+          })}
+          {(asked.length > 0 ? [] : QUESTIONS).map((question) =>
             question.long ? (
               <TextAreaField
                 key={question.key}
@@ -372,16 +468,28 @@ function Wizard({
                 {letter.coverLetter ?? t('apply.none')}
               </dd>
             </div>
-            {QUESTIONS.filter((question) => letter.answers[question.key]).map((question) => (
-              <div key={question.key} className="py-3">
-                <dt className="font-medium text-muted-foreground">
-                  {t(`apply.questions.${question.label}`)}
-                </dt>
-                <dd className="whitespace-pre-wrap" dir="auto">
-                  {letter.answers[question.key]}
-                </dd>
-              </div>
-            ))}
+            {asked
+              .filter((question) => letter.answers[question.id])
+              .map((question) => (
+                <div key={question.id} className="py-3">
+                  <dt className="font-medium text-muted-foreground">{question.label[locale]}</dt>
+                  <dd className="whitespace-pre-wrap" dir="auto">
+                    {answerText(question, letter.answers[question.id] ?? '', locale)}
+                  </dd>
+                </div>
+              ))}
+            {(asked.length > 0 ? [] : QUESTIONS)
+              .filter((question) => letter.answers[question.key])
+              .map((question) => (
+                <div key={question.key} className="py-3">
+                  <dt className="font-medium text-muted-foreground">
+                    {t(`apply.questions.${question.label}`)}
+                  </dt>
+                  <dd className="whitespace-pre-wrap" dir="auto">
+                    {letter.answers[question.key]}
+                  </dd>
+                </div>
+              ))}
           </dl>
           <Turnstile siteKey={siteKey} onToken={onToken} label={t('apply.captcha')} />
           <FormError>{problem}</FormError>

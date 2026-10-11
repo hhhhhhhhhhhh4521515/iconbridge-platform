@@ -559,7 +559,7 @@ describe('admin applications (e2e)', () => {
       const csv = text(response.body);
       const [header, row] = csv.slice(1).trim().split('\r\n');
       expect(header).toBe(
-        'Application ID,Status,Applied at,Job,Destination,First name,Last name,Email,Phone,Nationality,Country of residence,Date of birth,Passport (masked),Passport expiry,Profession,Years of experience,Languages',
+        'Application ID,Status,Applied at,Job,Destination,First name,Last name,Email,Phone,Nationality,Country of residence,Date of birth,Passport (masked),Passport expiry,Profession,Years of experience,Languages,Answers',
       );
       expect(row).toContain(candidate.email);
       expect(row).toContain('********567');

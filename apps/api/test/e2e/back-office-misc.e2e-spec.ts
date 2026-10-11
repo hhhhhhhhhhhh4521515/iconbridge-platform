@@ -78,28 +78,21 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
       expect((await list('?active=false')).total).toBe(0);
     });
 
-    it('shows one candidate with profile, documents and applications, and audits the view', async () => {
+    it('shows one candidate with profile, documents and applications, the passport number masked', async () => {
       const job = await insertJob(test, catalog, { slug: 'job' });
       const { candidate, id } = await newApplication(test, job.id);
-      const response = await as(test, viewer)
-        .get(`/admin/candidates/${candidate.profileId}`)
-        .expect(200);
-      expect(response.body).toMatchObject({
-        email: candidate.email,
-        profile: { passportNumber: 'FAKE1234567', passportNumberMasked: '********567' },
-        applications: [{ id, status: 'SUBMITTED' }],
-      });
-      expect((response.body as { documents: unknown[] }).documents).toHaveLength(2);
-
-      const entry = await test.prisma.auditLog.findFirstOrThrow({
-        where: { action: 'candidate.view' },
-      });
-      expect(entry).toMatchObject({
-        actorId: viewer.id,
-        entityType: 'candidate',
-        entityId: candidate.profileId,
-      });
-      expect(JSON.stringify(entry)).not.toContain('FAKE1234567');
+      for (const user of [viewer, recruiter, superAdmin]) {
+        const response = await as(test, user)
+          .get(`/admin/candidates/${candidate.profileId}`)
+          .expect(200);
+        expect(response.body).toMatchObject({
+          email: candidate.email,
+          profile: { passportNumber: null, passportNumberMasked: '********567' },
+          applications: [{ id, status: 'SUBMITTED' }],
+        });
+        expect((response.body as { documents: unknown[] }).documents).toHaveLength(2);
+        expect(JSON.stringify(response.body)).not.toContain('FAKE1234567');
+      }
       await as(test, viewer)
         .get('/admin/candidates/00000000-0000-4000-8000-000000000000')
         .expect(404);
@@ -186,7 +179,7 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
       });
     });
 
-    it('publishes the contact details, and nothing else, to the site', async () => {
+    it('publishes the contact details and the social links, and nothing else, to the site', async () => {
       await as(test, superAdmin)
         .put('/admin/settings/CONTACT_EMAIL', { value: 'hello@agency.test' })
         .expect(200);
@@ -202,6 +195,10 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
         CONTACT_PHONE: '+356 2100 0000',
         CONTACT_WHATSAPP: '',
         CONTACT_ADDRESS: '',
+        SOCIAL_FACEBOOK: '',
+        SOCIAL_INSTAGRAM: '',
+        SOCIAL_TIKTOK: '',
+        SOCIAL_LINKEDIN: '',
         MAX_UPLOAD_SIZE_MB: 5,
       });
     });

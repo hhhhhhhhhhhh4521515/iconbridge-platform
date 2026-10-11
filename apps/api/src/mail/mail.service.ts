@@ -23,6 +23,7 @@ export const EMAIL_LINK_PATHS = {
   'application-received': 'account/applications',
   'new-application': 'admin/applications',
   'application-status': 'account/applications',
+  'application-status-correction': 'account/applications',
   'job-alert-confirm': 'job-alerts/confirm',
   'job-alert': 'jobs',
   'contact-message': '',

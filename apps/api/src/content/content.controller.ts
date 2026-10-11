@@ -60,6 +60,10 @@ const siteInfoSchema = z.object({
   CONTACT_PHONE: z.string(),
   CONTACT_WHATSAPP: z.string(),
   CONTACT_ADDRESS: z.string(),
+  SOCIAL_FACEBOOK: z.string(),
+  SOCIAL_INSTAGRAM: z.string(),
+  SOCIAL_TIKTOK: z.string(),
+  SOCIAL_LINKEDIN: z.string(),
   /** Largest accepted upload, so the site can refuse a file before sending it. */
   MAX_UPLOAD_SIZE_MB: z.number().int(),
 });
@@ -122,7 +126,9 @@ export class PublicContentController {
   }
 
   @Get('site-info')
-  @ApiOperation({ summary: 'Contact details shown on the site, and the upload size limit' })
+  @ApiOperation({
+    summary: 'Contact details and social links shown on the site, and the upload size limit',
+  })
   @ApiZodResponse(200, siteInfoSchema)
   async siteInfo(): Promise<SiteInfo> {
     const [contact, maxUploadMb] = await Promise.all([

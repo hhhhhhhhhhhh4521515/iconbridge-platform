@@ -32,6 +32,7 @@ export const API_ERROR_CODES = [
   'IMAGE_REQUIRED',
   'RATE_LIMITED',
   'REAPPLY_COOLDOWN',
+  'UNDO_NOT_ALLOWED',
   'INTERNAL_ERROR',
 ] as const;
 export const apiErrorCodeSchema = z.enum(API_ERROR_CODES);
