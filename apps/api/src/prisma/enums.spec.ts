@@ -4,6 +4,7 @@ import {
   EDUCATION_LEVELS,
   EMAIL_TOKEN_TYPES,
   GENDERS,
+  HISTORICAL_METRICS,
   JOB_STATUSES,
   LANGUAGE_LEVELS,
   SALARY_PERIODS,
@@ -24,6 +25,7 @@ describe('Prisma enums match packages/shared', () => {
     ['JobStatus', prismaEnums.JobStatus, JOB_STATUSES],
     ['SalaryPeriod', prismaEnums.SalaryPeriod, SALARY_PERIODS],
     ['ApplicationStatus', prismaEnums.ApplicationStatus, APPLICATION_STATUSES],
+    ['HistoricalMetric', prismaEnums.HistoricalMetric, HISTORICAL_METRICS],
   ] as const)('%s', (_name, prismaEnum, shared) => {
     expect(Object.values(prismaEnum)).toEqual([...shared]);
   });

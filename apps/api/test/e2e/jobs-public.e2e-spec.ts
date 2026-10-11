@@ -438,6 +438,7 @@ describe('public jobs (e2e)', () => {
       expect(publicStatsSchema.parse(first.body)).toEqual({
         openJobs: 5,
         registeredCandidates: 1,
+        partnerCompanies: 0,
         visasApproved: 0,
         countries: 3,
       });

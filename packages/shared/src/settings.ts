@@ -28,6 +28,8 @@ export const settingSchemas = {
   SOCIAL_INSTAGRAM: socialUrl,
   SOCIAL_TIKTOK: socialUrl,
   SOCIAL_LINKEDIN: socialUrl,
+  /** When true, recruiters may delete candidates and applications; otherwise only a super admin. */
+  ALLOW_RECRUITER_DELETE: z.boolean(),
 } as const;
 
 /** Settings anyone may read: the contact block and the social links of the site. */
@@ -62,4 +64,5 @@ export const DEFAULT_SETTINGS: SettingValues = {
   SOCIAL_INSTAGRAM: '',
   SOCIAL_TIKTOK: '',
   SOCIAL_LINKEDIN: '',
+  ALLOW_RECRUITER_DELETE: false,
 };

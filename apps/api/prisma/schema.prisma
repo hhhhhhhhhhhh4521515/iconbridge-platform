@@ -103,6 +103,15 @@ enum SalaryPeriod {
   @@map("salary_period")
 }
 
+/// Figures from before the platform. Same values as HISTORICAL_METRICS in packages/shared.
+enum HistoricalMetric {
+  VISAS_APPROVED
+  CANDIDATES_DEPLOYED
+  CANDIDATES_REGISTERED
+  PARTNER_COMPANIES
+  COUNTRIES_SERVED
+}
+
 enum ApplicationStatus {
   SUBMITTED
   UNDER_REVIEW
@@ -317,9 +326,10 @@ model Destination {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  jobs           Job[]
-  successStories SuccessStory[]
-  homeSlides     HomeSlide[]
+  jobs              Job[]
+  successStories    SuccessStory[]
+  homeSlides        HomeSlide[]
+  historicalFigures HistoricalFigure[]
 
   @@map("destinations")
 }
@@ -655,4 +665,26 @@ model AuditLog {
   @@index([actorId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/// Results the agency obtained before this platform existed, entered by the super admin.
+/// Kept apart from applications: nothing here is ever counted as platform data.
+/// One row per (year, destination, metric); the two global metrics have neither year nor
+/// destination. Uniqueness (NULLs counted as equal) and the value rules are in the migration.
+model HistoricalFigure {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  metric        HistoricalMetric
+  year          Int?             @db.SmallInt
+  destinationId String?          @map("destination_id") @db.Uuid
+  value         Int
+  note          String?
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  destination Destination? @relation(fields: [destinationId], references: [id], onDelete: Restrict)
+
+  /// Created by hand in the migration with NULLS NOT DISTINCT; declared here so Prisma sees no drift.
+  @@unique([metric, year, destinationId], map: "historical_figures_metric_year_destination_key")
+  @@index([destinationId])
+  @@map("historical_figures")
 }

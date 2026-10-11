@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { CandidatesModule } from '../candidates/candidates.module.js';
+import { JobsModule } from '../jobs/jobs.module.js';
 import { AdminSettingsController } from './admin-settings.controller.js';
 import { AdminStatsService } from './admin-stats.service.js';
 import { AdminApplicationsController } from './applications/admin-applications.controller.js';
@@ -11,13 +12,15 @@ import { AuditInterceptor } from './audit/audit.interceptor.js';
 import { AuditService } from './audit/audit.service.js';
 import { AdminCandidatesController } from './candidates/admin-candidates.controller.js';
 import { AdminCandidatesService } from './candidates/admin-candidates.service.js';
+import { DeletionService } from './deletion.service.js';
+import { HistoricalFiguresController } from './historical-figures.controller.js';
 import { ContactMessagesController } from './contact-messages.controller.js';
 import { AdminUsersController } from './users/admin-users.controller.js';
 import { AdminUsersService } from './users/admin-users.service.js';
 
 @Global()
 @Module({
-  imports: [CandidatesModule],
+  imports: [CandidatesModule, JobsModule],
   controllers: [
     AdminUsersController,
     AuditLogsController,
@@ -25,6 +28,7 @@ import { AdminUsersService } from './users/admin-users.service.js';
     AdminCandidatesController,
     AdminSettingsController,
     ContactMessagesController,
+    HistoricalFiguresController,
   ],
   providers: [
     AdminUsersService,
@@ -35,6 +39,7 @@ import { AdminUsersService } from './users/admin-users.service.js';
     ApplicationExportService,
     AdminCandidatesService,
     AdminStatsService,
+    DeletionService,
   ],
   exports: [AuditInterceptor, AuditSnapshotService, AuditService],
 })

@@ -12,6 +12,6 @@ import { ProfileService } from './profile.service.js';
 @Module({
   controllers: [ProfileController, DocumentsController, ApplicationsController, AccountController],
   providers: [ProfileService, DocumentsService, ApplicationsService, AccountService],
-  exports: [ProfileService, DocumentsService, ApplicationsService],
+  exports: [ProfileService, DocumentsService, ApplicationsService, AccountService],
 })
 export class CandidatesModule {}

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { APPLICATION_STATUSES, type AdminStats, type ApplicationStatus } from '@iconbridge/shared';
 import { Clock } from '../common/clock/clock.js';
 import { OPEN_JOB_SQL } from '../jobs/public-jobs.service.js';
+import { ResultsService } from '../catalog/results.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 /** Figures of the back-office dashboard. Erased candidates still count: their rows are anonymous. */
@@ -10,6 +11,7 @@ export class AdminStatsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
+    private readonly results: ResultsService,
   ) {}
 
   async get(): Promise<AdminStats> {
@@ -61,8 +63,14 @@ export class AdminStatsService {
         SELECT count(*)::int AS count FROM applications WHERE applied_at >= ${weekStart}`,
       ]);
 
+    const [platform, history] = await Promise.all([
+      this.results.platform(),
+      this.results.history(),
+    ]);
     const counts = new Map(byStatus.map((row) => [row.status, row.count]));
     return {
+      platform,
+      history,
       openJobs: open[0]?.count ?? 0,
       newApplicationsThisWeek: week[0]?.count ?? 0,
       applicationsByStatus: Object.fromEntries(

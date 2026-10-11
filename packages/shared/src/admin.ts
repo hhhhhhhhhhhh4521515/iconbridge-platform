@@ -4,6 +4,8 @@ import { countryCodeSchema } from './countries.js';
 import {
   APPLICATION_PIPELINE,
   applicationStatusSchema,
+  historicalMetricSchema,
+  isGlobalHistoricalMetric,
   type ApplicationStatus,
   type UserRole,
 } from './enums.js';
@@ -297,6 +299,8 @@ export const adminCandidateSummarySchema = z.object({
   isActive: z.boolean(),
   emailVerified: z.boolean(),
   applicationCount: z.number().int(),
+  /** Documents the candidate keeps (not deleted). */
+  documentCount: z.number().int(),
   registeredAt: z.iso.datetime(),
 });
 export type AdminCandidateSummary = z.infer<typeof adminCandidateSummarySchema>;
@@ -504,7 +508,104 @@ export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
 
 export const updateSettingSchema = z.object({ value: z.unknown() });
 
+// ---------------------------------------------------------------------------
+// Deleting candidates and applications
+// ---------------------------------------------------------------------------
+
+/** Why the record is deleted; kept in the audit log. It must not contain personal data. */
+const deletionReason = z.string().trim().min(5).max(500);
+export const DELETE_MAX_RECORDS = 50;
+const deletionIds = z
+  .array(z.uuid())
+  .min(1)
+  .max(DELETE_MAX_RECORDS)
+  .refine((ids) => new Set(ids).size === ids.length, { message: 'Each id may appear once' });
+
+export const deleteRecordSchema = z.object({ reason: deletionReason });
+export type DeleteRecordInput = z.infer<typeof deleteRecordSchema>;
+
+export const bulkDeleteSchema = z.object({ ids: deletionIds, reason: deletionReason });
+export type BulkDeleteInput = z.infer<typeof bulkDeleteSchema>;
+
+/** What deleting one candidate removed. */
+export const candidateDeletionSchema = z.object({
+  id: z.uuid(),
+  documents: z.number().int(),
+  applications: z.number().int(),
+});
+export type CandidateDeletion = z.infer<typeof candidateDeletionSchema>;
+
+/** What the current user may do beyond the fixed permissions of their role. */
+export const adminCapabilitiesSchema = z.object({ canDeleteRecords: z.boolean() });
+export type AdminCapabilities = z.infer<typeof adminCapabilitiesSchema>;
+
+// ---------------------------------------------------------------------------
+// Historical results (before the platform)
+// ---------------------------------------------------------------------------
+
+export const HISTORY_FIRST_YEAR = 1990;
+
+export const historicalFigureInputSchema = z
+  .object({
+    metric: historicalMetricSchema,
+    /** Null for the two global figures. */
+    year: z.number().int().min(HISTORY_FIRST_YEAR).max(2100).nullable(),
+    /** Null for the two global figures. */
+    destinationId: z.uuid().nullable(),
+    value: z.number().int().min(0).max(10_000_000),
+    note: z.string().trim().max(300).nullable().optional(),
+  })
+  .superRefine((figure, context) => {
+    const global = isGlobalHistoricalMetric(figure.metric);
+    if (global && (figure.year !== null || figure.destinationId !== null)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['year'],
+        message: 'This figure is global: it has no year and no destination',
+      });
+    }
+    if (!global && (figure.year === null || figure.destinationId === null)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['year'],
+        message: 'This figure needs a year and a destination',
+      });
+    }
+  });
+export type HistoricalFigureInput = z.infer<typeof historicalFigureInputSchema>;
+
+export const historicalFigureSchema = z.object({
+  id: z.uuid(),
+  metric: historicalMetricSchema,
+  year: z.number().int().nullable(),
+  destinationId: z.uuid().nullable(),
+  destinationCode: z.string().nullable(),
+  value: z.number().int(),
+  note: z.string().nullable(),
+  updatedAt: z.iso.datetime(),
+});
+export type HistoricalFigure = z.infer<typeof historicalFigureSchema>;
+
+const yearCount = z.object({ year: z.number().int(), count: z.number().int() });
+const destinationCount = z.object({ code: z.string(), count: z.number().int() });
+/** The same figures from one source: the platform, or the history entered by hand. */
+const resultsSchema = z.object({
+  visasApproved: z.number().int(),
+  visasApprovedThisYear: z.number().int(),
+  candidatesDeployed: z.number().int(),
+  registeredCandidates: z.number().int(),
+  partnerCompanies: z.number().int(),
+  countries: z.number().int(),
+  visasByYear: z.array(yearCount),
+  visasByDestination: z.array(destinationCount),
+});
+export type ResultFigures = z.infer<typeof resultsSchema>;
+
 export const adminStatsSchema = z.object({
+  /** Results computed from the applications and accounts of the platform. */
+  platform: resultsSchema,
+  /** Results from before the platform, entered by the super admin. Never mixed with the data above. */
+  history: resultsSchema,
   openJobs: z.number().int(),
   /** Applications received since Monday 00:00 UTC. */
   newApplicationsThisWeek: z.number().int(),

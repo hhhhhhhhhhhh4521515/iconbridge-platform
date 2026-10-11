@@ -1,24 +1,34 @@
-import { Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   adminCandidateDetailSchema,
   adminCandidateListQuerySchema,
   adminCandidateSummarySchema,
+  bulkDeleteSchema,
+  bulkResultSchema,
+  candidateDeletionSchema,
+  deleteRecordSchema,
   PERMISSIONS,
   revealedPassportSchema,
   uuidParamSchema,
   type AdminCandidateDetail,
   type AdminCandidateListQuery,
   type AdminCandidateSummary,
+  type BulkDeleteInput,
+  type BulkResult,
+  type CandidateDeletion,
+  type DeleteRecordInput,
   type Paginated,
   type RevealedPassport,
 } from '@iconbridge/shared';
 import { z } from 'zod';
-import type { AuthUser } from '../../auth/auth.types.js';
+import type { Request } from 'express';
+import { requestMeta, type AuthUser } from '../../auth/auth.types.js';
 import { CurrentUser, Roles } from '../../auth/decorators/index.js';
-import { ZodParams, ZodQuery } from '../../common/pipes/zod-validation.pipe.js';
-import { ApiErrors, ApiZodResponse } from '../../common/swagger/zod-openapi.js';
-import { Audit } from '../audit/audit.decorator.js';
+import { ZodBody, ZodParams, ZodQuery } from '../../common/pipes/zod-validation.pipe.js';
+import { ApiErrors, ApiZodBody, ApiZodResponse } from '../../common/swagger/zod-openapi.js';
+import { Audit, SkipAudit } from '../audit/audit.decorator.js';
+import { DeletionService } from '../deletion.service.js';
 import { AdminCandidatesService } from './admin-candidates.service.js';
 
 interface IdParam {
@@ -36,7 +46,10 @@ const pageSchema = z.object({
 @Roles(...PERMISSIONS.MANAGE_APPLICATIONS)
 @Controller('admin/candidates')
 export class AdminCandidatesController {
-  constructor(private readonly candidates: AdminCandidatesService) {}
+  constructor(
+    private readonly candidates: AdminCandidatesService,
+    private readonly deletion: DeletionService,
+  ) {}
 
   @Get()
   @Roles(...PERMISSIONS.VIEW_CANDIDATES)
@@ -53,6 +66,53 @@ export class AdminCandidatesController {
     @ZodQuery(adminCandidateListQuerySchema) query: AdminCandidateListQuery,
   ): Promise<Paginated<AdminCandidateSummary>> {
     return this.candidates.list(query);
+  }
+
+  @Post('bulk-delete')
+  @HttpCode(HttpStatus.OK)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Delete several candidates',
+    description:
+      'Same rule and same erasure as deleting one. The answer says which ones were deleted; one audit entry each.',
+  })
+  @ApiZodBody(bulkDeleteSchema)
+  @ApiZodResponse(200, bulkResultSchema)
+  @ApiErrors(400, 401, 403)
+  bulkDelete(
+    @ZodBody(bulkDeleteSchema) body: BulkDeleteInput,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<BulkResult> {
+    const { ip } = requestMeta(request);
+    return this.deletion.bulk(
+      body,
+      (id) => this.deletion.deleteCandidate(id, body.reason, user, ip),
+      user,
+    );
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Delete a candidate',
+    description:
+      'For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The files are ' +
+      'removed from storage, then the personal data is erased as for a GDPR request; the applications stay as ' +
+      'anonymous rows. The audit entry holds who, when, the reason and the counts, no personal data.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'Candidate profile id' })
+  @ApiZodBody(deleteRecordSchema)
+  @ApiZodResponse(200, candidateDeletionSchema)
+  @ApiErrors(400, 401, 403, 404)
+  remove(
+    @ZodParams(uuidParamSchema) params: IdParam,
+    @ZodBody(deleteRecordSchema) body: DeleteRecordInput,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<CandidateDeletion> {
+    return this.deletion.deleteCandidate(params.id, body.reason, user, requestMeta(request).ip);
   }
 
   @Get(':id')

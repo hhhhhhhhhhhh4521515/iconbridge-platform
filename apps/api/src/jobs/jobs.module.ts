@@ -6,6 +6,7 @@ import {
 import { AdminCatalogService } from '../catalog/admin-catalog.service.js';
 import { CatalogController } from '../catalog/catalog.controller.js';
 import { CatalogService } from '../catalog/catalog.service.js';
+import { ResultsService } from '../catalog/results.service.js';
 import { AdminJobsController } from './admin-jobs.controller.js';
 import { AdminJobsService } from './admin-jobs.service.js';
 import { JobAvailabilityService } from './job-availability.service.js';
@@ -25,11 +26,12 @@ import { PublicJobsService } from './public-jobs.service.js';
   providers: [
     PublicJobsService,
     CatalogService,
+    ResultsService,
     AdminJobsService,
     AdminCatalogService,
     JobCoverService,
     JobAvailabilityService,
   ],
-  exports: [JobAvailabilityService, CatalogService, JobCoverService],
+  exports: [JobAvailabilityService, CatalogService, ResultsService, JobCoverService],
 })
 export class JobsModule {}

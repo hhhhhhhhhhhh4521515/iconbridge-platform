@@ -18,7 +18,7 @@ const SUMMARY_INCLUDE = {
   user: {
     select: { id: true, email: true, isActive: true, emailVerifiedAt: true, createdAt: true },
   },
-  _count: { select: { applications: true } },
+  _count: { select: { applications: true, documents: { where: { deletedAt: null } } } },
 } satisfies Prisma.CandidateProfileInclude;
 
 type SummaryRow = Prisma.CandidateProfileGetPayload<{ include: typeof SUMMARY_INCLUDE }>;
@@ -36,6 +36,7 @@ const toSummary = (row: SummaryRow): AdminCandidateSummary => ({
   isActive: row.user.isActive,
   emailVerified: row.user.emailVerifiedAt !== null,
   applicationCount: row._count.applications,
+  documentCount: row._count.documents,
   registeredAt: row.user.createdAt.toISOString(),
 });
 

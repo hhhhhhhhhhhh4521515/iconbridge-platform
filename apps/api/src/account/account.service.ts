@@ -225,15 +225,30 @@ export class AccountService {
   async deleteAccount(userId: string, password: string): Promise<void> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: {
-        email: true,
-        passwordHash: true,
-        candidateProfile: { select: { id: true, documents: { select: { blobPath: true } } } },
-      },
+      select: { passwordHash: true },
     });
     if (!user.passwordHash || !(await verifyPassword(user.passwordHash, password))) {
       throw new AppException('INVALID_CREDENTIALS', HttpStatus.FORBIDDEN, 'Wrong password');
     }
+    await this.eraseCandidate(userId);
+  }
+
+  /**
+   * The erasure itself, also used when the back office deletes a candidate. Returns
+   * what was removed, as counts only.
+   */
+  async eraseCandidate(
+    userId: string,
+  ): Promise<{ profileId: string | null; documents: number; applications: number }> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        email: true,
+        candidateProfile: {
+          select: { id: true, documents: { select: { blobPath: true, deletedAt: true } } },
+        },
+      },
+    });
     const profileId = user.candidateProfile?.id;
 
     for (const document of user.candidateProfile?.documents ?? []) {
@@ -241,6 +256,7 @@ export class AccountService {
     }
 
     const now = this.clock.now();
+    let applicationCount = 0;
     await this.prisma.$transaction(async (tx) => {
       if (profileId) {
         const applications = await tx.application.findMany({
@@ -262,6 +278,7 @@ export class AccountService {
             },
           });
         }
+        applicationCount = applications.length;
         const ids = applications.map((application) => application.id);
         await tx.application.updateMany({
           where: { id: { in: ids } },
@@ -326,5 +343,11 @@ export class AccountService {
       });
     });
     this.logger.log(`Candidate account erased (user ${userId})`);
+    return {
+      profileId: profileId ?? null,
+      documents: (user.candidateProfile?.documents ?? []).filter((d) => d.deletedAt === null)
+        .length,
+      applications: applicationCount,
+    };
   }
 }
