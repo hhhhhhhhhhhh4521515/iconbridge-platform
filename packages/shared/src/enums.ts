@@ -120,3 +120,7 @@ export const GLOBAL_HISTORICAL_METRICS = [
 export function isGlobalHistoricalMetric(metric: HistoricalMetric): boolean {
   return (GLOBAL_HISTORICAL_METRICS as readonly HistoricalMetric[]).includes(metric);
 }
+
+/** Life of an email in the outbox. */
+export const EMAIL_STATUSES = ['PENDING', 'SENT', 'FAILED', 'CANCELLED'] as const;
+export type EmailStatus = (typeof EMAIL_STATUSES)[number];

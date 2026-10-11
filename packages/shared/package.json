@@ -29,7 +29,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "api:types": "openapi-typescript openapi/openapi.json -o src/generated/api.ts"
+    "api:types": "openapi-typescript openapi/openapi.json -o src/generated/api.ts",
+    "test:cov": "vitest run --coverage"
   },
   "dependencies": {
     "openapi-fetch": "^0.17.0",

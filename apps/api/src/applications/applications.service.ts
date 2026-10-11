@@ -116,11 +116,7 @@ export class ApplicationsService {
         await this.lock(tx, `application:${profile.id}:${jobId}`);
 
         const evaluation = await this.evaluate(tx, user, jobId);
-        this.assertEligible(evaluation);
-        const job = evaluation.job;
-        if (!job) {
-          throw notFound('Job not found');
-        }
+        const job = this.assertEligible(evaluation);
 
         const documents = await tx.document.findMany({
           where: { id: { in: input.documentIds }, candidateId: profile.id, deletedAt: null },
@@ -330,9 +326,10 @@ export class ApplicationsService {
   }
 
   /** Turns the first applicable reason into the error of POST /jobs/:id/apply. */
-  private assertEligible(evaluation: Evaluation): void {
+  private assertEligible(evaluation: Evaluation): JobState {
     const has = (reason: IneligibilityReason) => evaluation.reasons.includes(reason);
-    if (!evaluation.job?.known) {
+    const { job } = evaluation;
+    if (!job?.known) {
       throw notFound('Job not found');
     }
     if (has('REAPPLY_COOLDOWN') && evaluation.nextAllowedAt) {
@@ -380,6 +377,7 @@ export class ApplicationsService {
         'You have reached the maximum number of applications in progress',
       );
     }
+    return job;
   }
 
   /** Waits for a transaction-level advisory lock named by `key`. */

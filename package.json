@@ -24,7 +24,8 @@
     "db:migrate": "pnpm --filter @iconbridge/api db:migrate",
     "db:seed": "pnpm --filter @iconbridge/shared build && pnpm --filter @iconbridge/api db:seed",
     "api:types": "pnpm --filter @iconbridge/api openapi:export && pnpm --filter @iconbridge/shared api:types",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:cov": "pnpm -r --workspace-concurrency=1 run test:cov"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
@@ -38,6 +39,7 @@
     "@commitlint/config-conventional": "^21.2.3",
     "@eslint/js": "^9.39.5",
     "@iconbridge/config": "workspace:*",
+    "@vitest/coverage-v8": "^5.0.3",
     "eslint": "catalog:",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
