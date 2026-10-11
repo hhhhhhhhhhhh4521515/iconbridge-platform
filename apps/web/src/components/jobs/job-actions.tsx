@@ -1,12 +1,10 @@
 'use client';
 
-import { createApiClient } from '@iconbridge/shared/api-client';
 import { Check, Copy, Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from '@/i18n/navigation';
+import { api, hasSession, refreshSession } from '@/lib/client-api';
 import { cta } from '@/lib/ui';
-
-const api = createApiClient();
 
 export interface ApplyLabels {
   apply: string;
@@ -68,7 +66,11 @@ export function ApplyButton({
       new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date(iso));
     const load = async (): Promise<ApplyState> => {
       // /auth/session answers 200 to visitors too, so no failed request shows in the console.
-      const session = await api.GET('/api/v1/auth/session');
+      let session = await api.GET('/api/v1/auth/session');
+      if (!session.data?.user && hasSession() && (await refreshSession())) {
+        // The access token had expired (it lives 15 minutes); the session itself was still good.
+        session = await api.GET('/api/v1/auth/session');
+      }
       const user = session.data?.user;
       if (!user) {
         return { kind: 'anonymous' };

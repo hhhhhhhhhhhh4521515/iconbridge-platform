@@ -19,16 +19,19 @@ import {
   ApiCookieAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import {
   candidateDocumentSchema,
   DOCUMENT_TYPES,
+  downloadQuerySchema,
   PERMISSIONS,
   uploadDocumentSchema,
   uuidParamSchema,
   type CandidateDocument,
+  type DownloadQuery,
   type UploadDocumentInput,
 } from '@iconbridge/shared';
 import { z } from 'zod';
@@ -37,7 +40,7 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser, Owned, Roles } from '../auth/decorators/index.js';
 import { OwnershipGuard } from '../auth/guards/ownership.guard.js';
 import { AppException } from '../common/errors/app.exception.js';
-import { ZodParams, ZodValidationPipe } from '../common/pipes/zod-validation.pipe.js';
+import { ZodParams, ZodQuery, ZodValidationPipe } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { DocumentsService } from './documents.service.js';
 
@@ -133,11 +136,21 @@ export class DocumentsController {
       'document and to back-office users, whose downloads are written to the audit log.',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiQuery({
+    name: 'inline',
+    required: false,
+    enum: ['true', 'false'],
+    description: 'true: the link displays the file (preview) instead of saving it',
+  })
   @ApiResponse({ status: 302, description: 'Location: temporary signed URL' })
   @ApiErrors(401, 403, 404)
   async download(
     @ZodParams(uuidParamSchema) params: IdParam,
+    @ZodQuery(downloadQuerySchema) query: DownloadQuery,
   ): Promise<{ url: string; statusCode: number }> {
-    return { url: await this.documents.downloadUrl(params.id), statusCode: HttpStatus.FOUND };
+    return {
+      url: await this.documents.downloadUrl(params.id, query.inline),
+      statusCode: HttpStatus.FOUND,
+    };
   }
 }

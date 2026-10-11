@@ -118,6 +118,14 @@ describe('candidate profile schema', () => {
     });
   });
 
+  it('accepts destination preferences and defaults them to none', () => {
+    expect(schema.parse(complete).preferredDestinations).toEqual([]);
+    expect(
+      schema.parse({ ...complete, preferredDestinations: ['malta', ' CRUISE_SHIP '] })
+        .preferredDestinations,
+    ).toEqual(['MALTA', 'CRUISE_SHIP']);
+  });
+
   it('accepts a profile with only the names', () => {
     expect(schema.safeParse(empty).success).toBe(true);
   });

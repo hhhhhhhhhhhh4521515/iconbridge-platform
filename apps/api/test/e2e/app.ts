@@ -113,10 +113,10 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
       },
       privateDownloadUrl: (
         path: string,
-        options: { fileName: string; expiresInSeconds?: number },
+        options: { fileName: string; expiresInSeconds?: number; inline?: boolean },
       ) =>
         Promise.resolve(
-          `${FAKE_PRIVATE_HOST}/${path}?sp=r&ttl=${options.expiresInSeconds ?? 300}&name=${encodeURIComponent(options.fileName)}`,
+          `${FAKE_PRIVATE_HOST}/${path}?sp=r&ttl=${options.expiresInSeconds ?? 300}&name=${encodeURIComponent(options.fileName)}${options.inline ? '&inline=1' : ''}`,
         ),
     })
     .overrideProvider(Clock)

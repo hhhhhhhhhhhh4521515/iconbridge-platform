@@ -202,6 +202,7 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
         CONTACT_PHONE: '+356 2100 0000',
         CONTACT_WHATSAPP: '',
         CONTACT_ADDRESS: '',
+        MAX_UPLOAD_SIZE_MB: 5,
       });
     });
   });

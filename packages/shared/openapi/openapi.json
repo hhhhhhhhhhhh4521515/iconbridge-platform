@@ -8878,6 +8878,12 @@
                         "pattern": "^[A-Z0-9]{1,4}$"
                       }
                     },
+                    "preferredDestinations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "hasStcwTraining": {
                       "type": "boolean"
                     },
@@ -8991,6 +8997,7 @@
                     "educationLevel",
                     "languages",
                     "drivingLicenceCategories",
+                    "preferredDestinations",
                     "hasStcwTraining",
                     "hasSeamanBook",
                     "hasMedicalCertificate",
@@ -9282,6 +9289,16 @@
                       "pattern": "^[A-Z0-9]{1,4}$"
                     }
                   },
+                  "preferredDestinations": {
+                    "default": [],
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    }
+                  },
                   "hasStcwTraining": {
                     "type": "boolean"
                   },
@@ -9471,6 +9488,12 @@
                         "pattern": "^[A-Z0-9]{1,4}$"
                       }
                     },
+                    "preferredDestinations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "hasStcwTraining": {
                       "type": "boolean"
                     },
@@ -9584,6 +9607,7 @@
                     "educationLevel",
                     "languages",
                     "drivingLicenceCategories",
+                    "preferredDestinations",
                     "hasStcwTraining",
                     "hasSeamanBook",
                     "hasMedicalCertificate",
@@ -10757,6 +10781,19 @@
         "description": "Redirects (302) to a read-only link valid 5 minutes. Allowed to the candidate who owns the document and to back-office users, whose downloads are written to the audit log.",
         "operationId": "DocumentsController_download",
         "parameters": [
+          {
+            "name": "inline",
+            "required": false,
+            "in": "query",
+            "description": "true: the link displays the file (preview) instead of saving it",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
           {
             "name": "id",
             "required": true,
@@ -12603,6 +12640,1235 @@
         "summary": "Withdraw an application (possible until the contract is signed)",
         "tags": [
           "candidate: applications"
+        ]
+      }
+    },
+    "/api/v1/me/settings": {
+      "patch": {
+        "operationId": "AccountController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fr",
+                      "ar"
+                    ]
+                  }
+                },
+                "required": [
+                  "locale"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fr",
+                        "ar"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "locale"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Change my language (used for the emails)",
+        "tags": [
+          "candidate: my data (GDPR)"
+        ]
+      }
+    },
+    "/api/v1/me/password": {
+      "post": {
+        "description": "Needs the current password. Every other session is signed out; this one receives new cookies.",
+        "operationId": "AccountController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Change my password",
+        "tags": [
+          "candidate: my data (GDPR)"
+        ]
+      }
+    },
+    "/api/v1/me/job-alerts": {
+      "get": {
+        "operationId": "AccountController_jobAlerts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "destinations": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "categories": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "confirmed": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "destinations",
+                      "categories",
+                      "confirmed",
+                      "createdAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "My job alerts",
+        "tags": [
+          "candidate: my data (GDPR)"
+        ]
+      },
+      "post": {
+        "description": "Active at once, without a confirmation email: the address is already verified.",
+        "operationId": "AccountController_createJobAlert",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "destinations": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 40
+                    }
+                  },
+                  "categories": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 80
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "destinations": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "categories": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "confirmed": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "destinations",
+                      "categories",
+                      "confirmed",
+                      "createdAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create a job alert for my address",
+        "tags": [
+          "candidate: my data (GDPR)"
+        ]
+      }
+    },
+    "/api/v1/me/job-alerts/{id}": {
+      "delete": {
+        "operationId": "AccountController_removeJobAlert",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Delete one of my job alerts",
+        "tags": [
+          "candidate: my data (GDPR)"
         ]
       }
     },
@@ -24252,13 +25518,19 @@
                     },
                     "CONTACT_ADDRESS": {
                       "type": "string"
+                    },
+                    "MAX_UPLOAD_SIZE_MB": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "CONTACT_EMAIL",
                     "CONTACT_PHONE",
                     "CONTACT_WHATSAPP",
-                    "CONTACT_ADDRESS"
+                    "CONTACT_ADDRESS",
+                    "MAX_UPLOAD_SIZE_MB"
                   ],
                   "additionalProperties": false
                 }
@@ -24266,7 +25538,7 @@
             }
           }
         },
-        "summary": "Contact details shown on the site",
+        "summary": "Contact details shown on the site, and the upload size limit",
         "tags": [
           "public"
         ]

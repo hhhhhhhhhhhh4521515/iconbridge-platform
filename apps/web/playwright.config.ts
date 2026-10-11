@@ -19,6 +19,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    actionTimeout: 15_000,
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },

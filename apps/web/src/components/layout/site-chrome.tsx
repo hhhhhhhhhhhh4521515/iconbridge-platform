@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { pick } from '@/lib/format';
-import { cta } from '@/lib/ui';
+import { AuthActions } from './auth-actions';
 import { LocaleSwitcher, MobileMenu, ThemeToggle } from './header-controls';
 
 const NAV = [
@@ -88,14 +88,14 @@ export async function Header() {
     </li>
   ));
   const actions = (
-    <>
-      <Link href="/register" className={`${cta.gold} whitespace-nowrap`}>
-        {t('jobSeeker')}
-      </Link>
-      <Link href="/login" className={`${cta.outline} whitespace-nowrap`}>
-        {t('login')}
-      </Link>
-    </>
+    <AuthActions
+      labels={{
+        jobSeeker: t('jobSeeker'),
+        login: t('login'),
+        account: t('account'),
+        logout: t('logout'),
+      }}
+    />
   );
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">

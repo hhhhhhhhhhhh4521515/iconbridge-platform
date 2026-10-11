@@ -237,6 +237,9 @@ model CandidateProfile {
   /// Licence categories such as "B", "C", "CE".
   drivingLicenceCategories String[]        @default([]) @map("driving_licence_categories")
 
+  /// Destination codes the candidate is interested in; used to recommend jobs.
+  preferredDestinations String[] @default([]) @map("preferred_destinations")
+
   // Cruise-ship extras
   hasStcwTraining       Boolean @default(false) @map("has_stcw_training")
   hasSeamanBook         Boolean @default(false) @map("has_seaman_book")

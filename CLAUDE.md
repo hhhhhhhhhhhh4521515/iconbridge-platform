@@ -66,6 +66,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - shadcn/ui components are added with `pnpm dlx shadcn@latest add <name>` from `apps/web`.
 - Web: every text goes in `apps/web/src/messages/{fr,en,ar}.json` (same keys in the three files); links use `Link` from `@/i18n/navigation`; use logical CSS (`ps-`, `ms-`, `start-`) so Arabic mirrors correctly.
 - Web: the browser calls the API only through `/api/v1/*` on the web origin (`createApiClient()` from `@iconbridge/shared/api-client`); server components use `src/lib/api.ts`. Never expose `API_INTERNAL_URL` or call the API host from client code.
+- Web, candidate area: client components call the API with `api` from `@/lib/client-api` (silent refresh on 401), never a bare `createApiClient()`; forms use `useZodForm` with a schema from `@iconbridge/shared/<module>` and the fields of `components/forms/fields.tsx`; error texts are message keys under `forms.errors` and `forms.api`.
 - Web: content must be readable without JavaScript and with `prefers-reduced-motion`; animations are an enhancement. Use `next/image` (`MediaImage` for pictures from blob storage) and keep calls to action at 44 px or more.
 - Versions shared by workspaces are set in the `catalog` of `pnpm-workspace.yaml`.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`); commitlint checks them. Small logical commits.

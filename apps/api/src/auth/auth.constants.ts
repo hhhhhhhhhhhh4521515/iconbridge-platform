@@ -13,6 +13,12 @@ export const ACCOUNT_LOCK_MS = 15 * MINUTE;
 
 export const ACCESS_COOKIE = 'ib_access';
 export const REFRESH_COOKIE = 'ib_refresh';
+/**
+ * Readable by the web app (not httpOnly) and holding no secret: it only says "a session
+ * probably exists", so pages can show the right menu and redirect visitors to the login
+ * page without calling the API. Access is always decided by the API from the real tokens.
+ */
+export const SESSION_MARKER_COOKIE = 'ib_session';
 export const JWT_ISSUER = 'iconbridge-api';
 
 /** Requests per minute and per client IP. Auth routes are stricter than the rest. */

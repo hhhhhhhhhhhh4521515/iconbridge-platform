@@ -117,6 +117,15 @@ const profileFields = z.object({
     )
     .max(15),
 
+  /**
+   * Destination codes the candidate is interested in (MALTA, POLAND, CRUISE_SHIP...).
+   * Used to recommend jobs; CRUISE_SHIP also shows the cruise-ship questions.
+   */
+  preferredDestinations: z
+    .array(z.string().trim().toUpperCase().min(1).max(40))
+    .max(10)
+    .default([]),
+
   // Cruise-ship extras
   hasStcwTraining: z.boolean(),
   hasSeamanBook: z.boolean(),
@@ -169,6 +178,33 @@ export function makeCandidateProfileSchema(now: () => Date = () => new Date()) {
 }
 
 export const candidateProfileSchema = makeCandidateProfileSchema();
+
+/** The fields of the profile, without the rules that span several fields. For building forms. */
+export const candidateProfileFields = profileFields;
+
+/** Steps of the profile wizard and the fields each one edits. */
+export const PROFILE_STEPS = {
+  identity: [
+    'firstName',
+    'lastName',
+    'gender',
+    'dateOfBirth',
+    'nationality',
+    'countryOfResidence',
+    'city',
+    'phone',
+    'whatsapp',
+    'preferredDestinations',
+  ],
+  passport: ['passportNumber', 'passportIssuingCountry', 'passportIssueDate', 'passportExpiryDate'],
+  experience: ['currentProfession', 'yearsOfExperience', 'educationLevel'],
+  languages: ['languages'],
+  licence: ['drivingLicenceCategories'],
+  cruise: ['hasStcwTraining', 'hasSeamanBook', 'hasMedicalCertificate', 'seaExperience'],
+} as const satisfies Record<string, readonly (keyof typeof profileFields.shape)[]>;
+export type ProfileStep = keyof typeof PROFILE_STEPS;
+
+export const CRUISE_DESTINATION = 'CRUISE_SHIP';
 export type CandidateProfileInput = z.infer<typeof candidateProfileSchema>;
 
 // ---------------------------------------------------------------------------
@@ -283,6 +319,7 @@ export const candidateProfileResponseSchema = z.object({
   passportNumberMasked: z.string().nullable(),
   /** True when the passport expires within 6 months. */
   passportExpiringSoon: z.boolean(),
+  preferredDestinations: z.array(z.string()),
   gdprConsentAt: z.iso.datetime().nullable(),
   profileCompleteness: profileCompletenessSchema,
 });
@@ -434,3 +471,47 @@ export type CandidateApplication = z.infer<typeof candidateApplicationSchema>;
 /** Body of DELETE /me/account: the password confirms the irreversible deletion. */
 export const deleteAccountSchema = z.object({ password: z.string().min(1).max(128) });
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
+// ---------------------------------------------------------------------------
+// Account settings
+// ---------------------------------------------------------------------------
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  /** Same rules as at registration: 10 characters at least, zxcvbn score 3 or more. */
+  newPassword: z.string().min(10).max(128),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const accountSettingsSchema = z.object({
+  /** Language of the emails sent to the user. */
+  locale: z.enum(['en', 'fr', 'ar']),
+});
+export type AccountSettingsInput = z.infer<typeof accountSettingsSchema>;
+
+/** A job alert created from the account: no confirmation email, the address is already verified. */
+export const myJobAlertSchema = z.object({
+  destinations: z.array(z.string().trim().toUpperCase().max(40)).max(20).default([]),
+  categories: z.array(z.string().trim().toLowerCase().max(80)).max(20).default([]),
+});
+export type MyJobAlertInput = z.infer<typeof myJobAlertSchema>;
+
+export const myJobAlertResponseSchema = z.object({
+  id: z.uuid(),
+  /** Destination codes; empty means every destination. */
+  destinations: z.array(z.string()),
+  /** Category slugs; empty means every category. */
+  categories: z.array(z.string()),
+  confirmed: z.boolean(),
+  createdAt: z.iso.datetime(),
+});
+export type MyJobAlert = z.infer<typeof myJobAlertResponseSchema>;
+
+/** `?inline=true` asks for a link the browser displays (preview) instead of saving. */
+export const downloadQuerySchema = z.object({
+  inline: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+});
+export type DownloadQuery = z.infer<typeof downloadQuerySchema>;
