@@ -175,6 +175,8 @@ model User {
   auditLogs        AuditLog[]
 
   @@index([role])
+  /// Lists and counters select accounts by role, leaving out the erased ones.
+  @@index([role, deletedAt])
   @@map("users")
 }
 
@@ -462,6 +464,8 @@ model Application {
 
   /// Serves the re-application cooldown lookup: last application of a candidate to a job.
   @@index([candidateId, jobId, appliedAt(sort: Desc)])
+  /// The back-office list and the dashboard read the newest applications first.
+  @@index([appliedAt(sort: Desc)])
   @@index([jobId, status])
   @@index([status])
   @@map("applications")
