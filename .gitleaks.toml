@@ -1,0 +1,13 @@
+# gitleaks configuration. Run: gitleaks git --redact .
+# The default rules apply. The only matches in the history are passwords of test
+# fixtures: fake accounts created in the test database or in memory, used nowhere else.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Passwords of test fixtures"
+paths = [
+  '''apps/api/test/.*''',
+  '''apps/api/src/.*\.spec\.ts''',
+  '''apps/web/e2e/.*''',
+]
