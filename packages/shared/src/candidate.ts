@@ -515,3 +515,12 @@ export const downloadQuerySchema = z.object({
     .transform((value) => value === 'true'),
 });
 export type DownloadQuery = z.infer<typeof downloadQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Data retention
+// ---------------------------------------------------------------------------
+
+/** A candidate account without any activity for this many months is erased. */
+export const RETENTION_MONTHS = 24;
+/** The candidate is warned by email this many days before the erasure; signing in keeps the account. */
+export const RETENTION_NOTICE_DAYS = 30;

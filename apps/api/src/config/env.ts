@@ -18,6 +18,11 @@ const baseEnvSchema = z.object({
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535),
   MAIL_FROM: z.string().min(1),
+  /**
+   * background: a request queues its emails and returns; they are sent right after.
+   * inline: the request waits for the first attempt (automated tests).
+   */
+  MAIL_DELIVERY: z.enum(['background', 'inline']).default('background'),
   /** Azurite or an account key. Leave empty in Azure and set AZURE_STORAGE_ACCOUNT_URL instead. */
   AZURE_STORAGE_CONNECTION_STRING: z.string(),
   /** https://<account>.blob.core.windows.net, used with the managed identity. Empty locally. */

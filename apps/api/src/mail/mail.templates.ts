@@ -9,6 +9,7 @@ export const EMAIL_TEMPLATES = [
   'new-application',
   'application-status',
   'application-status-correction',
+  'retention-warning',
   'job-alert-confirm',
   'job-alert',
   'contact-message',
@@ -29,6 +30,8 @@ export interface EmailVariables {
   message?: string | null;
   /** Links listed in the email (job alerts): one per job. */
   links?: { label: string; url: string }[];
+  /** Day the account will be erased, already written for the reader (retention warning). */
+  date?: string;
   /** Link to stop receiving these emails (job alerts). */
   unsubscribeUrl?: string;
   /** Who wrote through the contact form. */
@@ -182,6 +185,16 @@ const en: Record<EmailTemplate, Builder> = {
     buttonLabel: 'View my applications',
     footnotes: [NEVER_PAY.en],
   }),
+  'retention-warning': ({ date = '' }) => ({
+    subject: `Your account will be deleted soon - ${BRAND}`,
+    heading: 'Your account has not been used for a long time',
+    paragraphs: [
+      `You have not signed in to ${BRAND} for almost two years. To protect your personal data, your account, your profile and your documents will be deleted on ${date}.`,
+      'To keep your account, sign in before that date. If you no longer need it, you have nothing to do.',
+    ],
+    buttonLabel: 'Sign in to keep my account',
+    footnotes: [NEVER_PAY.en],
+  }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `Confirm your job alert - ${BRAND}`,
     heading: 'Confirm your job alert',
@@ -296,6 +309,16 @@ const fr: Record<EmailTemplate, Builder> = {
     buttonLabel: 'Voir mes candidatures',
     footnotes: [NEVER_PAY.fr],
   }),
+  'retention-warning': ({ date = '' }) => ({
+    subject: `Votre compte sera bientôt supprimé - ${BRAND}`,
+    heading: "Votre compte n'est plus utilisé depuis longtemps",
+    paragraphs: [
+      `Vous ne vous êtes pas connecté à ${BRAND} depuis près de deux ans. Pour protéger vos données personnelles, votre compte, votre profil et vos documents seront supprimés le ${date}.`,
+      "Pour conserver votre compte, connectez-vous avant cette date. Si vous n'en avez plus besoin, vous n'avez rien à faire.",
+    ],
+    buttonLabel: 'Me connecter pour garder mon compte',
+    footnotes: [NEVER_PAY.fr],
+  }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `Confirmez votre alerte emploi - ${BRAND}`,
     heading: 'Confirmez votre alerte emploi',
@@ -403,6 +426,16 @@ const ar: Record<EmailTemplate, Builder> = {
       `أُرسلت رسالتنا الأخيرة بخصوص طلبك لوظيفة «${jobTitle}» عن طريق الخطأ. نرجو تجاهلها. حالة طلبك هي: ${STATUS_LABELS.ar[status]}.`,
     ],
     buttonLabel: 'عرض طلباتي',
+    footnotes: [NEVER_PAY.ar],
+  }),
+  'retention-warning': ({ date = '' }) => ({
+    subject: `سيُحذف حسابك قريبًا - ${BRAND}`,
+    heading: 'لم يُستخدم حسابك منذ مدة طويلة',
+    paragraphs: [
+      `لم تسجّل الدخول إلى ${BRAND} منذ قرابة سنتين. لحماية بياناتك الشخصية، سيُحذف حسابك وملفك الشخصي ومستنداتك بتاريخ ${date}.`,
+      'للاحتفاظ بحسابك، سجّل الدخول قبل هذا التاريخ. إذا لم تعد بحاجة إليه، فلا يلزمك فعل أي شيء.',
+    ],
+    buttonLabel: 'تسجيل الدخول للاحتفاظ بحسابي',
     footnotes: [NEVER_PAY.ar],
   }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({

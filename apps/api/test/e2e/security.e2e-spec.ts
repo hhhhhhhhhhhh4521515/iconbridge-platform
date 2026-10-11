@@ -82,11 +82,12 @@ describe('security (e2e)', () => {
           const targets = [handler, controller];
           return [
             {
-              method: RequestMethod[method] ?? 'GET',
+              method: RequestMethod[method],
               path: `${health ? '' : API}/${joined}`.replace(/\/+/g, '/'),
               open:
-                Boolean(reflector.getAllAndOverride(IS_PUBLIC_KEY, targets)) ||
-                Boolean(reflector.getAllAndOverride(OPTIONAL_AUTH_KEY, targets)),
+                reflector.getAllAndOverride<boolean | undefined>(IS_PUBLIC_KEY, targets) === true ||
+                reflector.getAllAndOverride<boolean | undefined>(OPTIONAL_AUTH_KEY, targets) ===
+                  true,
               roles: reflector.getAllAndOverride<readonly string[] | undefined>(ROLES_KEY, targets),
             },
           ];

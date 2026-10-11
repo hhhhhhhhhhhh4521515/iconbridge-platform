@@ -519,12 +519,14 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
 
   describe('scheduled tasks', () => {
     it('exposes every task by name and runs them all, reporting each', async () => {
-      expect([...TASK_NAMES]).toEqual(['close-jobs', 'job-alerts']);
+      expect([...TASK_NAMES]).toEqual(['send-emails', 'close-jobs', 'job-alerts', 'retention']);
       await insertJob(test, catalog, { slug: 'expired', deadline: daysFromNow(-1) });
       const reports = await test.app.get(TasksService).runAll();
       expect(reports).toEqual([
+        expect.objectContaining({ task: 'send-emails', ok: true, ran: true }),
         expect.objectContaining({ task: 'close-jobs', ok: true, ran: true }),
         expect.objectContaining({ task: 'job-alerts', ok: true, ran: true }),
+        expect.objectContaining({ task: 'retention', ok: true, ran: true }),
       ]);
       expect((await test.prisma.job.findUniqueOrThrow({ where: { slug: 'expired' } })).status).toBe(
         'CLOSED',
@@ -539,8 +541,10 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
       const reports = await tasks.runAll();
       failing.mockRestore();
       expect(reports.map((report) => [report.task, report.ok])).toEqual([
+        ['send-emails', true],
         ['close-jobs', true],
         ['job-alerts', false],
+        ['retention', true],
       ]);
     });
 

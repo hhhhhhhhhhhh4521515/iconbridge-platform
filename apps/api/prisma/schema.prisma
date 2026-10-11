@@ -112,6 +112,16 @@ enum HistoricalMetric {
   COUNTRIES_SERVED
 }
 
+enum EmailStatus {
+  /// Waiting to be sent, or to be tried again after a failure.
+  PENDING
+  SENT
+  /// Given up after too many attempts.
+  FAILED
+  /// Withdrawn before it was sent (the change it announced was undone).
+  CANCELLED
+}
+
 enum ApplicationStatus {
   SUBMITTED
   UNDER_REVIEW
@@ -133,26 +143,28 @@ enum ApplicationStatus {
 // ---------------------------------------------------------------------------
 
 model User {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Always stored in lower case (CHECK constraint).
-  email            String    @unique
+  email             String    @unique
   /// argon2id hash. Null until an invited admin has set a password.
-  passwordHash     String?   @map("password_hash")
-  role             UserRole  @default(CANDIDATE)
-  emailVerifiedAt  DateTime? @map("email_verified_at") @db.Timestamptz(3)
-  isActive         Boolean   @default(true) @map("is_active")
-  lastLoginAt      DateTime? @map("last_login_at") @db.Timestamptz(3)
+  passwordHash      String?   @map("password_hash")
+  role              UserRole  @default(CANDIDATE)
+  emailVerifiedAt   DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  isActive          Boolean   @default(true) @map("is_active")
+  lastLoginAt       DateTime? @map("last_login_at") @db.Timestamptz(3)
+  /// When the "your account will be erased" email was sent (data retention); cleared by any new activity.
+  retentionWarnedAt DateTime? @map("retention_warned_at") @db.Timestamptz(3)
   /// Language of the emails sent to the user: en, fr or ar (CHECK constraint).
-  locale           String    @default("en") @db.VarChar(2)
+  locale            String    @default("en") @db.VarChar(2)
   /// Consecutive failed logins; reset by a successful login or a password reset.
-  failedLoginCount Int       @default(0) @map("failed_login_count")
+  failedLoginCount  Int       @default(0) @map("failed_login_count")
   /// Logins are refused until this time (set after too many failures).
-  lockedUntil      DateTime? @map("locked_until") @db.Timestamptz(3)
+  lockedUntil       DateTime? @map("locked_until") @db.Timestamptz(3)
   /// Copied into access tokens; incrementing it invalidates every token already issued.
-  tokenVersion     Int       @default(0) @map("token_version")
-  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  tokenVersion      Int       @default(0) @map("token_version")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   refreshTokens    RefreshToken[]
   emailTokens      EmailToken[]
@@ -484,18 +496,20 @@ model ApplicationStatusHistory {
   comment            String?
   /// Optional text for the candidate: shown in their timeline and included in the email.
   messageToCandidate String?            @map("message_to_candidate")
-  /// When the email about this change was sent to the candidate; null if none went out.
-  notifiedAt         DateTime?          @map("notified_at") @db.Timestamptz(3)
+  /// The email about this change in the outbox; its status says whether the candidate received it.
+  emailId            String?            @map("email_id") @db.Uuid
   /// Insertion order. Two changes can carry the same timestamp; this number tells which came last.
   seq                Int                @default(autoincrement())
   /// Set when the author undid this change. A reverted row is kept for the record but no longer counts.
   revertedAt         DateTime?          @map("reverted_at") @db.Timestamptz(3)
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  changedBy   User?       @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  application Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  changedBy   User?        @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  email       EmailOutbox? @relation(fields: [emailId], references: [id], onDelete: SetNull)
 
   @@index([applicationId, createdAt])
+  @@index([emailId])
   @@index([changedById])
   @@map("application_status_history")
 }
@@ -687,4 +701,31 @@ model HistoricalFigure {
   @@unique([metric, year, destinationId], map: "historical_figures_metric_year_destination_key")
   @@index([destinationId])
   @@map("historical_figures")
+}
+
+/// Emails waiting to be sent. A request only writes a row here; the task runner sends
+/// them, and tries again later when the mail server is down, so no email is lost and
+/// no request waits for SMTP.
+model EmailOutbox {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  template      String
+  locale        String
+  /// Recipient, variables of the template and reply address, encrypted (AES-256-GCM): the
+  /// variables hold one-time links. Emptied once the email is sent.
+  payload       String
+  status        EmailStatus @default(PENDING)
+  attempts      Int         @default(0)
+  /// Not before this moment. Also the lease of an attempt in progress.
+  nextAttemptAt DateTime    @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  /// Kind of the last failure (an error name, never a message with an address).
+  lastError     String?     @map("last_error")
+  sentAt        DateTime?   @map("sent_at") @db.Timestamptz(3)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  statusChanges ApplicationStatusHistory[]
+
+  /// The sender asks for "pending and due", oldest first.
+  @@index([status, nextAttemptAt])
+  @@map("email_outbox")
 }

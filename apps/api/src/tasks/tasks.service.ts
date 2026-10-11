@@ -2,10 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import type { Env } from '../config/env.js';
+import { RetentionService } from '../account/retention.service.js';
 import { JobAvailabilityService } from '../jobs/job-availability.service.js';
+import { MailService } from '../mail/mail.service.js';
 import { JobAlertsService } from '../public-forms/job-alerts.service.js';
 
-export const TASK_NAMES = ['close-jobs', 'job-alerts'] as const;
+export const TASK_NAMES = ['send-emails', 'close-jobs', 'job-alerts', 'retention'] as const;
 export type TaskName = (typeof TASK_NAMES)[number];
 
 export function isTaskName(value: string): value is TaskName {
@@ -39,14 +41,22 @@ export class TasksService {
   constructor(
     private readonly jobAvailability: JobAvailabilityService,
     private readonly jobAlerts: JobAlertsService,
+    private readonly mail: MailService,
+    private readonly retention: RetentionService,
     config: ConfigService<Env, true>,
   ) {
     this.schedulerEnabled = config.get('SCHEDULER_ENABLED', { infer: true });
   }
 
   private readonly tasks: Record<TaskName, () => Promise<{ ran: boolean }>> = {
+    'send-emails': async () => ({
+      ran: true,
+      ...(await this.mail.sendDue()),
+      purged: await this.mail.purge(),
+    }),
     'close-jobs': () => this.jobAvailability.closeUnavailableJobs(),
     'job-alerts': () => this.jobAlerts.sendDue(),
+    retention: () => this.retention.run(),
   };
 
   /** Runs one task. Never throws: a failure is logged and reported. */
@@ -68,6 +78,14 @@ export class TasksService {
       reports.push(await this.run(task));
     }
     return reports;
+  }
+
+  /** Emails that could not be sent at once are tried again every minute. */
+  @Cron('30 * * * * *', { name: 'send-emails' })
+  async scheduledEmails(): Promise<void> {
+    if (this.schedulerEnabled) {
+      await this.run('send-emails');
+    }
   }
 
   @Cron('0 */15 * * * *', { name: 'scheduled-tasks' })

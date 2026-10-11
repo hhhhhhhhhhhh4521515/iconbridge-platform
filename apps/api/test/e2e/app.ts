@@ -42,6 +42,8 @@ export interface TestApp {
   clock: FakeClock;
   /** Emails "sent" since the last reset, oldest first. */
   outbox: SentEmail[];
+  /** Set `down` to true and the fake mail server refuses every message. */
+  mailServer: { down: boolean };
   http: () => ReturnType<typeof request>;
   close: () => Promise<void>;
 }
@@ -72,6 +74,7 @@ export interface TestAppOptions {
 
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
   const outbox: SentEmail[] = [];
+  const mailServer = { down: false };
   const files: TestApp['files'] = new Map();
   const privateFiles: TestApp['privateFiles'] = new Map();
   const clock = new FakeClock();
@@ -82,6 +85,11 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     .overrideProvider(MAIL_TRANSPORT)
     .useValue({
       sendMail: (message: SentEmail) => {
+        if (mailServer.down) {
+          return Promise.reject(
+            Object.assign(new Error('connect ECONNREFUSED'), { name: 'SmtpDown' }),
+          );
+        }
         outbox.push(message);
         return Promise.resolve({});
       },
@@ -135,6 +143,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     app,
     prisma: app.get(PrismaService),
     outbox,
+    mailServer,
     files,
     privateFiles,
     clock,

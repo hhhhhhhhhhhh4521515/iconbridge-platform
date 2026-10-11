@@ -243,6 +243,13 @@ export class AdminApplicationsService {
         where: { id: last.id },
         data: { revertedAt: now },
       });
+      // The email about the undone change: withdrawn if it has not left yet. If it was
+      // sent, the candidate read it and a short correction follows.
+      const withdrawn = last.emailId ? await this.mail.cancel(last.emailId, tx) : false;
+      const notified =
+        !withdrawn && last.emailId
+          ? (await this.mail.statusOf(last.emailId, tx)) === 'SENT'
+          : false;
       await this.audit.record(
         {
           actorId: user.id,
@@ -250,13 +257,17 @@ export class AdminApplicationsService {
           entityType: 'application',
           entityId: id,
           before: { status: last.toStatus },
-          after: { status: previous, candidateWasNotified: last.notifiedAt !== null },
+          after: {
+            status: previous,
+            candidateWasNotified: notified,
+            pendingEmailWithdrawn: withdrawn,
+          },
           ip,
         },
         tx,
       );
       return {
-        notified: last.notifiedAt !== null,
+        notified,
         status: previous,
         email: updated.candidate.user.email,
         locale: updated.candidate.user.locale,
@@ -424,17 +435,17 @@ export class AdminApplicationsService {
   /** One email per step, in the candidate's language, with the optional message. Never the internal comment. */
   private async notifyCandidate(change: StatusChange): Promise<void> {
     const locale = localeSchema.catch('en').parse(change.locale);
-    const sent = await this.mail.send(change.email, 'application-status', locale, {
+    const emailId = await this.mail.enqueue(change.email, 'application-status', locale, {
       actionUrl: this.mail.linkFor('application-status', locale),
       jobTitle: change.jobTitle,
       status: change.to,
       message: change.message,
     });
-    if (sent && change.historyId) {
-      // Remembered so that undoing this change knows whether a correction email is owed.
+    if (change.historyId) {
+      // Remembered so that undoing this change knows whether the candidate received the email.
       await this.prisma.applicationStatusHistory.update({
         where: { id: change.historyId },
-        data: { notifiedAt: this.clock.now() },
+        data: { emailId },
       });
     }
   }

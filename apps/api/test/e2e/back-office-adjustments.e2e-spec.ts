@@ -13,6 +13,7 @@ import {
   type TestUser,
 } from './app.js';
 import { as, newApplication } from './back-office.js';
+import { MailService } from '../../src/mail/mail.service.js';
 
 const MINUTE = 60_000;
 
@@ -41,6 +42,7 @@ describe('back-office adjustments (e2e)', () => {
   beforeEach(async () => {
     await resetDatabase(test.prisma);
     test.clock.reset();
+    test.mailServer.down = false;
     catalog = await seedCatalog(test);
     viewer = await createUser(test, 'VIEWER');
     recruiter = await createUser(test, 'RECRUITER');
@@ -158,14 +160,30 @@ describe('back-office adjustments (e2e)', () => {
       expect(mine[0]?.history.map((entry) => entry.toStatus)).toEqual(['SUBMITTED']);
     });
 
-    it('sends no correction when the first email never went out', async () => {
-      await test.prisma.applicationStatusHistory.updateMany({ data: { notifiedAt: null } });
+    it('withdraws the first email instead of correcting it when it had not left yet', async () => {
+      // The mail server was down when the status changed: the email waits in the outbox.
       await undo(recruiter).expect(200);
+      test.outbox.length = 0;
+      test.mailServer.down = true;
+      await as(test, recruiter)
+        .patch(`/admin/applications/${id}/status`, { status: 'UNDER_REVIEW' })
+        .expect(200);
+      test.mailServer.down = false;
+      expect(await test.prisma.emailOutbox.count({ where: { status: 'PENDING' } })).toBe(1);
+
+      await undo(recruiter).expect(200);
+      // Nothing is sent, now or at the next run: the candidate never hears of the mistake.
+      await test.app.get(MailService).sendDue();
       expect(test.outbox).toHaveLength(0);
+      expect(await test.prisma.emailOutbox.count({ where: { status: 'CANCELLED' } })).toBe(1);
       const audit = await test.prisma.auditLog.findFirstOrThrow({
         where: { action: 'application.undo_status' },
+        orderBy: { createdAt: 'desc' },
       });
-      expect(audit.after).toMatchObject({ candidateWasNotified: false });
+      expect(audit.after).toMatchObject({
+        candidateWasNotified: false,
+        pendingEmailWithdrawn: true,
+      });
     });
 
     it('is allowed at exactly 15 minutes and refused one second later', async () => {
