@@ -107,6 +107,8 @@ c) If a check fails, fix the cause and re-run (never skip, disable or weaken a t
 
 d) Commit in small logical commits with conventional messages, push, open a PR with `gh` (summary + checks run), wait for CI with `gh pr checks --watch` (if no CI exists yet, rely on the local checks), squash-merge, delete the branch, switch back to `main` and pull.
 
+Stop every server or background process you started for checks (production builds, test servers, Prisma Studio) before finishing a task, unless I asked you to leave it running.
+
 e) Append a dated entry to `docs/JOURNAL.md` (what, why, checks, PR link) in the same PR.
 
 f) Finish with a report: DONE or BLOCKED, what was built, check results, PR link, and what remains.
