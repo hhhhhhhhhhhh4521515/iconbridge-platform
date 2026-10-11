@@ -1,9 +1,14 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import type { ConfigService } from '@nestjs/config';
 import { faker } from '@faker-js/faker';
 import type { LocalizedText } from '@iconbridge/shared';
 import { FieldCipher } from '../../src/common/crypto/field-cipher.js';
 import { protectPassportNumber } from '../../src/common/crypto/passport.js';
 import { hashPassword } from '../../src/common/crypto/password.js';
+import type { Env } from '../../src/config/env.js';
 import type { PrismaClient } from '../../src/generated/prisma/client.js';
+import { AzureStorageService } from '../../src/storage/azure-storage.service.js';
 import type {
   EducationLevel,
   JobStatus,
@@ -176,7 +181,7 @@ const slideTexts: {
 }[] = [
   {
     code: 'MALTA',
-    image: 'seed/slides/malta.jpg',
+    image: 'hero-malta-1.webp',
     title: { en: 'Work in Malta', fr: 'Travaillez à Malte', ar: 'اعمل في مالطا' },
     subtitle: {
       en: 'Hospitality, construction and transport jobs under the Mediterranean sun.',
@@ -186,7 +191,7 @@ const slideTexts: {
   },
   {
     code: 'POLAND',
-    image: 'seed/slides/poland.jpg',
+    image: 'hero-poland-1.webp',
     title: {
       en: 'Build your career in Poland',
       fr: 'Construisez votre carrière en Pologne',
@@ -200,7 +205,7 @@ const slideTexts: {
   },
   {
     code: 'CRUISE_SHIP',
-    image: 'seed/slides/cruise-ship.jpg',
+    image: 'hero-cruise-1.webp',
     title: {
       en: 'See the world on a cruise ship',
       fr: 'Découvrez le monde à bord d’un navire de croisière',
@@ -216,48 +221,48 @@ const slideTexts: {
 
 const ctaLabel: LocalizedText = { en: 'View jobs', fr: 'Voir les offres', ar: 'عرض الوظائف' };
 
-const storyTexts: {
-  jobTitle: string;
-  code: 'MALTA' | 'POLAND' | 'CRUISE_SHIP';
-  quote: LocalizedText;
-}[] = [
-  {
-    jobTitle: 'Hotel Receptionist',
-    code: 'MALTA',
-    quote: {
-      en: 'Sample quote: the team guided me at every step, from the interview to my arrival.',
-      fr: "Citation d'exemple : l'équipe m'a accompagné à chaque étape, de l'entretien à mon arrivée.",
-      ar: 'اقتباس تجريبي: رافقني الفريق في كل خطوة، من المقابلة حتى وصولي.',
-    },
-  },
-  {
-    jobTitle: 'Warehouse Operative',
-    code: 'POLAND',
-    quote: {
-      en: 'Sample quote: I always knew where my application stood.',
-      fr: "Citation d'exemple : j'ai toujours su où en était ma candidature.",
-      ar: 'اقتباس تجريبي: كنت أعرف دائمًا إلى أين وصل طلبي.',
-    },
-  },
-  {
-    jobTitle: 'Cabin Steward',
-    code: 'CRUISE_SHIP',
-    quote: {
-      en: 'Sample quote: my visa was approved and I joined the ship two weeks later.',
-      fr: "Citation d'exemple : mon visa a été approuvé et j'ai embarqué deux semaines plus tard.",
-      ar: 'اقتباس تجريبي: تمت الموافقة على تأشيرتي والتحقت بالسفينة بعد أسبوعين.',
-    },
-  },
-  {
-    jobTitle: 'Line Cook',
-    code: 'MALTA',
-    quote: {
-      en: 'Sample quote: nobody ever asked me for money to apply.',
-      fr: "Citation d'exemple : personne ne m'a jamais demandé d'argent pour postuler.",
-      ar: 'اقتباس تجريبي: لم يطلب مني أحد مالًا للتقديم.',
-    },
-  },
-];
+/** Caption of the sample stories: a neutral sentence, not words put in somebody's mouth. */
+const storyCaption: LocalizedText = {
+  en: 'Employment visa approved with IconBridge.',
+  fr: 'Visa de travail approuvé avec IconBridge.',
+  ar: 'تمت الموافقة على تأشيرة العمل مع IconBridge.',
+};
+
+/** Brand images of the web app, used for the sample slides and stories. */
+const BRAND_DIR = join(process.cwd(), '..', 'web', 'public', 'brand');
+
+/** "story-fatima.webp" -> "Fatima"; "story-candidate-26.webp" -> "Candidate 26". */
+export function storyNameFromFile(file: string): string {
+  return file
+    .replace(/^story-/, '')
+    .replace(/\.webp$/, '')
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+/**
+ * Copies a brand image to the public media container (Azurite locally) and returns
+ * its path there, or null when the file or the storage is not available: the sample
+ * data is then created without pictures and the seed still succeeds.
+ */
+async function uploadBrandImage(
+  storage: AzureStorageService,
+  file: string,
+  folder: string,
+): Promise<string | null> {
+  const source = join(BRAND_DIR, file);
+  if (!existsSync(source)) {
+    return null;
+  }
+  const path = `seed/${folder}/${file}`;
+  try {
+    await storage.uploadPublic(path, readFileSync(source), 'image/webp');
+    return path;
+  } catch {
+    return null;
+  }
+}
 
 const educationLevels: EducationLevel[] = ['SECONDARY', 'VOCATIONAL', 'BACHELOR'];
 const languageLevels: LanguageLevel[] = ['A2', 'B1', 'B2', 'C1'];
@@ -339,42 +344,68 @@ export async function seedSampleData(
     });
   }
 
+  const storage = new AzureStorageService({
+    get: (key: keyof Env) => process.env[key] ?? '',
+  } as unknown as ConfigService<Env, true>);
+
+  // Slides and stories have fixed ids and are refreshed on every run: they are
+  // sample content whose pictures come from apps/web/public/brand.
+  let picturesMissing = 0;
   for (const [index, slide] of slideTexts.entries()) {
     const id = sampleId(1, index + 1);
-    await prisma.homeSlide.upsert({
-      where: { id },
-      update: {},
-      create: {
-        id,
-        title: slide.title,
-        subtitle: slide.subtitle,
-        imagePath: slide.image,
-        ctaLabel,
-        ctaUrl: `/jobs?destination=${slide.code}`,
-        destinationId: destinationId(slide.code),
-        sortOrder: index + 1,
-      },
-    });
+    const imagePath = await uploadBrandImage(storage, slide.image, 'slides');
+    picturesMissing += imagePath ? 0 : 1;
+    const data = {
+      title: slide.title,
+      subtitle: slide.subtitle,
+      imagePath,
+      ctaLabel,
+      ctaUrl: `/jobs?destination=${slide.code}`,
+      destinationId: destinationId(slide.code),
+      sortOrder: index + 1,
+      isActive: imagePath !== null,
+    };
+    await prisma.homeSlide.upsert({ where: { id }, update: data, create: { id, ...data } });
   }
 
-  for (const [index, story] of storyTexts.entries()) {
+  // One story per "story-*.webp" poster. Only the first name comes from the file;
+  // job, destination and caption are placeholders to edit in the back office.
+  const storyFiles = existsSync(BRAND_DIR)
+    ? readdirSync(BRAND_DIR)
+        .filter((file) => /^story-.+\.webp$/.test(file))
+        .sort()
+    : [];
+  // Sample stories of an earlier run that no longer have a file.
+  const staleIds = Array.from({ length: 60 }, (_, index) => sampleId(2, index + 1)).slice(
+    storyFiles.length,
+  );
+  await prisma.successStory.deleteMany({ where: { id: { in: staleIds } } });
+  for (const [index, file] of storyFiles.entries()) {
     const id = sampleId(2, index + 1);
-    await prisma.successStory.upsert({
-      where: { id },
-      update: {},
-      create: {
-        id,
-        firstName: faker.person.firstName(),
-        lastName: 'Sample',
-        jobTitle: story.jobTitle,
-        destinationId: destinationId(story.code),
-        visaApprovedAt: daysFromNow(-30 * (index + 2)),
-        quote: story.quote,
-        consentDocumentPath: `seed/consents/sample-${index + 1}.pdf`,
-        isPublished: true,
-        sortOrder: index + 1,
-      },
-    });
+    const photoPath = await uploadBrandImage(storage, file, 'stories');
+    picturesMissing += photoPath ? 0 : 1;
+    const data = {
+      firstName: storyNameFromFile(file),
+      lastName: '',
+      showFullName: false,
+      jobTitle: 'Employment visa',
+      destinationId: destinationId('MALTA'),
+      // Unknown for the posters: left empty rather than invented.
+      visaApprovedAt: null,
+      quote: storyCaption,
+      photoPath,
+      // Placeholder so the sample stories can be shown locally. In production a story
+      // is created in the back office and needs the real signed consent to be published.
+      consentDocumentPath: `seed/consents/placeholder-${index + 1}.pdf`,
+      isPublished: true,
+      sortOrder: index + 1,
+    };
+    await prisma.successStory.upsert({ where: { id }, update: data, create: { id, ...data } });
+  }
+  if (picturesMissing > 0) {
+    process.stdout.write(
+      `  ${picturesMissing} sample pictures could not be stored (is Azurite running?); the rows were created without them.\n`,
+    );
   }
 
   const cipher = new FieldCipher(env.PASSPORT_ENCRYPTION_KEY);
@@ -450,7 +481,7 @@ export async function seedSampleData(
   return {
     jobs: sampleJobs.length,
     homeSlides: slideTexts.length,
-    successStories: storyTexts.length,
+    successStories: storyFiles.length,
     candidates: candidateCount,
   };
 }
