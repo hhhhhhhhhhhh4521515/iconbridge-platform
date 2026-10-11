@@ -21,23 +21,23 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 
 Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, never OneDrive).
 
-| Command                                     | Effect                                                                                                                             |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                          |
-| `pnpm dev`                                  | Start the compose services, wait until healthy, then run web, api and shared in watch mode                                         |
-| `pnpm build`                                | Build every workspace                                                                                                              |
-| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                         |
-| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                      |
-| `pnpm test:browser`                         | Playwright smoke tests of the web app (needs the API on 4000 with seeded data; builds and starts the web app if port 3000 is free) |
-| `pnpm api:types`                            | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint              |
-| `pnpm lint`                                 | ESLint in every workspace                                                                                                          |
-| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                                                  |
-| `pnpm format`                               | Prettier on the whole repository                                                                                                   |
-| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                             |
-| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                       |
-| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                                           |
-| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                                      |
-| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                             |
+| Command                                     | Effect                                                                                                                                   |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                                |
+| `pnpm dev`                                  | Start the compose services, wait until healthy, then run web, api and shared in watch mode                                               |
+| `pnpm build`                                | Build every workspace                                                                                                                    |
+| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                               |
+| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                            |
+| `pnpm test:browser`                         | Playwright tests of the web app (needs the API on 4000 with seeded data and Mailpit; builds and starts the web app if port 3000 is free) |
+| `pnpm api:types`                            | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint                    |
+| `pnpm lint`                                 | ESLint in every workspace                                                                                                                |
+| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                                                        |
+| `pnpm format`                               | Prettier on the whole repository                                                                                                         |
+| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                                   |
+| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                             |
+| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                                                 |
+| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                                            |
+| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                                   |
 
 One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://localhost:3000>, Swagger <http://localhost:4000/api/docs>, Mailpit <http://localhost:8025> (SMTP on 2525), Azurite blob `localhost:10000`.
 
@@ -67,6 +67,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Web: every text goes in `apps/web/src/messages/{fr,en,ar}.json` (same keys in the three files); links use `Link` from `@/i18n/navigation`; use logical CSS (`ps-`, `ms-`, `start-`) so Arabic mirrors correctly.
 - Web: the browser calls the API only through `/api/v1/*` on the web origin (`createApiClient()` from `@iconbridge/shared/api-client`); server components use `src/lib/api.ts`. Never expose `API_INTERNAL_URL` or call the API host from client code.
 - Web, candidate area: client components call the API with `api` from `@/lib/client-api` (silent refresh on 401), never a bare `createApiClient()`; forms use `useZodForm` with a schema from `@iconbridge/shared/<module>` and the fields of `components/forms/fields.tsx`; error texts are message keys under `forms.errors` and `forms.api`.
+- Web, back office (`app/[locale]/admin`, components in `components/admin`): texts go in `messages/admin/{en,fr}.json`; show or hide actions with `useAdmin().can(...)` and never rely on that for security; call the API through `useCall()` so failures show a toast; ask with `useConfirm()` before a destructive action. Public pages live in `app/[locale]/(site)`.
 - Web: content must be readable without JavaScript and with `prefers-reduced-motion`; animations are an enhancement. Use `next/image` (`MediaImage` for pictures from blob storage) and keep calls to action at 44 px or more.
 - Versions shared by workspaces are set in the `catalog` of `pnpm-workspace.yaml`.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`); commitlint checks them. Small logical commits.
@@ -89,6 +90,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Exports never contain full passport numbers unless a SUPER_ADMIN sets `includeFullPassportNumber`; every export is logged. Neutralise spreadsheet formulas in any new export.
 - Success stories are published only with a consent document; the public name is `publicStoryName()`.
 - Internal notes are never returned to candidates.
+- Back-office answers carry the masked passport number only. The clear number leaves the API through `POST /admin/candidates/:id/reveal-passport` (audited, never for a viewer) or the super-admin export.
+- Rich text of a job passes `cleanRichText` (`apps/api/src/jobs/rich-text.ts`) on writing and on reading; never render other HTML from the database.
 
 ## Autonomous workflow (mandatory after every task)
 

@@ -406,3 +406,40 @@ Candidates could read the offers but not register or apply. The reasons for the 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/8>
 
 **Remaining**: the back-office interface, per-job questions, real legal texts, Dockerfiles, Terraform, CI/CD.
+
+## 2026-10-11 - Back office of the web application
+
+**What**
+
+- API adjustments: passport numbers masked for every role with an audited reveal action for recruiters and super admins; undo of one's own last status change within 15 minutes, with a correction email when the first one had left; contact-messages inbox; per-job application questions (migration), validated when applying, kept with the application, shown in the detail and in exports; rich text of jobs cleaned on writing and reading; social links in settings and `GET /site-info`; audit-log filters; `newApplicationsThisWeek` in the dashboard figures.
+- `/admin` in the web app with its own layout and a menu by role: dashboard (KPI cards and Recharts charts), jobs (TanStack Table, quick actions, form with Tiptap, cover crop, questions, preview), applications (table, Kanban board with drag and drop, detail drawer, bulk change, CSV/Excel export with column picker), candidates, success stories and home slides managers (drag to reorder, live slider preview), destinations and categories, users and roles, contact inbox, settings, audit log.
+- Candidate apply flow: the questions of the job replace the two general ones when the job has some.
+- Footer social links (Facebook, Instagram, TikTok, LinkedIn, WhatsApp) come from the settings.
+- Toasts, optimistic updates (feature a job, reorder, hide a slide, board moves), confirmation dialogs, `/` and Ctrl+K for search, English and French.
+
+**Why**
+
+Recruiters had an API and no screen. Reasons for the choices: [ADR-009](adr/ADR-009-back-office.md).
+
+**Notes**
+
+- Found by the browser tests and fixed: closing a dialog opened from another dialog also closed its parent; the editor toolbar did not follow the cursor; the slider preview widened the page on tablets; a new success story was placed last and so did not reach the twelve the home page shows (new stories now go first).
+- `GET /admin/candidates/:id` no longer shows the clear passport number nor writes a `candidate.view` entry; three existing API tests were updated for the changed contracts (candidate detail, site-info keys, story order) and one for the new export column.
+- Not covered by a browser test: slides manager, catalog, users page, settings page, audit viewer, contact inbox, bulk change and export dialog. Their endpoints are covered by API tests; the screens were checked on screenshots at 1440 px and 820 px, in English and French, with no console error.
+- The browser tests leave their invited accounts (`e2e-recruiter-*`, `e2e-viewer-*`) in the local database; they remove their job, story and candidate.
+- Phones are not a target of the back office.
+
+**Checks**
+
+| Check                                       | Result                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | Pass                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `pnpm test`                                 | Pass: 427 unit tests (shared 132, api 266, web 29)                                                                                                                                                                                                                                                                                                                                                                                  |
+| `pnpm test:e2e`                             | Pass: 423 tests (28 new)                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `pnpm test:browser`                         | Pass: 41 runs (19 tests on desktop and phone, 3 back-office tests)                                                                                                                                                                                                                                                                                                                                                                  |
+| Done when: recruiter scenario               | Pass: invited recruiter sets a password from the Mailpit link, creates and publishes a job with rich text, a question and a cropped cover; the job is on the public site; a candidate applies and answers the question; the board refuses a jump and accepts the next step; undo works; the application reaches Visa approved; a success story is created, refused without consent, published with it, and appears on the home page |
+| Done when: role checks                      | Pass: a viewer sees dashboard, jobs, applications, candidates; has no create, edit, export, status, note or reveal button; twelve forced writes or reads of other roles answer 403; the passport number stays masked in the API answer                                                                                                                                                                                              |
+
+**PR**: PR_LINK
+
+**Remaining**: Dockerfiles, Terraform, CI/CD, legal review of the policy texts, a data retention task.
