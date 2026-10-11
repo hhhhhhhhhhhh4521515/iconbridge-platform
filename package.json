@@ -14,6 +14,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
+    "test:browser": "pnpm --filter @iconbridge/web test:browser",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "infra:up": "docker compose up -d --wait",
@@ -22,6 +23,7 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "pnpm --filter @iconbridge/api db:migrate",
     "db:seed": "pnpm --filter @iconbridge/shared build && pnpm --filter @iconbridge/api db:seed",
+    "api:types": "pnpm --filter @iconbridge/api openapi:export && pnpm --filter @iconbridge/shared api:types",
     "prepare": "husky"
   },
   "lint-staged": {

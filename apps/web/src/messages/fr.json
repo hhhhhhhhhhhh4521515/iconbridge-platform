@@ -1,0 +1,431 @@
+{
+  "common": {
+    "brand": "IconBridge Jobs",
+    "skipToContent": "Aller au contenu",
+    "viewAll": "Tout voir",
+    "learnMore": "En savoir plus",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "close": "Fermer",
+    "openMenu": "Ouvrir le menu",
+    "language": "Langue",
+    "theme": "Thème de couleur",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "retry": "Réessayer",
+    "backHome": "Retour à l'accueil",
+    "required": "obligatoire",
+    "neverPay": "IconBridge ne demande jamais d'argent aux candidats pour postuler."
+  },
+  "meta": {
+    "siteName": "IconBridge Jobs",
+    "homeTitle": "Emplois à Malte, en Pologne et sur les navires de croisière",
+    "homeDescription": "IconBridge recrute pour des employeurs à Malte, en Pologne et sur des navires de croisière. Consultez les offres, postulez en ligne et suivez votre candidature jusqu'au visa.",
+    "jobsTitle": "Offres d'emploi",
+    "jobsDescription": "Recherchez les offres ouvertes à Malte, en Pologne et sur les navires de croisière par destination, catégorie, langue et salaire.",
+    "storiesTitle": "Témoignages de réussite",
+    "storiesDescription": "Des candidats qui ont obtenu leur visa de travail avec IconBridge.",
+    "aboutTitle": "À propos d'IconBridge",
+    "aboutDescription": "Une agence de recrutement qui accompagne les candidats de leur candidature à leur arrivée à l'étranger.",
+    "contactTitle": "Contact",
+    "contactDescription": "Posez une question à IconBridge sur une offre, votre candidature ou votre visa.",
+    "privacyTitle": "Politique de confidentialité",
+    "termsTitle": "Conditions d'utilisation"
+  },
+  "topbar": {
+    "phone": "Téléphone",
+    "email": "E-mail",
+    "whatsapp": "WhatsApp"
+  },
+  "nav": {
+    "main": "Navigation principale",
+    "home": "Accueil",
+    "jobs": "Offres",
+    "destinations": "Destinations",
+    "stories": "Réussites",
+    "about": "À propos",
+    "contact": "Contact",
+    "jobSeeker": "Espace candidat",
+    "login": "Connexion"
+  },
+  "footer": {
+    "tagline": "Votre pont vers un emploi à Malte, en Pologne ou en mer.",
+    "categories": "Catégories d'emploi",
+    "explore": "Explorer",
+    "contact": "Contact",
+    "legal": "Informations légales",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation",
+    "follow": "Suivez-nous",
+    "rights": "Tous droits réservés."
+  },
+  "hero": {
+    "label": "Destinations à la une",
+    "slideOf": "Diapositive {current} sur {total}",
+    "pause": "Mettre le diaporama en pause",
+    "play": "Lancer le diaporama",
+    "cta": "Voir les offres",
+    "secondaryCta": "Comment ça marche",
+    "searchLabel": "Rechercher une offre",
+    "keyword": "Métier ou mot-clé",
+    "keywordPlaceholder": "ex. soudeur, cuisinier, réceptionniste",
+    "destination": "Destination",
+    "allDestinations": "Toutes les destinations",
+    "search": "Rechercher",
+    "fallback": {
+      "malta": {
+        "title": "Travaillez à Malte",
+        "subtitle": "Des emplois dans l'hôtellerie, le bâtiment et le transport sous le soleil de la Méditerranée."
+      },
+      "poland": {
+        "title": "Construisez votre carrière en Pologne",
+        "subtitle": "Des employeurs de l'industrie, de la logistique et de l'agriculture recrutent maintenant."
+      },
+      "cruise": {
+        "title": "Découvrez le monde à bord d'un navire de croisière",
+        "subtitle": "Rejoignez l'équipage : postes en cabines, en restaurant et en cuisine."
+      }
+    }
+  },
+  "stats": {
+    "title": "IconBridge en chiffres",
+    "openJobs": "Offres ouvertes",
+    "candidates": "Candidats inscrits",
+    "visas": "Visas approuvés",
+    "countries": "Destinations"
+  },
+  "destinations": {
+    "title": "Où souhaitez-vous travailler ?",
+    "subtitle": "Trois destinations, avec des employeurs que nous connaissons.",
+    "openJobs": "{count, plural, =0 {Aucune offre ouverte} one {# offre ouverte} other {# offres ouvertes}}",
+    "viewJobs": "Voir les offres : {name}"
+  },
+  "categories": {
+    "title": "Offres par catégorie",
+    "subtitle": "Trouvez le secteur qui correspond à votre expérience.",
+    "openJobs": "{count, plural, =0 {Aucune offre} one {# offre} other {# offres}}"
+  },
+  "latestJobs": {
+    "title": "Dernières offres",
+    "subtitle": "De nouvelles offres sont publiées chaque semaine.",
+    "featured": "À la une",
+    "empty": "Aucune offre n'est ouverte pour le moment. Créez une alerte ci-dessous pour être informé en premier."
+  },
+  "how": {
+    "title": "Comment ça marche",
+    "subtitle": "Cinq étapes, de votre profil à votre départ.",
+    "steps": {
+      "profile": {
+        "title": "Créez votre profil",
+        "text": "Inscrivez-vous gratuitement, renseignez vos informations et déposez votre CV et votre passeport."
+      },
+      "apply": {
+        "title": "Postulez",
+        "text": "Choisissez une offre et envoyez votre candidature en quelques clics."
+      },
+      "interview": {
+        "title": "Entretien",
+        "text": "Les candidats présélectionnés rencontrent l'employeur, en ligne ou sur place."
+      },
+      "visa": {
+        "title": "Visa",
+        "text": "Nous préparons avec vous le dossier de permis de travail et de visa."
+      },
+      "travel": {
+        "title": "Départ",
+        "text": "Vous partez avec un contrat signé et quelqu'un pour vous accueillir."
+      }
+    }
+  },
+  "stories": {
+    "title": "Ils ont obtenu leur visa avec IconBridge",
+    "subtitle": "De vrais candidats, publiés avec leur accord.",
+    "badge": "Visa approuvé",
+    "visaDate": "Visa approuvé le {date}",
+    "photoAlt": "{name}, {job}",
+    "viewAll": "Toutes les réussites",
+    "filterLabel": "Filtrer par destination",
+    "all": "Toutes",
+    "empty": "Aucun témoignage à afficher pour cette destination pour le moment."
+  },
+  "trust": {
+    "title": "Pourquoi les candidats nous font confiance",
+    "licensed": {
+      "title": "Agence agréée",
+      "text": "IconBridge Recruitment Ltd est une agence de recrutement enregistrée qui travaille avec des employeurs identifiés."
+    },
+    "partners": {
+      "title": "Des employeurs que nous connaissons",
+      "text": "Hôtels, entreprises du bâtiment, usines et compagnies de croisière que nous rencontrons avant de publier leurs offres."
+    },
+    "support": {
+      "title": "Un accompagnement à chaque étape",
+      "text": "De votre première question à votre arrivée : documents, entretien, visa et voyage."
+    },
+    "antiScam": {
+      "title": "Nous ne demandons jamais d'argent aux candidats pour postuler",
+      "text": "Postuler sur IconBridge est gratuit. Si quelqu'un vous demande de payer en notre nom, ne payez pas et contactez-nous."
+    }
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "items": {
+      "cost": {
+        "q": "Postuler est-il payant ?",
+        "a": "Non. Créer un profil et postuler sont gratuits. Nous ne demandons jamais d'argent aux candidats pour postuler."
+      },
+      "documents": {
+        "q": "De quels documents ai-je besoin ?",
+        "a": "Un CV et une copie d'un passeport valide. Les diplômes et certificats sont un plus. Les postes en croisière demandent aussi la formation STCW, un livret maritime et un certificat médical."
+      },
+      "time": {
+        "q": "Combien de temps dure la procédure ?",
+        "a": "Cela dépend de l'employeur et du pays. Après une offre, le permis de travail et le visa prennent généralement de plusieurs semaines à quelques mois."
+      },
+      "status": {
+        "q": "Comment suivre ma candidature ?",
+        "a": "Dans votre compte. Vous recevez aussi un e-mail à chaque changement de statut de votre candidature."
+      },
+      "reapply": {
+        "q": "Puis-je postuler de nouveau à la même offre ?",
+        "a": "Vous pouvez postuler à la même offre une fois tous les 6 mois. Vous pouvez postuler à d'autres offres à tout moment."
+      },
+      "data": {
+        "q": "Que deviennent mes données personnelles ?",
+        "a": "Elles servent uniquement à vos candidatures. Vous pouvez télécharger ou supprimer vos données depuis votre compte à tout moment."
+      }
+    }
+  },
+  "alert": {
+    "title": "Recevez les nouvelles offres par e-mail",
+    "text": "Choisissez une destination et nous vous écrirons dès qu'une offre correspondante est publiée. Désinscription en un clic.",
+    "email": "Adresse e-mail",
+    "destination": "Destination",
+    "allDestinations": "Toutes les destinations",
+    "submit": "Créer mon alerte",
+    "sending": "Envoi...",
+    "success": "Consultez votre boîte de réception et confirmez votre adresse pour activer l'alerte.",
+    "error": "L'alerte n'a pas pu être créée. Vérifiez l'adresse et réessayez."
+  },
+  "contactCta": {
+    "title": "Une question avant de postuler ?",
+    "text": "Notre équipe répond en français, en anglais et en arabe.",
+    "button": "Nous contacter"
+  },
+  "jobs": {
+    "title": "Offres d'emploi",
+    "subtitle": "Des offres à Malte, en Pologne et sur les navires de croisière.",
+    "results": "{count, plural, =0 {Aucune offre trouvée} one {# offre trouvée} other {# offres trouvées}}",
+    "filters": {
+      "title": "Filtres",
+      "keyword": "Mot-clé",
+      "keywordPlaceholder": "Métier ou mot-clé",
+      "destination": "Destination",
+      "category": "Catégorie",
+      "language": "Langue demandée",
+      "any": "Indifférent",
+      "salaryMin": "Salaire minimum",
+      "currency": "Devise",
+      "featured": "Offres à la une uniquement",
+      "sort": "Trier par",
+      "sortRelevance": "Pertinence",
+      "sortNewest": "Les plus récentes",
+      "sortDeadline": "Clôture proche",
+      "sortSalary": "Salaire le plus élevé",
+      "apply": "Appliquer les filtres",
+      "reset": "Réinitialiser"
+    },
+    "empty": {
+      "title": "Aucune offre ne correspond à votre recherche",
+      "text": "Essayez un autre mot-clé ou retirez un filtre.",
+      "reset": "Afficher toutes les offres"
+    },
+    "pagination": {
+      "label": "Pages de résultats",
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "page": "Page {page} sur {total}"
+    },
+    "card": {
+      "featured": "À la une",
+      "deadline": "Postulez avant le {date}",
+      "positions": "{count, plural, one {# poste} other {# postes}}",
+      "view": "Voir l'offre : {title}"
+    },
+    "period": {
+      "HOUR": "par heure",
+      "DAY": "par jour",
+      "WEEK": "par semaine",
+      "MONTH": "par mois",
+      "YEAR": "par an"
+    },
+    "salaryRange": "{min} à {max} {period}",
+    "salarySingle": "{amount} {period}",
+    "salaryUnknown": "Salaire sur demande",
+    "detail": {
+      "back": "Toutes les offres",
+      "description": "Description du poste",
+      "requirements": "Profil recherché",
+      "benefits": "Avantages",
+      "accommodation": "Logement fourni",
+      "transport": "Transport fourni",
+      "meals": "Repas fournis",
+      "summary": "En bref",
+      "salary": "Salaire",
+      "contract": "Contrat",
+      "contractMonths": "{count, plural, one {# mois} other {# mois}}",
+      "hours": "Horaires",
+      "positions": "Postes",
+      "languages": "Langues",
+      "employer": "Employeur",
+      "published": "Publiée le",
+      "deadline": "Date limite de candidature",
+      "countdown": "Il reste {days, plural, =0 {} one {# jour et } other {# jours et }}{hours, plural, one {# heure} other {# heures}}",
+      "countdownMinutes": "Il reste {minutes, plural, one {# minute} other {# minutes}}",
+      "closed": "Les candidatures sont closes",
+      "share": "Partager cette offre",
+      "copyLink": "Copier le lien",
+      "copied": "Lien copié",
+      "shareOn": "Partager sur {network}",
+      "shareByEmail": "Partager par e-mail"
+    },
+    "apply": {
+      "apply": "Postuler",
+      "checking": "Vérification...",
+      "login": "Connectez-vous pour postuler",
+      "register": "Créer un profil gratuit",
+      "verifyEmail": "Confirmez votre adresse e-mail pour postuler",
+      "completeProfile": "Complétez votre profil pour postuler",
+      "passportExpired": "Mettez à jour votre passeport pour postuler",
+      "cooldown": "Vous avez postulé le {applied}. Vous pourrez postuler de nouveau le {next}.",
+      "viewApplication": "Voir ma candidature",
+      "notOpen": "Cette offre n'accepte plus de candidatures",
+      "maxActive": "Vous avez atteint le nombre maximum de candidatures en cours",
+      "staff": "Les candidatures se font depuis un compte candidat"
+    }
+  },
+  "about": {
+    "title": "À propos d'IconBridge",
+    "intro": "IconBridge Recruitment Ltd met en relation des candidats et des employeurs à Malte, en Pologne et sur des navires de croisière, et reste à leurs côtés jusqu'à leur arrivée.",
+    "missionTitle": "Notre mission",
+    "mission": "Rendre le travail à l'étranger sûr et compréhensible : des offres claires, une information honnête et une équipe qui répond.",
+    "valuesTitle": "Nos engagements",
+    "values": {
+      "honesty": {
+        "title": "Honnêteté",
+        "text": "Nous publions de vraies offres d'employeurs identifiés et disons ce qu'un poste implique réellement."
+      },
+      "free": {
+        "title": "Gratuit pour les candidats",
+        "text": "Postuler ne coûte rien. Nous ne demandons jamais d'argent aux candidats pour postuler."
+      },
+      "support": {
+        "title": "Un accompagnement durable",
+        "text": "Des conseils avant le départ et un contact après l'arrivée, pour le travail et la vie quotidienne."
+      }
+    },
+    "cta": "Voir les offres ouvertes"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "intro": "Écrivez-nous avec le formulaire ou utilisez les coordonnées ci-dessous. Nous répondons par e-mail.",
+    "detailsTitle": "Nos coordonnées",
+    "address": "Adresse",
+    "form": {
+      "name": "Nom complet",
+      "email": "Adresse e-mail",
+      "phone": "Téléphone (facultatif)",
+      "subject": "Objet (facultatif)",
+      "message": "Votre message",
+      "messageHint": "Au moins 10 caractères.",
+      "submit": "Envoyer le message",
+      "sending": "Envoi...",
+      "success": "Votre message a été envoyé. Nous vous répondrons par e-mail.",
+      "error": "Le message n'a pas pu être envoyé. Vérifiez le formulaire et réessayez.",
+      "captcha": "Vérification de sécurité"
+    }
+  },
+  "legal": {
+    "updated": "Dernière mise à jour : {date}",
+    "draftNotice": "Ce texte est un modèle général. Faites-le relire par un conseiller juridique avant l'ouverture du site.",
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "sections": {
+        "who": {
+          "title": "Qui est responsable de vos données",
+          "text": "IconBridge Recruitment Ltd exploite ce site et décide de l'utilisation des données personnelles qui y sont collectées."
+        },
+        "what": {
+          "title": "Ce que nous collectons",
+          "text": "Identité et coordonnées, informations de passeport, profil professionnel, documents que vous déposez et candidatures. Les numéros de passeport sont stockés chiffrés."
+        },
+        "why": {
+          "title": "Pourquoi nous les utilisons",
+          "text": "Pour traiter vos candidatures, présenter votre profil aux employeurs des offres auxquelles vous postulez, et préparer les dossiers de permis de travail et de visa. Nous ne vendons pas vos données."
+        },
+        "share": {
+          "title": "Qui les reçoit",
+          "text": "Nos recruteurs, les employeurs des offres auxquelles vous postulez et les autorités qui instruisent les permis et les visas. Des prestataires techniques hébergent le site pour notre compte."
+        },
+        "keep": {
+          "title": "Durée de conservation",
+          "text": "Tant que votre compte existe, puis pendant la durée exigée par la loi. Vous pouvez supprimer votre compte à tout moment."
+        },
+        "rights": {
+          "title": "Vos droits",
+          "text": "Vous pouvez consulter, corriger, télécharger et supprimer vos données depuis votre compte ou en nous écrivant. Vous pouvez aussi saisir votre autorité de protection des données."
+        },
+        "cookies": {
+          "title": "Cookies",
+          "text": "Le site utilise uniquement les cookies nécessaires pour vous connecter et mémoriser votre langue et votre thème. Aucun traceur publicitaire n'est utilisé."
+        }
+      }
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "sections": {
+        "service": {
+          "title": "Le service",
+          "text": "Le site permet aux candidats de consulter des offres d'emploi et de postuler. IconBridge agit comme intermédiaire entre les candidats et les employeurs."
+        },
+        "free": {
+          "title": "Gratuit pour les candidats",
+          "text": "Créer un compte et postuler sont gratuits. IconBridge ne demande jamais d'argent aux candidats pour postuler."
+        },
+        "account": {
+          "title": "Votre compte",
+          "text": "Fournissez des informations exactes et gardez votre mot de passe secret. Une personne, un compte."
+        },
+        "applications": {
+          "title": "Candidatures",
+          "text": "Postuler ne garantit pas un emploi. Vous pouvez postuler à la même offre une fois tous les 6 mois. La décision finale revient aux employeurs."
+        },
+        "content": {
+          "title": "Vos documents",
+          "text": "Ne déposez que des documents authentiques qui vous appartiennent. Les faux documents entraînent la fermeture du compte."
+        },
+        "liability": {
+          "title": "Limites",
+          "text": "Nous faisons de notre mieux pour que les offres soient exactes et le site disponible, sans garantie. Les décisions de visa appartiennent aux autorités."
+        },
+        "law": {
+          "title": "Modifications et contact",
+          "text": "Ces conditions peuvent évoluer ; la date ci-dessus indique la dernière version. Des questions : utilisez la page de contact."
+        }
+      }
+    }
+  },
+  "errors": {
+    "notFoundTitle": "Page introuvable",
+    "notFoundText": "La page que vous cherchez n'existe pas ou l'offre n'est plus ouverte.",
+    "genericTitle": "Une erreur est survenue",
+    "genericText": "Une erreur inattendue s'est produite. Réessayez dans un instant.",
+    "browseJobs": "Voir les offres"
+  },
+  "account": {
+    "comingTitle": "Espace candidat",
+    "comingText": "La connexion, l'inscription et l'espace candidat sont en cours de construction et ouvriront bientôt.",
+    "loginTitle": "Connexion",
+    "registerTitle": "Créez votre profil"
+  }
+}
