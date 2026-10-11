@@ -7,6 +7,14 @@ export const IS_PUBLIC_KEY = 'auth:public';
 /** Opens a route to visitors: no access token is required or read. */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
+export const OPTIONAL_AUTH_KEY = 'auth:optional';
+/**
+ * Opens a route to visitors like @Public(), but still recognises a signed-in
+ * user: the handler receives the user when the access token is valid, and
+ * nothing otherwise. No 401 is ever returned.
+ */
+export const OptionalAuth = () => SetMetadata(OPTIONAL_AUTH_KEY, true);
+
 export const ROLES_KEY = 'auth:roles';
 /**
  * Restricts a route (or a controller) to the given roles, usually a list from

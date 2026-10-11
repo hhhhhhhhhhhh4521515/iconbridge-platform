@@ -8,3 +8,7 @@ apps/api/src/generated
 AGENTS.md
 apps/web/AGENTS.md
 next-env.d.ts
+packages/shared/src/generated
+packages/shared/openapi
+test-results
+playwright-report

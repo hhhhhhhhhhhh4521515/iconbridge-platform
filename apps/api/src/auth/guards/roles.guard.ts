@@ -4,7 +4,12 @@ import { READ_ONLY_ROLES, type UserRole } from '@iconbridge/shared';
 import { ADMIN_PATH } from '../../app.constants.js';
 import { forbidden, unauthenticated } from '../../common/errors/app.exception.js';
 import type { RequestWithUser } from '../auth.types.js';
-import { IS_PUBLIC_KEY, ROLES_KEY, SELF_SERVICE_KEY } from '../decorators/index.js';
+import {
+  IS_PUBLIC_KEY,
+  OPTIONAL_AUTH_KEY,
+  ROLES_KEY,
+  SELF_SERVICE_KEY,
+} from '../decorators/index.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -25,7 +30,10 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const targets = [context.getHandler(), context.getClass()];
-    if (this.reflector.getAllAndOverride<boolean | undefined>(IS_PUBLIC_KEY, targets)) {
+    if (
+      this.reflector.getAllAndOverride<boolean | undefined>(IS_PUBLIC_KEY, targets) ||
+      this.reflector.getAllAndOverride<boolean | undefined>(OPTIONAL_AUTH_KEY, targets)
+    ) {
       return true;
     }
 

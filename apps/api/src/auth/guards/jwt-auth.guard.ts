@@ -5,7 +5,7 @@ import { unauthenticated } from '../../common/errors/app.exception.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { ACCESS_COOKIE } from '../auth.constants.js';
 import type { AuthUser, RequestWithUser } from '../auth.types.js';
-import { IS_PUBLIC_KEY } from '../decorators/index.js';
+import { IS_PUBLIC_KEY, OPTIONAL_AUTH_KEY } from '../decorators/index.js';
 import { TokenService } from '../token.service.js';
 
 /**
@@ -30,9 +30,16 @@ export class JwtAuthGuard implements CanActivate {
       return true;
     }
 
+    const optional = this.reflector.getAllAndOverride<boolean | undefined>(OPTIONAL_AUTH_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const payload = await this.tokens.verifyAccessToken(this.extractToken(request));
     if (!payload) {
+      if (optional) {
+        return true;
+      }
       throw unauthenticated();
     }
 
@@ -50,6 +57,9 @@ export class JwtAuthGuard implements CanActivate {
       },
     });
     if (!user || !user.isActive || user.deletedAt || user.tokenVersion !== payload.tv) {
+      if (optional) {
+        return true;
+      }
       throw unauthenticated();
     }
 

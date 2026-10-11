@@ -11,11 +11,10 @@ import type { Env } from './config/env.js';
 
 export { API_PREFIX, DOCS_PATH };
 
-/** HTTP configuration shared by the real server (main.ts) and the e2e tests. */
-export function setupApp(app: NestExpressApplication): void {
+/** Prefix, security headers, cookies and CORS: everything but the logger and the docs. */
+export function configureHttp(app: NestExpressApplication): void {
   const config = app.get<ConfigService<Env, true>>(ConfigService);
 
-  app.useLogger(app.get(Logger));
   app.set('trust proxy', config.get('TRUST_PROXY_HOPS', { infer: true }));
   app.use(
     helmet({
@@ -36,11 +35,14 @@ export function setupApp(app: NestExpressApplication): void {
       { path: 'health/ready', method: RequestMethod.GET },
     ],
   });
-  // Only the web app may call the API from a browser, with cookies.
+  // The web app proxies /api/v1 on its own origin, so browsers normally make no
+  // cross-origin call. CORS stays limited to the web origin for tools and tests.
   app.enableCors({ origin: config.get('WEB_ORIGIN', { infer: true }), credentials: true });
   app.enableShutdownHooks();
+}
 
-  const document = SwaggerModule.createDocument(
+export function buildOpenApiDocument(app: NestExpressApplication) {
+  return SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
       .setTitle('IconBridge Jobs API')
@@ -53,5 +55,11 @@ export function setupApp(app: NestExpressApplication): void {
       .addCookieAuth(ACCESS_COOKIE)
       .build(),
   );
-  SwaggerModule.setup(DOCS_PATH, app, document);
+}
+
+/** HTTP configuration shared by the real server (main.ts) and the e2e tests. */
+export function setupApp(app: NestExpressApplication): void {
+  app.useLogger(app.get(Logger));
+  configureHttp(app);
+  SwaggerModule.setup(DOCS_PATH, app, buildOpenApiDocument(app));
 }

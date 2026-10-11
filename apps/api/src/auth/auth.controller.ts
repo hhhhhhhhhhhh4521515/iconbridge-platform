@@ -18,15 +18,17 @@ import {
   type VerifyEmailInput,
 } from '@iconbridge/shared';
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { ZodBody } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { RATE_LIMITS, REFRESH_COOKIE } from './auth.constants.js';
 import { clearAuthCookies, setAuthCookies } from './auth.cookies.js';
 import { AuthService } from './auth.service.js';
-import { requestMeta, type AuthUser } from './auth.types.js';
-import { CurrentUser, Public } from './decorators/index.js';
+import { requestMeta, type AuthUser, type RequestWithUser } from './auth.types.js';
+import { CurrentUser, OptionalAuth, Public } from './decorators/index.js';
 
 const SENSITIVE = { default: RATE_LIMITS.authSensitive };
+const sessionSchema = z.object({ user: currentUserSchema.nullable() });
 
 function refreshCookie(request: Request): string | undefined {
   const value = (request.cookies as Record<string, unknown> | undefined)?.[REFRESH_COOKIE];
@@ -166,6 +168,19 @@ export class AuthController {
   @ApiErrors(400, 429)
   async resetPassword(@ZodBody(resetPasswordSchema) body: ResetPasswordInput): Promise<void> {
     await this.auth.resetPassword(body);
+  }
+
+  @OptionalAuth()
+  @Get('session')
+  @ApiOperation({
+    summary: 'Who is signed in, if anyone',
+    description:
+      'Always answers 200: `{ user }` for a valid session, `{ user: null }` for a visitor. ' +
+      'Pages open to everybody use it instead of `GET /auth/me`, which answers 401 to visitors.',
+  })
+  @ApiZodResponse(200, sessionSchema)
+  async session(@Req() request: RequestWithUser): Promise<{ user: CurrentUserDto | null }> {
+    return { user: request.user ? await this.auth.currentUser(request.user.id) : null };
   }
 
   @Get('me')
