@@ -403,6 +403,6 @@ Candidates could read the offers but not register or apply. The reasons for the 
 | Done when: the full scenario                | Pass on both profiles: register, verify the email with the link read from the Mailpit API, complete the profile, upload a CV and a passport, apply, see the application and its timeline, second application blocked with the date; then withdraw and delete the account |
 | Screens                                     | Dashboard, wizard, documents, settings, registration checked on screenshots at phone and desktop widths, in English and Arabic; no sideways overflow, no console error                                                                                                   |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/8>
 
 **Remaining**: the back-office interface, per-job questions, real legal texts, Dockerfiles, Terraform, CI/CD.
