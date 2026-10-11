@@ -440,6 +440,6 @@ Recruiters had an API and no screen. Reasons for the choices: [ADR-009](adr/ADR-
 | Done when: recruiter scenario               | Pass: invited recruiter sets a password from the Mailpit link, creates and publishes a job with rich text, a question and a cropped cover; the job is on the public site; a candidate applies and answers the question; the board refuses a jump and accepts the next step; undo works; the application reaches Visa approved; a success story is created, refused without consent, published with it, and appears on the home page |
 | Done when: role checks                      | Pass: a viewer sees dashboard, jobs, applications, candidates; has no create, edit, export, status, note or reveal button; twelve forced writes or reads of other roles answer 403; the passport number stays masked in the API answer                                                                                                                                                                                              |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/9>
 
 **Remaining**: Dockerfiles, Terraform, CI/CD, legal review of the policy texts, a data retention task.
