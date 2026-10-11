@@ -30,10 +30,31 @@ function proxyToApi(request: NextRequest): NextResponse {
   return NextResponse.rewrite(target, { request: { headers } });
 }
 
+/** Set by the API with the session cookies; see SESSION_MARKER_COOKIE in the API. */
+const SESSION_MARKER = 'ib_session';
+const ACCOUNT_AREA = new RegExp(`^/(${routing.locales.join('|')})/account(/.*)?$`);
+
+/**
+ * The candidate area needs a session. Without the marker cookie the visitor goes to
+ * the login page, which sends them back afterwards. This is a convenience, not the
+ * protection: every piece of data comes from the API, which checks the real tokens.
+ */
+function loginRedirect(request: NextRequest): NextResponse | null {
+  const match = ACCOUNT_AREA.exec(request.nextUrl.pathname);
+  if (!match || request.cookies.has(SESSION_MARKER)) {
+    return null;
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = `/${match[1] ?? routing.defaultLocale}/login`;
+  url.search = `?next=${encodeURIComponent(`/account${match[2] ?? ''}${request.nextUrl.search}`)}`;
+  return NextResponse.redirect(url);
+}
+
 export default function proxy(request: NextRequest): NextResponse {
-  return request.nextUrl.pathname.startsWith(API_PREFIX)
-    ? proxyToApi(request)
-    : handleI18n(request);
+  if (request.nextUrl.pathname.startsWith(API_PREFIX)) {
+    return proxyToApi(request);
+  }
+  return loginRedirect(request) ?? handleI18n(request);
 }
 
 export const config = {
