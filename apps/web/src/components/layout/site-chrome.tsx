@@ -127,10 +127,12 @@ export async function Header() {
   );
 }
 
+/** Social networks whose address the back office holds in the settings; an empty one is not shown. */
 const SOCIAL = [
-  { name: 'Facebook', href: 'https://www.facebook.com/' },
-  { name: 'Instagram', href: 'https://www.instagram.com/' },
-  { name: 'LinkedIn', href: 'https://www.linkedin.com/' },
+  ['Facebook', 'SOCIAL_FACEBOOK'],
+  ['Instagram', 'SOCIAL_INSTAGRAM'],
+  ['TikTok', 'SOCIAL_TIKTOK'],
+  ['LinkedIn', 'SOCIAL_LINKEDIN'],
 ] as const;
 
 export async function Footer() {
@@ -142,6 +144,17 @@ export async function Footer() {
     api.categories(),
     api.siteInfo(),
   ]);
+  const social = [
+    ...SOCIAL.flatMap(([name, key]) => (info?.[key] ? [{ name, href: info[key] }] : [])),
+    ...(info?.CONTACT_WHATSAPP
+      ? [
+          {
+            name: t('whatsapp'),
+            href: `https://wa.me/${digits(info.CONTACT_WHATSAPP).replace('+', '')}`,
+          },
+        ]
+      : []),
+  ];
   const heading = 'mb-3 text-sm font-semibold tracking-wide text-white uppercase';
   const link =
     'inline-flex min-h-9 items-center text-sm text-white/80 hover:text-white hover:underline';
@@ -201,16 +214,25 @@ export async function Footer() {
             ) : null}
             {info?.CONTACT_ADDRESS ? <li className="py-1.5">{info.CONTACT_ADDRESS}</li> : null}
           </ul>
-          <h2 className={`${heading} mt-6`}>{t('follow')}</h2>
-          <ul className="flex flex-wrap gap-x-4">
-            {SOCIAL.map((network) => (
-              <li key={network.name}>
-                <a href={network.href} className={link} rel="noopener noreferrer" target="_blank">
-                  {network.name}
-                </a>
-              </li>
-            ))}
-          </ul>
+          {social.length > 0 ? (
+            <>
+              <h2 className={`${heading} mt-6`}>{t('follow')}</h2>
+              <ul className="flex flex-wrap gap-x-4" data-testid="social-links">
+                {social.map((network) => (
+                  <li key={network.name}>
+                    <a
+                      href={network.href}
+                      className={link}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {network.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </div>
       </div>
       <div className="border-t border-white/15">

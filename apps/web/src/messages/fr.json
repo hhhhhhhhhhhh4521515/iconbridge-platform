@@ -59,7 +59,8 @@
     "privacy": "Politique de confidentialité",
     "terms": "Conditions d'utilisation",
     "follow": "Suivez-nous",
-    "rights": "Tous droits réservés."
+    "rights": "Tous droits réservés.",
+    "whatsapp": "WhatsApp"
   },
   "hero": {
     "label": "Destinations à la une",
@@ -673,7 +674,9 @@
       "successTitle": "Votre candidature a été envoyée",
       "successText": "Nous avons bien reçu votre candidature à « {title} ». Vous recevrez un e-mail à chaque étape.",
       "viewApplication": "Suivre ma candidature",
-      "moreJobs": "Voir d'autres offres"
+      "moreJobs": "Voir d'autres offres",
+      "yes": "Oui",
+      "no": "Non"
     },
     "settings": {
       "title": "Paramètres",
@@ -710,7 +713,8 @@
       "deleteType": "Saisissez {word} pour confirmer",
       "deleteForever": "Supprimer définitivement mon compte",
       "cancel": "Annuler"
-    }
+    },
+    "openAdmin": "Ouvrir le back-office"
   },
   "forms": {
     "saving": "Enregistrement…",

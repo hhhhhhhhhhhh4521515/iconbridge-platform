@@ -36,7 +36,7 @@ export function LoginForm() {
       return;
     }
     sessionChanged();
-    router.replace(safeNext(search.get('next'), data.role === 'CANDIDATE' ? '/account' : '/'));
+    router.replace(safeNext(search.get('next'), data.role === 'CANDIDATE' ? '/account' : '/admin'));
     router.refresh();
   });
 
