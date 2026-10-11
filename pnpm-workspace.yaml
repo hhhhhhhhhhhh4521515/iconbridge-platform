@@ -14,6 +14,8 @@ catalog:
 
 # Dependencies allowed to run install scripts (pnpm blocks them by default).
 allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
   argon2: true
   '@nestjs/core': false
   '@prisma/engines': true

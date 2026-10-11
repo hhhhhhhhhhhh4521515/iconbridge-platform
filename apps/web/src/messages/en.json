@@ -1,0 +1,431 @@
+{
+  "common": {
+    "brand": "IconBridge Jobs",
+    "skipToContent": "Skip to content",
+    "viewAll": "View all",
+    "learnMore": "Learn more",
+    "previous": "Previous",
+    "next": "Next",
+    "close": "Close",
+    "openMenu": "Open menu",
+    "language": "Language",
+    "theme": "Colour theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "retry": "Try again",
+    "backHome": "Back to home",
+    "required": "required",
+    "neverPay": "IconBridge never asks candidates for money to apply."
+  },
+  "meta": {
+    "siteName": "IconBridge Jobs",
+    "homeTitle": "Jobs in Malta, Poland and on cruise ships",
+    "homeDescription": "IconBridge recruits for employers in Malta, Poland and on cruise ships. Browse open jobs, apply online and follow your application up to your visa.",
+    "jobsTitle": "Open jobs",
+    "jobsDescription": "Search open jobs in Malta, Poland and on cruise ships by destination, category, language and salary.",
+    "storiesTitle": "Success stories",
+    "storiesDescription": "Candidates who obtained their work visa with IconBridge.",
+    "aboutTitle": "About IconBridge",
+    "aboutDescription": "A recruitment agency that accompanies candidates from their application to their arrival abroad.",
+    "contactTitle": "Contact",
+    "contactDescription": "Ask IconBridge a question about a job, your application or your visa.",
+    "privacyTitle": "Privacy policy",
+    "termsTitle": "Terms of use"
+  },
+  "topbar": {
+    "phone": "Phone",
+    "email": "Email",
+    "whatsapp": "WhatsApp"
+  },
+  "nav": {
+    "main": "Main navigation",
+    "home": "Home",
+    "jobs": "Jobs",
+    "destinations": "Destinations",
+    "stories": "Success stories",
+    "about": "About",
+    "contact": "Contact",
+    "jobSeeker": "Job seeker",
+    "login": "Login"
+  },
+  "footer": {
+    "tagline": "Your bridge to a job in Malta, Poland or at sea.",
+    "categories": "Job categories",
+    "explore": "Explore",
+    "contact": "Contact",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "follow": "Follow us",
+    "rights": "All rights reserved."
+  },
+  "hero": {
+    "label": "Featured destinations",
+    "slideOf": "Slide {current} of {total}",
+    "pause": "Pause the slideshow",
+    "play": "Play the slideshow",
+    "cta": "View jobs",
+    "secondaryCta": "How it works",
+    "searchLabel": "Search jobs",
+    "keyword": "Job title or keyword",
+    "keywordPlaceholder": "e.g. welder, cook, receptionist",
+    "destination": "Destination",
+    "allDestinations": "All destinations",
+    "search": "Search",
+    "fallback": {
+      "malta": {
+        "title": "Work in Malta",
+        "subtitle": "Hospitality, construction and transport jobs under the Mediterranean sun."
+      },
+      "poland": {
+        "title": "Build your career in Poland",
+        "subtitle": "Factory, logistics and agriculture employers are hiring now."
+      },
+      "cruise": {
+        "title": "See the world on a cruise ship",
+        "subtitle": "Join the crew: housekeeping, restaurant and galley positions."
+      }
+    }
+  },
+  "stats": {
+    "title": "IconBridge in numbers",
+    "openJobs": "Open jobs",
+    "candidates": "Registered candidates",
+    "visas": "Visas approved",
+    "countries": "Destinations"
+  },
+  "destinations": {
+    "title": "Where would you like to work?",
+    "subtitle": "Three destinations, with employers we know and visit.",
+    "openJobs": "{count, plural, =0 {No open job} one {# open job} other {# open jobs}}",
+    "viewJobs": "View jobs in {name}"
+  },
+  "categories": {
+    "title": "Jobs by category",
+    "subtitle": "Find the sector that matches your experience.",
+    "openJobs": "{count, plural, =0 {No open job} one {# job} other {# jobs}}"
+  },
+  "latestJobs": {
+    "title": "Latest jobs",
+    "subtitle": "New offers are published every week.",
+    "featured": "Featured",
+    "empty": "No job is open right now. Subscribe to the alert below to be the first to know."
+  },
+  "how": {
+    "title": "How it works",
+    "subtitle": "Five steps from your profile to your departure.",
+    "steps": {
+      "profile": {
+        "title": "Create your profile",
+        "text": "Register for free, fill in your details and upload your CV and passport."
+      },
+      "apply": {
+        "title": "Apply",
+        "text": "Choose a job and send your application in a few clicks."
+      },
+      "interview": {
+        "title": "Interview",
+        "text": "Shortlisted candidates meet the employer, online or in person."
+      },
+      "visa": {
+        "title": "Visa",
+        "text": "We prepare the work permit and visa file with you."
+      },
+      "travel": {
+        "title": "Travel",
+        "text": "You leave with a signed contract and someone to welcome you."
+      }
+    }
+  },
+  "stories": {
+    "title": "They got their visa with IconBridge",
+    "subtitle": "Real candidates, published with their agreement.",
+    "badge": "Visa approved",
+    "visaDate": "Visa approved on {date}",
+    "photoAlt": "{name}, {job}",
+    "viewAll": "All success stories",
+    "filterLabel": "Filter by destination",
+    "all": "All",
+    "empty": "No story to show for this destination yet."
+  },
+  "trust": {
+    "title": "Why candidates trust us",
+    "licensed": {
+      "title": "Licensed agency",
+      "text": "IconBridge Recruitment Ltd is a registered recruitment agency working with identified employers."
+    },
+    "partners": {
+      "title": "Employers we know",
+      "text": "Hotels, construction companies, factories and cruise lines that we meet before publishing their offers."
+    },
+    "support": {
+      "title": "Support at every step",
+      "text": "From your first question to your arrival: documents, interview, visa and travel."
+    },
+    "antiScam": {
+      "title": "We never ask candidates for money to apply",
+      "text": "Applying on IconBridge is free. If someone asks you to pay in our name, do not pay and contact us."
+    }
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "items": {
+      "cost": {
+        "q": "Does it cost anything to apply?",
+        "a": "No. Creating a profile and applying are free. We never ask candidates for money to apply."
+      },
+      "documents": {
+        "q": "Which documents do I need?",
+        "a": "A CV and a scan of a valid passport. Diplomas and certificates help. Cruise jobs also need STCW training, a seaman's book and a medical certificate."
+      },
+      "time": {
+        "q": "How long does the process take?",
+        "a": "It depends on the employer and the country. After an offer, a work permit and a visa usually take several weeks to a few months."
+      },
+      "status": {
+        "q": "How do I follow my application?",
+        "a": "In your account. You also receive an email each time the status of your application changes."
+      },
+      "reapply": {
+        "q": "Can I apply again to the same job?",
+        "a": "You can apply to the same job once every 6 months. You can apply to other jobs at any time."
+      },
+      "data": {
+        "q": "What happens to my personal data?",
+        "a": "It is used only for your applications. You can download or delete your data from your account at any time."
+      }
+    }
+  },
+  "alert": {
+    "title": "Receive new jobs by email",
+    "text": "Choose a destination and we will email you when a matching job is published. You can unsubscribe with one click.",
+    "email": "Email address",
+    "destination": "Destination",
+    "allDestinations": "All destinations",
+    "submit": "Create my alert",
+    "sending": "Sending...",
+    "success": "Check your inbox and confirm your email address to activate the alert.",
+    "error": "The alert could not be created. Check the address and try again."
+  },
+  "contactCta": {
+    "title": "A question before you apply?",
+    "text": "Our team answers in French, English and Arabic.",
+    "button": "Contact us"
+  },
+  "jobs": {
+    "title": "Open jobs",
+    "subtitle": "Offers in Malta, Poland and on cruise ships.",
+    "results": "{count, plural, =0 {No job found} one {# job found} other {# jobs found}}",
+    "filters": {
+      "title": "Filters",
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Job title or keyword",
+      "destination": "Destination",
+      "category": "Category",
+      "language": "Required language",
+      "any": "Any",
+      "salaryMin": "Minimum salary",
+      "currency": "Currency",
+      "featured": "Featured jobs only",
+      "sort": "Sort by",
+      "sortRelevance": "Relevance",
+      "sortNewest": "Newest",
+      "sortDeadline": "Closing soon",
+      "sortSalary": "Highest salary",
+      "apply": "Apply filters",
+      "reset": "Reset"
+    },
+    "empty": {
+      "title": "No job matches your search",
+      "text": "Try another keyword or remove a filter.",
+      "reset": "Show all jobs"
+    },
+    "pagination": {
+      "label": "Pages of results",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page} of {total}"
+    },
+    "card": {
+      "featured": "Featured",
+      "deadline": "Apply before {date}",
+      "positions": "{count, plural, one {# position} other {# positions}}",
+      "view": "View the job: {title}"
+    },
+    "period": {
+      "HOUR": "per hour",
+      "DAY": "per day",
+      "WEEK": "per week",
+      "MONTH": "per month",
+      "YEAR": "per year"
+    },
+    "salaryRange": "{min} to {max} {period}",
+    "salarySingle": "{amount} {period}",
+    "salaryUnknown": "Salary on request",
+    "detail": {
+      "back": "All jobs",
+      "description": "Job description",
+      "requirements": "Requirements",
+      "benefits": "Benefits",
+      "accommodation": "Accommodation provided",
+      "transport": "Transport provided",
+      "meals": "Meals provided",
+      "summary": "Summary",
+      "salary": "Salary",
+      "contract": "Contract",
+      "contractMonths": "{count, plural, one {# month} other {# months}}",
+      "hours": "Working hours",
+      "positions": "Positions",
+      "languages": "Languages",
+      "employer": "Employer",
+      "published": "Published",
+      "deadline": "Application deadline",
+      "countdown": "{days, plural, =0 {} one {# day } other {# days }}{hours, plural, one {# hour} other {# hours}} left",
+      "countdownMinutes": "{minutes, plural, one {# minute} other {# minutes}} left",
+      "closed": "Applications are closed",
+      "share": "Share this job",
+      "copyLink": "Copy the link",
+      "copied": "Link copied",
+      "shareOn": "Share on {network}",
+      "shareByEmail": "Share by email"
+    },
+    "apply": {
+      "apply": "Apply now",
+      "checking": "Checking...",
+      "login": "Login to apply",
+      "register": "Create a free profile",
+      "verifyEmail": "Confirm your email address to apply",
+      "completeProfile": "Complete your profile to apply",
+      "passportExpired": "Update your passport to apply",
+      "cooldown": "You applied on {applied}. You can apply again on {next}.",
+      "viewApplication": "View my application",
+      "notOpen": "This job no longer accepts applications",
+      "maxActive": "You have reached the maximum number of applications in progress",
+      "staff": "Applications are made from a candidate account"
+    }
+  },
+  "about": {
+    "title": "About IconBridge",
+    "intro": "IconBridge Recruitment Ltd connects candidates with employers in Malta, Poland and on cruise ships, and stays by their side until they arrive.",
+    "missionTitle": "Our mission",
+    "mission": "To make working abroad safe and understandable: clear offers, honest information and a team that answers.",
+    "valuesTitle": "What we stand for",
+    "values": {
+      "honesty": {
+        "title": "Honesty",
+        "text": "We publish real offers from identified employers and say what a job really involves."
+      },
+      "free": {
+        "title": "Free for candidates",
+        "text": "Applying costs nothing. We never ask candidates for money to apply."
+      },
+      "support": {
+        "title": "Continued support",
+        "text": "Guidance before departure and a contact after arrival, for work and daily life."
+      }
+    },
+    "cta": "Browse open jobs"
+  },
+  "contact": {
+    "title": "Contact us",
+    "intro": "Write to us with the form, or use the details below. We answer by email.",
+    "detailsTitle": "Our details",
+    "address": "Address",
+    "form": {
+      "name": "Full name",
+      "email": "Email address",
+      "phone": "Phone (optional)",
+      "subject": "Subject (optional)",
+      "message": "Your message",
+      "messageHint": "At least 10 characters.",
+      "submit": "Send the message",
+      "sending": "Sending...",
+      "success": "Your message has been sent. We will answer by email.",
+      "error": "The message could not be sent. Check the form and try again.",
+      "captcha": "Security check"
+    }
+  },
+  "legal": {
+    "updated": "Last updated: {date}",
+    "draftNotice": "This text is a general model. Have it reviewed by a legal adviser before the site opens.",
+    "privacy": {
+      "title": "Privacy policy",
+      "sections": {
+        "who": {
+          "title": "Who is responsible for your data",
+          "text": "IconBridge Recruitment Ltd operates this site and decides how the personal data collected here is used."
+        },
+        "what": {
+          "title": "What we collect",
+          "text": "Identity and contact details, passport details, professional profile, the documents you upload and your applications. Passport numbers are stored encrypted."
+        },
+        "why": {
+          "title": "Why we use it",
+          "text": "To handle your applications, present your profile to employers for the jobs you applied to, and prepare work permit and visa files. We do not sell your data."
+        },
+        "share": {
+          "title": "Who receives it",
+          "text": "Our recruiters, the employers of the jobs you apply to, and the authorities that process permits and visas. Technical providers host the site on our behalf."
+        },
+        "keep": {
+          "title": "How long we keep it",
+          "text": "As long as your account exists, then for the period required by law. You can delete your account at any time."
+        },
+        "rights": {
+          "title": "Your rights",
+          "text": "You can access, correct, download and delete your data from your account, or by writing to us. You can also complain to your data protection authority."
+        },
+        "cookies": {
+          "title": "Cookies",
+          "text": "The site only uses the cookies needed to sign you in and remember your language and colour theme. No advertising tracker is used."
+        }
+      }
+    },
+    "terms": {
+      "title": "Terms of use",
+      "sections": {
+        "service": {
+          "title": "The service",
+          "text": "The site lets candidates see job offers and apply. IconBridge acts as an intermediary between candidates and employers."
+        },
+        "free": {
+          "title": "Free for candidates",
+          "text": "Creating an account and applying are free. IconBridge never asks candidates for money to apply."
+        },
+        "account": {
+          "title": "Your account",
+          "text": "Give accurate information and keep your password secret. One person, one account."
+        },
+        "applications": {
+          "title": "Applications",
+          "text": "Applying does not guarantee a job. You can apply to the same job once every 6 months. Employers make the final decision."
+        },
+        "content": {
+          "title": "Your documents",
+          "text": "Upload only documents that are yours and genuine. False documents lead to the closing of the account."
+        },
+        "liability": {
+          "title": "Limits",
+          "text": "We do our best to keep offers accurate and the site available, without guarantee. Visa decisions belong to the authorities."
+        },
+        "law": {
+          "title": "Changes and contact",
+          "text": "These terms may change; the date above shows the latest version. Questions: use the contact page."
+        }
+      }
+    }
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page you are looking for does not exist or the job is no longer open.",
+    "genericTitle": "Something went wrong",
+    "genericText": "An unexpected error occurred. Try again in a moment.",
+    "browseJobs": "Browse jobs"
+  },
+  "account": {
+    "comingTitle": "Candidate area",
+    "comingText": "Sign-in, registration and the candidate area are being built and will open soon.",
+    "loginTitle": "Login",
+    "registerTitle": "Create your profile"
+  }
+}

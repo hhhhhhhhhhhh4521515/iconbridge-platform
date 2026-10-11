@@ -1,4 +1,5 @@
 export * from './admin.js';
+export * from './api-client.js';
 export * from './auth.js';
 export * from './candidate.js';
 export * from './countries.js';

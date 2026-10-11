@@ -522,6 +522,45 @@ describe('authentication (e2e)', () => {
     });
   });
 
+  describe('GET /auth/session', () => {
+    it('answers 200 with no user to a visitor, and never 401', async () => {
+      const visitor = await test.http().get(`${API}/auth/session`).expect(200);
+      expect(visitor.body).toEqual({ user: null });
+      const garbage = await test
+        .http()
+        .get(`${API}/auth/session`)
+        .set('Cookie', 'ib_access=not-a-token')
+        .expect(200);
+      expect(garbage.body).toEqual({ user: null });
+    });
+
+    it('returns the signed-in user, and null again once the account is disabled', async () => {
+      const user = await createUser(test, 'CANDIDATE');
+      const session = await test
+        .http()
+        .get(`${API}/auth/session`)
+        .set('Cookie', cookieHeader(user.cookies))
+        .expect(200);
+      expect(session.body).toMatchObject({
+        user: { id: user.id, role: 'CANDIDATE', emailVerified: true },
+      });
+      expect(JSON.stringify(session.body)).not.toMatch(/password|token/i);
+
+      await test.prisma.user.update({ where: { id: user.id }, data: { isActive: false } });
+      const after = await test
+        .http()
+        .get(`${API}/auth/session`)
+        .set('Cookie', cookieHeader(user.cookies))
+        .expect(200);
+      expect(after.body).toEqual({ user: null });
+    });
+
+    it('does not open anything else: protected routes still need a session', async () => {
+      await test.http().get(`${API}/auth/me`).expect(401);
+      await test.http().get(`${API}/me/profile`).expect(401);
+    });
+  });
+
   describe('global HTTP behaviour', () => {
     it('returns errors as { code, message, details } without a stack', async () => {
       const notFound = await test

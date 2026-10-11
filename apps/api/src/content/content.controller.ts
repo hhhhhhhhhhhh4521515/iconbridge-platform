@@ -55,6 +55,13 @@ import { COVER_MAX_BYTES } from '../jobs/job-cover.service.js';
 import { SettingsService } from '../settings/settings.service.js';
 import { ContentService } from './content.service.js';
 
+const siteInfoSchema = z.object({
+  CONTACT_EMAIL: z.string(),
+  CONTACT_PHONE: z.string(),
+  CONTACT_WHATSAPP: z.string(),
+  CONTACT_ADDRESS: z.string(),
+});
+
 interface IdParam {
   id: string;
 }
@@ -113,6 +120,7 @@ export class PublicContentController {
 
   @Get('site-info')
   @ApiOperation({ summary: 'Contact details shown on the site' })
+  @ApiZodResponse(200, siteInfoSchema)
   async siteInfo(): Promise<Record<(typeof PUBLIC_SETTING_KEYS)[number], string>> {
     const entries = await Promise.all(
       PUBLIC_SETTING_KEYS.map(async (key) => [key, await this.settings.get(key)] as const),

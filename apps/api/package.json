@@ -9,6 +9,7 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "task": "nest build && node dist/cli.js",
+    "openapi:export": "nest build && node dist/openapi-export.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

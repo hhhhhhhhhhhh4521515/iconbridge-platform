@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./api-client": {
+      "types": "./dist/api-client.d.ts",
+      "default": "./dist/api-client.js"
     }
   },
   "files": [
@@ -20,15 +24,18 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "api:types": "openapi-typescript openapi/openapi.json -o src/generated/api.ts"
   },
   "dependencies": {
+    "openapi-fetch": "^0.17.0",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@iconbridge/config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "openapi-typescript": "^7.13.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
