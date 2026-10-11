@@ -443,3 +443,26 @@ Recruiters had an API and no screen. Reasons for the choices: [ADR-009](adr/ADR-
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/9>
 
 **Remaining**: Dockerfiles, Terraform, CI/CD, legal review of the policy texts, a data retention task.
+
+## 2026-10-11 - Clear error when a dev port is taken
+
+**What**
+
+- `pnpm dev` first runs `scripts/dev-preflight.mjs`: if port 3000 or 4000 is in use it stops and names the port, the process id and the server that could not start.
+- The `dev` task of turbo keeps the full output of each server (`outputLogs: full`).
+
+**Why**
+
+`pnpm dev` ended with "@iconbridge/web#dev exited (1)" and nothing else. The cause was `EADDRINUSE`: production builds of the web app and the API, left running on ports 3000 and 4000 after the browser tests of the previous task. The error was printed by Next.js but lost among the output of the other tasks.
+
+**Checks**
+
+| Check                             | Result                                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Port taken                        | The check exits 1 with "Port 3000 is already in use by pid ... (node): web (Next.js) cannot start"             |
+| Ports free                        | `pnpm dev` starts; `/fr` and `/fr/login` answer 200, `/health/ready` 200, `/api/v1/jobs` through the proxy 200 |
+| `pnpm lint`, `pnpm typecheck`     | Pass                                                                                                           |
+| `pnpm test`, `pnpm test:e2e`      | Pass: 427 and 423                                                                                              |
+| `pnpm build`, `pnpm test:browser` | Not run: no application code changed, and the dev servers were left running on the ports they need             |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/10>

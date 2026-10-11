@@ -24,7 +24,7 @@ Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, neve
 | Command                                     | Effect                                                                                                                                   |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                                |
-| `pnpm dev`                                  | Start the compose services, wait until healthy, then run web, api and shared in watch mode                                               |
+| `pnpm dev`                                  | Check that ports 3000 and 4000 are free, start the compose services, wait until healthy, then run web, api and shared in watch mode      |
 | `pnpm build`                                | Build every workspace                                                                                                                    |
 | `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                               |
 | `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                            |

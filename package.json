@@ -8,7 +8,7 @@
     "node": ">=22.12 <23"
   },
   "scripts": {
-    "dev": "pnpm infra:up && turbo run dev",
+    "dev": "node scripts/dev-preflight.mjs && pnpm infra:up && turbo run dev --output-logs=full",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
