@@ -5,10 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-soft: var(--brand-gold-soft);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -126,5 +130,178 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   IconBridge brand. Colours come from the logo (navy #0e073e, white mark) and
+   from the agency posters (gold #c48f2f, royal blue #102d85).
+   Gold is decorative or a background under navy text: on white it does not
+   reach the contrast needed for body text.
+   ------------------------------------------------------------------------ */
+:root {
+  --brand-navy: #0e073e;
+  --brand-blue: #102d85;
+  --brand-gold: #c48f2f;
+  --brand-gold-soft: #f6ecd6;
+
+  --background: #ffffff;
+  --foreground: #14103a;
+  --card: #ffffff;
+  --card-foreground: #14103a;
+  --popover: #ffffff;
+  --popover-foreground: #14103a;
+  --primary: #0e073e;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1fa;
+  --secondary-foreground: #0e073e;
+  --muted: #f3f4f8;
+  --muted-foreground: #4b4f68;
+  --accent: #f6ecd6;
+  --accent-foreground: #0e073e;
+  --border: #dcdfea;
+  --input: #c3c8d8;
+  --ring: #102d85;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --brand-gold-soft: #2a2350;
+
+  --background: #0a0629;
+  --foreground: #f1f2f9;
+  --card: #120c3d;
+  --card-foreground: #f1f2f9;
+  --popover: #120c3d;
+  --popover-foreground: #f1f2f9;
+  --primary: #e2b75e;
+  --primary-foreground: #0e073e;
+  --secondary: #1b1550;
+  --secondary-foreground: #f1f2f9;
+  --muted: #171147;
+  --muted-foreground: #b9bcd3;
+  --accent: #2a2350;
+  --accent-foreground: #f1f2f9;
+  --border: #2d2764;
+  --input: #3a3478;
+  --ring: #e2b75e;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+/* Arabic uses Cairo first; Latin text inside Arabic pages falls back to Inter. */
+html[lang='ar'] body {
+  font-family: var(--font-cairo), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.container-page {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .container-page {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* Hero: slow zoom on the visible slide, and the bar that fills until the next one. */
+@keyframes ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.hero-zoom {
+  animation: ken-burns 7s ease-out both;
+}
+.hero-progress {
+  transform-origin: left;
+  animation: hero-progress linear both;
+}
+[dir='rtl'] .hero-progress {
+  transform-origin: right;
+}
+.hero-paused .hero-zoom,
+.hero-paused .hero-progress {
+  animation-play-state: paused;
+}
+
+@keyframes skeleton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.skeleton {
+  border-radius: 0.5rem;
+  background: var(--muted);
+  animation: skeleton 1.4s ease-in-out infinite;
+}
+
+.snap-row {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  padding-bottom: 0.75rem;
+}
+.snap-row > * {
+  scroll-snap-align: start;
+  flex: none;
+}
+
+/* Reveal on scroll (components/ui/reveal.tsx). Without the data attribute the content is simply visible. */
+.reveal[data-reveal='pending'] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.reveal[data-reveal='shown'] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.5s ease-out var(--reveal-delay, 0s),
+    transform 0.5s ease-out var(--reveal-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .hero-zoom,
+  .skeleton {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .hero-progress {
+    animation: none;
+    transform: scaleX(1);
   }
 }
