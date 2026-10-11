@@ -12,6 +12,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 import { ApplyButton, DeadlineCountdown, ShareButtons } from '@/components/jobs/job-actions';
@@ -98,6 +99,7 @@ function jobPostingJsonLd(job: PublicJob, locale: string) {
 export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slug]'>) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   const job = await api.job(slug);
   if (!job) {
     notFound();
@@ -138,6 +140,7 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
     <article className="container-page py-8">
       <script
         type="application/ld+json"
+        nonce={nonce}
         // JSON-LD must be inline; "<" is escaped so the text cannot close the script element.
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jobPostingJsonLd(job, locale)).replace(/</g, '\\u003c'),
