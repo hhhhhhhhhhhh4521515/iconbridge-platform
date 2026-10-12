@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { remember } from './cleanup';
 import { readyCandidate, seededAdmin, signIn, STAMP } from './support';
 
 /**
@@ -40,6 +41,9 @@ test.describe('back office: history and deletions', () => {
   test('historical visas show on the dashboard and the home page; an application and a candidate are deleted', async ({
     browser,
   }) => {
+    // The figures of the dashboard are shared: the same test in another browser at the
+    // same moment would add its own 250 visas to the totals this one reads.
+    test.skip(test.info().project.name !== 'admin', 'changes figures shared by every browser');
     test.setTimeout(420_000);
     const admin = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const credentials = seededAdmin();
@@ -58,8 +62,24 @@ test.describe('back office: history and deletions', () => {
       }
     };
     await clearYear();
+    // Whatever happens below, the figure of the test year is removed at the end of the run.
+    const destinations = (await (await admin.request.get('/api/v1/admin/destinations')).json()) as {
+      id: string;
+      code: string;
+    }[];
+    remember({
+      kind: 'figure',
+      metric: 'VISAS_APPROVED',
+      year: YEAR,
+      destinationId: destinations.find((entry) => entry.code === 'MALTA')?.id ?? null,
+      value: null,
+      note: null,
+    });
     const before = await stats(admin.request);
-    const expectedTotal = before.history.visasApproved + 250 + before.platform.visasApproved;
+    const historical = before.history.visasApproved + 250;
+    // Other tests run at the same time and one of them gets a visa approved: the
+    // platform figure is read again each time it is needed, never remembered.
+    const platformNow = async () => (await stats(admin.request)).platform.visasApproved;
 
     await test.step('the super admin enters 250 historical visas for Malta', async () => {
       await page.goto('/en/admin/settings');
@@ -75,11 +95,15 @@ test.describe('back office: history and deletions', () => {
     });
 
     await test.step('the dashboard shows the total with its split, and the platform alone on demand', async () => {
-      await page.goto('/en/admin');
-      await expect(page.getByTestId('kpi-visas-total')).toHaveText(number(expectedTotal));
-      await expect(page.getByTestId('kpi-visas-total-split')).toHaveText(
-        `${number(expectedTotal)} = ${number(before.history.visasApproved + 250)} historical + ${number(before.platform.visasApproved)} platform`,
-      );
+      expect((await stats(admin.request)).history.visasApproved).toBe(historical);
+      await expect(async () => {
+        const platform = await platformNow();
+        await page.goto('/en/admin');
+        await expect(page.getByTestId('kpi-visas-total')).toHaveText(number(historical + platform));
+        await expect(page.getByTestId('kpi-visas-total-split')).toHaveText(
+          `${number(historical + platform)} = ${number(historical)} historical + ${number(platform)} platform`,
+        );
+      }).toPass({ timeout: 30_000 });
       const perYear = page.getByRole('figure').filter({ hasText: 'Visas approved per year' });
       await expect(perYear).toContainText('Historical (before the platform)');
       await expect(
@@ -93,32 +117,39 @@ test.describe('back office: history and deletions', () => {
       ).toContainText('Historical (before the platform)');
 
       await page.getByRole('button', { name: 'Platform only' }).click();
-      await expect(page.getByTestId('kpi-visas-total')).toHaveText(
-        number(before.platform.visasApproved),
-      );
+      // Exactly the historical part less than before.
+      const withoutHistory = async () =>
+        Number((await page.getByTestId('kpi-visas-total').textContent())?.replace(/\D/g, ''));
       await expect(page.getByTestId('kpi-visas-total-split')).toHaveCount(0);
       await expect(perYear).not.toContainText('Historical (before the platform)');
+      const platformShown = await withoutHistory();
+      expect(platformShown).toBeGreaterThanOrEqual(before.platform.visasApproved);
       await page.getByRole('button', { name: 'Including history' }).click();
-      await expect(page.getByTestId('kpi-visas-total')).toHaveText(number(expectedTotal));
+      await expect(page.getByTestId('kpi-visas-total')).toHaveText(
+        number(historical + platformShown),
+      );
     });
 
     await test.step('the counter of the home page includes the history', async () => {
       // Saving the figure told the site to forget its copy: the home page follows at once.
-      const api = (await (await admin.request.get('/api/v1/stats')).json()) as {
-        visasApproved: number;
-      };
-      expect(api.visasApproved).toBe(expectedTotal);
+      const publicVisas = async () =>
+        (
+          (await (await admin.request.get('/api/v1/stats')).json()) as {
+            visasApproved: number;
+          }
+        ).visasApproved;
+      expect(await publicVisas()).toBe(historical + (await platformNow()));
       const visitor = await browser.newContext();
       const home = await visitor.newPage();
-      await expect
-        .poll(
-          async () => {
-            await home.goto('/en');
-            return home.getByTestId('counter-visas').getAttribute('data-value');
-          },
-          { timeout: 15_000, intervals: [1_000] },
-        )
-        .toBe(String(expectedTotal));
+      await expect(async () => {
+        const expected = await publicVisas();
+        await home.goto('/en');
+        await expect(home.getByTestId('counter-visas')).toHaveAttribute(
+          'data-value',
+          String(expected),
+        );
+        expect(expected).toBeGreaterThanOrEqual(historical);
+      }).toPass({ timeout: 15_000 });
       await visitor.close();
     });
 
@@ -175,11 +206,10 @@ test.describe('back office: history and deletions', () => {
 
     await test.step('deleting a candidate removes the files and keeps the totals', async () => {
       // The candidate applies again, so there is an application to keep as an anonymous row.
-      expect((await apply()).status()).toBe(201);
-      const totalApplications = async () =>
-        Object.values((await stats(admin.request)).applicationsByStatus).reduce((a, b) => a + b, 0);
-      const applicationsBefore = await totalApplications();
-      const visasBefore = (await stats(admin.request)).platform.visasApproved;
+      const applied = await apply();
+      expect(applied.status()).toBe(201);
+      const applicationId = ((await applied.json()) as { id: string }).id;
+      remember({ kind: 'application', id: applicationId });
 
       // Signed links to the two files in the private storage: they work now...
       const links: string[] = [];
@@ -216,9 +246,14 @@ test.describe('back office: history and deletions', () => {
       // The person cannot use the account any more.
       expect((await candidate.context.request.get('/api/v1/me/profile')).status()).toBe(401);
 
-      // The totals of the dashboard did not move.
-      expect(await totalApplications()).toBe(applicationsBefore);
-      expect((await stats(admin.request)).platform.visasApproved).toBe(visasBefore);
+      // The totals of the dashboard do not move: the application is still counted, as a
+      // withdrawn row that names nobody.
+      const kept = (await (
+        await admin.request.get(`/api/v1/admin/applications/${applicationId}`)
+      ).json()) as { status: string; candidate: { firstName: string; email: string } };
+      expect(kept.status).toBe('WITHDRAWN');
+      expect(kept.candidate.firstName).toBe('Deleted');
+      expect(JSON.stringify(kept)).not.toContain(firstName);
 
       // The audit log says who, why and how much; not who the candidate was.
       const log = await (

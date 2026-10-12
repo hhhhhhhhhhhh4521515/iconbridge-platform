@@ -47,6 +47,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@iconbridge/config": "workspace:*",
     "@playwright/test": "^1.64.0",
     "@tailwindcss/turbopack": "^4",

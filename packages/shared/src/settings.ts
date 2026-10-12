@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 
 /**

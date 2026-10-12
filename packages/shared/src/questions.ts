@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 import type { Locale, LocalizedText } from './i18n.js';
 

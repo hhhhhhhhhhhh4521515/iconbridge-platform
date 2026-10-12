@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 import { JOB_STATUSES, jobStatusSchema, salaryPeriodSchema, type JobStatus } from './enums.js';
 import { localizedTextSchema } from './i18n.js';

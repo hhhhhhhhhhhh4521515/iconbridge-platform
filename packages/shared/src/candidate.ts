@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 import { phoneSchema } from './auth.js';
 import { countryCodeSchema } from './countries.js';

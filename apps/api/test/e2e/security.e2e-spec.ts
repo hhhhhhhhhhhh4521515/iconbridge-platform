@@ -13,6 +13,7 @@ import {
   seedCatalog,
   type TestApp,
 } from './app.js';
+import { KEEP_ALIVE_MS } from '../../src/app.setup.js';
 
 interface Route {
   method: string;
@@ -206,6 +207,16 @@ describe('security (e2e)', () => {
   });
 
   describe('response headers and errors', () => {
+    it('keeps idle connections longer than its clients do, so no request meets a closing socket', () => {
+      const server = test.app.getHttpServer() as {
+        keepAliveTimeout: number;
+        headersTimeout: number;
+      };
+      expect(server.keepAliveTimeout).toBe(KEEP_ALIVE_MS);
+      expect(KEEP_ALIVE_MS).toBeGreaterThanOrEqual(60_000);
+      expect(server.headersTimeout).toBeGreaterThan(server.keepAliveTimeout);
+    });
+
     it('sends the security headers', async () => {
       const response = await test.http().get(`${API}/jobs`).expect(200);
       expect(response.headers['x-content-type-options']).toBe('nosniff');

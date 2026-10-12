@@ -106,7 +106,7 @@ function Chart({
   return (
     <figure className={`${card} p-5`}>
       <figcaption className="mb-3 font-semibold">{title}</figcaption>
-      <div className={`${tall ? 'h-96' : 'h-64'} text-muted-foreground`} aria-hidden>
+      <div className={`${tall ? 'h-96' : 'h-64'} text-muted-foreground`} aria-hidden inert>
         {children}
       </div>
       <ul className="sr-only">
@@ -137,7 +137,7 @@ function SplitChart({
   return (
     <figure className={`${card} p-5`}>
       <figcaption className="mb-3 font-semibold">{title}</figcaption>
-      <div className="h-64 text-muted-foreground" aria-hidden>
+      <div className="h-64 text-muted-foreground" aria-hidden inert>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.15} />

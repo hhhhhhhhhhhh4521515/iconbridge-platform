@@ -100,7 +100,7 @@ function Timeline({ application }: { application: Application }) {
               aria-hidden
               className={`relative z-10 inline-flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                 state === 'done'
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-emerald-700 text-white'
                   : state === 'current'
                     ? 'bg-brand-gold text-brand-navy ring-4 ring-brand-gold/30'
                     : 'border border-border bg-background text-muted-foreground'

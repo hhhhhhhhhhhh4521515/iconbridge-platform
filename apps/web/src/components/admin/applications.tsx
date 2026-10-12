@@ -228,32 +228,42 @@ function Card({
     disabled: !draggable,
     data: { application },
   });
+  const name = `${application.candidate.firstName} ${application.candidate.lastName}`;
   return (
-    <li
-      ref={setNodeRef}
-      style={
-        transform
-          ? { transform: `translate(${String(transform.x)}px, ${String(transform.y)}px)` }
-          : undefined
-      }
-      className={`rounded-lg border border-border bg-background p-2.5 text-sm shadow-sm ${
-        isDragging ? 'relative z-10 opacity-80 shadow-lg' : ''
-      } ${draggable ? 'cursor-grab touch-none' : ''}`}
-      data-testid="board-card"
-      data-id={application.id}
-      {...attributes}
-      {...listeners}
-    >
-      <button
-        type="button"
-        className="block w-full text-start font-medium hover:underline"
-        onClick={() => {
-          onOpen(application.id);
-        }}
+    <li>
+      {/*
+        The card is dragged as a whole and holds a button that opens the detail. As a
+        "button" holding a button it could not be used with a screen reader: it is a
+        group that can be moved (dnd-kit describes how), and the button stays a button.
+      */}
+      <div
+        ref={setNodeRef}
+        style={
+          transform
+            ? { transform: `translate(${String(transform.x)}px, ${String(transform.y)}px)` }
+            : undefined
+        }
+        className={`rounded-lg border border-border bg-background p-2.5 text-sm shadow-sm ${
+          isDragging ? 'relative z-10 opacity-80 shadow-lg' : ''
+        } ${draggable ? 'cursor-grab touch-none' : ''}`}
+        data-testid="board-card"
+        data-id={application.id}
+        {...attributes}
+        {...listeners}
+        role="group"
+        aria-label={name}
       >
-        {application.candidate.firstName} {application.candidate.lastName}
-      </button>
-      <p className="truncate text-xs text-muted-foreground">{application.job.title}</p>
+        <button
+          type="button"
+          className="block w-full text-start font-medium hover:underline"
+          onClick={() => {
+            onOpen(application.id);
+          }}
+        >
+          {name}
+        </button>
+        <p className="truncate text-xs text-muted-foreground">{application.job.title}</p>
+      </div>
     </li>
   );
 }

@@ -10,6 +10,15 @@ import { defineConfig, devices } from '@playwright/test';
  * The back-office tests sign in as the seeded super admin of `apps/api/.env`. If nothing
  * listens on 3000, Playwright builds and starts the web app itself.
  */
+const ADMIN = /admin.*\.spec\.ts$/;
+const DESK = { width: 1440, height: 900 };
+/**
+ * WebKit needs system libraries that `playwright install --with-deps webkit` installs
+ * (with sudo). CI has them; on a machine without them, run `pnpm test:browser:webkit`,
+ * which uses the Playwright container instead.
+ */
+const WEBKIT = Boolean(process.env.CI ?? process.env.E2E_WEBKIT);
+
 export default defineConfig({
   testDir: './e2e',
   // Removes what the tests created, even when one of them failed half-way.
@@ -26,16 +35,35 @@ export default defineConfig({
     actionTimeout: 15_000,
   },
   projects: [
-    { name: 'desktop', testIgnore: /admin.*\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },
-    { name: 'phone', testIgnore: /admin.*\.spec\.ts$/, use: { ...devices['Pixel 7'] } },
+    { name: 'desktop', testIgnore: ADMIN, use: { ...devices['Desktop Chrome'] } },
+    { name: 'phone', testIgnore: ADMIN, use: { ...devices['Pixel 7'] } },
     {
       // The back office is made for a desk or a tablet. It runs after the two others: every
       // test here signs several people in, and sign-ins are rate-limited per address.
       name: 'admin',
-      testMatch: /admin.*\.spec\.ts$/,
+      testMatch: ADMIN,
       dependencies: ['desktop', 'phone'],
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: { ...devices['Desktop Chrome'], viewport: DESK },
     },
+    // The same tests in the two other browser engines.
+    { name: 'firefox', testIgnore: ADMIN, use: { ...devices['Desktop Firefox'] } },
+    {
+      name: 'firefox-admin',
+      testMatch: ADMIN,
+      dependencies: ['firefox'],
+      use: { ...devices['Desktop Firefox'], viewport: DESK },
+    },
+    ...(WEBKIT
+      ? [
+          { name: 'webkit', testIgnore: ADMIN, use: { ...devices['Desktop Safari'] } },
+          {
+            name: 'webkit-admin',
+            testMatch: ADMIN,
+            dependencies: ['webkit'],
+            use: { ...devices['Desktop Safari'], viewport: DESK },
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: 'pnpm build && pnpm start',

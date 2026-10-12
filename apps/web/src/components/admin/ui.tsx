@@ -57,7 +57,8 @@ const TONES = {
   neutral: 'bg-muted text-foreground',
   info: 'bg-secondary text-secondary-foreground',
   gold: 'bg-brand-gold text-brand-navy',
-  success: 'bg-emerald-600 text-white',
+  // emerald-700: white text on emerald-600 has too little contrast (3.7 for 4.5 required).
+  success: 'bg-emerald-700 text-white',
   danger: 'bg-destructive/15 text-destructive',
   muted: 'bg-muted text-muted-foreground',
 } as const;

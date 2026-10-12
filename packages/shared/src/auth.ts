@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 import { ADMIN_ROLES, userRoleSchema } from './enums.js';
 import { countryCodeSchema } from './countries.js';
