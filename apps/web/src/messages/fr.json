@@ -209,7 +209,23 @@
     "submit": "Créer mon alerte",
     "sending": "Envoi...",
     "success": "Consultez votre boîte de réception et confirmez votre adresse pour activer l'alerte.",
-    "error": "L'alerte n'a pas pu être créée. Vérifiez l'adresse et réessayez."
+    "error": "L'alerte n'a pas pu être créée. Vérifiez l'adresse et réessayez.",
+    "confirm": {
+      "title": "Alerte emploi",
+      "doneTitle": "Votre alerte emploi est active.",
+      "doneText": "Nous vous écrirons dès qu'une offre correspondante sera publiée. Chaque e-mail contient un lien pour arrêter l'alerte.",
+      "failedTitle": "Ce lien ne fonctionne plus.",
+      "failedText": "Il a expiré ou a déjà été utilisé. Créez de nouveau l'alerte depuis le site.",
+      "jobs": "Voir les offres"
+    },
+    "unsubscribe": {
+      "title": "Alerte emploi",
+      "doneTitle": "Votre alerte emploi est arrêtée.",
+      "doneText": "Vous ne recevrez plus d'e-mails pour cette alerte. Vous pouvez en créer une nouvelle à tout moment.",
+      "failedTitle": "Ce lien ne fonctionne plus.",
+      "failedText": "L'alerte a probablement déjà été arrêtée.",
+      "jobs": "Voir les offres"
+    }
   },
   "contactCta": {
     "title": "Une question avant de postuler ?",
