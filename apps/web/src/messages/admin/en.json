@@ -546,6 +546,10 @@
     "disableTitle": "Disable this account?",
     "disableText": "{email} is logged out at once and cannot log in any more.",
     "disabled": "The account is disabled.",
+    "delete": "Delete",
+    "deleteTitle": "Delete this account?",
+    "deleteText": "{email} is logged out and can never log in again. What this person did stays in the audit log. This cannot be undone.",
+    "deleted": "The account is deleted.",
     "enabled": "The account is active again.",
     "forceLogout": "Log out everywhere",
     "logoutTitle": "Log this user out?",
@@ -572,7 +576,11 @@
     "markHandled": "Mark as handled",
     "markedHandled": "Marked as handled.",
     "reopen": "Put back to handle",
-    "reopened": "Put back among the messages to handle."
+    "reopened": "Put back among the messages to handle.",
+    "delete": "Delete",
+    "deleteTitle": "Delete this message?",
+    "deleteText": "The message of {name} is removed for good. This cannot be undone.",
+    "deleted": "The message is deleted."
   },
   "settings": {
     "title": "Settings",

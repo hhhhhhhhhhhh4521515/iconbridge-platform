@@ -322,6 +322,28 @@ describe('back-office adjustments (e2e)', () => {
       expect(JSON.stringify(entries)).not.toContain('amira@example.test');
     });
 
+    it('lets a super admin delete a message for good; the audit log keeps nothing of it', async () => {
+      await send('Amira', 'Visa');
+      await send('Omar', 'Salary');
+      const amira = (await list(superAdmin)).items.find((item) => item.name === 'Amira');
+      const path = `/admin/contact-messages/${amira?.id ?? ''}`;
+      await as(test, viewer).delete(path).expect(403);
+      await as(test, recruiter).delete(path).expect(403);
+      await test.http().delete(`${API}${path}`).expect(401);
+      expect((await list(superAdmin)).total).toBe(2);
+
+      await as(test, superAdmin).delete(path).expect(204);
+      expect((await list(superAdmin)).items.map((item) => item.name)).toEqual(['Omar']);
+      await as(test, superAdmin).delete(path).expect(404);
+
+      const entries = await test.prisma.auditLog.findMany({
+        where: { action: 'contact_message.delete' },
+      });
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({ actorId: superAdmin.id, entityId: amira?.id });
+      expect(JSON.stringify(entries)).not.toMatch(/amira|Visa|Malta/i);
+    });
+
     it('refuses writes to a viewer, and everything to candidates and visitors', async () => {
       await send('Amira', 'Visa');
       const [message] = (await list(viewer)).items;

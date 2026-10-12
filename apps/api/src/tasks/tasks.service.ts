@@ -56,7 +56,10 @@ export class TasksService {
     }),
     'close-jobs': () => this.jobAvailability.closeUnavailableJobs(),
     'job-alerts': () => this.jobAlerts.sendDue(),
-    retention: () => this.retention.run(),
+    retention: async () => ({
+      ...(await this.retention.run()),
+      contactMessages: await this.retention.purgeContactMessages(),
+    }),
   };
 
   /** Runs one task. Never throws: a failure is logged and reported. */

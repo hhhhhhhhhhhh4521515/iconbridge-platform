@@ -546,6 +546,10 @@
     "disableTitle": "Désactiver ce compte ?",
     "disableText": "{email} est déconnecté immédiatement et ne peut plus se connecter.",
     "disabled": "Le compte est désactivé.",
+    "delete": "Supprimer",
+    "deleteTitle": "Supprimer ce compte ?",
+    "deleteText": "{email} est déconnecté et ne pourra plus jamais se connecter. Ses actions restent dans le journal d'audit. Cette action est définitive.",
+    "deleted": "Le compte est supprimé.",
     "enabled": "Le compte est de nouveau actif.",
     "forceLogout": "Déconnecter partout",
     "logoutTitle": "Déconnecter cet utilisateur ?",
@@ -572,7 +576,11 @@
     "markHandled": "Marquer comme traité",
     "markedHandled": "Marqué comme traité.",
     "reopen": "Remettre à traiter",
-    "reopened": "Remis parmi les messages à traiter."
+    "reopened": "Remis parmi les messages à traiter.",
+    "delete": "Supprimer",
+    "deleteTitle": "Supprimer ce message ?",
+    "deleteText": "Le message de {name} est supprimé définitivement. Cette action est irréversible.",
+    "deleted": "Le message est supprimé."
   },
   "settings": {
     "title": "Paramètres",

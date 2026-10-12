@@ -176,6 +176,31 @@ describe('data retention (e2e)', () => {
     expect(await retention.run()).toEqual({ ran: true, warned: 0, erased: 0 });
   });
 
+  it('removes the messages of the contact form after two years, and says how many in the audit log', async () => {
+    const message = (createdAt: Date, name: string) =>
+      test.prisma.contactMessage.create({
+        data: { name, email: `${name.toLowerCase()}@example.test`, message: 'Hello', createdAt },
+      });
+    await message(ago(RETENTION_MONTHS, 1), 'Old');
+    await message(ago(RETENTION_MONTHS, -1), 'Recent');
+
+    const report = await test.app.get(TasksService).run('retention');
+    expect(report).toMatchObject({ ok: true, result: { contactMessages: 1 } });
+    expect((await test.prisma.contactMessage.findMany()).map((row) => row.name)).toEqual([
+      'Recent',
+    ]);
+    const entries = await test.prisma.auditLog.findMany({
+      where: { action: 'contact_message.retention_delete' },
+    });
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ actorId: null, before: { messages: 1 } });
+    expect(JSON.stringify(entries)).not.toContain('old@example.test');
+
+    // Nothing to remove, nothing to write.
+    expect(await retention.purgeContactMessages()).toBe(0);
+    expect(await test.prisma.auditLog.count()).toBe(1);
+  });
+
   it('runs as a scheduled task', async () => {
     await lastSeen(ago(RETENTION_MONTHS, 5));
     const report = await test.app.get(TasksService).run('retention');

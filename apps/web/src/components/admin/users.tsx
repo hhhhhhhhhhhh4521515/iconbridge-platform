@@ -180,6 +180,28 @@ export function UsersManager() {
         );
       }
     };
+    const remove = async (user: AdminUser) => {
+      const yes = await confirm({
+        title: t('users.deleteTitle'),
+        text: t('users.deleteText', { email: user.email }),
+        confirmLabel: t('users.delete'),
+        destructive: true,
+      });
+      if (!yes) {
+        return;
+      }
+      const result = await call(
+        api.DELETE('/api/v1/admin/users/{id}', path(user.id)),
+        t('users.deleted'),
+      );
+      if (result.ok && data) {
+        setData({
+          ...data,
+          items: data.items.filter((item) => item.id !== user.id),
+          total: data.total - 1,
+        });
+      }
+    };
     return [
       {
         accessorKey: 'email',
@@ -251,6 +273,14 @@ export function UsersManager() {
                 onClick={() => void setActive(row.original, !row.original.isActive)}
               >
                 {row.original.isActive ? t('users.disable') : t('users.enable')}
+              </button>
+              <button
+                type="button"
+                className={`${smallButton} text-destructive`}
+                aria-label={`${t('users.delete')}: ${row.original.email}`}
+                onClick={() => void remove(row.original)}
+              >
+                {t('users.delete')}
               </button>
             </div>
           ),

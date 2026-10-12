@@ -46,6 +46,30 @@ export class RetentionService {
     return outcome.ran ? { ran: true, ...outcome.result } : { ran: false };
   }
 
+  /**
+   * Messages of the contact form hold a name, an address and what the person wrote:
+   * they are removed RETENTION_MONTHS after they were received.
+   */
+  async purgeContactMessages(): Promise<number> {
+    const before = this.clock.now();
+    before.setUTCMonth(before.getUTCMonth() - RETENTION_MONTHS);
+    const removed = await this.prisma.contactMessage.deleteMany({
+      where: { createdAt: { lt: before } },
+    });
+    if (removed.count > 0) {
+      await this.audit.record({
+        actorId: null,
+        action: 'contact_message.retention_delete',
+        entityType: 'contactMessage',
+        entityId: null,
+        before: { messages: removed.count },
+        after: { reason: `Received over ${RETENTION_MONTHS} months ago`, deletedBy: 'system' },
+      });
+      this.logger.log(`Retention: ${removed.count} contact messages removed`);
+    }
+    return removed.count;
+  }
+
   private async apply(): Promise<{ warned: number; erased: number }> {
     const now = this.clock.now();
     const eraseBefore = new Date(now);
