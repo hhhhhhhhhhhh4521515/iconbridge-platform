@@ -21,7 +21,9 @@ k6 run tests/load/apply.js        # also needs Mailpit (http://localhost:8025)
 
 `RATE_LIMITS_ENABLED=false` is refused when `NODE_ENV=production`. Never run these
 scripts against the production site: `apply.js` creates accounts and applications
-(it erases its accounts at the end; the applications stay as anonymous withdrawn rows).
+(with `ADMIN_EMAIL` and `ADMIN_PASSWORD` of a super admin it deletes both at the end;
+without them the accounts erase themselves and their applications stay as anonymous,
+withdrawn rows).
 
-Options: `API_URL`, `MAILPIT_URL`, `VUS` (apply only). Results of the last run are in
+Options: `API_URL`, `MAILPIT_URL`, and for `apply.js` `VUS`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Results of the last run are in
 `docs/QA-REPORT.md`.

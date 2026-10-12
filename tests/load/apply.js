@@ -10,8 +10,7 @@
 // jobs (an application is allowed once per job).
 //
 // Cleaning up: with ADMIN_EMAIL and ADMIN_PASSWORD (a super admin), the test deletes its
-// candidates and their applications through the back office, and nothing is left but one
-// audit entry. Without them every test account erases itself, which keeps its
+// applications, then its candidates, through the back office: only audit entries are left. Without them every test account erases itself, which keeps its
 // applications as anonymous, withdrawn rows.
 import http from 'k6/http';
 import { check, sleep } from 'k6';
@@ -144,7 +143,7 @@ export function setup() {
     });
     candidates.push({ email, cookie, documentIds, profileId: profile.json().id });
   }
-  return { candidates, jobs: jobs.map((job) => job.id) };
+  return { candidates, jobs: jobs.map((job) => job.id), stamp };
 }
 
 export default function (data) {
@@ -175,13 +174,21 @@ export function teardown(data) {
       JSON.stringify({ email: __ENV.ADMIN_EMAIL, password: __ENV.ADMIN_PASSWORD }),
       { headers: JSON_HEADERS, jar: null },
     );
+    const admin = { headers: { ...JSON_HEADERS, Cookie: cookieOf(login) }, jar: null };
+    const reason = 'Created by the k6 load test';
+    // The applications first: deleting a candidate keeps them, as anonymous rows.
+    for (let round = 0; round < 20; round++) {
+      const page = http.get(`${API}/admin/applications?q=load-${data.stamp}&pageSize=50`, admin);
+      const ids = page.status === 200 ? page.json().items.map((item) => item.id) : [];
+      if (ids.length === 0) {
+        break;
+      }
+      http.post(`${API}/admin/applications/bulk-delete`, JSON.stringify({ ids, reason }), admin);
+    }
     const deleted = http.post(
       `${API}/admin/candidates/bulk-delete`,
-      JSON.stringify({
-        ids: data.candidates.map((candidate) => candidate.profileId),
-        reason: 'Accounts created by the k6 load test',
-      }),
-      { headers: { ...JSON_HEADERS, Cookie: cookieOf(login) }, jar: null },
+      JSON.stringify({ ids: data.candidates.map((candidate) => candidate.profileId), reason }),
+      admin,
     );
     if (deleted.status < 300) {
       return;
