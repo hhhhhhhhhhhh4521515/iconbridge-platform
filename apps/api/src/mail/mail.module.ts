@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
 import type { Env } from '../config/env.js';
-import { MAIL_TRANSPORT, MailService } from './mail.service.js';
+import { MAIL_TRANSPORT, MailService, OUTBOX_CONCURRENCY } from './mail.service.js';
 
 @Global()
 @Module({
@@ -20,6 +20,9 @@ import { MAIL_TRANSPORT, MailService } from './mail.service.js';
           secure: false,
           // Never send credentials or mail over an unencrypted connection in production.
           requireTLS: production,
+          // The outbox sends a few emails at a time: keep the connections open between them.
+          pool: true,
+          maxConnections: OUTBOX_CONCURRENCY,
           ...(user ? { auth: { user, pass: config.get('SMTP_PASSWORD', { infer: true }) } } : {}),
         });
       },

@@ -37,6 +37,8 @@ export const EMAIL_LINK_PATHS = {
 const OUTBOX_CONTEXT = 'email-outbox';
 export const OUTBOX_MAX_ATTEMPTS = 8;
 const OUTBOX_BATCH = 200;
+/** Emails sent at the same time; the transport keeps as many SMTP connections open. */
+export const OUTBOX_CONCURRENCY = 3;
 const OUTBOX_LEASE_MS = 2 * 60_000;
 const OUTBOX_KEEP_MS = 30 * 24 * 3_600_000;
 
@@ -190,10 +192,14 @@ export class MailService {
       select: { id: true },
     });
     const report = { sent: 0, retried: 0, failed: 0 };
-    for (const { id } of due) {
-      const outcome = await this.attempt(id);
-      if (outcome !== 'skipped') {
-        report[outcome] += 1;
+    for (let start = 0; start < due.length; start += OUTBOX_CONCURRENCY) {
+      const outcomes = await Promise.all(
+        due.slice(start, start + OUTBOX_CONCURRENCY).map(({ id }) => this.attempt(id)),
+      );
+      for (const outcome of outcomes) {
+        if (outcome !== 'skipped') {
+          report[outcome] += 1;
+        }
       }
     }
     return report;
