@@ -135,9 +135,17 @@ export async function cleanUp(request: APIRequestContext): Promise<string[]> {
   )) {
     applications.add(application.id);
   }
-  const jobs = (
-    await items<{ id: string; slug: string }>(request, '/api/v1/admin/jobs?q=E2E&pageSize=100')
-  ).filter((job) => job.slug.startsWith('e2e-'));
+  // Live ones, and those a test already put in the bin: both are removed for good.
+  const jobs = [
+    ...(await items<{ id: string; slug: string }>(
+      request,
+      '/api/v1/admin/jobs?q=E2E&pageSize=100',
+    )),
+    ...(await items<{ id: string; slug: string }>(
+      request,
+      '/api/v1/admin/jobs?q=E2E&deleted=true&pageSize=100',
+    )),
+  ].filter((job) => job.slug.startsWith('e2e-'));
   for (const job of jobs) {
     for (const application of await items<{ id: string }>(
       request,
