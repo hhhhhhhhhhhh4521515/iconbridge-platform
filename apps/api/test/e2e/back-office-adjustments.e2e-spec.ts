@@ -359,6 +359,47 @@ describe('back-office adjustments (e2e)', () => {
     });
   });
 
+  describe('job alerts of an address', () => {
+    const subscribe = (email: string) =>
+      test.prisma.jobAlertSubscription.create({
+        data: { email, unsubscribeToken: `token-${email}-${String(Math.random())}` },
+      });
+
+    it('lets a super admin remove every alert of an address; the audit log keeps the number only', async () => {
+      await subscribe('hedi@example.test');
+      await subscribe('hedi@example.test');
+      await subscribe('other@example.test');
+      const erase = (user: TestUser, email: string) =>
+        as(test, user).post('/admin/job-alerts/erase').send({ email });
+
+      await erase(viewer, 'hedi@example.test').expect(403);
+      await erase(recruiter, 'hedi@example.test').expect(403);
+      await test
+        .http()
+        .post(`${API}/admin/job-alerts/erase`)
+        .send({ email: 'a@b.test' })
+        .expect(401);
+      await erase(superAdmin, 'not-an-address').expect(400);
+      expect(await test.prisma.jobAlertSubscription.count()).toBe(3);
+
+      // Written in any case: addresses are stored in lower case.
+      expect((await erase(superAdmin, 'Hedi@Example.test').expect(200)).body).toEqual({
+        removed: 2,
+      });
+      expect(
+        (await test.prisma.jobAlertSubscription.findMany()).map((alert) => alert.email),
+      ).toEqual(['other@example.test']);
+      expect((await erase(superAdmin, 'hedi@example.test').expect(200)).body).toEqual({
+        removed: 0,
+      });
+
+      const entries = await test.prisma.auditLog.findMany({ where: { action: 'job_alert.erase' } });
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({ actorId: superAdmin.id, before: { alerts: 2 } });
+      expect(JSON.stringify(entries)).not.toContain('hedi');
+    });
+  });
+
   describe('questions of a job', () => {
     const label = (text: string) => ({ en: text, fr: `${text} (fr)`, ar: `${text} (ar)` });
     const questions = [

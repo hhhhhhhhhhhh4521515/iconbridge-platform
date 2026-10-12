@@ -646,3 +646,14 @@ export const contactMessageSchema = z.object({
   turnstileToken: z.string().min(1).max(2048),
 });
 export type ContactMessageInput = z.infer<typeof contactMessageSchema>;
+
+// ---------------------------------------------------------------------------
+// Job alerts
+// ---------------------------------------------------------------------------
+
+/** Body of POST /admin/job-alerts/erase: the address whose alerts are removed. */
+export const eraseJobAlertsSchema = z.object({ email: emailSchema });
+export type EraseJobAlertsInput = z.infer<typeof eraseJobAlertsSchema>;
+
+export const eraseJobAlertsResultSchema = z.object({ removed: z.number().int() });
+export type EraseJobAlertsResult = z.infer<typeof eraseJobAlertsResultSchema>;

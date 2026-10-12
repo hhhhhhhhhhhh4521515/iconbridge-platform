@@ -13,6 +13,7 @@ import { AuditService } from './audit/audit.service.js';
 import { AdminCandidatesController } from './candidates/admin-candidates.controller.js';
 import { AdminCandidatesService } from './candidates/admin-candidates.service.js';
 import { DeletionService } from './deletion.service.js';
+import { AdminJobAlertsController } from './job-alerts.controller.js';
 import { HistoricalFiguresController } from './historical-figures.controller.js';
 import { ContactMessagesController } from './contact-messages.controller.js';
 import { AdminUsersController } from './users/admin-users.controller.js';
@@ -29,6 +30,7 @@ import { AdminUsersService } from './users/admin-users.service.js';
     AdminSettingsController,
     ContactMessagesController,
     HistoricalFiguresController,
+    AdminJobAlertsController,
   ],
   providers: [
     AdminUsersService,

@@ -14775,6 +14775,252 @@
         ]
       }
     },
+    "/api/v1/admin/job-alerts/erase": {
+      "post": {
+        "description": "Confirmed or not. Answers how many alerts were removed; the audit log keeps that number, not the address.",
+        "operationId": "AdminJobAlertsController_erase",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "removed": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "removed"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove every job alert of an email address (super admin)",
+        "tags": [
+          "admin: job alerts"
+        ]
+      }
+    },
     "/api/v1/me/profile": {
       "get": {
         "description": "Includes the clear passport number (owner only), the completeness percentage and the missing items.",
