@@ -723,6 +723,11 @@
     "loadFailed": "This could not be loaded. Check your connection and try again.",
     "choose": "Choose…",
     "phoneCountry": "Country calling code",
+    "date": {
+      "day": "Day",
+      "month": "Month",
+      "year": "Year"
+    },
     "errors": {
       "required": "This field is required.",
       "invalid": "This value is not valid.",

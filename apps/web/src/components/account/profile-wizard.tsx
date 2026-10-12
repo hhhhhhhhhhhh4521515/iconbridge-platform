@@ -23,6 +23,7 @@ import {
 } from 'react-hook-form';
 import { CheckGroup } from '@/components/forms/check-group';
 import { CountrySelect } from '@/components/forms/country-select';
+import { DateField } from '@/components/forms/date-field';
 import {
   CheckField,
   FormError,
@@ -55,6 +56,9 @@ const WIZARD_STEPS = [
   'documents',
 ] as const;
 type WizardStep = (typeof WIZARD_STEPS)[number];
+
+/** Years offered by the date lists start from this one. */
+const THIS_YEAR = new Date().getFullYear();
 
 const FIELD_NAMES = Object.keys(candidateProfileFields.shape);
 
@@ -237,13 +241,14 @@ function IdentityStep({ back, onSaved }: StepProps) {
           </option>
         ))}
       </SelectField>
-      <TextField
+      <DateField
+        control={control}
+        name="dateOfBirth"
         label={t('dateOfBirth')}
-        type="date"
-        autoComplete="bday"
         hint={t('dateOfBirthHint')}
         error={errors.dateOfBirth}
-        {...register('dateOfBirth')}
+        fromYear={THIS_YEAR}
+        toYear={THIS_YEAR - 90}
       />
       <CountrySelect
         label={t('nationality')}
@@ -336,7 +341,7 @@ function PassportStep({ back, onSaved }: StepProps) {
     },
     onSaved,
   );
-  const { register, formState } = step.form;
+  const { register, control, formState } = step.form;
   const { errors } = formState;
   return (
     <StepForm title={t('steps.passport')} intro={t('passportIntro')} {...step} back={back}>
@@ -355,17 +360,21 @@ function PassportStep({ back, onSaved }: StepProps) {
         error={errors.passportIssuingCountry}
         {...register('passportIssuingCountry')}
       />
-      <TextField
+      <DateField
+        control={control}
+        name="passportIssueDate"
         label={t('passportIssueDate')}
-        type="date"
         error={errors.passportIssueDate}
-        {...register('passportIssueDate')}
+        fromYear={THIS_YEAR}
+        toYear={THIS_YEAR - 15}
       />
-      <TextField
+      <DateField
+        control={control}
+        name="passportExpiryDate"
         label={t('passportExpiryDate')}
-        type="date"
         error={errors.passportExpiryDate}
-        {...register('passportExpiryDate')}
+        fromYear={THIS_YEAR - 2}
+        toYear={THIS_YEAR + 15}
       />
     </StepForm>
   );

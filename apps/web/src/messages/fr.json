@@ -723,6 +723,11 @@
     "loadFailed": "Le chargement a échoué. Vérifiez votre connexion et réessayez.",
     "choose": "Choisir…",
     "phoneCountry": "Indicatif du pays",
+    "date": {
+      "day": "Jour",
+      "month": "Mois",
+      "year": "Année"
+    },
     "errors": {
       "required": "Ce champ est obligatoire.",
       "invalid": "Cette valeur n'est pas valide.",
