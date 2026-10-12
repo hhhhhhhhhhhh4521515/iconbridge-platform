@@ -34,7 +34,14 @@ import { StorageModule } from './storage/storage.module.js';
       useFactory: (config: ConfigService<Env, true>) =>
         loggerParams(config.get('NODE_ENV', { infer: true })),
     }),
-    ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ...RATE_LIMITS.default }] }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        throttlers: [{ name: 'default', ...RATE_LIMITS.default }],
+        // Only ever off for a load test on a workstation (refused in production).
+        skipIf: () => !config.get('RATE_LIMITS_ENABLED', { infer: true }),
+      }),
+    }),
     ScheduleModule.forRoot(),
     PrismaModule,
     ClockModule,

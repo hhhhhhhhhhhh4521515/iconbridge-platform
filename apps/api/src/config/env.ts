@@ -46,6 +46,14 @@ const baseEnvSchema = z.object({
   /** Empty for a server without authentication (Mailpit). */
   SMTP_USER: z.string(),
   SMTP_PASSWORD: z.string(),
+  /**
+   * "false" switches the rate limits off, for a load test on a workstation only:
+   * refused when NODE_ENV is production.
+   */
+  RATE_LIMITS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
   /** Reverse proxies in front of the API whose X-Forwarded-For is trusted (0 locally). */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5),
   /** "true" runs the scheduled tasks inside the API (local). "false" in Azure, where a Container Apps Job runs them. */
@@ -70,7 +78,15 @@ export const envSchema = baseEnvSchema
       path: ['TURNSTILE_SECRET_KEY'],
       message: 'A Turnstile test secret cannot be used in production',
     },
-  );
+  )
+  .refine((env) => env.NODE_ENV !== 'production' || env.RATE_LIMITS_ENABLED, {
+    path: ['RATE_LIMITS_ENABLED'],
+    message: 'The rate limits cannot be switched off in production',
+  })
+  .refine((env) => env.NODE_ENV !== 'production' || env.ACCESS_TOKEN_TTL_SECONDS >= 300, {
+    path: ['ACCESS_TOKEN_TTL_SECONDS'],
+    message: 'In production an access token lives at least 5 minutes',
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

@@ -60,6 +60,33 @@ describe('validateEnv', () => {
     expect(validateEnv({ ...valid, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
   });
 
+  it('refuses test conveniences in production: no rate limits, very short tokens', () => {
+    const production = { ...valid, NODE_ENV: 'production', TURNSTILE_SECRET_KEY: 'real-secret' };
+    expect(() => validateEnv(production)).not.toThrow();
+    expect(() => validateEnv({ ...production, RATE_LIMITS_ENABLED: 'false' })).toThrow(
+      /RATE_LIMITS_ENABLED/,
+    );
+    expect(() => validateEnv({ ...production, ACCESS_TOKEN_TTL_SECONDS: '5' })).toThrow(
+      /ACCESS_TOKEN_TTL_SECONDS/,
+    );
+    const local = validateEnv({
+      ...valid,
+      RATE_LIMITS_ENABLED: 'false',
+      ACCESS_TOKEN_TTL_SECONDS: '5',
+    });
+    expect(local).toMatchObject({ RATE_LIMITS_ENABLED: false, ACCESS_TOKEN_TTL_SECONDS: 5 });
+    // Defaults: limits on, 15 minutes, emails sent in the background.
+    expect(validateEnv(valid)).toMatchObject({
+      RATE_LIMITS_ENABLED: true,
+      ACCESS_TOKEN_TTL_SECONDS: 900,
+      MAIL_DELIVERY: 'background',
+      REVALIDATE_SECRET: '',
+    });
+    expect(() => validateEnv({ ...valid, REVALIDATE_SECRET: 'too-short' })).toThrow(
+      /REVALIDATE_SECRET/,
+    );
+  });
+
   it('needs exactly one way to reach blob storage', () => {
     const accountUrl = 'https://example.blob.core.windows.net';
     expect(() => validateEnv({ ...valid, AZURE_STORAGE_CONNECTION_STRING: '' })).toThrow(
