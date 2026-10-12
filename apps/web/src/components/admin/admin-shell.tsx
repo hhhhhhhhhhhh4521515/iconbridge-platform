@@ -186,7 +186,7 @@ function Frame({ children }: { children: ReactNode }) {
             <Badge tone="info">{t(`roles.${user.role}`)}</Badge>
           </div>
           <div className="flex items-center gap-1">
-            <Link href="/" className={`${cta.ghost} hidden px-3 md:inline-flex`}>
+            <Link href="/" className={`${cta.ghost} px-3 max-md:hidden`}>
               <ExternalLink className="size-4" aria-hidden />
               {t('viewSite')}
             </Link>

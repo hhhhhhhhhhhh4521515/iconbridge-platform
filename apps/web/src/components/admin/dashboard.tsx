@@ -413,7 +413,7 @@ export function Dashboard() {
         {latest.length === 0 ? (
           <p className="rounded-lg bg-muted p-4 text-sm">{t('applications.empty')}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-start text-muted-foreground">
                 <tr>
