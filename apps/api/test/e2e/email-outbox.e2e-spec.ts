@@ -104,7 +104,9 @@ describe('email outbox (e2e)', () => {
       const report = await mail.sendDue();
       expect(report.retried + report.failed).toBe(1);
     }
-    expect(waits).toEqual([1, 2, 4, 8, 16, 32, 64]);
+    // Doubling up to six hours, then every six hours: the server may be down for almost three days.
+    expect(waits).toEqual([1, 2, 4, 8, 16, 32, 64, 128, 256, ...Array<number>(10).fill(360)]);
+    expect(minutes / (24 * 60)).toBeGreaterThan(2.8);
     const [row] = await rows();
     expect(row).toMatchObject({
       status: 'FAILED',

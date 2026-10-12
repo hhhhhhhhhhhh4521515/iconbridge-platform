@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Locale } from '@iconbridge/shared';
 import mjml2html from 'mjml';
@@ -35,7 +35,8 @@ export const EMAIL_LINK_PATHS = {
 } as const satisfies Record<EmailTemplate, string>;
 
 const OUTBOX_CONTEXT = 'email-outbox';
-export const OUTBOX_MAX_ATTEMPTS = 8;
+/** With the waits of `retryDelayMs`, an email is tried for about three days before it is given up. */
+export const OUTBOX_MAX_ATTEMPTS = 20;
 const OUTBOX_BATCH = 200;
 /** Emails sent at the same time; the transport keeps as many SMTP connections open. */
 export const OUTBOX_CONCURRENCY = 3;
@@ -60,7 +61,7 @@ export interface RenderedEmail {
 }
 
 @Injectable()
-export class MailService {
+export class MailService implements OnModuleDestroy {
   private readonly logger = new Logger(MailService.name);
   private readonly from: string;
   private readonly webOrigin: string;
@@ -267,6 +268,18 @@ export class MailService {
 
   private running = false;
   private again = false;
+  /** The background run in progress, if any. */
+  private loop: Promise<void> | null = null;
+
+  /**
+   * When the process stops (a deployment, or the task command line at its end): the
+   * emails being sent are finished first, then the SMTP connections are closed. Without
+   * this an email could leave twice, and the command line would never exit.
+   */
+  async onModuleDestroy(): Promise<void> {
+    await this.loop;
+    (this.transport as { close?: () => void }).close?.();
+  }
 
   private takeAgain(): boolean {
     const again = this.again;
@@ -281,7 +294,7 @@ export class MailService {
       return;
     }
     this.running = true;
-    void (async () => {
+    this.loop = (async () => {
       try {
         // `again` is set by a call that arrives while this loop is sending.
         for (let pass = true; pass; pass = this.takeAgain()) {
