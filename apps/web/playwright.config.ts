@@ -1,23 +1,27 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Browser tests of the public site, the candidate area and the back office.
+ * Browser tests of the public site, the candidate area and the back office, in
+ * Chromium (desk and phone), Firefox and WebKit.
  *
- *   pnpm test:browser            (from the repository root)
+ *   pnpm test:browser            (from the repository root: Chromium and Firefox)
+ *   pnpm test:browser:webkit     (WebKit, in the Playwright container)
  *
- * They need the stack: `pnpm infra:up`, the API on port 4000 with the seeded
- * development data (`pnpm db:seed`), Mailpit on port 8025, and the web app on port 3000.
- * The back-office tests sign in as the seeded super admin of `apps/api/.env`. If nothing
- * listens on 3000, Playwright builds and starts the web app itself.
+ * They need `pnpm infra:up` (PostgreSQL, Azurite, Mailpit on port 8025) and the seeded
+ * development data (`pnpm db:seed`). Playwright builds and starts the API (port 4000,
+ * without rate limits) and the web app (port 3000) itself when nothing listens there.
+ * The back-office tests sign in as the seeded super admin of `apps/api/.env`.
+ *
+ * Whatever the tests create is removed at the end of the run (`e2e/cleanup.ts`).
  */
 const ADMIN = /admin.*\.spec\.ts$/;
 const DESK = { width: 1440, height: 900 };
 /**
- * WebKit needs system libraries that `playwright install --with-deps webkit` installs
- * (with sudo). CI has them; on a machine without them, run `pnpm test:browser:webkit`,
- * which uses the Playwright container instead.
+ * WebKit runs through `pnpm test:browser:webkit` only (it sets E2E_WEBKIT): it needs
+ * system libraries that the Playwright container has, and the site over HTTPS, because
+ * WebKit does not keep the `Secure` session cookies over plain http://localhost.
  */
-const WEBKIT = Boolean(process.env.CI || process.env.E2E_WEBKIT);
+const WEBKIT = Boolean(process.env.E2E_WEBKIT);
 /** Where the site answers. HTTPS with a self-made certificate in the WebKit container. */
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
 
@@ -68,11 +72,24 @@ export default defineConfig({
         ]
       : []),
   ],
-  webServer: {
-    command: 'pnpm build && pnpm start',
-    url: `${BASE}/fr`,
-    ignoreHTTPSErrors: BASE.startsWith('https://'),
-    reuseExistingServer: true,
-    timeout: 240_000,
-  },
+  // Started only when nothing answers yet. `pnpm dev` must be stopped first: its API keeps
+  // the rate limits (5 sign-ins a minute for one address), which the tests would wait out.
+  webServer: [
+    {
+      // The built API, without rate limits: every test signs in from this machine.
+      command: 'pnpm build && pnpm start',
+      cwd: '../api',
+      env: { RATE_LIMITS_ENABLED: 'false' },
+      url: 'http://localhost:4000/health/ready',
+      reuseExistingServer: true,
+      timeout: 240_000,
+    },
+    {
+      command: 'pnpm build && pnpm start',
+      url: `${BASE}/fr`,
+      ignoreHTTPSErrors: BASE.startsWith('https://'),
+      reuseExistingServer: true,
+      timeout: 240_000,
+    },
+  ],
 });

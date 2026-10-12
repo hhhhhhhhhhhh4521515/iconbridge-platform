@@ -851,8 +851,8 @@ test.describe('back office: the other screens', () => {
       ).toBeLessThan(300);
 
       // The scheduled task, run now the way the Container Apps Job runs it.
-      execFileSync('pnpm', ['--filter', '@iconbridge/api', 'task', 'job-alerts'], {
-        cwd: path.join(__dirname, '..', '..', '..'),
+      execFileSync('node', ['dist/cli.js', 'job-alerts'], {
+        cwd: path.join(__dirname, '..', '..', 'api'),
         stdio: 'pipe',
       });
       let unsubscribe = '';
