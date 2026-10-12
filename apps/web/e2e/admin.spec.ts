@@ -514,9 +514,12 @@ test.describe('back office', () => {
 
   test('without a real session the back office sends to the login page, and Arabic opens it in English', async ({
     browser,
+    baseURL,
   }) => {
     const context = await browser.newContext();
-    await context.addCookies([{ name: 'ib_session', value: '1', url: 'http://localhost:3000' }]);
+    await context.addCookies([
+      { name: 'ib_session', value: '1', url: baseURL ?? 'http://localhost:3000' },
+    ]);
     const page = await context.newPage();
     // A marker cookie without a session: the page loads its frame, the API says nobody is signed in.
     await page.goto('/en/admin');

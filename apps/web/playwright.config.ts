@@ -17,7 +17,9 @@ const DESK = { width: 1440, height: 900 };
  * (with sudo). CI has them; on a machine without them, run `pnpm test:browser:webkit`,
  * which uses the Playwright container instead.
  */
-const WEBKIT = Boolean(process.env.CI ?? process.env.E2E_WEBKIT);
+const WEBKIT = Boolean(process.env.CI || process.env.E2E_WEBKIT);
+/** Where the site answers. HTTPS with a self-made certificate in the WebKit container. */
+const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
 
 export default defineConfig({
   testDir: './e2e',
@@ -29,7 +31,8 @@ export default defineConfig({
   reporter: [['list']],
   timeout: 45_000,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: BASE,
+    ignoreHTTPSErrors: BASE.startsWith('https://'),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     actionTimeout: 15_000,
@@ -67,7 +70,8 @@ export default defineConfig({
   ],
   webServer: {
     command: 'pnpm build && pnpm start',
-    url: 'http://localhost:3000/fr',
+    url: `${BASE}/fr`,
+    ignoreHTTPSErrors: BASE.startsWith('https://'),
     reuseExistingServer: true,
     timeout: 240_000,
   },
