@@ -103,7 +103,7 @@ test.describe('back office: history and deletions', () => {
     });
 
     await test.step('the counter of the home page includes the history', async () => {
-      // The API answers at once; the home page keeps its data for up to a minute.
+      // Saving the figure told the site to forget its copy: the home page follows at once.
       const api = (await (await admin.request.get('/api/v1/stats')).json()) as {
         visasApproved: number;
       };
@@ -116,7 +116,7 @@ test.describe('back office: history and deletions', () => {
             await home.goto('/en');
             return home.getByTestId('counter-visas').getAttribute('data-value');
           },
-          { timeout: 150_000, intervals: [5_000] },
+          { timeout: 15_000, intervals: [1_000] },
         )
         .toBe(String(expectedTotal));
       await visitor.close();

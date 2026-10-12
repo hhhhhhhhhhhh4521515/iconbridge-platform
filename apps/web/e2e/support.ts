@@ -5,13 +5,17 @@ import {
   type APIRequestContext,
   type Browser,
   type BrowserContext,
+  type Locator,
+  type Page,
 } from '@playwright/test';
+import { remember } from './cleanup';
 
 /** Shared by the back-office browser tests: accounts, sign-in and emails read from Mailpit. */
 
 export const MAILPIT = process.env.MAILPIT_URL ?? 'http://localhost:8025';
 export const PASSWORD = 'harbour-violet-compass-58';
-export const STAMP = Date.now().toString(36);
+// Several workers and browsers run at once: the stamp must differ in each of them.
+export const STAMP = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 export const BRAND = path.join(__dirname, '..', 'public', 'brand');
 export const PDF = Buffer.from(
   '%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n',
@@ -173,4 +177,80 @@ export async function readyCandidate(
     expect(uploaded.status(), `upload of ${name}`).toBe(201);
   }
   return { context, email };
+}
+
+type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>;
+let adminState: { state: StorageState; at: number } | undefined;
+
+/**
+ * A browser context signed in as the seeded super admin, at the size of a desk screen.
+ * Sign-ins are rate-limited, so a worker signs in once and its tests share the session
+ * for a few minutes: less than the life of an access token, so nobody has to refresh.
+ */
+export async function adminSession(
+  browser: Browser,
+  options: Parameters<Browser['newContext']>[0] = {},
+): Promise<BrowserContext> {
+  const size = { viewport: { width: 1440, height: 900 }, ...options };
+  if (adminState && Date.now() - adminState.at < 8 * 60_000) {
+    return browser.newContext({ ...size, storageState: adminState.state });
+  }
+  const context = await browser.newContext(size);
+  const credentials = seededAdmin();
+  await signIn(context.request, credentials.email, credentials.password);
+  adminState = { state: await context.storageState(), at: Date.now() };
+  return context;
+}
+
+/** A registered candidate with a confirmed address and nothing else. */
+export async function verifiedCandidate(
+  browser: Browser,
+  tag: string,
+): Promise<{ context: BrowserContext; email: string }> {
+  const email = `e2e-candidate-${STAMP}${tag}@example.test`;
+  const context = await browser.newContext();
+  const registered = await context.request.post('/api/v1/auth/register', {
+    data: {
+      email,
+      password: PASSWORD,
+      firstName: 'Leila',
+      lastName: 'Mansour',
+      phone: '+21620123456',
+      country: 'TN',
+      gdprConsent: true,
+      turnstileToken: 'turnstile-test-key',
+      locale: 'en',
+    },
+  });
+  expect(registered.status()).toBe(201);
+  const token = await emailToken(context.request, email, 'verify-email');
+  expect(
+    (await context.request.post('/api/v1/auth/verify-email', { data: { token } })).status(),
+  ).toBe(204);
+  await signIn(context.request, email, PASSWORD);
+  return { context, email };
+}
+
+/** Chooses a date in a field made of three lists (day, month, year). `date` is YYYY-MM-DD. */
+export async function pickDate(scope: Page | Locator, label: RegExp, date: string): Promise<void> {
+  const [year = '', month = '', day = ''] = date.split('-');
+  const group = scope.getByRole('group', { name: label });
+  await group.getByLabel('Day').selectOption(String(Number(day)));
+  await group.getByLabel('Month').selectOption(String(Number(month)));
+  await group.getByLabel('Year').selectOption(year);
+}
+
+export const toast = (page: Page, text: string | RegExp): Locator =>
+  page.locator('[data-sonner-toast]').filter({ hasText: text }).first();
+
+/**
+ * Writes down the applications of a candidate, so the run removes them at the end:
+ * erasing an account keeps its applications as anonymous rows.
+ */
+export async function rememberApplications(request: APIRequestContext): Promise<void> {
+  const response = await request.get('/api/v1/me/applications');
+  const list = (await response.json()) as { id: string }[] | { items: { id: string }[] };
+  for (const application of Array.isArray(list) ? list : list.items) {
+    remember({ kind: 'application', id: application.id });
+  }
 }
