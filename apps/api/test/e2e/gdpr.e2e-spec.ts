@@ -260,6 +260,31 @@ describe('GDPR: export and erasure (e2e)', () => {
       ).toBe('DEPLOYED');
     });
 
+    it('leaves an application nobody can move any more, not even a super admin', async () => {
+      await erase().expect(204);
+      const superAdmin = await createUser(test, 'SUPER_ADMIN');
+      const admin = cookieHeader(superAdmin.cookies);
+
+      // A withdrawn application can normally be reopened by a super admin; not this one.
+      const detail = await test
+        .http()
+        .get(`${API}/admin/applications/${applicationId}`)
+        .set('Cookie', admin)
+        .expect(200);
+      expect(detail.body).toMatchObject({ status: 'WITHDRAWN', allowedTransitions: [] });
+      const moved = await test
+        .http()
+        .patch(`${API}/admin/applications/${applicationId}/status`)
+        .set('Cookie', admin)
+        .send({ status: 'UNDER_REVIEW' })
+        .expect(409);
+      expect(moved.body).toMatchObject({ code: 'INVALID_APPLICATION_TRANSITION' });
+      expect(
+        (await test.prisma.application.findUniqueOrThrow({ where: { id: applicationId } })).status,
+      ).toBe('WITHDRAWN');
+      expect(test.outbox.filter((mail) => mail.template === 'application-status')).toEqual([]);
+    });
+
     it('frees the email address: the person can register again and starts from nothing', async () => {
       await erase().expect(204);
       await test
