@@ -549,3 +549,47 @@ Last step before the deployment work: find what a security reviewer and a QA lea
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/12>
 
 **Remaining**: Dockerfiles, Terraform, CI/CD with these checks, alerting, the decision on malware scanning (Microsoft Defender for Storage), legal review of the retention periods and policy texts, a load test on Azure.
+
+## 2026-10-14 - Container images for Azure Container Apps
+
+**What**
+
+- Emails without the scheduler: checked that the API sends each outbox email right after its transaction even with `SCHEDULER_ENABLED=false` (as in Azure), and that only failed ones wait for the scheduled job. New test `email-immediate.e2e-spec.ts` (4 tests); the fake mail server can now be slow.
+- `apps/api/Dockerfile`: prune, `pnpm fetch`, offline install, build; runtime on Alpine with its Node 22 package, user 1000, production files only (traced with `@vercel/nft` by `apps/api/scripts/trace-runtime.mjs`). Target `migrate`: `prisma migrate deploy` and the seed of reference data, compiled to JavaScript, without sample data.
+- `apps/web/Dockerfile`: Next.js standalone output, `NEXT_PUBLIC_*` as build arguments, `API_INTERNAL_URL` and the other settings read at start.
+- `docker-compose.prod.yml`: migration job, API and web from the images, against the local PostgreSQL, Azurite and Mailpit. Azurite gets the alias `azurite.localhost` and path-style URLs.
+- `docs/DEPLOYMENT.md` (build, checks, local run, Container Apps and Jobs settings, configuration, shutdown, troubleshooting) and [ADR-012](adr/ADR-012-container-images.md).
+
+**Why**
+
+The next step is the deployment to Azure Container Apps; the images, the migration job and their configuration had to exist and be tested first.
+
+**Notes**
+
+- Sizes from the layers: API 203 MB (66 MB to pull), web 166 MB (63 MB), migration 259 MB (90 MB). Docker Desktop shows more in `docker images` because the containerd store adds the compressed layers.
+- `pnpm deploy --prod` alone gave 721 MB of dependencies for the API (the Prisma CLI and studio arrive as peers of the client); the trace keeps 75 MB.
+- The official `node:22-alpine` base is 170 MB; Alpine's Node 22 with full ICU is 106 MB. The build stages still use the official image.
+- The first migration image was the build stage: 3.4 GB, with npm and the development tools flagged by trivy. It is now built like the API.
+- Bug found by running the browser suite against the images: the sitemap was generated at build time, without the API, and listed no job until its first refresh. It is now rendered on request.
+- Two tests made robust: the viewer test no longer opens an application another test may be deleting; the history test reads signed links through `localhost` because Node does not resolve `azurite.localhost` (browsers do).
+- Prisma 7 with the driver adapter has no native query engine, so there is no binary target to set for Alpine.
+- Found while testing: Next.js closed idle connections after 5 seconds, so a client reusing one at that moment got "connection reset" (the same race fixed in the API last time). The web app now keeps them 65 seconds (`KEEP_ALIVE_TIMEOUT` in the image, `--keepAliveTimeout` for `next start`). A GDPR test that failed when a random id contained "567" now checks the masked number itself.
+- Graceful shutdown measured: the API exits with 0 in 0.6 s; Next.js exits with 143 after finishing its requests, by design.
+
+**Checks**
+
+| Check                                                     | Result                                                                |
+| --------------------------------------------------------- | --------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`               | Pass                                                                  |
+| `pnpm test`                                               | Pass: 556 unit tests                                                  |
+| `pnpm test:e2e`                                           | Pass: 499 tests (4 new)                                               |
+| `pnpm test:browser`                                       | Pass: 141 passed, 6 skipped                                           |
+| Browser suite against the production images               | Pass: 141 passed, 6 skipped                                           |
+| hadolint, both Dockerfiles                                | No remark                                                             |
+| trivy, HIGH/CRITICAL with a fix, three images             | None                                                                  |
+| Migration image on an empty database                      | 10 migrations applied, reference data and super admin created, no job |
+| Done when: `docker compose -f docker-compose.prod.yml up` | Pass: site, API docs and emails on localhost                          |
+
+**PR**: PR_LINK
+
+**Remaining**: Terraform for the Azure resources, the CI/CD pipeline (build, scan, push, migrate, deploy), alerting.
