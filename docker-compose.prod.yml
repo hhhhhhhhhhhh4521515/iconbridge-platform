@@ -1,0 +1,112 @@
+# The production images, run on this machine against the local services, to try them
+# before Azure:
+#
+#   docker compose -f docker-compose.prod.yml up --build
+#
+# Stop `pnpm dev` first: the site takes ports 3000 and 4000. The services of
+# docker-compose.yml (PostgreSQL, Azurite, Mailpit) start with it, with the same data.
+# Secrets come from the local apps/api/.env and apps/web/.env (`pnpm env:init`); the
+# lines below only change what differs inside Docker. See docs/DEPLOYMENT.md.
+name: iconbridge
+
+include:
+  - docker-compose.yml
+
+x-labels: &build-args
+  VCS_REF: ${VCS_REF:-local}
+  BUILD_DATE: ${BUILD_DATE:-unknown}
+
+x-api-env: &api-env
+  DATABASE_URL: postgresql://${POSTGRES_USER:-iconbridge}:${POSTGRES_PASSWORD:-iconbridge}@postgres:5432/${POSTGRES_DB:-iconbridge}?schema=public
+  # The well-known key of the Azurite emulator (published by Microsoft, the same in every
+  # Azurite), with the address that both the API and the browser can reach.
+  AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.localhost:10000/devstoreaccount1;
+  AZURE_STORAGE_ACCOUNT_URL: ''
+  PUBLIC_MEDIA_BASE_URL: http://localhost:10000/devstoreaccount1/public-media
+
+services:
+  # Runs once before the API, as the Container Apps Job does before each deployment.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+      args: *build-args
+    image: iconbridge-migrate:local
+    env_file: apps/api/.env
+    environment:
+      <<: *api-env
+      # Reference data and the first super admin; never the sample data.
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+      args: *build-args
+    image: iconbridge-api:local
+    env_file: apps/api/.env
+    environment:
+      <<: *api-env
+      # Not "production": that refuses the Turnstile test keys and SMTP without TLS
+      # (Mailpit), as it should. Everything else behaves as in production.
+      NODE_ENV: test
+      PORT: '4000'
+      WEB_ORIGIN: http://localhost:3000
+      WEB_INTERNAL_URL: http://web:3000
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      # As in Azure: the tasks run as a separate job (see docs/DEPLOYMENT.md).
+      SCHEDULER_ENABLED: 'false'
+      # The web app is the proxy in front of the API.
+      TRUST_PROXY_HOPS: '1'
+      # `RATE_LIMITS_ENABLED=false docker compose ...` for the browser tests (see DEPLOYMENT.md).
+      RATE_LIMITS_ENABLED: ${RATE_LIMITS_ENABLED:-true}
+    ports:
+      - '127.0.0.1:4000:4000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_healthy
+      azurite:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:4000/health/ready']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        <<: *build-args
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+        # Cloudflare's public test key: the check always passes.
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+    image: iconbridge-web:local
+    env_file: apps/web/.env
+    environment:
+      API_INTERNAL_URL: http://api:4000
+      CSP_MEDIA_ORIGINS: http://localhost:10000 http://azurite.localhost:10000
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/en']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped

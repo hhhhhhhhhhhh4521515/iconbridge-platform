@@ -4,7 +4,6 @@ import { PrismaClient } from '../src/generated/prisma/client.js';
 import { seedSuperAdmin } from './seed/admin.js';
 import { loadSeedEnv } from './seed/env.js';
 import { seedReferenceData } from './seed/reference.js';
-import { seedSampleData } from './seed/sample.js';
 
 // Seed entry point (`pnpm db:seed`). Safe to run again: rows are created when
 // missing and existing rows are left untouched.
@@ -24,6 +23,9 @@ try {
   log(`Super admin: ${admin.created ? 'created' : 'already exists, left unchanged'}.`);
 
   if (env.NODE_ENV === 'development') {
+    // Loaded only here: the sample data needs Faker, a development dependency that the
+    // migration image does not contain.
+    const { seedSampleData } = await import('./seed/sample.js');
     const counts = await seedSampleData(prisma, env, admin.id);
     log(
       `Sample data (development only): ${counts.jobs} jobs, ${counts.homeSlides} home slides, ` +

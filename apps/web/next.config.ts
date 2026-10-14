@@ -1,9 +1,19 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
+  // The Docker image (apps/web/Dockerfile) sets NEXT_OUTPUT=standalone: the build then
+  // holds a server and only the files it needs. `next start` keeps the normal output.
+  ...(process.env.NEXT_OUTPUT === 'standalone'
+    ? {
+        output: 'standalone' as const,
+        // The workspace root, so the packages of the monorepo are traced too.
+        outputFileTracingRoot: path.join(import.meta.dirname, '..', '..'),
+      }
+    : {}),
   // Public images uploaded through the back office live in blob storage. Local
   // emulator URLs are not optimised (see components/ui/media-image.tsx).
   images: {

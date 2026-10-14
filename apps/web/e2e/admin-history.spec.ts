@@ -218,7 +218,11 @@ test.describe('back office: history and deletions', () => {
           maxRedirects: 0,
         });
         expect(redirect.status()).toBe(302);
-        links.push(redirect.headers().location ?? '');
+        // With docker-compose.prod.yml the storage is signed as azurite.localhost, a name
+        // browsers resolve by themselves and Node does not; the signature does not cover the host.
+        links.push(
+          (redirect.headers().location ?? '').replace('//azurite.localhost:', '//localhost:'),
+        );
       }
       for (const link of links) {
         expect((await admin.request.get(link)).status(), 'file readable before').toBe(200);

@@ -25,11 +25,19 @@ services:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     restart: unless-stopped
     # --skipApiVersionCheck: the Azure SDK is often one API version ahead of the emulator.
-    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --skipApiVersionCheck
+    # --disableProductStyleUrl: the account is always the first segment of the path, also
+    # when the host name has dots (azurite.localhost below).
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --skipApiVersionCheck --disableProductStyleUrl
     ports:
       - '127.0.0.1:${AZURITE_BLOB_PORT:-10000}:10000'
     volumes:
       - azurite-data:/data
+    networks:
+      default:
+        # The production images (docker-compose.prod.yml) reach Azurite under this name, and
+        # so does the browser: every *.localhost name leads to 127.0.0.1, where port 10000 is
+        # published. Download links signed by the API then work on both sides.
+        aliases: [azurite.localhost]
     healthcheck:
       test: ['CMD-SHELL', 'nc -z 127.0.0.1 10000']
       interval: 5s

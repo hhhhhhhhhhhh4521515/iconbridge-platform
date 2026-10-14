@@ -920,6 +920,10 @@ The e2e suites create the database `<name>_test` next to the development one (or
 
 `pnpm test:cov` measures the API (unit and e2e together, thresholds: 80 % of lines on services, 100 % on the cooldown rule), the shared package and the web libraries. `tests/load` holds two k6 scripts (job list, applying) for 50 virtual users. Results: [QA-REPORT.md](QA-REPORT.md).
 
+## Container images
+
+Three images: the API, the migration job (`--target migrate` of the API Dockerfile) and the web app. Built from the repository root with `turbo prune`, `pnpm fetch` and an offline install; the runtime is Alpine with its Node 22 package, user 1000, no package manager. The API keeps only the files its entry points load (`apps/api/scripts/trace-runtime.mjs`, `@vercel/nft`); the web app uses the Next.js standalone output. `docker-compose.prod.yml` runs them on this machine against the development services. Build, check and Azure settings: [DEPLOYMENT.md](DEPLOYMENT.md); choices: [ADR-012](adr/ADR-012-container-images.md).
+
 ## Not built yet
 
-Dockerfiles, Terraform, CI/CD, alerting, malware scanning of uploads (see SECURITY.md).
+Terraform, CI/CD, alerting, malware scanning of uploads (see SECURITY.md).

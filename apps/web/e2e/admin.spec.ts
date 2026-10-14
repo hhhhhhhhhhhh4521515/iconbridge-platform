@@ -411,7 +411,14 @@ test.describe('back office', () => {
       await expect(table.getByRole('checkbox')).toHaveCount(0);
       await expect(table.getByRole('button', { name: /^Delete the application/ })).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Export' })).toHaveCount(0);
-      await table.getByRole('row').nth(1).getByRole('button').first().click();
+      // Not one made by a test running at the same time: it may be deleted while it opens.
+      await table
+        .getByRole('row')
+        .filter({ hasNotText: 'e2e-' })
+        .nth(1)
+        .getByRole('button')
+        .first()
+        .click();
       const detail = page.getByTestId('application-detail');
       await expect(detail.getByTestId('admin-timeline')).toBeVisible();
       await expect(detail.getByTestId('status-actions')).toHaveCount(0);

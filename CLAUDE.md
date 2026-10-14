@@ -6,42 +6,44 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 
 ## Folder map
 
-| Path                 | Content                                                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`           | Next.js App Router, Tailwind CSS, shadcn/ui. Port 3000                                                                           |
-| `apps/api`           | NestJS REST API (ESM), Prisma. Port 4000, prefix `/api/v1`, Swagger at `/api/docs`, probes at `/health/live` and `/health/ready` |
-| `packages/shared`    | zod schemas, enums (roles, application statuses, destinations) and types used by web and api                                     |
-| `packages/config`    | Shared ESLint, Prettier and tsconfig presets                                                                                     |
-| `infra/terraform`    | Azure infrastructure (empty for now)                                                                                             |
-| `.github/workflows`  | CI/CD (empty for now)                                                                                                            |
-| `docs/`              | `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `QA-REPORT.md`, `JOURNAL.md`, `00-environment.md`, `adr/`                           |
-| `tests/load`         | k6 load tests (job list, applying)                                                                                               |
-| `scripts/`           | Development helpers (`env-init`, `dev-preflight`, WebKit tests in a container)                                                   |
-| `docker-compose.yml` | Local PostgreSQL 16, Azurite, Mailpit, optional pgAdmin (profile `tools`)                                                        |
+| Path                      | Content                                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`                | Next.js App Router, Tailwind CSS, shadcn/ui. Port 3000                                                                           |
+| `apps/api`                | NestJS REST API (ESM), Prisma. Port 4000, prefix `/api/v1`, Swagger at `/api/docs`, probes at `/health/live` and `/health/ready` |
+| `packages/shared`         | zod schemas, enums (roles, application statuses, destinations) and types used by web and api                                     |
+| `packages/config`         | Shared ESLint, Prettier and tsconfig presets                                                                                     |
+| `infra/terraform`         | Azure infrastructure (empty for now)                                                                                             |
+| `.github/workflows`       | CI/CD (empty for now)                                                                                                            |
+| `docs/`                   | `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `QA-REPORT.md`, `JOURNAL.md`, `00-environment.md`, `adr/`                           |
+| `tests/load`              | k6 load tests (job list, applying)                                                                                               |
+| `scripts/`                | Development helpers (`env-init`, `dev-preflight`, WebKit tests in a container)                                                   |
+| `docker-compose.yml`      | Local PostgreSQL 16, Azurite, Mailpit, optional pgAdmin (profile `tools`)                                                        |
+| `docker-compose.prod.yml` | The production images on this machine (see `docs/DEPLOYMENT.md`)                                                                 |
 
 ## Commands
 
 Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, never OneDrive).
 
-| Command                                     | Effect                                                                                                                                                                              |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                                                                           |
-| `pnpm dev`                                  | Check that ports 3000 and 4000 are free, start the compose services, wait until healthy, then run web, api and shared in watch mode                                                 |
-| `pnpm build`                                | Build every workspace                                                                                                                                                               |
-| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                                                                          |
-| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                                                                       |
-| `pnpm test:browser`                         | Playwright tests of the web app in Chromium and Firefox (needs `pnpm infra:up`, seeded data and Mailpit; builds and starts the API and the web app if ports 4000 and 3000 are free) |
-| `pnpm test:browser:webkit`                  | The same tests in WebKit, inside the Playwright container (needs Docker and `pnpm build`)                                                                                           |
-| `pnpm test:cov`                             | Coverage of the API (unit and e2e), the shared package and the web libraries, with thresholds                                                                                       |
-| `pnpm api:types`                            | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint                                                               |
-| `pnpm lint`                                 | ESLint in every workspace                                                                                                                                                           |
-| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                                                                                                   |
-| `pnpm format`                               | Prettier on the whole repository                                                                                                                                                    |
-| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                                                                              |
-| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                                                                        |
-| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                                                                                            |
-| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `send-emails`, `close-jobs`, `job-alerts`, `retention` or `all`                                                                                           |
-| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                                                                              |
+| Command                                                | Effect                                                                                                                                                                              |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm env:init`                                        | Create missing `.env` files from the `.env.example` files                                                                                                                           |
+| `pnpm dev`                                             | Check that ports 3000 and 4000 are free, start the compose services, wait until healthy, then run web, api and shared in watch mode                                                 |
+| `pnpm build`                                           | Build every workspace                                                                                                                                                               |
+| `pnpm test`                                            | Unit tests of every workspace (Vitest, no database needed)                                                                                                                          |
+| `pnpm test:e2e`                                        | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                                                                       |
+| `pnpm test:browser`                                    | Playwright tests of the web app in Chromium and Firefox (needs `pnpm infra:up`, seeded data and Mailpit; builds and starts the API and the web app if ports 4000 and 3000 are free) |
+| `pnpm test:browser:webkit`                             | The same tests in WebKit, inside the Playwright container (needs Docker and `pnpm build`)                                                                                           |
+| `pnpm test:cov`                                        | Coverage of the API (unit and e2e), the shared package and the web libraries, with thresholds                                                                                       |
+| `pnpm api:types`                                       | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint                                                               |
+| `pnpm lint`                                            | ESLint in every workspace                                                                                                                                                           |
+| `pnpm typecheck`                                       | `tsc --noEmit` in every workspace                                                                                                                                                   |
+| `pnpm format`                                          | Prettier on the whole repository                                                                                                                                                    |
+| `pnpm db:migrate`                                      | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                                                                              |
+| `pnpm db:seed`                                         | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                                                                        |
+| `pnpm --filter @iconbridge/api db:studio`              | Prisma Studio on <http://localhost:5555>                                                                                                                                            |
+| `pnpm --filter @iconbridge/api task <name>`            | Run a scheduled task now: `send-emails`, `close-jobs`, `job-alerts`, `retention` or `all`                                                                                           |
+| `pnpm infra:up` / `pnpm infra:down`                    | Start / stop the compose services only                                                                                                                                              |
+| `docker compose -f docker-compose.prod.yml up --build` | The production images (migration job, API, web) against the local services; stop `pnpm dev` first. Build and Azure settings: `docs/DEPLOYMENT.md`                                   |
 
 Do not run `pnpm build` while `pnpm dev` is running: the build rewrites `apps/web/.next` and the dev server then answers 500 until it is restarted. For the browser tests, stop `pnpm dev` and let Playwright start the production builds: its API runs with `RATE_LIMITS_ENABLED=false`, without which the tests wait for the sign-in limit.
 
@@ -82,6 +84,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Web: no inline script or `eval`: the Content-Security-Policy allows scripts by nonce only. A scroll container (`overflow-x-auto`) that holds visually hidden labels must be `relative`, or the page becomes wider than a phone.
 - Web: content must be readable without JavaScript and with `prefers-reduced-motion`; animations are an enhancement. Use `next/image` (`MediaImage` for pictures from blob storage) and keep calls to action at 44 px or more.
 - Versions shared by workspaces are set in the `catalog` of `pnpm-workspace.yaml`.
+- Docker: the images keep only the files the API loads (`apps/api/scripts/trace-runtime.mjs`). A dependency that loads a file by a computed name goes in the `--keep` list of `apps/api/Dockerfile`. After changing a Dockerfile or a dependency, run hadolint, build, `trivy image --severity HIGH,CRITICAL --ignore-unfixed`, and the browser suite against `docker-compose.prod.yml`. Never put a secret in a Dockerfile, a build argument or `docker-compose.prod.yml`.
+- Database migrations must work with the API version still running (they run before the new revision starts).
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`); commitlint checks them. Small logical commits.
 - Feature branches named `feat/<task-name>`; never commit directly to `main`.
 - Record important technical choices as ADRs in `docs/adr/ADR-NNN-title.md`.

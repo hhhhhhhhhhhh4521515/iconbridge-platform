@@ -17,3 +17,6 @@ infra
 *.md
 **/*.tsbuildinfo
 **/*.log
+**/dist-seed
+**/test-results*
+**/playwright-report

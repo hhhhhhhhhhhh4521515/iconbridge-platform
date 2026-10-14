@@ -55,3 +55,4 @@ Thumbs.db
 # Records the browser tests still have to remove
 apps/web/e2e/.created.jsonl
 test-results-webkit-stack/
+apps/api/dist-seed/
