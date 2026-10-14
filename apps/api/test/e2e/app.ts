@@ -42,8 +42,11 @@ export interface TestApp {
   clock: FakeClock;
   /** Emails "sent" since the last reset, oldest first. */
   outbox: SentEmail[];
-  /** Set `down` to true and the fake mail server refuses every message. */
-  mailServer: { down: boolean };
+  /**
+   * Set `down` to true and the fake mail server refuses every message; `delayMs`
+   * makes it take that long to accept one.
+   */
+  mailServer: { down: boolean; delayMs: number };
   http: () => ReturnType<typeof request>;
   close: () => Promise<void>;
 }
@@ -74,7 +77,7 @@ export interface TestAppOptions {
 
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
   const outbox: SentEmail[] = [];
-  const mailServer = { down: false };
+  const mailServer = { down: false, delayMs: 0 };
   const files: TestApp['files'] = new Map();
   const privateFiles: TestApp['privateFiles'] = new Map();
   const clock = new FakeClock();
@@ -84,7 +87,10 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   })
     .overrideProvider(MAIL_TRANSPORT)
     .useValue({
-      sendMail: (message: SentEmail) => {
+      sendMail: async (message: SentEmail) => {
+        if (mailServer.delayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, mailServer.delayMs));
+        }
         if (mailServer.down) {
           return Promise.reject(
             Object.assign(new Error('connect ECONNREFUSED'), { name: 'SmtpDown' }),
