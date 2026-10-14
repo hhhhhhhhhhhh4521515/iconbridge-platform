@@ -14,7 +14,7 @@
   "scripts": {
     "lint": "eslint ."
   },
-  "dependencies": {
+  "devDependencies": {
     "@eslint/js": "^9.39.5",
     "eslint": "catalog:",
     "eslint-config-next": "16.4.0",
