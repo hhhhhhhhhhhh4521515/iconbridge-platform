@@ -304,7 +304,7 @@ erDiagram
   }
 ```
 
-`job_alert_subscriptions`, `contact_messages` and `settings` have no foreign key. A job alert stores destination and category ids in arrays (empty means any).
+`job_alert_subscriptions`, `contact_messages` and `settings` have no foreign key. `email_outbox` (not drawn) holds the emails to send: template, language, encrypted content, status (`PENDING`, `SENT`, `FAILED`, `CANCELLED`), attempts and the time of the next one; `application_status_history.email_id` points to the email that announced a status change. `users.retention_warned_at` (not drawn) is the date of the warning sent before an inactive account is erased. A job alert stores destination and category ids in arrays (empty means any).
 
 ### Rules enforced by the database
 
@@ -331,6 +331,9 @@ Indexes worth knowing:
 | `jobs` GIN on `required_languages`                     | Language filter                                                    |
 | `jobs` GIN trigram on `title` (pg_trgm)                | Tolerant search on titles                                          |
 | `applications (candidate_id, job_id, applied_at DESC)` | Last application of a candidate to a job (re-application cooldown) |
+| `applications (applied_at DESC)`                       | Back-office list of applications, newest first                     |
+| `users (role, deleted_at)`                             | Back-office lists of candidates and of staff accounts              |
+| `email_outbox (status, next_attempt_at)`               | Emails due for delivery                                            |
 
 The `simple` configuration does no stemming: "welders" does not match "welder". It was chosen because offers may be written in English, French or Arabic and a generated column takes one fixed configuration.
 
@@ -451,10 +454,28 @@ Four guards run globally, in this order:
 - Request bodies, query strings and route parameters are validated with zod schemas from `packages/shared` (`ZodBody`, `ZodQuery`, `ZodParams`). The same schemas generate the OpenAPI request bodies.
 - Logs are JSON (pino), one line per request with a request id, also returned in the `x-request-id` header. Passwords, tokens, passport numbers, cookies and the `Authorization` header are redacted; query strings are not logged.
 - `helmet` sets the security headers; CORS allows only `WEB_ORIGIN`, with credentials.
+- `originCheck` refuses a state-changing request whose `Origin` or `Referer` is another site (CSRF); requests with neither header go on to the normal checks.
+- Rate limits are per client address (`RATE_LIMITS` in `auth/auth.constants.ts`). `RATE_LIMITS_ENABLED=false` turns them off for load and browser tests and is refused in production.
+- The HTTP server keeps idle connections for 65 seconds, longer than its clients (the web app, the Azure ingress) do, so a request never meets a connection being closed.
+
+The full list of protections, with the test behind each, is in [SECURITY.md](SECURITY.md).
 
 ### Email
 
-`MailService` sends through Nodemailer (SMTP, STARTTLS required in production). Four templates (verify email, reset password, invitation, account exists) exist in English, French and Arabic; one MJML layout renders them, right-to-left for Arabic. The language is `users.locale`. Links open `WEB_ORIGIN/<locale>/verify-email`, `/reset-password`, `/set-password` and `/forgot-password`. A delivery failure is logged and does not fail the request.
+`MailService` writes every email to an outbox and delivers it through Nodemailer (SMTP, STARTTLS required in production). Four templates (verify email, reset password, invitation, account exists) exist in English, French and Arabic; one MJML layout renders them, right-to-left for Arabic. The language is `users.locale`. Links open `WEB_ORIGIN/<locale>/verify-email`, `/reset-password`, `/set-password` and `/forgot-password`.
+
+**Outbox.** `mail.send()` only inserts a row in `email_outbox` (template, language, and the address and variables encrypted with `FieldCipher`) and returns: a request never waits for SMTP, and a bulk change of 100 applications answers at once. Delivery happens afterwards:
+
+| Step            | Rule                                                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| First attempt   | Right after the request, in the background of the same process (`MAIL_DELIVERY=background`), three emails at a time over pooled SMTP connections |
+| Scheduled task  | `send-emails`, every minute: sends what is due, whatever process wrote it                                                                        |
+| Failure         | Tried again after 1, 2, 4… minutes, at most every 6 hours, 20 attempts (about three days), then marked `FAILED`                                  |
+| Several runners | A row is claimed with a two-minute lease before it is sent, so two runners never send the same email; a runner that dies frees it                |
+| After sending   | The content is erased at once; the row is removed after 30 days                                                                                  |
+| Shutdown        | The emails being sent are finished and the SMTP connections closed, so the task command exits and no email leaves twice                          |
+
+A status change keeps the id of its email: undoing the change cancels an email that has not left yet, or sends a correction if it has. `MAIL_DELIVERY=inline` (tests) sends during the request.
 
 ## Job offers
 
@@ -675,19 +696,21 @@ Every export is logged with its format, columns, filters and row count. Cells th
 
 ### Scheduled tasks
 
-| Task         | What it does                                                              |
-| ------------ | ------------------------------------------------------------------------- |
-| `close-jobs` | Closes published jobs whose deadline passed or whose positions are filled |
-| `job-alerts` | Sends job alerts; removes requests never confirmed                        |
+| Task          | What it does                                                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `send-emails` | Delivers the emails of the outbox that are due; removes rows sent over 30 days ago                                                        |
+| `close-jobs`  | Closes published jobs whose deadline passed or whose positions are filled                                                                 |
+| `job-alerts`  | Sends job alerts; removes requests never confirmed                                                                                        |
+| `retention`   | Warns candidates inactive for 23 months, erases their data a month later, deletes contact messages older than 24 months (see SECURITY.md) |
 
 Two ways to start them, running the same code:
 
 | Where             | How                                                                                                                                                          |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Local development | Inside the API, every 15 minutes, when `SCHEDULER_ENABLED=true`                                                                                              |
+| Local development | Inside the API, every 15 minutes (emails every minute), when `SCHEDULER_ENABLED=true`                                                                        |
 | Azure             | `SCHEDULER_ENABLED=false`; a scheduled Container Apps Job runs `node dist/cli.js all`, because the API scales to zero and its timers stop when nobody visits |
 
-Locally: `pnpm --filter @iconbridge/api task <close-jobs|job-alerts|all>`. The command prints one JSON report per task and exits with 1 if a task failed. Each task takes a PostgreSQL advisory lock, so the scheduler, the command and several replicas can overlap: one runs, the others skip. A new task is added to `TASK_NAMES` in `tasks/tasks.service.ts`.
+Locally: `pnpm --filter @iconbridge/api task <send-emails|close-jobs|job-alerts|retention|all>`. The command prints one JSON report per task and exits with 1 if a task failed. Each task takes a PostgreSQL advisory lock, so the scheduler, the command and several replicas can overlap: one runs, the others skip. A new task is added to `TASK_NAMES` in `tasks/tasks.service.ts`.
 
 ## Web application (public site)
 
@@ -704,7 +727,10 @@ flowchart LR
 ```
 
 - The browser never calls the API host. `src/proxy.ts` forwards `/api/v1/*` on the web origin to `API_INTERNAL_URL`, read at run time, so one image works in every environment. Session cookies are therefore first-party (`SameSite=Lax` works) and no CORS is involved.
-- Server components call the API directly through `src/lib/api.ts`, with Next.js caching for 60 seconds. A failed call returns a fallback and is logged, so pages render (and the site builds) without the API.
+- Server components call the API directly through `src/lib/api.ts`. Answers are cached by Next.js for 60 seconds under a tag (`jobs`, `catalog`, `stories`, `slides`, `site-info`, `stats`). A failed call returns a fallback and is logged, so pages render (and the site builds) without the API.
+- When a back-office user publishes or edits a job, a story, a slide, a destination, a category, a setting or a historical figure, the API (`@Revalidates(...tags)` on the controller, `SiteCacheService`) posts the tags to `POST /api/revalidate` of the web app with the shared `REVALIDATE_SECRET`; the web app calls `revalidateTag`. The change is on the site at the next page view instead of a minute later. If the call fails, the 60-second expiry still applies.
+- Public `GET` answers of the API (`/jobs`, `/destinations`, `/categories`, `/success-stories`, `/home-slides`, `/site-info`) carry `Cache-Control: public, max-age=60, stale-while-revalidate=120`.
+- Every page gets a `Content-Security-Policy` with a nonce written by `src/proxy.ts` (`src/lib/csp.ts`); the other security headers come from `next.config.ts`. Because of the nonce, pages are rendered per request; their data still comes from the tagged cache.
 - Both use the typed client of `packages/shared` (`createApiClient`), generated from the API's OpenAPI document: `pnpm api:types` runs `openapi:export` in the API and `openapi-typescript` in the shared package. Browser code imports `@iconbridge/shared/api-client` so the zod schemas stay out of the bundle.
 - `TRUST_PROXY_HOPS` of the API must count the web proxy for client addresses to be right.
 
@@ -872,16 +898,28 @@ All ports are bound to 127.0.0.1 and every service has a health check; `pnpm dev
 
 ## Testing
 
-| Workspace                                | Runner                                  | Scope today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/shared`                        | Vitest                                  | Enums and schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `apps/api` unit (`pnpm test`)            | Vitest                                  | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/api` e2e (`pnpm test:e2e`)         | Vitest + supertest                      | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure, the application state machine and hired count, export permissions, the consent rule of success stories, job alerts, contact form and task locking. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
-| `apps/web` unit (`pnpm test`)            | Vitest                                  | Environment validation; the three message files have the same keys and placeholders; form validation against the shared schemas; upload checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/web` browser (`pnpm test:browser`) | Playwright (desktop and phone profiles) | Hero slider (autoplay, pause, reduced motion), success stories, job filters in the URL, job page with JSON-LD and the Apply state, 404 for closed jobs, language switch and `dir="rtl"`, dark mode, sitemap and robots. Back office (project `admin`, run last): recruiter scenario from a new job to a success story on the home page, viewer role checks with forced writes answered 403. Candidate area: redirect to login, registration errors, and the whole road (register, verify by the Mailpit link, profile, upload, apply, timeline, waiting period, withdraw, delete account). Needs the API, the seeded data and Mailpit                                                                                                   |
+| Workspace                                | Runner                                                                              | Scope today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared`                        | Vitest                                                                              | Enums, schemas, and every business rule: the whole transition matrix, cooldown, deletion rights (coverage threshold on the rule files)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `apps/api` unit (`pnpm test`)            | Vitest                                                                              | No database: auth service, guards, exception filter, validation pipe, password policy, Turnstile, mail templates, log redaction, crypto helpers, environment validation, Prisma enums equal to the shared ones                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `apps/api` e2e (`pnpm test:e2e`)         | Vitest + supertest                                                                  | The real application over HTTP against a PostgreSQL test database: full auth flow, token rotation and reuse, lockout, password reset, role matrix on every admin route, ownership, admin accounts, audit log, rate limits, job search and filters, visibility rules, job management and permissions per role, automatic closing with concurrent runs, candidate profile, uploads checked by content, document access, the 6-month rule with a frozen clock and parallel requests, GDPR export and erasure, the application state machine and hired count, export permissions, the consent rule of success stories, job alerts, contact form and task locking. Mail, CAPTCHA, blob storage and the clock are replaced by in-memory fakes |
+| `apps/web` unit (`pnpm test`)            | Vitest                                                                              | Environment validation; the three message files have the same keys and placeholders; form validation against the shared schemas; upload checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `apps/web` browser (`pnpm test:browser`) | Playwright: Chromium (desk, phone), Firefox; WebKit with `pnpm test:browser:webkit` | Hero slider (autoplay, pause, reduced motion), success stories, job filters in the URL, job page with JSON-LD and the Apply state, 404 for closed jobs, language switch and `dir="rtl"`, dark mode, sitemap and robots. Back office (project `admin`, run last): recruiter scenario from a new job to a success story on the home page, viewer role checks with forced writes answered 403. Candidate area: redirect to login, registration errors, and the whole road (register, verify by the Mailpit link, profile, upload, apply, timeline, waiting period, withdraw, delete account). Needs the API, the seeded data and Mailpit                                                                                                   |
 
 The e2e suites create the database `<name>_test` next to the development one (or use `TEST_DATABASE_URL`), apply the migrations, and empty the tables between tests. They refuse to run on a database whose name does not end in `_test`. Routes that do not exist yet (candidates, jobs, applications) are represented by test-only controllers in `apps/api/test/e2e/fixtures.controller.ts`, so the guards are exercised with the decorators real controllers will use.
 
+### Browser tests
+
+- Playwright starts the built API (without rate limits: every test signs in from one address) and the web app when nothing listens on ports 4000 and 3000. Stop `pnpm dev` first.
+- Projects: `desktop`, `phone` and `admin` in Chromium, `firefox` and `firefox-admin`. Tests that change something shared by the whole site (a setting, a historical figure) run in the `admin` project only.
+- WebKit runs in the Playwright container (`scripts/test-browser-webkit.sh`): it needs system libraries, and the site over HTTPS, because WebKit does not keep `Secure` cookies on `http://localhost`. The script puts an HTTPS front with a throw-away certificate before the web app and the storage emulator.
+- `e2e/accessibility.spec.ts` and `e2e/admin-accessibility.spec.ts` run axe (WCAG 2.1 A and AA) on the main pages and fail on anything the Content-Security-Policy refuses.
+- Clean-up: accounts are named `e2e-…@example.test` and jobs `E2E …`; other records and changed settings are written to `e2e/.created.jsonl` (`remember()`). `e2e/global-teardown.ts` removes everything through the back-office API at the end of the run, also after a failed or interrupted one.
+
+### Coverage and load
+
+`pnpm test:cov` measures the API (unit and e2e together, thresholds: 80 % of lines on services, 100 % on the cooldown rule), the shared package and the web libraries. `tests/load` holds two k6 scripts (job list, applying) for 50 virtual users. Results: [QA-REPORT.md](QA-REPORT.md).
+
 ## Not built yet
 
-Data retention task, Dockerfiles, Terraform and CI/CD.
+Dockerfiles, Terraform, CI/CD, alerting, malware scanning of uploads (see SECURITY.md).

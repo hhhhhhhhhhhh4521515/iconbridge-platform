@@ -14,32 +14,36 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 | `packages/config`    | Shared ESLint, Prettier and tsconfig presets                                                                                     |
 | `infra/terraform`    | Azure infrastructure (empty for now)                                                                                             |
 | `.github/workflows`  | CI/CD (empty for now)                                                                                                            |
-| `docs/`              | `SPEC.md`, `ARCHITECTURE.md`, `JOURNAL.md`, `00-environment.md`, `adr/`                                                          |
+| `docs/`              | `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `QA-REPORT.md`, `JOURNAL.md`, `00-environment.md`, `adr/`                           |
+| `tests/load`         | k6 load tests (job list, applying)                                                                                               |
+| `scripts/`           | Development helpers (`env-init`, `dev-preflight`, WebKit tests in a container)                                                   |
 | `docker-compose.yml` | Local PostgreSQL 16, Azurite, Mailpit, optional pgAdmin (profile `tools`)                                                        |
 
 ## Commands
 
 Run from the repository root, inside WSL (`~/projects/iconbridge-platform`, never OneDrive).
 
-| Command                                     | Effect                                                                                                                                   |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                                |
-| `pnpm dev`                                  | Check that ports 3000 and 4000 are free, start the compose services, wait until healthy, then run web, api and shared in watch mode      |
-| `pnpm build`                                | Build every workspace                                                                                                                    |
-| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                               |
-| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                            |
-| `pnpm test:browser`                         | Playwright tests of the web app (needs the API on 4000 with seeded data and Mailpit; builds and starts the web app if port 3000 is free) |
-| `pnpm api:types`                            | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint                    |
-| `pnpm lint`                                 | ESLint in every workspace                                                                                                                |
-| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                                                        |
-| `pnpm format`                               | Prettier on the whole repository                                                                                                         |
-| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                                   |
-| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                             |
-| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                                                 |
-| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `close-jobs`, `job-alerts` or `all`                                                                            |
-| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                                   |
+| Command                                     | Effect                                                                                                                                                                              |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm env:init`                             | Create missing `.env` files from the `.env.example` files                                                                                                                           |
+| `pnpm dev`                                  | Check that ports 3000 and 4000 are free, start the compose services, wait until healthy, then run web, api and shared in watch mode                                                 |
+| `pnpm build`                                | Build every workspace                                                                                                                                                               |
+| `pnpm test`                                 | Unit tests of every workspace (Vitest, no database needed)                                                                                                                          |
+| `pnpm test:e2e`                             | API end-to-end tests over HTTP against the PostgreSQL test database `iconbridge_test` (needs `pnpm infra:up`)                                                                       |
+| `pnpm test:browser`                         | Playwright tests of the web app in Chromium and Firefox (needs `pnpm infra:up`, seeded data and Mailpit; builds and starts the API and the web app if ports 4000 and 3000 are free) |
+| `pnpm test:browser:webkit`                  | The same tests in WebKit, inside the Playwright container (needs Docker and `pnpm build`)                                                                                           |
+| `pnpm test:cov`                             | Coverage of the API (unit and e2e), the shared package and the web libraries, with thresholds                                                                                       |
+| `pnpm api:types`                            | Regenerate the typed API client in `packages/shared` from the API OpenAPI document; run it after changing an endpoint                                                               |
+| `pnpm lint`                                 | ESLint in every workspace                                                                                                                                                           |
+| `pnpm typecheck`                            | `tsc --noEmit` in every workspace                                                                                                                                                   |
+| `pnpm format`                               | Prettier on the whole repository                                                                                                                                                    |
+| `pnpm db:migrate`                           | `prisma migrate dev` (create and apply migrations locally), then regenerate the client                                                                                              |
+| `pnpm db:seed`                              | Run `apps/api/prisma/seed.ts`: reference data and super admin; sample data in development. Safe to run again                                                                        |
+| `pnpm --filter @iconbridge/api db:studio`   | Prisma Studio on <http://localhost:5555>                                                                                                                                            |
+| `pnpm --filter @iconbridge/api task <name>` | Run a scheduled task now: `send-emails`, `close-jobs`, `job-alerts`, `retention` or `all`                                                                                           |
+| `pnpm infra:up` / `pnpm infra:down`         | Start / stop the compose services only                                                                                                                                              |
 
-Do not run `pnpm build` while `pnpm dev` is running: the build rewrites `apps/web/.next` and the dev server then answers 500 until it is restarted. For the browser tests, stop `pnpm dev` and let Playwright start the production build.
+Do not run `pnpm build` while `pnpm dev` is running: the build rewrites `apps/web/.next` and the dev server then answers 500 until it is restarted. For the browser tests, stop `pnpm dev` and let Playwright start the production builds: its API runs with `RATE_LIMITS_ENABLED=false`, without which the tests wait for the sign-in limit.
 
 One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://localhost:3000>, Swagger <http://localhost:4000/api/docs>, Mailpit <http://localhost:8025> (SMTP on 2525), Azurite blob `localhost:10000`.
 
@@ -52,7 +56,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - API endpoints: every route requires a session unless it is `@Public()`. Restrict with `@Roles(...PERMISSIONS.X)` from `packages/shared`; back-office routes go under `admin/` and must have `@Roles`. Candidate-owned records use `OwnershipGuard` with `@Owned()`. Applying to a job needs `@RequireVerifiedEmail()`.
 - Validate input with `ZodBody` / `ZodQuery` / `ZodParams` and a schema from `packages/shared`; document it with `ApiZodBody`. Throw `AppException` with a code from `API_ERROR_CODES`.
 - Admin writes: add `@Audit({ action, entityType, idParam })` and a loader in `AuditSnapshotService` for new entity types.
-- Emails: add the template in English, French and Arabic in `apps/api/src/mail/mail.templates.ts`.
+- Emails: add the template in English, French and Arabic in `apps/api/src/mail/mail.templates.ts`. `MailService.send` writes to the outbox and returns; never call the SMTP transport directly, and never make a request wait for a delivery.
 - Public job queries must use `OPEN_JOB_SQL` (`apps/api/src/jobs/public-jobs.service.ts`) or `isJobOpen` from `packages/shared`; never re-implement the visibility rule. Job status changes go through `JOB_TRANSITIONS`.
 - Raw SQL only with `Prisma.sql` and bound parameters; never build SQL or `tsquery` text from user input by concatenation.
 - Rules that depend on the date read `Clock` (`apps/api/src/common/clock/clock.ts`), never `new Date()` directly, so tests can move time. Settings are read through `SettingsService`.
@@ -60,10 +64,13 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - File storage goes through the abstract `StorageService`; never use the Azure SDK elsewhere.
 - Application status changes go through `AdminApplicationsService` and `allowedApplicationTransitions` (`packages/shared`). Text for the candidate goes in `messageToCandidate`; `comment` and notes are internal and must never appear in a candidate endpoint, an email or an export for candidates.
 - Figures from before the platform live in `historical_figures` and are added to live data only by `ResultsService`; never write them into applications or count them in a query on applications.
+- A controller that changes what the public site shows (jobs, stories, slides, catalog, settings, figures) carries `@Revalidates(...tags)` so the site follows at once; a new cached call of `apps/web/src/lib/api.ts` gets its tag in `cache-tags.ts`.
 - Scheduled work is a task in `apps/api/src/tasks/tasks.service.ts` (callable from the CLI and protected by an advisory lock), never a bare `@Cron`: in Azure the API scales to zero and a Container Apps Job runs the CLI.
 - Routes that write their own audit entries use `@SkipAudit()` and `AuditService.record`; sensitive reads (clear passport numbers, consent documents) get `@Audit`.
-- New endpoints need e2e tests for the allowed and the refused roles.
+- New endpoints need e2e tests for the allowed and the refused roles. `security.e2e-spec.ts` lists every route: a new public route must be added to its `OPEN_ROUTES` on purpose.
+- Browser tests share the development database with the person working on it. Name accounts `e2e-…@example.test` and jobs `E2E …`, write down anything else with `remember()` (`apps/web/e2e/cleanup.ts`), put back any setting you change, and act only on rows the test created (never "select all"). A test that changes something shared by the whole site runs in the `admin` project only. New pages get an axe check in `accessibility.spec.ts` or `admin-accessibility.spec.ts`.
 - Database: follow the conventions in the "Data model" section of `docs/ARCHITECTURE.md`. Create migrations with `--create-only` when they need hand-written SQL (CHECK constraints, generated columns), and list new constraints in that section. Never edit a migration that has been merged.
+- A module of `packages/shared` that creates zod schemas starts with `import './zod-setup.js';` (zod must not try `new Function` under the site's Content-Security-Policy).
 - An enum that exists in both `schema.prisma` and `packages/shared` must be changed in both; `apps/api/src/prisma/enums.spec.ts` checks it.
 - New environment variable: add it to the zod schema and to the matching `.env.example`, with a comment.
 - shadcn/ui components are added with `pnpm dlx shadcn@latest add <name>` from `apps/web`.
@@ -71,6 +78,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Web: the browser calls the API only through `/api/v1/*` on the web origin (`createApiClient()` from `@iconbridge/shared/api-client`); server components use `src/lib/api.ts`. Never expose `API_INTERNAL_URL` or call the API host from client code.
 - Web, candidate area: client components call the API with `api` from `@/lib/client-api` (silent refresh on 401), never a bare `createApiClient()`; forms use `useZodForm` with a schema from `@iconbridge/shared/<module>` and the fields of `components/forms/fields.tsx`; error texts are message keys under `forms.errors` and `forms.api`.
 - Web, back office (`app/[locale]/admin`, components in `components/admin`): texts go in `messages/admin/{en,fr}.json`; show or hide actions with `useAdmin().can(...)` and never rely on that for security; call the API through `useCall()` so failures show a toast; ask with `useConfirm()` before a destructive action. Public pages live in `app/[locale]/(site)`.
+- Web: dates are entered with `DateField` / `DateSelects` (`components/forms/date-field.tsx`), never `<input type="date">`, which follows the language of the browser instead of the page.
+- Web: no inline script or `eval`: the Content-Security-Policy allows scripts by nonce only. A scroll container (`overflow-x-auto`) that holds visually hidden labels must be `relative`, or the page becomes wider than a phone.
 - Web: content must be readable without JavaScript and with `prefers-reduced-motion`; animations are an enhancement. Use `next/image` (`MediaImage` for pictures from blob storage) and keep calls to action at 44 px or more.
 - Versions shared by workspaces are set in the `catalog` of `pnpm-workspace.yaml`.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`); commitlint checks them. Small logical commits.
@@ -93,6 +102,8 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Exports never contain full passport numbers unless a SUPER_ADMIN sets `includeFullPassportNumber`; every export is logged. Neutralise spreadsheet formulas in any new export.
 - Success stories are published only with a consent document; the public name is `publicStoryName()`.
 - Internal notes are never returned to candidates.
+- The protections and the test behind each are listed in `docs/SECURITY.md`; update it when one changes. Before a release run `pnpm audit --prod`, `trivy fs .` and `gitleaks git .`.
+- `RATE_LIMITS_ENABLED=false` and a short `ACCESS_TOKEN_TTL_SECONDS` are for test stacks only; the API refuses them in production. Do not add other switches that weaken a protection without the same refusal.
 - Deleting a candidate goes through `AccountService.eraseCandidate` (files first, then the data); deleting from the back office goes through `DeletionService`, which checks `ALLOW_RECRUITER_DELETE` and writes the audit entry. Audit entries of deletions hold a reason and counts, never personal data.
 - Back-office answers carry the masked passport number only. The clear number leaves the API through `POST /admin/candidates/:id/reveal-passport` (audited, never for a viewer) or the super-admin export.
 - Rich text of a job passes `cleanRichText` (`apps/api/src/jobs/rich-text.ts`) on writing and on reading; never render other HTML from the database.

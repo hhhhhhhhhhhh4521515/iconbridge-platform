@@ -504,3 +504,48 @@ The agency's results from before the platform were missing from its counters, an
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/11>
 
 **Remaining**: Dockerfiles, Terraform, CI/CD, legal review of the policy texts, a data retention task.
+
+## 2026-10-14 - Security review and QA audit
+
+**What**
+
+- Documents: [SECURITY.md](SECURITY.md) (OWASP Top 10 checklist with the test behind each control, data protection, retention, remaining risks) and [QA-REPORT.md](QA-REPORT.md) (results, coverage, load figures, bugs found). `CLAUDE.md`: stop the servers started for checks; conventions for the outbox, revalidation, date fields and browser tests.
+- Security: rich text cleaned with DOMPurify; origin check against CSRF; EXIF and GPS removed from uploaded images; Content-Security-Policy with nonces, HSTS and the other headers on the web app; a test that lists every route and checks its guard; dependency advisories fixed; `eslint-plugin-security`; gitleaks configuration.
+- Emails go through an outbox table with retries for about three days; a bulk change no longer waits for SMTP.
+- The public site follows the back office at once: the API tells the web app which cached data changed (`@Revalidates`, `revalidateTag`). Public API answers carry caching headers.
+- Data retention task: warning, then erasure of candidate accounts inactive for 24 months; contact messages deleted after 24 months.
+- New: delete a contact message, delete a back-office account, erase the job alerts of an address (super admin); pages behind the links of job alert emails; internal notes can be edited in the drawer; the applications list, detail and status change work on a phone; date fields in the language of the page.
+- Tests: coverage with thresholds (`pnpm test:cov`), k6 load tests (`tests/load`), 3 new browser test files (account, back-office screens, accessibility with axe), Firefox and WebKit projects, clean-up of everything the browser tests create.
+
+**Why**
+
+Last step before the deployment work: find what a security reviewer and a QA lead would find, and fix it while it is cheap. Reasons for the choices: [ADR-011](adr/ADR-011-security-hardening-and-qa.md).
+
+**Notes**
+
+- Bugs found by the new tests: the links of job alert emails led to missing pages; occasional "socket hang up" between the web app and the API; back-office tables wider than a phone; three kinds of axe violations in the back office; a withdrawn application of an erased candidate could be reopened.
+- `MAX_UPLOAD_SIZE_MB` was 25 locally because of a manual change in the settings screen on 11 October (audit log), not because of a test. Reset to 5.
+- Removed from the local database: 15 invited test accounts, 11 test candidates, 6 test jobs. Historical figures entered by hand on 12 October were left untouched.
+- WebKit needs system libraries that require administrator rights here: it runs in the Playwright container, over HTTPS, because WebKit does not keep `Secure` cookies on `http://localhost`.
+- The browser tests now need the API without rate limits; Playwright starts it itself when port 4000 is free. `pnpm dev` must be stopped first.
+- One advisory remains (`braces`, no fixed version) in lint tooling that is not shipped; accepted in SECURITY.md.
+- The retry test of the outbox was updated on purpose when the number of attempts went from 8 to 20.
+
+**Checks**
+
+| Check                                          | Result                                                                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`    | Pass                                                                                                     |
+| `pnpm test`                                    | Pass: 556 unit tests (shared 205, api 301, web 50)                                                       |
+| `pnpm test:e2e`                                | Pass: 495 tests                                                                                          |
+| `pnpm test:browser`                            | Pass: 141 passed, 6 skipped (Chromium desk and phone, Firefox)                                           |
+| `pnpm test:browser:webkit`                     | Pass: 48 passed, 6 skipped                                                                               |
+| `pnpm test:cov`                                | API 96.6 % of lines, services 95.5 %, application rules 100 %, shared 99.7 %, web libraries 96.2 %       |
+| k6, 50 virtual users                           | Job list p95 11–18 ms; apply p95 430–650 ms (1.2 s on a cold start); no failed request                   |
+| `pnpm audit --prod`, trivy, gitleaks           | No vulnerability in production dependencies, 0 high or critical, no secret in the history                |
+| Done when: no high or critical finding remains | Yes for what ships. One high advisory without a fix remains in a development-only lint tool (documented) |
+| Done when: all test suites are green           | Yes                                                                                                      |
+
+**PR**: PR_LINK
+
+**Remaining**: Dockerfiles, Terraform, CI/CD with these checks, alerting, the decision on malware scanning (Microsoft Defender for Storage), legal review of the retention periods and policy texts, a load test on Azure.
