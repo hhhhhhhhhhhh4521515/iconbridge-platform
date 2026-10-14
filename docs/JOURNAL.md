@@ -590,6 +590,6 @@ The next step is the deployment to Azure Container Apps; the images, the migrati
 | Migration image on an empty database                      | 10 migrations applied, reference data and super admin created, no job |
 | Done when: `docker compose -f docker-compose.prod.yml up` | Pass: site, API docs and emails on localhost                          |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/13>
 
 **Remaining**: Terraform for the Azure resources, the CI/CD pipeline (build, scan, push, migrate, deploy), alerting.
