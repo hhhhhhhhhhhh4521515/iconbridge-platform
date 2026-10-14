@@ -1,5 +1,12 @@
-import { Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   ADMIN_ROLES,
   adminUserSchema,
@@ -114,5 +121,24 @@ export class AdminUsersController {
   @ApiErrors(401, 403, 404)
   forceLogout(@ZodParams(uuidParamSchema) params: IdParam): Promise<AdminUser> {
     return this.users.forceLogout(params.id);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Audit({ action: 'admin_user.delete', entityType: 'user', idParam: 'id' })
+  @ApiOperation({
+    summary: 'Delete a back-office account',
+    description:
+      'The account is signed out and can no longer be used; its address becomes free. ' +
+      'Not your own account, and never the last active super admin.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 204 })
+  @ApiErrors(401, 403, 404, 409)
+  async remove(
+    @ZodParams(uuidParamSchema) params: IdParam,
+    @CurrentUser() user: AuthUser,
+  ): Promise<void> {
+    await this.users.remove(params.id, user.id);
   }
 }

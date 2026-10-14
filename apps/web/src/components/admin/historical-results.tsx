@@ -147,7 +147,7 @@ function Editor({
         ) : null}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table className="w-full text-sm" aria-label={t('tableLabel', { year })}>
           <thead>
             <tr className="text-start">

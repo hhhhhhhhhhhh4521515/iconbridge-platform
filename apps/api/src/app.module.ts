@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AdminModule } from './admin/admin.module.js';
 import { AuditInterceptor } from './admin/audit/audit.interceptor.js';
+import { RevalidateInterceptor } from './site-cache/revalidate.interceptor.js';
 import { RATE_LIMITS } from './auth/auth.constants.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CandidatesModule } from './candidates/candidates.module.js';
@@ -33,7 +34,14 @@ import { StorageModule } from './storage/storage.module.js';
       useFactory: (config: ConfigService<Env, true>) =>
         loggerParams(config.get('NODE_ENV', { infer: true })),
     }),
-    ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ...RATE_LIMITS.default }] }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        throttlers: [{ name: 'default', ...RATE_LIMITS.default }],
+        // Only ever off for a load test on a workstation (refused in production).
+        skipIf: () => !config.get('RATE_LIMITS_ENABLED', { infer: true }),
+      }),
+    }),
     ScheduleModule.forRoot(),
     PrismaModule,
     ClockModule,
@@ -57,6 +65,7 @@ import { StorageModule } from './storage/storage.module.js';
     { provide: APP_GUARD, useExisting: RolesGuard },
     { provide: APP_GUARD, useExisting: VerifiedEmailGuard },
     { provide: APP_INTERCEPTOR, useExisting: AuditInterceptor },
+    { provide: APP_INTERCEPTOR, useExisting: RevalidateInterceptor },
   ],
 })
 export class AppModule {}

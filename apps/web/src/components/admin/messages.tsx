@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCheck, Mail, RotateCcw } from 'lucide-react';
+import { CheckCheck, Mail, RotateCcw, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
 import { useLoaded } from '@/components/account/account-context';
@@ -9,7 +9,16 @@ import { Modal } from '@/components/ui/modal';
 import { api, type ContactMessage } from '@/lib/client-api';
 import { cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
-import { Badge, dateTime, filterControl, PageHeader, Pager, SearchBox, useCall } from './ui';
+import {
+  Badge,
+  dateTime,
+  filterControl,
+  PageHeader,
+  Pager,
+  SearchBox,
+  useCall,
+  useConfirm,
+} from './ui';
 
 const PAGE_SIZE = 20;
 
@@ -18,6 +27,7 @@ export function MessagesInbox() {
   const common = useTranslations('common');
   const locale = useLocale();
   const call = useCall();
+  const confirm = useConfirm();
   const { can } = useAdmin();
   const [handled, setHandled] = useState('false');
   const [q, setQ] = useState('');
@@ -47,6 +57,26 @@ export function MessagesInbox() {
         params: { path: { id: message.id } },
       }),
       done ? t('markedHandled') : t('reopened'),
+    );
+    if (result.ok) {
+      setReading(null);
+      reload();
+    }
+  };
+
+  const remove = async (message: ContactMessage) => {
+    const yes = await confirm({
+      title: t('deleteTitle'),
+      text: t('deleteText', { name: message.name }),
+      confirmLabel: t('delete'),
+      destructive: true,
+    });
+    if (!yes) {
+      return;
+    }
+    const result = await call(
+      api.DELETE('/api/v1/admin/contact-messages/{id}', { params: { path: { id: message.id } } }),
+      t('deleted'),
     );
     if (result.ok) {
       setReading(null);
@@ -154,6 +184,16 @@ export function MessagesInbox() {
               {reading.message}
             </p>
             <div className="flex flex-wrap justify-end gap-3">
+              {can('MANAGE_SETTINGS') ? (
+                <button
+                  type="button"
+                  className={`${cta.outline} me-auto border-destructive text-destructive`}
+                  onClick={() => void remove(reading)}
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                  {t('delete')}
+                </button>
+              ) : null}
               <a
                 className={cta.outline}
                 href={`mailto:${reading.email}?subject=${encodeURIComponent(`Re: ${reading.subject ?? ''}`)}`}

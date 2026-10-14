@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { pickDate, rememberApplications } from './support';
 
 /**
  * The whole road of a candidate, in a real browser against the real stack:
@@ -126,10 +127,10 @@ test.describe('candidate area', () => {
       await expect(page.locator('input[name="phone"]')).toHaveValue('20123456');
       await page.getByLabel(/^Gender/).selectOption('FEMALE');
       // Too young: the rule of packages/shared answers in the page language.
-      await page.getByLabel(/^Date of birth/).fill('2015-01-01');
+      await pickDate(page, /^Date of birth/, '2015-01-01');
       await saveAndContinue(page);
       await expect(page.getByText('You must be at least 18 years old.').last()).toBeVisible();
-      await page.getByLabel(/^Date of birth/).fill('1995-04-12');
+      await pickDate(page, /^Date of birth/, '1995-04-12');
       await page.getByLabel(/^Nationality/).selectOption('TN');
       await page.getByLabel(/^City/).fill('Tunis');
       await page.getByRole('checkbox', { name: 'Malta' }).check();
@@ -138,8 +139,8 @@ test.describe('candidate area', () => {
       await expect(page).toHaveURL(/step=passport/);
       await page.getByLabel(/^Passport number/).fill('x1234567');
       await page.getByLabel(/^Issued by/).selectOption('TN');
-      await page.getByLabel(/^Issue date/).fill('2022-01-15');
-      await page.getByLabel(/^Expiry date/).fill('2032-01-14');
+      await pickDate(page, /^Issue date/, '2022-01-15');
+      await pickDate(page, /^Expiry date/, '2032-01-14');
       await saveAndContinue(page);
 
       await expect(page).toHaveURL(/step=experience/);
@@ -268,6 +269,8 @@ test.describe('candidate area', () => {
       await page.getByRole('button', { name: 'Yes, withdraw' }).click();
       await expect(page.getByTestId('status-badge').first()).toHaveText('Withdrawn');
 
+      // The application stays after the account, as an anonymous row: the run removes it.
+      await rememberApplications(page.request);
       await page.goto('/en/account/settings');
       await page.getByRole('button', { name: 'Delete my account' }).click();
       const confirm = page.getByRole('button', { name: 'Delete my account for good' });

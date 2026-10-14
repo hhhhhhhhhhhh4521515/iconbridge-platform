@@ -11,6 +11,8 @@ Object.assign(process.env, {
   SMTP_USER: '',
   SMTP_PASSWORD: '',
   MAIL_FROM: 'IconBridge Jobs <no-reply@example.test>',
+  // The request waits for the email, so a test reads the outbox right after it.
+  MAIL_DELIVERY: 'inline',
   AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
   AZURE_STORAGE_ACCOUNT_URL: '',
   PUBLIC_MEDIA_BASE_URL: 'http://localhost:10000/devstoreaccount1/public-media',

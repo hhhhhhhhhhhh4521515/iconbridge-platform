@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { API_PREFIX, DOCS_PATH } from './app.constants.js';
 import { ACCESS_COOKIE } from './auth/auth.constants.js';
+import { originCheck } from './common/http/origin-check.js';
 import type { Env } from './config/env.js';
 
 export { API_PREFIX, DOCS_PATH };
@@ -28,6 +29,8 @@ export function configureHttp(app: NestExpressApplication): void {
     }),
   );
   app.use(cookieParser());
+  // State-changing requests started by a page of another site are refused (CSRF).
+  app.use(originCheck([config.get('WEB_ORIGIN', { infer: true })]));
 
   app.setGlobalPrefix(API_PREFIX, {
     exclude: [
@@ -39,6 +42,14 @@ export function configureHttp(app: NestExpressApplication): void {
   // cross-origin call. CORS stays limited to the web origin for tools and tests.
   app.enableCors({ origin: config.get('WEB_ORIGIN', { infer: true }), credentials: true });
   app.enableShutdownHooks();
+
+  // The web app and the Azure ingress keep their connections to the API open and use
+  // them again. Node closes an idle connection after 5 seconds by default: a request
+  // sent at that very moment is lost ("socket hang up"). Idle connections are kept
+  // longer than the clients keep them, so it is the client that closes.
+  const server = app.getHttpServer() as { keepAliveTimeout: number; headersTimeout: number };
+  server.keepAliveTimeout = KEEP_ALIVE_MS;
+  server.headersTimeout = KEEP_ALIVE_MS + 1_000;
 }
 
 export function buildOpenApiDocument(app: NestExpressApplication) {
@@ -56,6 +67,9 @@ export function buildOpenApiDocument(app: NestExpressApplication) {
       .build(),
   );
 }
+
+/** Idle time before the API closes a kept-alive connection. */
+export const KEEP_ALIVE_MS = 65_000;
 
 /** HTTP configuration shared by the real server (main.ts) and the e2e tests. */
 export function setupApp(app: NestExpressApplication): void {

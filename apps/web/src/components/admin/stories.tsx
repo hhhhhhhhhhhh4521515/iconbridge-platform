@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useId, useState } from 'react';
 import { useLoaded } from '@/components/account/account-context';
+import { DateSelects } from '@/components/forms/date-field';
 import { LoadFailed, Loading } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
 import { api, type AdminDestination, type AdminStory } from '@/lib/client-api';
@@ -154,16 +155,15 @@ function StoryEditor({
             ))}
           </select>
         </Labelled>
-        <Labelled label={t('visaApprovedAt')}>
-          <input
-            type="date"
-            className={input}
-            value={draft.visaApprovedAt}
-            onChange={(event) => {
-              set('visaApprovedAt', event.target.value);
-            }}
-          />
-        </Labelled>
+        <DateSelects
+          label={t('visaApprovedAt')}
+          value={draft.visaApprovedAt}
+          onChange={(value) => {
+            set('visaApprovedAt', value);
+          }}
+          fromYear={new Date().getFullYear()}
+          toYear={2010}
+        />
       </div>
       <LocalizedInput
         label={t('quote')}

@@ -228,32 +228,42 @@ function Card({
     disabled: !draggable,
     data: { application },
   });
+  const name = `${application.candidate.firstName} ${application.candidate.lastName}`;
   return (
-    <li
-      ref={setNodeRef}
-      style={
-        transform
-          ? { transform: `translate(${String(transform.x)}px, ${String(transform.y)}px)` }
-          : undefined
-      }
-      className={`rounded-lg border border-border bg-background p-2.5 text-sm shadow-sm ${
-        isDragging ? 'relative z-10 opacity-80 shadow-lg' : ''
-      } ${draggable ? 'cursor-grab touch-none' : ''}`}
-      data-testid="board-card"
-      data-id={application.id}
-      {...attributes}
-      {...listeners}
-    >
-      <button
-        type="button"
-        className="block w-full text-start font-medium hover:underline"
-        onClick={() => {
-          onOpen(application.id);
-        }}
+    <li>
+      {/*
+        The card is dragged as a whole and holds a button that opens the detail. As a
+        "button" holding a button it could not be used with a screen reader: it is a
+        group that can be moved (dnd-kit describes how), and the button stays a button.
+      */}
+      <div
+        ref={setNodeRef}
+        style={
+          transform
+            ? { transform: `translate(${String(transform.x)}px, ${String(transform.y)}px)` }
+            : undefined
+        }
+        className={`rounded-lg border border-border bg-background p-2.5 text-sm shadow-sm ${
+          isDragging ? 'relative z-10 opacity-80 shadow-lg' : ''
+        } ${draggable ? 'cursor-grab touch-none' : ''}`}
+        data-testid="board-card"
+        data-id={application.id}
+        {...attributes}
+        {...listeners}
+        role="group"
+        aria-label={name}
       >
-        {application.candidate.firstName} {application.candidate.lastName}
-      </button>
-      <p className="truncate text-xs text-muted-foreground">{application.job.title}</p>
+        <button
+          type="button"
+          className="block w-full text-start font-medium hover:underline"
+          onClick={() => {
+            onOpen(application.id);
+          }}
+        >
+          {name}
+        </button>
+        <p className="truncate text-xs text-muted-foreground">{application.job.title}</p>
+      </div>
     </li>
   );
 }
@@ -333,7 +343,7 @@ function Board({
   };
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-3" data-testid="board">
+      <div className="relative flex gap-3 overflow-x-auto pb-3" data-testid="board">
         {BOARD_COLUMNS.map((status) => (
           <Column
             key={status}
@@ -755,16 +765,116 @@ export function Applications() {
         </>
       ) : (
         <>
-          <DataTable
-            label={t('applications.title')}
-            columns={columns}
-            rows={rows}
-            rowId={(row) => row.id}
-            loading={loading}
-            empty={t('applications.empty')}
-            selection={selection}
-            {...(editable ? { onSelectionChange: setSelection } : {})}
-          />
+          {/* On a phone a table of five columns scrolls sideways: one card per application instead. */}
+          <ul
+            className="space-y-2 md:hidden"
+            aria-label={t('applications.title')}
+            aria-busy={loading}
+            data-testid="application-cards"
+          >
+            {editable && rows.length > 0 ? (
+              <li>
+                <label className="flex min-h-11 items-center gap-3 px-1 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    className="size-5 accent-primary"
+                    checked={rows.every((row) => selection[row.id])}
+                    onChange={(event) => {
+                      setSelection(
+                        event.target.checked
+                          ? Object.fromEntries(rows.map((row) => [row.id, true]))
+                          : {},
+                      );
+                    }}
+                  />
+                  {t('applications.selectAll')}
+                </label>
+              </li>
+            ) : null}
+            {rows.length === 0 && !loading ? (
+              <li className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                {t('applications.empty')}
+              </li>
+            ) : null}
+            {rows.map((row) => {
+              const name = `${row.candidate.firstName} ${row.candidate.lastName}`;
+              return (
+                <li
+                  key={row.id}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-card p-3"
+                >
+                  {editable ? (
+                    <span className="flex size-11 shrink-0 items-center justify-center">
+                      <input
+                        type="checkbox"
+                        className="size-5 accent-primary"
+                        aria-label={t('applications.selectOne', { name })}
+                        checked={Boolean(selection[row.id])}
+                        onChange={(event) => {
+                          const next = { ...selection };
+                          if (event.target.checked) {
+                            next[row.id] = true;
+                          } else {
+                            delete next[row.id];
+                          }
+                          setSelection(next);
+                        }}
+                      />
+                    </span>
+                  ) : null}
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      className="flex min-h-11 w-full flex-col items-start justify-center text-start"
+                      onClick={() => {
+                        open(row.id);
+                      }}
+                    >
+                      <span className="font-medium break-words">{name}</span>
+                      <span className="max-w-full truncate text-xs text-muted-foreground">
+                        {row.candidate.email}
+                      </span>
+                    </button>
+                    <p className="mt-1 text-sm">
+                      {row.job.title}
+                      <span className="text-muted-foreground">
+                        {' · '}
+                        {row.job.destinationCode.replaceAll('_', ' ')}
+                      </span>
+                    </p>
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <ApplicationBadge status={row.status} />
+                      {shortDate(row.appliedAt, locale)}
+                    </p>
+                  </div>
+                  {canDelete ? (
+                    <button
+                      type="button"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-destructive hover:bg-muted"
+                      aria-label={`${t('applications.delete')}: ${name}`}
+                      onClick={() => {
+                        setDeleting([row]);
+                      }}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+          <div className="hidden md:block">
+            <DataTable
+              label={t('applications.title')}
+              columns={columns}
+              rows={rows}
+              rowId={(row) => row.id}
+              loading={loading}
+              empty={t('applications.empty')}
+              selection={selection}
+              {...(editable ? { onSelectionChange: setSelection } : {})}
+            />
+          </div>
           <Pager page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPage={setPage} />
         </>
       )}

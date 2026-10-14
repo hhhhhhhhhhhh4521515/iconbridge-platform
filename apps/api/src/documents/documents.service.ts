@@ -78,7 +78,7 @@ export class DocumentsService {
     }
 
     const blobPath = `candidates/${profile.id}/${randomUUID()}.${inspected.format}`;
-    await this.storage.uploadPrivate(blobPath, file.buffer, inspected.mimeType);
+    await this.storage.uploadPrivate(blobPath, inspected.content, inspected.mimeType);
     try {
       const row = await this.prisma.document.create({
         data: {
@@ -87,7 +87,7 @@ export class DocumentsService {
           blobPath,
           originalName: sanitizeFileName(decodeUploadName(file.originalname), inspected.format),
           mimeType: inspected.mimeType,
-          sizeBytes: file.buffer.length,
+          sizeBytes: inspected.content.length,
           sha256: inspected.sha256,
         },
       });

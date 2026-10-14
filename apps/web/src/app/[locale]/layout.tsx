@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Cairo, Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
@@ -47,6 +48,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
   }
   setRequestLocale(locale);
   const messages = await getMessages();
+  // Set by the proxy with the Content Security Policy of this response.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html
       lang={locale}
@@ -57,7 +60,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
       <body className="flex min-h-full flex-col bg-background text-foreground">
         {/* Client components only need these two groups of texts (error page, header). */}
         <NextIntlClientProvider messages={{ common: messages.common, errors: messages.errors }}>
-          <Providers>{children}</Providers>
+          <Providers nonce={nonce}>{children}</Providers>
         </NextIntlClientProvider>
       </body>
     </html>

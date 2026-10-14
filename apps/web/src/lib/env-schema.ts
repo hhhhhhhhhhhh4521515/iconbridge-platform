@@ -11,6 +11,10 @@ export const webEnvSchema = z.object({
   API_INTERNAL_URL: httpUrl,
   /** Public address of the site, for canonical links, hreflang, the sitemap and Open Graph. */
   NEXT_PUBLIC_SITE_URL: httpUrl,
+  /** Origins of the file storage allowed by the Content Security Policy, space-separated. */
+  CSP_MEDIA_ORIGINS: z.string().default(''),
+  /** Shared with the API, which sends it to `/api/revalidate`. Empty: that route is closed. */
+  REVALIDATE_SECRET: z.union([z.literal(''), z.string().min(24)]).default(''),
   /** Cloudflare Turnstile site key (public by nature). */
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1),
 });

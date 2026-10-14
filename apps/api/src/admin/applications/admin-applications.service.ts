@@ -31,7 +31,7 @@ const SUMMARY_INCLUDE = {
       firstName: true,
       lastName: true,
       nationality: true,
-      user: { select: { email: true, locale: true } },
+      user: { select: { email: true, locale: true, deletedAt: true } },
     },
   },
 } satisfies Prisma.ApplicationInclude;
@@ -243,6 +243,13 @@ export class AdminApplicationsService {
         where: { id: last.id },
         data: { revertedAt: now },
       });
+      // The email about the undone change: withdrawn if it has not left yet. If it was
+      // sent, the candidate read it and a short correction follows.
+      const withdrawn = last.emailId ? await this.mail.cancel(last.emailId, tx) : false;
+      const notified =
+        !withdrawn && last.emailId
+          ? (await this.mail.statusOf(last.emailId, tx)) === 'SENT'
+          : false;
       await this.audit.record(
         {
           actorId: user.id,
@@ -250,13 +257,17 @@ export class AdminApplicationsService {
           entityType: 'application',
           entityId: id,
           before: { status: last.toStatus },
-          after: { status: previous, candidateWasNotified: last.notifiedAt !== null },
+          after: {
+            status: previous,
+            candidateWasNotified: notified,
+            pendingEmailWithdrawn: withdrawn,
+          },
           ip,
         },
         tx,
       );
       return {
-        notified: last.notifiedAt !== null,
+        notified,
         status: previous,
         email: updated.candidate.user.email,
         locale: updated.candidate.user.locale,
@@ -348,6 +359,18 @@ export class AdminApplicationsService {
       if (!current) {
         throw notFound('Application not found');
       }
+      const erased = await tx.application.count({
+        where: { id, candidate: { user: { deletedAt: { not: null } } } },
+      });
+      if (erased > 0) {
+        // What is left of it is an anonymous row kept for the figures: nobody to move or to write to.
+        throw new AppException(
+          'INVALID_APPLICATION_TRANSITION',
+          HttpStatus.CONFLICT,
+          'The candidate of this application deleted their account',
+          { from: current.status, to: input.status, allowed: [] },
+        );
+      }
       if (!canTransitionApplication(current.status, input.status, user.role)) {
         throw new AppException(
           'INVALID_APPLICATION_TRANSITION',
@@ -424,17 +447,17 @@ export class AdminApplicationsService {
   /** One email per step, in the candidate's language, with the optional message. Never the internal comment. */
   private async notifyCandidate(change: StatusChange): Promise<void> {
     const locale = localeSchema.catch('en').parse(change.locale);
-    const sent = await this.mail.send(change.email, 'application-status', locale, {
+    const emailId = await this.mail.enqueue(change.email, 'application-status', locale, {
       actionUrl: this.mail.linkFor('application-status', locale),
       jobTitle: change.jobTitle,
       status: change.to,
       message: change.message,
     });
-    if (sent && change.historyId) {
-      // Remembered so that undoing this change knows whether a correction email is owed.
+    if (change.historyId) {
+      // Remembered so that undoing this change knows whether the candidate received the email.
       await this.prisma.applicationStatusHistory.update({
         where: { id: change.historyId },
-        data: { notifiedAt: this.clock.now() },
+        data: { emailId },
       });
     }
   }
@@ -507,7 +530,10 @@ export class AdminApplicationsService {
         email: row.candidate.user.email,
         nationality: row.candidate.nationality,
       },
-      allowedTransitions: allowedApplicationTransitions(row.status, user.role),
+      // Nothing moves once the candidate is erased, not even for a super admin.
+      allowedTransitions: row.candidate.user.deletedAt
+        ? []
+        : allowedApplicationTransitions(row.status, user.role),
     };
   }
 }

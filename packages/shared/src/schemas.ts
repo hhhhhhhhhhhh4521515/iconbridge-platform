@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 
 /** Machine-readable error codes returned by the API in `ApiError.code`. */

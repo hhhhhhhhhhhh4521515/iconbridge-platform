@@ -1,7 +1,7 @@
 'use client';
 
 import { answerText } from '@iconbridge/shared/questions';
-import { Award, Trash2, Undo2 } from 'lucide-react';
+import { Award, Pencil, Trash2, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
 import { useLoaded } from '@/components/account/account-context';
@@ -219,6 +219,22 @@ function Notes({ detail, onChanged }: { detail: AdminApplicationDetail; onChange
       onChanged();
     }
   };
+  const [editing, setEditing] = useState<{ id: string; body: string } | null>(null);
+  const saveEdit = async () => {
+    if (!editing) {
+      return;
+    }
+    const result = await call(
+      api.PATCH('/api/v1/admin/applications/{id}/notes/{noteId}', {
+        params: { path: { id: detail.id, noteId: editing.id } },
+        body: { body: editing.body },
+      }),
+    );
+    if (result.ok) {
+      setEditing(null);
+      onChanged();
+    }
+  };
   const remove = async (noteId: string) => {
     const result = await call(
       api.DELETE('/api/v1/admin/applications/{id}/notes/{noteId}', {
@@ -241,20 +257,72 @@ function Notes({ detail, onChanged }: { detail: AdminApplicationDetail; onChange
                 <span>
                   {note.authorEmail} · {dateTime(note.createdAt, locale)}
                 </span>
-                {note.authorId === user.id || user.role === 'SUPER_ADMIN' ? (
-                  <button
-                    type="button"
-                    className="inline-flex size-8 items-center justify-center rounded text-destructive hover:bg-background"
-                    aria-label={t('deleteNote')}
-                    onClick={() => void remove(note.id)}
-                  >
-                    <Trash2 className="size-4" aria-hidden />
-                  </button>
+                {/* The API allows the same people: the author of the note, or a super admin. */}
+                {can('MANAGE_APPLICATIONS') &&
+                (note.authorId === user.id || user.role === 'SUPER_ADMIN') ? (
+                  <span className="flex gap-1">
+                    <button
+                      type="button"
+                      className="inline-flex size-11 items-center justify-center rounded hover:bg-background sm:size-8"
+                      aria-label={t('editNote')}
+                      onClick={() => {
+                        setEditing({ id: note.id, body: note.body });
+                      }}
+                    >
+                      <Pencil className="size-4" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex size-11 items-center justify-center rounded text-destructive hover:bg-background sm:size-8"
+                      aria-label={t('deleteNote')}
+                      onClick={() => void remove(note.id)}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  </span>
                 ) : null}
               </div>
-              <p className="whitespace-pre-wrap" dir="auto">
-                {note.body}
-              </p>
+              {editing?.id === note.id ? (
+                <form
+                  className="space-y-2"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void saveEdit();
+                  }}
+                >
+                  <textarea
+                    rows={3}
+                    className={input}
+                    aria-label={t('editNote')}
+                    value={editing.body}
+                    onChange={(event) => {
+                      setEditing({ id: note.id, body: event.target.value });
+                    }}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      className={cta.primary}
+                      disabled={editing.body.trim() === '' || editing.body === note.body}
+                    >
+                      {t('saveNote')}
+                    </button>
+                    <button
+                      type="button"
+                      className={cta.outline}
+                      onClick={() => {
+                        setEditing(null);
+                      }}
+                    >
+                      {t('cancelNote')}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <p className="whitespace-pre-wrap" dir="auto">
+                  {note.body}
+                </p>
+              )}
             </li>
           ))}
         </ul>

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
+import { DateSelects } from '@/components/forms/date-field';
 import { LoadFailed, Loading } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
 import { api, type AuditEntry, type SettingValues } from '@/lib/client-api';
@@ -304,26 +305,24 @@ export function AuditLog() {
             }}
           />
         </Labelled>
-        <Labelled label={t('from')}>
-          <input
-            type="date"
-            className={input}
-            value={filters.from}
-            onChange={(event) => {
-              change({ from: event.target.value });
-            }}
-          />
-        </Labelled>
-        <Labelled label={t('to')}>
-          <input
-            type="date"
-            className={input}
-            value={filters.to}
-            onChange={(event) => {
-              change({ to: event.target.value });
-            }}
-          />
-        </Labelled>
+        <DateSelects
+          label={t('from')}
+          value={filters.from}
+          onChange={(value) => {
+            change({ from: value });
+          }}
+          fromYear={new Date().getFullYear()}
+          toYear={2024}
+        />
+        <DateSelects
+          label={t('to')}
+          value={filters.to}
+          onChange={(value) => {
+            change({ to: value });
+          }}
+          fromYear={new Date().getFullYear()}
+          toYear={2024}
+        />
       </div>
       {failed ? (
         <LoadFailed onRetry={reload} />

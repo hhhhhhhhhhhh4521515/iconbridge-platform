@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 
 /** ISO 3166-1 alpha-2 codes (249 officially assigned). */

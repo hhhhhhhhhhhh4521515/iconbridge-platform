@@ -1,13 +1,21 @@
 import 'server-only';
 import { createApiClient, type ApiPaths } from '@iconbridge/shared/api-client';
+import { tagsFor } from './cache-tags';
 import { env } from './env';
 
 /** Public data is cached by Next.js and refreshed at most once a minute. */
 const REVALIDATE_SECONDS = 60;
 
+/**
+ * Groups of cached answers. After a change in the back office the API names the groups
+ * concerned to `/api/revalidate`, which drops them at once (see src/lib/cache-tags.ts).
+ */
 const cached = createApiClient({
   baseUrl: env.API_INTERNAL_URL,
-  fetch: (request) => fetch(request, { next: { revalidate: REVALIDATE_SECONDS } }),
+  fetch: (request) =>
+    fetch(request, {
+      next: { revalidate: REVALIDATE_SECONDS, tags: tagsFor(new URL(request.url).pathname) },
+    }),
 });
 
 type Json<Path extends keyof ApiPaths> = ApiPaths[Path] extends {

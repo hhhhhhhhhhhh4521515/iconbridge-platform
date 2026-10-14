@@ -13,6 +13,7 @@ import {
   type TestUser,
 } from './app.js';
 import { as, newApplication } from './back-office.js';
+import { MailService } from '../../src/mail/mail.service.js';
 
 const MINUTE = 60_000;
 
@@ -41,6 +42,7 @@ describe('back-office adjustments (e2e)', () => {
   beforeEach(async () => {
     await resetDatabase(test.prisma);
     test.clock.reset();
+    test.mailServer.down = false;
     catalog = await seedCatalog(test);
     viewer = await createUser(test, 'VIEWER');
     recruiter = await createUser(test, 'RECRUITER');
@@ -158,14 +160,30 @@ describe('back-office adjustments (e2e)', () => {
       expect(mine[0]?.history.map((entry) => entry.toStatus)).toEqual(['SUBMITTED']);
     });
 
-    it('sends no correction when the first email never went out', async () => {
-      await test.prisma.applicationStatusHistory.updateMany({ data: { notifiedAt: null } });
+    it('withdraws the first email instead of correcting it when it had not left yet', async () => {
+      // The mail server was down when the status changed: the email waits in the outbox.
       await undo(recruiter).expect(200);
+      test.outbox.length = 0;
+      test.mailServer.down = true;
+      await as(test, recruiter)
+        .patch(`/admin/applications/${id}/status`, { status: 'UNDER_REVIEW' })
+        .expect(200);
+      test.mailServer.down = false;
+      expect(await test.prisma.emailOutbox.count({ where: { status: 'PENDING' } })).toBe(1);
+
+      await undo(recruiter).expect(200);
+      // Nothing is sent, now or at the next run: the candidate never hears of the mistake.
+      await test.app.get(MailService).sendDue();
       expect(test.outbox).toHaveLength(0);
+      expect(await test.prisma.emailOutbox.count({ where: { status: 'CANCELLED' } })).toBe(1);
       const audit = await test.prisma.auditLog.findFirstOrThrow({
         where: { action: 'application.undo_status' },
+        orderBy: { createdAt: 'desc' },
       });
-      expect(audit.after).toMatchObject({ candidateWasNotified: false });
+      expect(audit.after).toMatchObject({
+        candidateWasNotified: false,
+        pendingEmailWithdrawn: true,
+      });
     });
 
     it('is allowed at exactly 15 minutes and refused one second later', async () => {
@@ -304,6 +322,28 @@ describe('back-office adjustments (e2e)', () => {
       expect(JSON.stringify(entries)).not.toContain('amira@example.test');
     });
 
+    it('lets a super admin delete a message for good; the audit log keeps nothing of it', async () => {
+      await send('Amira', 'Visa');
+      await send('Omar', 'Salary');
+      const amira = (await list(superAdmin)).items.find((item) => item.name === 'Amira');
+      const path = `/admin/contact-messages/${amira?.id ?? ''}`;
+      await as(test, viewer).delete(path).expect(403);
+      await as(test, recruiter).delete(path).expect(403);
+      await test.http().delete(`${API}${path}`).expect(401);
+      expect((await list(superAdmin)).total).toBe(2);
+
+      await as(test, superAdmin).delete(path).expect(204);
+      expect((await list(superAdmin)).items.map((item) => item.name)).toEqual(['Omar']);
+      await as(test, superAdmin).delete(path).expect(404);
+
+      const entries = await test.prisma.auditLog.findMany({
+        where: { action: 'contact_message.delete' },
+      });
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({ actorId: superAdmin.id, entityId: amira?.id });
+      expect(JSON.stringify(entries)).not.toMatch(/amira|Visa|Malta/i);
+    });
+
     it('refuses writes to a viewer, and everything to candidates and visitors', async () => {
       await send('Amira', 'Visa');
       const [message] = (await list(viewer)).items;
@@ -316,6 +356,47 @@ describe('back-office adjustments (e2e)', () => {
       await as(test, recruiter)
         .post('/admin/contact-messages/00000000-0000-4000-8000-000000000000/handle')
         .expect(404);
+    });
+  });
+
+  describe('job alerts of an address', () => {
+    const subscribe = (email: string) =>
+      test.prisma.jobAlertSubscription.create({
+        data: { email, unsubscribeToken: `token-${email}-${String(Math.random())}` },
+      });
+
+    it('lets a super admin remove every alert of an address; the audit log keeps the number only', async () => {
+      await subscribe('hedi@example.test');
+      await subscribe('hedi@example.test');
+      await subscribe('other@example.test');
+      const erase = (user: TestUser, email: string) =>
+        as(test, user).post('/admin/job-alerts/erase').send({ email });
+
+      await erase(viewer, 'hedi@example.test').expect(403);
+      await erase(recruiter, 'hedi@example.test').expect(403);
+      await test
+        .http()
+        .post(`${API}/admin/job-alerts/erase`)
+        .send({ email: 'a@b.test' })
+        .expect(401);
+      await erase(superAdmin, 'not-an-address').expect(400);
+      expect(await test.prisma.jobAlertSubscription.count()).toBe(3);
+
+      // Written in any case: addresses are stored in lower case.
+      expect((await erase(superAdmin, 'Hedi@Example.test').expect(200)).body).toEqual({
+        removed: 2,
+      });
+      expect(
+        (await test.prisma.jobAlertSubscription.findMany()).map((alert) => alert.email),
+      ).toEqual(['other@example.test']);
+      expect((await erase(superAdmin, 'hedi@example.test').expect(200)).body).toEqual({
+        removed: 0,
+      });
+
+      const entries = await test.prisma.auditLog.findMany({ where: { action: 'job_alert.erase' } });
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({ actorId: superAdmin.id, before: { alerts: 2 } });
+      expect(JSON.stringify(entries)).not.toContain('hedi');
     });
   });
 

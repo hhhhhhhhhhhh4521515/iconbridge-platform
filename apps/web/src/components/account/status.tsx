@@ -13,7 +13,7 @@ const TONES: Record<Status, string> = {
   OFFER: 'bg-brand-gold text-brand-navy',
   CONTRACT_SIGNED: 'bg-emerald-100 text-emerald-900',
   VISA_PROCESSING: 'bg-emerald-100 text-emerald-900',
-  VISA_APPROVED: 'bg-emerald-600 text-white',
+  VISA_APPROVED: 'bg-emerald-700 text-white',
   DEPLOYED: 'bg-emerald-700 text-white',
   REJECTED: 'bg-destructive/15 text-destructive',
   WITHDRAWN: 'bg-muted text-muted-foreground',

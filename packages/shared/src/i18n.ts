@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 
 /** Languages of the site. Arabic is right-to-left. */

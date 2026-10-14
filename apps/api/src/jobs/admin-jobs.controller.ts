@@ -46,6 +46,7 @@ import { ZodBody, ZodParams, ZodQuery } from '../common/pipes/zod-validation.pip
 import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { AdminJobsService } from './admin-jobs.service.js';
 import { COVER_MAX_BYTES } from './job-cover.service.js';
+import { Revalidates } from '../site-cache/revalidate.interceptor.js';
 
 interface IdParam {
   id: string;
@@ -69,6 +70,7 @@ const jobPageSchema = z.object({
 @ApiTags('admin: jobs')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_JOBS)
+@Revalidates('jobs', 'catalog', 'stats')
 @Controller('admin/jobs')
 export class AdminJobsController {
   constructor(private readonly jobs: AdminJobsService) {}

@@ -9,7 +9,13 @@ const valid = {
 
 describe('parseWebEnv', () => {
   it('accepts http(s) URLs and drops trailing slashes', () => {
-    expect(parseWebEnv(valid)).toEqual({ ...valid, API_INTERNAL_URL: 'http://localhost:4000' });
+    expect(parseWebEnv(valid)).toEqual({
+      ...valid,
+      API_INTERNAL_URL: 'http://localhost:4000',
+      // Optional: without it the policy allows no storage origin.
+      CSP_MEDIA_ORIGINS: '',
+      REVALIDATE_SECRET: '',
+    });
   });
 
   it.each(Object.keys(valid))('fails when %s is missing', (name) => {

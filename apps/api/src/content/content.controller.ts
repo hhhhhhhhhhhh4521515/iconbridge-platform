@@ -54,6 +54,8 @@ import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-ope
 import { COVER_MAX_BYTES } from '../jobs/job-cover.service.js';
 import { SettingsService } from '../settings/settings.service.js';
 import { ContentService } from './content.service.js';
+import { Revalidates } from '../site-cache/revalidate.interceptor.js';
+import { PUBLIC_CACHE } from '../common/http/public-cache.js';
 
 const siteInfoSchema = z.object({
   CONTACT_EMAIL: z.string(),
@@ -108,6 +110,7 @@ export class PublicContentController {
   ) {}
 
   @Get('success-stories')
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({
     summary: 'Published success stories',
     description:
@@ -119,6 +122,7 @@ export class PublicContentController {
   }
 
   @Get('home-slides')
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({ summary: 'Active slides of the home page, in order' })
   @ApiZodResponse(200, z.array(homeSlideSchema))
   slides(): Promise<HomeSlide[]> {
@@ -126,6 +130,7 @@ export class PublicContentController {
   }
 
   @Get('site-info')
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({
     summary: 'Contact details and social links shown on the site, and the upload size limit',
   })
@@ -147,6 +152,7 @@ export class PublicContentController {
 @ApiTags('admin: success stories')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_CONTENT)
+@Revalidates('stories')
 @Controller('admin/success-stories')
 export class AdminSuccessStoriesController {
   constructor(private readonly content: ContentService) {}
@@ -294,6 +300,7 @@ export class AdminSuccessStoriesController {
 @ApiTags('admin: home slides')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_CONTENT)
+@Revalidates('slides')
 @Controller('admin/home-slides')
 export class AdminHomeSlidesController {
   constructor(private readonly content: ContentService) {}

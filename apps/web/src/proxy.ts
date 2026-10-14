@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
+import { contentSecurityPolicy, createNonce, parseOrigins } from './lib/csp';
 
 const handleI18n = createIntlMiddleware(routing);
 const API_PREFIX = '/api/v1/';
@@ -65,7 +66,24 @@ export default function proxy(request: NextRequest): NextResponse {
   if (request.nextUrl.pathname.startsWith(API_PREFIX)) {
     return proxyToApi(request);
   }
-  return privateAreaRedirect(request) ?? handleI18n(request);
+  const redirect = privateAreaRedirect(request);
+  if (redirect) {
+    return redirect;
+  }
+  // A page: it gets a Content Security Policy with a nonce of its own. The policy is
+  // also put on the request, where Next.js reads the nonce for the scripts it writes,
+  // and the layout reads `x-nonce` for the few inline scripts of the site.
+  const nonce = createNonce();
+  const policy = contentSecurityPolicy(nonce, {
+    development: process.env.NODE_ENV !== 'production',
+    https: (process.env.NEXT_PUBLIC_SITE_URL ?? '').startsWith('https://'),
+    mediaOrigins: parseOrigins(process.env.CSP_MEDIA_ORIGINS),
+  });
+  request.headers.set('x-nonce', nonce);
+  request.headers.set('content-security-policy', policy);
+  const response = handleI18n(request);
+  response.headers.set('content-security-policy', policy);
+  return response;
 }
 
 export const config = {

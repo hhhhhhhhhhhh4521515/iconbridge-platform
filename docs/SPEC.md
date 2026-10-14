@@ -39,22 +39,23 @@ The reasons are recorded in [ADR-001](adr/ADR-001-stack-choice.md).
 | Recruiter (admin) | `RECRUITER`               | Back-office user           |
 | Super admin       | `SUPER_ADMIN`             | Platform owner             |
 
-| Capability                                                    | Visitor | Candidate | Viewer    | Recruiter                                                           | Super admin |
-| ------------------------------------------------------------- | ------- | --------- | --------- | ------------------------------------------------------------------- | ----------- |
-| Browse jobs, home, success stories                            | Yes     | Yes       | Yes       | Yes                                                                 | Yes         |
-| Register, verify email, manage own profile and documents      | -       | Yes       | -         | -                                                                   | -           |
-| Apply to a job, withdraw, track status                        | -       | Yes       | -         | -                                                                   | -           |
-| Download / delete own data (GDPR)                             | -       | Yes       | -         | -                                                                   | -           |
-| See candidates, applications, documents                       | -       | -         | Read only | Yes                                                                 | Yes         |
-| Create / edit / publish / close / delete job offers           | -       | -         | -         | Yes                                                                 | Yes         |
-| Change application status, add internal notes                 | -       | -         | -         | Yes                                                                 | Yes         |
-| Manage success stories, home slides, categories, destinations | -       | -         | -         | Yes                                                                 | Yes         |
-| Export applications to CSV / Excel                            | -       | -         | -         | Yes                                                                 | Yes         |
-| Create / disable admin accounts, assign roles                 | -       | -         | -         | -                                                                   | Yes         |
-| Global settings (cooldown period, upload limits), audit log   | -       | -         | -         | -                                                                   | Yes         |
-| Enter historical results (figures from before the platform)   | -       | -         | -         | -                                                                   | Yes         |
-| See the split "historical + platform" on the dashboard        | -       | -         | Yes       | Yes                                                                 | Yes         |
-| Delete a candidate or an application (with a reason, audited) | -       | -         | -         | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
+| Capability                                                                            | Visitor | Candidate | Viewer    | Recruiter                                                           | Super admin |
+| ------------------------------------------------------------------------------------- | ------- | --------- | --------- | ------------------------------------------------------------------- | ----------- |
+| Browse jobs, home, success stories                                                    | Yes     | Yes       | Yes       | Yes                                                                 | Yes         |
+| Register, verify email, manage own profile and documents                              | -       | Yes       | -         | -                                                                   | -           |
+| Apply to a job, withdraw, track status                                                | -       | Yes       | -         | -                                                                   | -           |
+| Download / delete own data (GDPR)                                                     | -       | Yes       | -         | -                                                                   | -           |
+| See candidates, applications, documents                                               | -       | -         | Read only | Yes                                                                 | Yes         |
+| Create / edit / publish / close / delete job offers                                   | -       | -         | -         | Yes                                                                 | Yes         |
+| Change application status, add internal notes                                         | -       | -         | -         | Yes                                                                 | Yes         |
+| Manage success stories, home slides, categories, destinations                         | -       | -         | -         | Yes                                                                 | Yes         |
+| Export applications to CSV / Excel                                                    | -       | -         | -         | Yes                                                                 | Yes         |
+| Create / disable admin accounts, assign roles                                         | -       | -         | -         | -                                                                   | Yes         |
+| Global settings (cooldown period, upload limits), audit log                           | -       | -         | -         | -                                                                   | Yes         |
+| Enter historical results (figures from before the platform)                           | -       | -         | -         | -                                                                   | Yes         |
+| See the split "historical + platform" on the dashboard                                | -       | -         | Yes       | Yes                                                                 | Yes         |
+| Delete a candidate or an application (with a reason, audited)                         | -       | -         | -         | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
+| Delete a contact message, delete an admin account, erase the job alerts of an address | -       | -         | -         | -                                                                   | Yes         |
 
 - The first super admin is created by a seed script from environment variables.
 - There is no public sign-up for admins.
@@ -153,6 +154,8 @@ KPIs (open jobs, applications this month, visas approved, by destination), a Kan
 ### 7.5 Security and legal
 
 Rate limiting, CAPTCHA (Cloudflare Turnstile) on register/apply/contact, private files, GDPR data export and account deletion, privacy policy and terms pages.
+
+Data retention: a candidate account with no activity for 24 months and no application in progress is erased like a GDPR deletion, after a warning email 30 days before; messages of the contact form are deleted after 24 months. Uploaded pictures lose their metadata (EXIF, GPS). The full list of protections is in [SECURITY.md](SECURITY.md).
 
 ## 8. Azure for Students constraints
 

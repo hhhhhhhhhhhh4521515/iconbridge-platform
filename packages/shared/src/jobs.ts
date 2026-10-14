@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 import { JOB_STATUSES, jobStatusSchema, salaryPeriodSchema, type JobStatus } from './enums.js';
 import { localizedTextSchema } from './i18n.js';
@@ -88,8 +89,11 @@ const slug = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lower-case letters, digits and hyphens')
-  .max(SLUG_MAX_LENGTH);
+  // The length is checked first, so the pattern below only ever runs on a short text.
+  .max(SLUG_MAX_LENGTH)
+  // Each hyphen must be followed by a letter or digit: there is one way to match, no backtracking blow-up.
+  // eslint-disable-next-line security/detect-unsafe-regex
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lower-case letters, digits and hyphens');
 
 export const JOB_SORTS = ['relevance', 'newest', 'deadline', 'salary'] as const;
 export type JobSort = (typeof JOB_SORTS)[number];

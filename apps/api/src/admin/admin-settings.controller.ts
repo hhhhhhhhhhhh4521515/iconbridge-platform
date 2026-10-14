@@ -27,11 +27,13 @@ import { AdminStatsService } from './admin-stats.service.js';
 import { DeletionService } from './deletion.service.js';
 import { SkipAudit } from './audit/audit.decorator.js';
 import { AuditService } from './audit/audit.service.js';
+import { Revalidates } from '../site-cache/revalidate.interceptor.js';
 
 const isSettingKey = (key: string): key is SettingKey => (SETTING_KEYS as string[]).includes(key);
 
 @ApiTags('admin: settings and dashboard')
 @ApiCookieAuth()
+@Revalidates('site-info', 'stats')
 @Controller('admin')
 export class AdminSettingsController {
   constructor(

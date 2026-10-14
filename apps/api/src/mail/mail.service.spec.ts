@@ -2,7 +2,10 @@ import type { ConfigService } from '@nestjs/config';
 import { LOCALES } from '@iconbridge/shared';
 import type { Transporter } from 'nodemailer';
 import type { Env } from '../config/env.js';
-import { MailService } from './mail.service.js';
+import { Clock } from '../common/clock/clock.js';
+import type { FieldCipher } from '../common/crypto/field-cipher.js';
+import type { PrismaService } from '../prisma/prisma.service.js';
+import { MailService, retryDelayMs } from './mail.service.js';
 import { EMAIL_TEMPLATES } from './mail.templates.js';
 
 const config = {
@@ -14,7 +17,16 @@ const config = {
 
 function createService(sendMail = vi.fn().mockResolvedValue({})) {
   const transport = { sendMail } as unknown as Transporter;
-  return { service: new MailService(transport, config), sendMail };
+  // Rendering and the hand-over to the transport need no database; the outbox itself is
+  // tested against PostgreSQL in test/e2e/email-outbox.e2e-spec.ts.
+  const service = new MailService(
+    transport,
+    config,
+    undefined as unknown as PrismaService,
+    undefined as unknown as FieldCipher,
+    new Clock(),
+  );
+  return { service, sendMail };
 }
 
 const variables = {
@@ -84,20 +96,32 @@ describe('MailService', () => {
     );
   });
 
-  it('sends through the transport with the configured sender', async () => {
+  it('hands the email to the transport with the configured sender', async () => {
     const { service, sendMail } = createService();
-    expect(await service.send('user@example.test', 'verify-email', 'en', variables)).toBe(true);
+    await service.deliver('user@example.test', 'verify-email', 'en', variables, {
+      replyTo: 'reply@example.test',
+    });
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
         from: 'IconBridge Jobs <no-reply@example.test>',
         to: 'user@example.test',
+        replyTo: 'reply@example.test',
         subject: expect.stringContaining('Confirm your email') as string,
       }),
     );
   });
 
-  it('returns false instead of throwing when the server refuses the message', async () => {
+  it('lets the failure of the mail server reach the outbox, which will try again', async () => {
     const { service } = createService(vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
-    expect(await service.send('user@example.test', 'verify-email', 'en', variables)).toBe(false);
+    await expect(
+      service.deliver('user@example.test', 'verify-email', 'en', variables),
+    ).rejects.toThrow('ECONNREFUSED');
+  });
+
+  it('waits longer after each failed attempt, up to six hours', () => {
+    expect([1, 2, 3, 4, 8].map(retryDelayMs)).toEqual(
+      [1, 2, 4, 8, 128].map((minutes) => minutes * 60_000),
+    );
+    expect(retryDelayMs(20)).toBe(6 * 3_600_000);
   });
 });

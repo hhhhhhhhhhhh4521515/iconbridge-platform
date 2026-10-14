@@ -1,3 +1,4 @@
+import './zod-setup.js';
 import { z } from 'zod';
 
 /**
@@ -9,6 +10,8 @@ const socialUrl = z
   .string()
   .trim()
   .max(300)
+  // At most 300 characters (checked above) and a single optional group: linear.
+  // eslint-disable-next-line security/detect-unsafe-regex
   .regex(/^(https:\/\/\S+)?$/, 'Use an https address, or leave it empty');
 
 export const settingSchemas = {

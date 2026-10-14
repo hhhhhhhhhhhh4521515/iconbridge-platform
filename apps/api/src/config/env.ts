@@ -18,6 +18,11 @@ const baseEnvSchema = z.object({
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535),
   MAIL_FROM: z.string().min(1),
+  /**
+   * background: a request queues its emails and returns; they are sent right after.
+   * inline: the request waits for the first attempt (automated tests).
+   */
+  MAIL_DELIVERY: z.enum(['background', 'inline']).default('background'),
   /** Azurite or an account key. Leave empty in Azure and set AZURE_STORAGE_ACCOUNT_URL instead. */
   AZURE_STORAGE_CONNECTION_STRING: z.string(),
   /** https://<account>.blob.core.windows.net, used with the managed identity. Empty locally. */
@@ -28,10 +33,27 @@ const baseEnvSchema = z.object({
     .transform((url) => url.replace(/\/+$/, '')),
   PASSPORT_ENCRYPTION_KEY: aes256KeySchema,
   JWT_ACCESS_SECRET: z.string().min(32),
+  /** Lifetime of an access token, in seconds. 15 minutes; shorter only to test the silent refresh. */
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(1).max(3600).default(900),
+  /**
+   * Address of the web app as the API reaches it, to tell it that public content changed.
+   * Empty: WEB_ORIGIN is used.
+   */
+  WEB_INTERNAL_URL: z.union([z.literal(''), z.url({ protocol: /^https?$/ })]).default(''),
+  /** Shared with the web app (same variable there). Empty: the web app is not told; its cache ends after a minute. */
+  REVALIDATE_SECRET: z.union([z.literal(''), z.string().min(24)]).default(''),
   TURNSTILE_SECRET_KEY: z.string().min(1),
   /** Empty for a server without authentication (Mailpit). */
   SMTP_USER: z.string(),
   SMTP_PASSWORD: z.string(),
+  /**
+   * "false" switches the rate limits off, for a load test on a workstation only:
+   * refused when NODE_ENV is production.
+   */
+  RATE_LIMITS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
   /** Reverse proxies in front of the API whose X-Forwarded-For is trusted (0 locally). */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5),
   /** "true" runs the scheduled tasks inside the API (local). "false" in Azure, where a Container Apps Job runs them. */
@@ -56,7 +78,15 @@ export const envSchema = baseEnvSchema
       path: ['TURNSTILE_SECRET_KEY'],
       message: 'A Turnstile test secret cannot be used in production',
     },
-  );
+  )
+  .refine((env) => env.NODE_ENV !== 'production' || env.RATE_LIMITS_ENABLED, {
+    path: ['RATE_LIMITS_ENABLED'],
+    message: 'The rate limits cannot be switched off in production',
+  })
+  .refine((env) => env.NODE_ENV !== 'production' || env.ACCESS_TOKEN_TTL_SECONDS >= 300, {
+    path: ['ACCESS_TOKEN_TTL_SECONDS'],
+    message: 'In production an access token lives at least 5 minutes',
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

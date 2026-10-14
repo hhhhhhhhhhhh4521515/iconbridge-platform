@@ -209,7 +209,23 @@
     "submit": "Create my alert",
     "sending": "Sending...",
     "success": "Check your inbox and confirm your email address to activate the alert.",
-    "error": "The alert could not be created. Check the address and try again."
+    "error": "The alert could not be created. Check the address and try again.",
+    "confirm": {
+      "title": "Job alert",
+      "doneTitle": "Your job alert is active.",
+      "doneText": "We will email you when a job that matches is published. Every email has a link to stop the alert.",
+      "failedTitle": "This link does not work any more.",
+      "failedText": "It has expired or was already used. Create the alert again from the site.",
+      "jobs": "See the jobs"
+    },
+    "unsubscribe": {
+      "title": "Job alert",
+      "doneTitle": "Your job alert is stopped.",
+      "doneText": "You will receive no more emails from this alert. You can create a new one at any time.",
+      "failedTitle": "This link does not work any more.",
+      "failedText": "The alert was probably stopped already.",
+      "jobs": "See the jobs"
+    }
   },
   "contactCta": {
     "title": "A question before you apply?",
@@ -723,6 +739,11 @@
     "loadFailed": "This could not be loaded. Check your connection and try again.",
     "choose": "Choose…",
     "phoneCountry": "Country calling code",
+    "date": {
+      "day": "Day",
+      "month": "Month",
+      "year": "Year"
+    },
     "errors": {
       "required": "This field is required.",
       "invalid": "This value is not valid.",

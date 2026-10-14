@@ -1,5 +1,13 @@
-import { Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { Request } from 'express';
 import {
   adminContactMessageSchema,
   contactMessageListQuerySchema,
@@ -10,14 +18,16 @@ import {
   type Paginated,
 } from '@iconbridge/shared';
 import { z } from 'zod';
-import { Roles } from '../auth/decorators/index.js';
+import { requestMeta, type AuthUser } from '../auth/auth.types.js';
+import { CurrentUser, Roles } from '../auth/decorators/index.js';
 import { Clock } from '../common/clock/clock.js';
 import { notFound } from '../common/errors/app.exception.js';
 import { ZodParams, ZodQuery } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import type { ContactMessage, Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { Audit } from './audit/audit.decorator.js';
+import { Audit, SkipAudit } from './audit/audit.decorator.js';
+import { AuditService } from './audit/audit.service.js';
 
 const pageSchema = z.object({
   items: z.array(adminContactMessageSchema),
@@ -49,6 +59,7 @@ export class ContactMessagesController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
+    private readonly audit: AuditService,
   ) {}
 
   @Get()
@@ -114,6 +125,42 @@ export class ContactMessagesController {
   @ApiErrors(401, 403, 404)
   reopen(@ZodParams(uuidParamSchema) params: { id: string }): Promise<AdminContactMessage> {
     return this.setHandled(params.id, null);
+  }
+
+  @Delete(':id')
+  @Roles(...PERMISSIONS.MANAGE_SETTINGS)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Delete a message for good (super admin)',
+    description:
+      'For a message sent by mistake, spam, or a person who asks for their data to be removed. ' +
+      'The audit log keeps who deleted it and when, nothing of the message.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 204 })
+  @ApiErrors(401, 403, 404)
+  async remove(
+    @ZodParams(uuidParamSchema) params: { id: string },
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const removed = await tx.contactMessage.deleteMany({ where: { id: params.id } });
+      if (removed.count === 0) {
+        throw notFound('Message not found');
+      }
+      await this.audit.record(
+        {
+          actorId: user.id,
+          action: 'contact_message.delete',
+          entityType: 'contactMessage',
+          entityId: params.id,
+          ip: requestMeta(request).ip,
+        },
+        tx,
+      );
+    });
   }
 
   private async setHandled(id: string, handledAt: Date | null): Promise<AdminContactMessage> {

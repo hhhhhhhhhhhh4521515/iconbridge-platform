@@ -55,6 +55,7 @@ import { Audit, SkipAudit } from '../audit/audit.decorator.js';
 import { DeletionService } from '../deletion.service.js';
 import { AdminApplicationsService } from './admin-applications.service.js';
 import { ApplicationExportService } from './export.service.js';
+import { Revalidates } from '../../site-cache/revalidate.interceptor.js';
 
 interface IdParam {
   id: string;
@@ -72,6 +73,7 @@ const idSchema = z.object({ id: z.uuid() });
 @ApiTags('admin: applications')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_APPLICATIONS)
+@Revalidates('stats')
 @Controller('admin/applications')
 export class AdminApplicationsController {
   constructor(

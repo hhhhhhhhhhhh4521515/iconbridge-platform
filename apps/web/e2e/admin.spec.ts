@@ -1,6 +1,14 @@
 import path from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { BRAND, inviteStaff, PASSWORD, PDF, readyCandidate, STAMP } from './support';
+import {
+  BRAND,
+  inviteStaff,
+  PASSWORD,
+  PDF,
+  readyCandidate,
+  rememberApplications,
+  STAMP,
+} from './support';
 
 /**
  * The back office, in a real browser against the real stack.
@@ -291,7 +299,7 @@ test.describe('back office', () => {
     await test.step('the story appears on the home page', async () => {
       const visitor = await browser.newContext();
       const page = await visitor.newPage();
-      // The home page keeps its data for up to a minute.
+      // Publishing told the site to forget its copy: the story is there at once, not a minute later.
       await expect
         .poll(
           async () => {
@@ -301,7 +309,7 @@ test.describe('back office', () => {
               .filter({ hasText: `${firstName} K.` })
               .count();
           },
-          { timeout: 120_000, intervals: [5_000] },
+          { timeout: 15_000, intervals: [1_000] },
         )
         .toBeGreaterThan(0);
       const card = page
@@ -339,6 +347,8 @@ test.describe('back office', () => {
       for (const job of jobs.items) {
         expect((await api.delete(`/api/v1/admin/jobs/${job.id}`)).status()).toBe(204);
       }
+      // The application stays as an anonymous row after the account: the run removes it.
+      await rememberApplications(candidate.context.request);
       const erased = await candidate.context.request.delete('/api/v1/me/account', {
         data: { password: PASSWORD },
       });
@@ -504,9 +514,12 @@ test.describe('back office', () => {
 
   test('without a real session the back office sends to the login page, and Arabic opens it in English', async ({
     browser,
+    baseURL,
   }) => {
     const context = await browser.newContext();
-    await context.addCookies([{ name: 'ib_session', value: '1', url: 'http://localhost:3000' }]);
+    await context.addCookies([
+      { name: 'ib_session', value: '1', url: baseURL ?? 'http://localhost:3000' },
+    ]);
     const page = await context.newPage();
     // A marker cookie without a session: the page loads its frame, the API says nobody is signed in.
     await page.goto('/en/admin');

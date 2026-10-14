@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Header } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   JOB_SORTS,
@@ -13,6 +13,7 @@ import { Public } from '../auth/decorators/index.js';
 import { ZodParams, ZodQuery } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { PublicJobsService } from './public-jobs.service.js';
+import { PUBLIC_CACHE } from '../common/http/public-cache.js';
 
 const slugParamSchema = z.object({ slug: z.string().trim().toLowerCase().min(1).max(120) });
 const jobPageSchema = z.object({
@@ -29,6 +30,7 @@ export class PublicJobsController {
   constructor(private readonly jobs: PublicJobsService) {}
 
   @Get()
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({
     summary: 'Search open jobs',
     description:
@@ -99,6 +101,7 @@ export class PublicJobsController {
   }
 
   @Get(':slug')
+  @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({
     summary: 'One open job, with its destination and category',
     description: 'A draft, closed, archived, deleted, expired or full job answers 404.',

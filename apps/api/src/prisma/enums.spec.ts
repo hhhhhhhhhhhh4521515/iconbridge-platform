@@ -2,6 +2,7 @@ import {
   APPLICATION_STATUSES,
   DOCUMENT_TYPES,
   EDUCATION_LEVELS,
+  EMAIL_STATUSES,
   EMAIL_TOKEN_TYPES,
   GENDERS,
   HISTORICAL_METRICS,
@@ -26,11 +27,12 @@ describe('Prisma enums match packages/shared', () => {
     ['SalaryPeriod', prismaEnums.SalaryPeriod, SALARY_PERIODS],
     ['ApplicationStatus', prismaEnums.ApplicationStatus, APPLICATION_STATUSES],
     ['HistoricalMetric', prismaEnums.HistoricalMetric, HISTORICAL_METRICS],
+    ['EmailStatus', prismaEnums.EmailStatus, EMAIL_STATUSES],
   ] as const)('%s', (_name, prismaEnum, shared) => {
     expect(Object.values(prismaEnum)).toEqual([...shared]);
   });
 
   it('covers every enum of the schema', () => {
-    expect(Object.keys(prismaEnums)).toHaveLength(10);
+    expect(Object.keys(prismaEnums)).toHaveLength(11);
   });
 });
