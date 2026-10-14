@@ -3,8 +3,12 @@ import { DEFAULT_LOCALE, LOCALES } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { localizedUrl } from '@/lib/seo';
 
-/** Rebuilt at most every 10 minutes: new jobs appear, closed ones disappear. */
-export const revalidate = 600;
+/**
+ * Built when it is asked for, from the cached list of jobs (which the back office
+ * refreshes when a job changes). Not at build time: an image is built without the API,
+ * and its sitemap would list no job until the first refresh.
+ */
+export const dynamic = 'force-dynamic';
 
 const STATIC_PATHS = ['', '/jobs', '/success-stories', '/about', '/contact', '/privacy', '/terms'];
 
