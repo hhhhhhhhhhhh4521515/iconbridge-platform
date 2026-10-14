@@ -10,7 +10,7 @@
 // `Secure` cookie received over plain http://localhost (Chromium and Firefox make an
 // exception for localhost), so over http nobody would stay signed in.
 import { execFileSync, spawn } from 'node:child_process';
-import { createWriteStream, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
+import { createWriteStream, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import { createRequire } from 'node:module';
@@ -153,8 +153,18 @@ async function ready(url, name) {
   throw new Error(`${name} did not start`);
 }
 
+/**
+ * The web app keeps API answers on disk. They hold addresses of pictures: http ones
+ * written by a run on the host must not be served here, nor the https ones of this
+ * run on the host afterwards.
+ */
+const forgetCachedData = () => {
+  rmSync(path.join(root, 'apps/web/.next/cache/fetch-cache'), { recursive: true, force: true });
+};
+
 let code = 1;
 try {
+  forgetCachedData();
   // Every test signs in from the same address: without this the sign-in limit (5 a
   // minute) makes the run wait most of its time. Refused when NODE_ENV=production.
   start('api', 'node', ['dist/main.js'], 'apps/api', {
@@ -194,5 +204,6 @@ try {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
 } finally {
   stop();
+  forgetCachedData();
 }
 process.exit(code);

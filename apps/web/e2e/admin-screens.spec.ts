@@ -85,6 +85,8 @@ test.describe('back office: the other screens', () => {
   test('home slides: a slide is created, hidden, edited and deleted, and the site follows', async ({
     browser,
   }) => {
+    // Several pages of the site are loaded again and again in a second browser: slow in WebKit.
+    test.setTimeout(120_000);
     const admin = await adminSession(browser);
     const page = await admin.newPage();
     const title = `E2E slide ${STAMP} ${tag()}`;
@@ -160,6 +162,8 @@ test.describe('back office: the other screens', () => {
   test('destinations and categories: an entry is added, renamed and deleted, and the site follows', async ({
     browser,
   }) => {
+    // Several pages of the site are loaded again and again in a second browser: slow in WebKit.
+    test.setTimeout(120_000);
     const admin = await adminSession(browser);
     const page = await admin.newPage();
     const suffix = tag() === 'admin' ? 'A' : tag().slice(0, 1).toUpperCase();
