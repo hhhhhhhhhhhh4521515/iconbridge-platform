@@ -546,6 +546,6 @@ Last step before the deployment work: find what a security reviewer and a QA lea
 | Done when: no high or critical finding remains | Yes for what ships. One high advisory without a fix remains in a development-only lint tool (documented) |
 | Done when: all test suites are green           | Yes                                                                                                      |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/12>
 
 **Remaining**: Dockerfiles, Terraform, CI/CD with these checks, alerting, the decision on malware scanning (Microsoft Defender for Storage), legal review of the retention periods and policy texts, a load test on Azure.
