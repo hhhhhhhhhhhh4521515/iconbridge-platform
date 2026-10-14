@@ -1,0 +1,16 @@
+{
+  // Compiles the seed (and what it imports from src/) to JavaScript for the migration
+  // image, which runs it with plain `node`. See apps/api/Dockerfile.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist-seed",
+    "types": ["node"],
+    "noEmit": false,
+    "declaration": false,
+    "sourceMap": false,
+    "incremental": false
+  },
+  "include": ["prisma/seed.ts", "prisma/seed/**/*.ts"],
+  "exclude": ["node_modules", "dist", "dist-seed", "test", "**/*.spec.ts"]
+}
