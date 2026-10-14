@@ -244,7 +244,8 @@ describe('GDPR: export and erasure (e2e)', () => {
           where: { id: candidate.profileId },
         }),
       });
-      for (const personal of ['amira', 'Amira', '+21612345678', 'Tunis', 'FAKE1234567', '567']) {
+      // The masked number too ("*****567"); not the bare digits, which a random id may contain.
+      for (const personal of ['amira', 'Amira', '+21612345678', 'Tunis', 'FAKE1234567', '*567']) {
         expect(everything).not.toContain(personal);
       }
     });
