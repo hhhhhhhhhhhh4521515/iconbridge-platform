@@ -13,6 +13,19 @@ describe('settings', () => {
     expect(settingSchemas[key].safeParse(DEFAULT_SETTINGS[key]).success).toBe(true);
   });
 
+  it('ships no placeholder contact details: the site shows nothing until they are set', () => {
+    for (const key of [
+      'CONTACT_EMAIL',
+      'CONTACT_PHONE',
+      'CONTACT_WHATSAPP',
+      'CONTACT_ADDRESS',
+    ] as const) {
+      expect(DEFAULT_SETTINGS[key]).toBe('');
+    }
+    expect(settingSchemas.CONTACT_EMAIL.safeParse('hello@agency.test').success).toBe(true);
+    expect(settingSchemas.CONTACT_EMAIL.safeParse('not-an-email').success).toBe(false);
+  });
+
   it('rejects a negative cooldown and a non-integer value', () => {
     expect(settingSchemas.REAPPLY_COOLDOWN_MONTHS.safeParse(-1).success).toBe(false);
     expect(settingSchemas.REAPPLY_COOLDOWN_MONTHS.safeParse(1.5).success).toBe(false);
