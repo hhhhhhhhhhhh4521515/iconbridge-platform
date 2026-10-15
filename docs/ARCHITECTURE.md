@@ -319,6 +319,7 @@ These are written by hand in the migration SQL, because Prisma cannot express th
 | `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                 |
 | `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`                                                                             |
 | `documents`                        | `size_bytes > 0`                                                                                                                      |
+| `email_outbox`                     | `priority` between 1 and 3                                                                                                            |
 
 Rules that need the current date or a setting (18 years or older, passport expiry, re-application cooldown, automatic closing of jobs) belong to the API and arrive with the features.
 
@@ -334,6 +335,8 @@ Indexes worth knowing:
 | `applications (applied_at DESC)`                       | Back-office list of applications, newest first                     |
 | `users (role, deleted_at)`                             | Back-office lists of candidates and of staff accounts              |
 | `email_outbox (status, next_attempt_at)`               | Emails due for delivery                                            |
+| `email_outbox (status, priority, next_attempt_at)`     | Emails due, most urgent first                                      |
+| `email_outbox (template, sent_at)`                     | Job alerts sent in the last hour (half-quota cap)                  |
 
 The `simple` configuration does no stemming: "welders" does not match "welder". It was chosen because offers may be written in English, French or Arabic and a generated column takes one fixed configuration.
 
@@ -466,15 +469,17 @@ The full list of protections, with the test behind each, is in [SECURITY.md](SEC
 
 **Outbox.** `mail.send()` only inserts a row in `email_outbox` (template, language, and the address and variables encrypted with `FieldCipher`) and returns: a request never waits for SMTP, and a bulk change of 100 applications answers at once. Delivery happens afterwards:
 
-| Step            | Rule                                                                                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| First attempt   | Right after the request, in the background of the same process (`MAIL_DELIVERY=background`), three emails at a time over pooled SMTP connections              |
-| Scheduled task  | `send-emails`, every minute: sends what is due, whatever process wrote it                                                                                     |
-| Failure         | Tried again after 1, 2, 4… minutes, at most every 6 hours, 20 attempts (about three days), then marked `FAILED`                                               |
-| Several runners | A row is claimed with a two-minute lease before it is sent, so two runners never send the same email; a runner that dies frees it                             |
-| After sending   | The content is erased at once; the row is removed after 30 days                                                                                               |
-| Shutdown        | The emails being sent are finished and the SMTP connections closed, so the task command exits and no email leaves twice                                       |
-| Over quota      | The transport throws `MailThrottledError` (Azure 429): the email waits as long as asked without spending an attempt, and the process sends nothing until then |
+| Step            | Rule                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First attempt   | Right after the request, in the background of the same process (`MAIL_DELIVERY=background`), three emails at a time over pooled SMTP connections                                                                                                                                                                                                                                                                  |
+| Scheduled task  | `send-emails`, every minute: sends what is due, whatever process wrote it                                                                                                                                                                                                                                                                                                                                         |
+| Failure         | Tried again after 1, 2, 4… minutes, at most every 6 hours, 20 attempts (about three days), then marked `FAILED`                                                                                                                                                                                                                                                                                                   |
+| Several runners | A row is claimed with a two-minute lease before it is sent, so two runners never send the same email; a runner that dies frees it                                                                                                                                                                                                                                                                                 |
+| After sending   | The content is erased at once; the row is removed after 30 days                                                                                                                                                                                                                                                                                                                                                   |
+| Shutdown        | The emails being sent are finished and the SMTP connections closed, so the task command exits and no email leaves twice                                                                                                                                                                                                                                                                                           |
+| Priorities      | `EMAIL_PRIORITY` (`mail-priority.ts`), stored in `email_outbox.priority`: 1 account access (verification, password reset, invitation, account exists), 2 applications (received, status, correction) and other awaited emails (job alert confirmation, retention warning), 3 bulk (job alerts, recruiter notices, contact messages). A run fetches three due rows at a time, most urgent first, then oldest first |
+| Job-alert cap   | With `EMAIL_HOURLY_QUOTA` set (10 in Azure), job alerts sent or being sent in the last 60 minutes never exceed half of it; counted and claimed under an advisory lock, so replicas and the task job share the cap. Other emails are not held back                                                                                                                                                                 |
+| Over quota      | The transport throws `MailThrottledError` (Azure 429): the email waits as long as asked without spending an attempt, and the process sends nothing until then                                                                                                                                                                                                                                                     |
 
 A status change keeps the id of its email: undoing the change cancels an email that has not left yet, or sends a correction if it has. `MAIL_DELIVERY=inline` (tests) sends during the request.
 
