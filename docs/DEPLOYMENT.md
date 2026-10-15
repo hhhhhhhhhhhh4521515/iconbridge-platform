@@ -186,6 +186,145 @@ Container Apps sends SIGTERM to process 1, then SIGKILL after the grace period.
 - **API**: stops accepting requests, finishes those in progress and the emails being sent, closes the SMTP and database connections, exits with 0. Measured locally: 0.6 s.
 - **Web**: Next.js stops accepting requests, waits for those in progress, then exits with 143 (128 + SIGTERM), on purpose.
 
+## Runbook: Azure with Terraform
+
+The infrastructure is in `infra/terraform` (see [ADR-013](adr/ADR-013-azure-infrastructure.md) and the diagram in [ARCHITECTURE.md](ARCHITECTURE.md#azure-infrastructure)). Every command runs from the repository root, signed in with `az login`; the Make targets load `.azure-context`.
+
+Names below are those of production in Italy North: resource group `rg-iconbridge-prod`, registry `acriconbridgeproditn`, vault `kv-iconbridge-prod-itn`, apps `ca-iconbridge-api-prod-itn` and `ca-iconbridge-web-prod-itn`, jobs `caj-iconbridge-migrate-prod-itn` and `caj-iconbridge-tasks-prod-itn`.
+
+### 1. State storage (once)
+
+```bash
+echo 'owner = "you@example.com"' > infra/terraform/bootstrap/terraform.tfvars
+make tf-bootstrap
+```
+
+Creates `rg-iconbridge-tfstate` and the storage account `sticonbridgetfstateitn` (container `tfstate`, versioning, soft delete, no account key). Its own state stays in `infra/terraform/bootstrap/terraform.tfstate` on this machine (git-ignored): keep a copy somewhere safe.
+
+### 2. Infrastructure
+
+```bash
+cp infra/terraform/envs/prod/terraform.tfvars.example infra/terraform/envs/prod/terraform.tfvars
+# owner_email, admin_ip_addresses (curl -s https://api.ipify.org), mail_from
+make tf-init ENV=prod
+make tf-plan ENV=prod      # read the plan
+make tf-apply ENV=prod     # only after approval
+terraform -chdir=infra/terraform/envs/prod output
+```
+
+The apps start with Microsoft's public placeholder images and scale to zero; nothing runs yet.
+
+### 3. External secrets
+
+The API refuses the Turnstile test keys and SMTP without TLS in production. Four secrets are created with the value `CHANGE_ME` and must be set by hand: `smtp-user`, `smtp-password`, `turnstile-site-key`, `turnstile-secret-key` (and `ghcr-pull-token` with `registry_type = "ghcr"`).
+
+**Brevo (SMTP, free plan: 300 emails a day)**
+
+1. Open <https://www.brevo.com>, choose **Sign up free**, create the account and confirm it from the email Brevo sends.
+2. Fill in the profile Brevo asks for (name, company, address): sending stays blocked until it is complete.
+3. Top right, open the account menu, then **Senders, Domains & Dedicated IPs** → **Senders** → **Add a sender**. Name `IconBridge Jobs`, email: the address in `mail_from`. Confirm it with the code or link Brevo sends to that address.
+4. Account menu → **SMTP & API** → tab **SMTP**. Note the **Login** (an address like `…@smtp-brevo.com`). Server `smtp-relay.brevo.com` and port `587` are already the Terraform defaults.
+5. **Generate a new SMTP key**, name it `iconbridge-prod`, copy it at once (it is shown only once). This is the SMTP password.
+
+Later, with a domain of your own: **Senders, Domains & Dedicated IPs** → **Domains** → authenticate it (DKIM, DMARC records) so emails do not land in spam.
+
+**Cloudflare Turnstile (free)**
+
+1. Open <https://dash.cloudflare.com/sign-up>, create the account and confirm the email.
+2. Left menu → **Turnstile** → **Add widget**.
+3. Widget name `IconBridge Jobs`. **Hostname management** → **Add hostnames**: the web app's address without `https://` (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`), and the custom domain if there is one.
+4. Widget mode **Managed**; pre-clearance **No**. **Create**.
+5. Copy the **Site Key** and the **Secret Key**.
+
+**Into Key Vault** (values are typed, not left in the shell history):
+
+```bash
+VAULT=kv-iconbridge-prod-itn
+for name in smtp-user smtp-password turnstile-site-key turnstile-secret-key; do
+  read -rsp "$name: " value; echo
+  az keyvault secret set --vault-name $VAULT --name $name --value "$value" --output none
+done
+unset value
+```
+
+Terraform ignores these values afterwards. A Container App reads its secrets when a revision starts: after changing one, restart it (`az containerapp revision restart`, or deploy a new image).
+
+### 4. Images
+
+```bash
+OUT=infra/terraform/envs/prod
+REGISTRY=$(terraform -chdir=$OUT output -raw registry_login_server)
+SITE=https://$(terraform -chdir=$OUT output -raw web_default_fqdn)
+SITE_KEY=$(az keyvault secret show --vault-name kv-iconbridge-prod-itn --name turnstile-site-key --query value -o tsv)
+REF=$(git rev-parse --short HEAD); NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+az acr login --name acriconbridgeproditn
+docker build -f apps/api/Dockerfile -t $REGISTRY/iconbridge-api:$REF --build-arg VCS_REF=$REF --build-arg BUILD_DATE=$NOW .
+docker build -f apps/api/Dockerfile --target migrate -t $REGISTRY/iconbridge-migrate:$REF --build-arg VCS_REF=$REF --build-arg BUILD_DATE=$NOW .
+docker build -f apps/web/Dockerfile -t $REGISTRY/iconbridge-web:$REF --build-arg VCS_REF=$REF --build-arg BUILD_DATE=$NOW \
+  --build-arg NEXT_PUBLIC_SITE_URL=$SITE --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=$SITE_KEY .
+for image in iconbridge-api iconbridge-migrate iconbridge-web; do docker push $REGISTRY/$image:$REF; done
+```
+
+### 5. Migrate, then deploy
+
+```bash
+RG=rg-iconbridge-prod
+az containerapp job update -g $RG -n caj-iconbridge-migrate-prod-itn --image $REGISTRY/iconbridge-migrate:$REF
+az containerapp job start -g $RG -n caj-iconbridge-migrate-prod-itn
+az containerapp job execution list -g $RG -n caj-iconbridge-migrate-prod-itn --query "[0].properties.status" -o tsv   # wait for Succeeded
+
+az containerapp update -g $RG -n ca-iconbridge-api-prod-itn --image $REGISTRY/iconbridge-api:$REF
+az containerapp update -g $RG -n ca-iconbridge-web-prod-itn --image $REGISTRY/iconbridge-web:$REF
+az containerapp job update -g $RG -n caj-iconbridge-tasks-prod-itn --image $REGISTRY/iconbridge-api:$REF
+```
+
+The logs of a job execution are in Log Analytics (`ContainerAppConsoleLogs_CL`), or `az containerapp job logs show`.
+
+### 6. Verify
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' $SITE/en           # 200 (the first request wakes both apps)
+curl -s $SITE/api/health/ready                              # {"status":"ok"}: the API and its database
+make tf-plan ENV=prod                                       # "No changes"
+```
+
+Then, in a browser: register, upload a CV, and check that the file is in the storage:
+
+```bash
+az storage blob list --auth-mode login --account-name sticonbridgeproditn -c candidate-documents --query "[].name" -o tsv
+```
+
+**First super admin**: the address is `owner_email`; the password is in the vault. Sign in, then change it in the account settings at once.
+
+```bash
+az keyvault secret show --vault-name kv-iconbridge-prod-itn --name seed-admin-password --query value -o tsv
+```
+
+**TRUST_PROXY_HOPS**: after a sign-in, the back office's audit log shows the address of the request. It must be your public address. If it is an address of Azure, raise `trust_proxy_hops`; if you could choose it with an `X-Forwarded-For` header, lower it.
+
+### Routine deployment
+
+Steps 4 and 5 with a new commit, then `make tf-plan ENV=prod` to confirm Terraform sees no drift. Migrations must work with the API still running (see CLAUDE.md).
+
+### After the free year of the registry
+
+Set `registry_type = "ghcr"`, `ghcr_owner` and `ghcr_username` in `terraform.tfvars`; create a GitHub token with only `read:packages`; apply; set the secret `ghcr-pull-token`; push the images to `ghcr.io/<owner>/…`; deploy with the new names. Then the registry can be removed from the plan.
+
+### Costs
+
+| Resource                               | List price (Italy North)             | Expected                                                                                                     |
+| -------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| PostgreSQL B1ms, 32 GB, 7-day backups  | ~0.023 USD/hour + storage            | 0 within the free 750 h and 32 GB a month                                                                    |
+| Container Registry Standard            | 0.67 USD/day (about 20 USD a month)  | 0 within the free year, then ghcr                                                                            |
+| Container Apps (apps and jobs)         | per vCPU-second, GiB-second, request | 0 within the monthly free grant (scale to zero; the tasks job uses about 22 000 vCPU-seconds of the 180 000) |
+| Log Analytics and Application Insights | 2.99 USD/GB after 5 GB a month       | 0: capped at 0.15 GB a day                                                                                   |
+| Storage (files and state)              | ~0.018 USD/GB a month                | a few cents                                                                                                  |
+| Key Vault                              | 0.03 USD per 10 000 operations       | a few cents                                                                                                  |
+| Budget, identity, resource groups      | free                                 | 0                                                                                                            |
+
+The budget (15 USD a month) emails `owner_email` at 50, 80 and 100 %. The subscription's spending limit stops the resources when the credit is spent.
+
 ## Troubleshooting
 
 | Symptom                                                                      | Cause and fix                                                                    |
