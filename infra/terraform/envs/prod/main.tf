@@ -125,6 +125,14 @@ module "storage" {
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
 }
 
+module "email" {
+  source              = "../../modules/email"
+  name_suffix         = local.name_suffix
+  resource_group_name = azurerm_resource_group.this.name
+  tags                = local.tags
+  apps_principal_id   = module.identity.principal_id
+}
+
 module "keyvault" {
   source                = "../../modules/keyvault"
   name_suffix           = local.name_suffix
@@ -151,9 +159,10 @@ module "keyvault" {
     "appinsights-connection"  = module.observability.application_insights_connection_string
   }
 
-  # Set by hand after the first apply (docs/DEPLOYMENT.md, "External secrets").
+  # Set by hand after the first apply (docs/DEPLOYMENT.md, "External secrets"). Email needs
+  # none: the API sends through Azure Communication Services with its managed identity.
   external_secrets = concat(
-    ["smtp-user", "smtp-password", "turnstile-site-key", "turnstile-secret-key"],
+    ["turnstile-site-key", "turnstile-secret-key"],
     var.registry_type == "ghcr" ? ["ghcr-pull-token"] : [],
   )
 }
@@ -195,13 +204,14 @@ module "container_apps" {
     AZURE_STORAGE_CONNECTION_STRING = ""
     PUBLIC_MEDIA_BASE_URL           = module.storage.public_media_base_url
     # The Azure SDK picks the user-assigned identity with this id.
-    AZURE_CLIENT_ID   = module.identity.client_id
-    SMTP_HOST         = var.smtp_host
-    SMTP_PORT         = tostring(var.smtp_port)
-    MAIL_FROM         = var.mail_from
-    MAIL_DELIVERY     = "background"
-    TRUST_PROXY_HOPS  = tostring(var.trust_proxy_hops)
-    SCHEDULER_ENABLED = "false"
+    AZURE_CLIENT_ID = module.identity.client_id
+    # Azure Communication Services Email, with the managed identity (AZURE_CLIENT_ID).
+    EMAIL_TRANSPORT              = "azure"
+    AZURE_COMMUNICATION_ENDPOINT = module.email.endpoint
+    MAIL_FROM                    = module.email.sender_address
+    MAIL_DELIVERY                = "background"
+    TRUST_PROXY_HOPS             = tostring(var.trust_proxy_hops)
+    SCHEDULER_ENABLED            = "false"
   }
 
   api_secret_env = {
@@ -210,8 +220,6 @@ module "container_apps" {
     PASSPORT_ENCRYPTION_KEY               = "passport-encryption-key"
     REVALIDATE_SECRET                     = "revalidate-secret"
     TURNSTILE_SECRET_KEY                  = "turnstile-secret-key"
-    SMTP_USER                             = "smtp-user"
-    SMTP_PASSWORD                         = "smtp-password"
     APPLICATIONINSIGHTS_CONNECTION_STRING = "appinsights-connection"
   }
 
@@ -232,8 +240,9 @@ module "container_apps" {
     SEED_ADMIN_PASSWORD     = "seed-admin-password"
   }
 
-  # The Container Apps read Key Vault with the identity: its role must exist first.
-  depends_on = [module.keyvault, module.registry]
+  # The Container Apps read Key Vault, pull images and send emails with the identity: its
+  # roles must exist first.
+  depends_on = [module.keyvault, module.registry, module.email]
 }
 
 # ---------------------------------------------------------------------------

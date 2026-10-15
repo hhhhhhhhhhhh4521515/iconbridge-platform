@@ -15,8 +15,8 @@ enable_budget     = true
 budget_amount     = 15
 budget_start_date = "2026-10-01T00:00:00Z"
 
-# The sender address verified at Brevo.
-mail_from = "IconBridge Jobs <you@example.com>"
+# Emails leave from DoNotReply@<Azure-managed domain> (Azure Communication Services).
+mail_display_name = "IconBridge Recruitment"
 
 enable_custom_domain = false
 # custom_domain      = "jobs.example.com"

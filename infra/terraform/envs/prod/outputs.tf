@@ -63,3 +63,25 @@ output "managed_certificate_name" {
   description = "With a custom domain: its managed certificate, to bind once (docs/DEPLOYMENT.md, \"Custom domain\")."
   value       = module.container_apps.managed_certificate_name
 }
+
+output "mail_sender" {
+  description = "Sender of the emails (MAIL_FROM of the API)."
+  value       = module.email.sender_address
+}
+
+output "communication_endpoint" {
+  description = "Endpoint of Azure Communication Services (AZURE_COMMUNICATION_ENDPOINT of the API)."
+  value       = module.email.endpoint
+}
+
+output "mail_display_name_command" {
+  description = "Run once after the first apply: gives the sender its display name (Terraform cannot, see modules/email)."
+  value = join(" ", [
+    "az communication email domain sender-username update",
+    "--resource-group ${azurerm_resource_group.this.name}",
+    "--email-service-name ${module.email.email_service_name}",
+    "--domain-name ${module.email.domain_name}",
+    "--sender-username DoNotReply",
+    "--display-name '${var.mail_display_name}'",
+  ])
+}

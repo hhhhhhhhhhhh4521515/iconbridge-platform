@@ -98,22 +98,10 @@ variable "custom_domain" {
   }
 }
 
-variable "mail_from" {
-  description = "Sender of the emails. Its address must be verified at the mail provider (Brevo)."
+variable "mail_display_name" {
+  description = "Display name of the sender DoNotReply@<Azure-managed domain>, set once with az after the first apply (docs/DEPLOYMENT.md)."
   type        = string
-  default     = "IconBridge Jobs <no-reply@iconbridge.example>"
-}
-
-variable "smtp_host" {
-  description = "SMTP server of the mail provider (Brevo)."
-  type        = string
-  default     = "smtp-relay.brevo.com"
-}
-
-variable "smtp_port" {
-  description = "587: STARTTLS, which the API requires in production."
-  type        = number
-  default     = 587
+  default     = "IconBridge Recruitment"
 }
 
 variable "trust_proxy_hops" {
