@@ -55,7 +55,7 @@ Structure of `apps/api/src`:
 | `common/`                                                | `AppException`, exception filter, zod validation pipe, OpenAPI helpers, logger configuration             |
 | `auth/`                                                  | Auth endpoints, sessions, tokens, password policy, Turnstile, guards and decorators                      |
 | `admin/`                                                 | Admin accounts, audit interceptor and audit log                                                          |
-| `mail/`                                                  | Nodemailer transport, translated MJML templates                                                          |
+| `mail/`                                                  | Outbox, translated MJML templates, transports: Nodemailer (SMTP) and Azure Communication Services        |
 | `jobs/`                                                  | Public job search, admin job management, cover images, automatic closing                                 |
 | `catalog/`                                               | Destinations, categories and home-page counters, public and admin                                        |
 | `storage/`                                               | `StorageService` interface and its Azure Blob implementation (public media, private candidate documents) |
@@ -462,18 +462,19 @@ The full list of protections, with the test behind each, is in [SECURITY.md](SEC
 
 ### Email
 
-`MailService` writes every email to an outbox and delivers it through Nodemailer (SMTP, STARTTLS required in production). Four templates (verify email, reset password, invitation, account exists) exist in English, French and Arabic; one MJML layout renders them, right-to-left for Arabic. The language is `users.locale`. Links open `WEB_ORIGIN/<locale>/verify-email`, `/reset-password`, `/set-password` and `/forgot-password`.
+`MailService` writes every email to an outbox and delivers it through a transport chosen by `EMAIL_TRANSPORT`: Nodemailer (`smtp`: Mailpit locally, STARTTLS required in production) or Azure Communication Services Email (`azure`: production, managed identity, no password; [ADR-014](adr/ADR-014-email-azure-communication-services.md)). Four templates (verify email, reset password, invitation, account exists) exist in English, French and Arabic; one MJML layout renders them, right-to-left for Arabic. The language is `users.locale`. Links open `WEB_ORIGIN/<locale>/verify-email`, `/reset-password`, `/set-password` and `/forgot-password`.
 
 **Outbox.** `mail.send()` only inserts a row in `email_outbox` (template, language, and the address and variables encrypted with `FieldCipher`) and returns: a request never waits for SMTP, and a bulk change of 100 applications answers at once. Delivery happens afterwards:
 
-| Step            | Rule                                                                                                                                             |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| First attempt   | Right after the request, in the background of the same process (`MAIL_DELIVERY=background`), three emails at a time over pooled SMTP connections |
-| Scheduled task  | `send-emails`, every minute: sends what is due, whatever process wrote it                                                                        |
-| Failure         | Tried again after 1, 2, 4… minutes, at most every 6 hours, 20 attempts (about three days), then marked `FAILED`                                  |
-| Several runners | A row is claimed with a two-minute lease before it is sent, so two runners never send the same email; a runner that dies frees it                |
-| After sending   | The content is erased at once; the row is removed after 30 days                                                                                  |
-| Shutdown        | The emails being sent are finished and the SMTP connections closed, so the task command exits and no email leaves twice                          |
+| Step            | Rule                                                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First attempt   | Right after the request, in the background of the same process (`MAIL_DELIVERY=background`), three emails at a time over pooled SMTP connections              |
+| Scheduled task  | `send-emails`, every minute: sends what is due, whatever process wrote it                                                                                     |
+| Failure         | Tried again after 1, 2, 4… minutes, at most every 6 hours, 20 attempts (about three days), then marked `FAILED`                                               |
+| Several runners | A row is claimed with a two-minute lease before it is sent, so two runners never send the same email; a runner that dies frees it                             |
+| After sending   | The content is erased at once; the row is removed after 30 days                                                                                               |
+| Shutdown        | The emails being sent are finished and the SMTP connections closed, so the task command exits and no email leaves twice                                       |
+| Over quota      | The transport throws `MailThrottledError` (Azure 429): the email waits as long as asked without spending an attempt, and the process sends nothing until then |
 
 A status change keeps the id of its email: undoing the change cancels an email that has not left yet, or sends a correction if it has. `MAIL_DELIVERY=inline` (tests) sends during the request.
 
@@ -922,7 +923,7 @@ The e2e suites create the database `<name>_test` next to the development one (or
 
 ## Azure infrastructure
 
-Written in Terraform (`infra/terraform`): a bootstrap for the remote state, seven modules, and `envs/prod`. Region `italynorth`, names `<type>-iconbridge-<env>-itn`. Choices and trade-offs: [ADR-013](adr/ADR-013-azure-infrastructure.md); runbook: [DEPLOYMENT.md](DEPLOYMENT.md).
+Written in Terraform (`infra/terraform`): a bootstrap for the remote state, eight modules, and `envs/prod`. Region `italynorth`, names `<type>-iconbridge-<env>-itn`. Choices and trade-offs: [ADR-013](adr/ADR-013-azure-infrastructure.md); runbook: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ```mermaid
 flowchart LR
@@ -940,33 +941,37 @@ flowchart LR
     ST[("sticonbridgeproditn<br/>candidate-documents, public-media")]
     ACR[("acriconbridgeproditn<br/>or ghcr.io")]
     LOG[("log / appi-iconbridge-prod-itn<br/>0.15 GB a day")]
+    ACS[("acs / ecs-iconbridge-prod-itn<br/>Communication Services Email<br/>Azure-managed domain, data in Europe")]
   end
   WEB -- "/api/v1/*" --> API
   API --> PG
   MIG --> PG
   TASKS --> PG
   API -- "files, signed links" --> ST
+  API & TASKS -- "emails" --> ACS
   U -- "public media, signed links" --> ST
   WEB & API & MIG & TASKS -. "identity" .-> ID
   ID -. "secrets" .-> KV
   ID -. "AcrPull" .-> ACR
+  ID -. "send email" .-> ACS
   CAE -. logs .-> LOG
 ```
 
-| Resource                    | Name                                | Size and rules                                                                                                                  |
-| --------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Resource group              | `rg-iconbridge-prod`                | Budget 15 USD/month, alerts at 50, 80, 100 %                                                                                    |
-| Log Analytics, App Insights | `log-…`, `appi-iconbridge-prod-itn` | 30 days, 0.15 GB/day cap, 25 % sampling                                                                                         |
-| Container registry          | `acriconbridgeproditn`              | Standard, admin user off, pull by identity (`registry_type = "ghcr"`: GitHub instead)                                           |
-| Managed identity            | `id-iconbridge-prod-itn`            | AcrPull, Key Vault Secrets User, Storage Blob Data Contributor and Delegator                                                    |
-| Key Vault                   | `kv-iconbridge-prod-itn`            | RBAC, purge protection, 7-day soft delete; generated and hand-set secrets                                                       |
-| PostgreSQL Flexible Server  | `psql-iconbridge-prod-itn`          | v16, B1ms, 32 GB, 7-day LRS backups, TLS 1.2, `pg_trgm`, firewall: Azure services + admin IP                                    |
-| Storage account             | `sticonbridgeproditn`               | LRS Hot, TLS 1.2, no account key, `public-media` public per blob, `candidate-documents` private, 7-day soft delete, access logs |
-| Container Apps environment  | `cae-iconbridge-prod-itn`           | Consumption, the only one allowed in the region (shared with any staging)                                                       |
-| Web app                     | `ca-iconbridge-web-prod-itn`        | External HTTPS, 0.25 vCPU / 0.5 GiB, probes `/api/health/live`                                                                  |
-| API                         | `ca-iconbridge-api-prod-itn`        | Internal, 0.5 vCPU / 1 GiB, probes `/health/live` and `/health/ready`, `SCHEDULER_ENABLED=false`                                |
-| Migration job               | `caj-iconbridge-migrate-prod-itn`   | Manual trigger, before each deployment                                                                                          |
-| Tasks job                   | `caj-iconbridge-tasks-prod-itn`     | `*/15 * * * *`, API image, `node dist/cli.js all`                                                                               |
+| Resource                    | Name                                | Size and rules                                                                                                                                                                          |
+| --------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resource group              | `rg-iconbridge-prod`                | Budget 15 USD/month, alerts at 50, 80, 100 %                                                                                                                                            |
+| Log Analytics, App Insights | `log-…`, `appi-iconbridge-prod-itn` | 30 days, 0.15 GB/day cap, 25 % sampling                                                                                                                                                 |
+| Container registry          | `acriconbridgeproditn`              | Standard, admin user off, pull by identity (`registry_type = "ghcr"`: GitHub instead)                                                                                                   |
+| Managed identity            | `id-iconbridge-prod-itn`            | AcrPull, Key Vault Secrets User, Storage Blob Data Contributor and Delegator, Communication and Email Service Owner (on `acs-…` only)                                                   |
+| Email                       | `ecs-…`, `acs-iconbridge-prod-itn`  | Azure-managed domain, sender `DoNotReply@<guid>.azurecomm.net` "IconBridge Recruitment", no tracking; 5 emails/min, 10/h ([ADR-014](adr/ADR-014-email-azure-communication-services.md)) |
+| Key Vault                   | `kv-iconbridge-prod-itn`            | RBAC, purge protection, 7-day soft delete; generated and hand-set secrets                                                                                                               |
+| PostgreSQL Flexible Server  | `psql-iconbridge-prod-itn`          | v16, B1ms, 32 GB, 7-day LRS backups, TLS 1.2, `pg_trgm`, firewall: Azure services + admin IP                                                                                            |
+| Storage account             | `sticonbridgeproditn`               | LRS Hot, TLS 1.2, no account key, `public-media` public per blob, `candidate-documents` private, 7-day soft delete, access logs                                                         |
+| Container Apps environment  | `cae-iconbridge-prod-itn`           | Consumption, the only one allowed in the region (shared with any staging)                                                                                                               |
+| Web app                     | `ca-iconbridge-web-prod-itn`        | External HTTPS, 0.25 vCPU / 0.5 GiB, probes `/api/health/live`                                                                                                                          |
+| API                         | `ca-iconbridge-api-prod-itn`        | Internal, 0.5 vCPU / 1 GiB, probes `/health/live` and `/health/ready`, `SCHEDULER_ENABLED=false`                                                                                        |
+| Migration job               | `caj-iconbridge-migrate-prod-itn`   | Manual trigger, before each deployment                                                                                                                                                  |
+| Tasks job                   | `caj-iconbridge-tasks-prod-itn`     | `*/15 * * * *`, API image, `node dist/cli.js all`                                                                                                                                       |
 
 ## Container images
 

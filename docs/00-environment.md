@@ -72,7 +72,7 @@ Italy North (Milan) is the first region in the preference order that the policy 
 
 All nine are `Registered`: Microsoft.App, Microsoft.ContainerRegistry, Microsoft.DBforPostgreSQL, Microsoft.KeyVault, Microsoft.Storage, Microsoft.OperationalInsights, Microsoft.Insights, Microsoft.ManagedIdentity, Microsoft.Network.
 
-Terraform must not try to register others: set `resource_provider_registrations = "none"` in the `azurerm` provider.
+Terraform must not try to register others: set `resource_provider_registrations = "none"` in the `azurerm` provider. `Microsoft.Communication` (email, ADR-014) is registered by hand with `az provider register` before the first apply.
 
 ### Identity for CI/CD: OIDC is possible
 

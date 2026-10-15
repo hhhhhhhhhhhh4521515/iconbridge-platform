@@ -127,16 +127,16 @@ Region, quotas, budget and the identity of the pipeline are in [00-environment.m
 
 ### Container Apps
 
-| Setting           | API                                            | Web                                    |
-| ----------------- | ---------------------------------------------- | -------------------------------------- |
-| Image             | `iconbridge-api:<commit>`                      | `iconbridge-web:<commit>`              |
-| Ingress           | Internal only, target port 4000                | External, HTTPS only, target port 3000 |
-| Liveness probe    | HTTP `GET /health/live`                        | HTTP `GET /en`                         |
-| Readiness probe   | HTTP `GET /health/ready` (checks the database) | HTTP `GET /en`                         |
-| Startup probe     | `GET /health/live`, up to 60 s                 | `GET /en`, up to 60 s                  |
-| Scale             | 0 to 3 replicas, HTTP rule                     | 0 to 3 replicas, HTTP rule             |
-| Termination grace | 30 s (longer than the emails in progress)      | 30 s                                   |
-| Identity          | Managed identity: Blob Storage, Key Vault      | —                                      |
+| Setting           | API                                                                       | Web                                    |
+| ----------------- | ------------------------------------------------------------------------- | -------------------------------------- |
+| Image             | `iconbridge-api:<commit>`                                                 | `iconbridge-web:<commit>`              |
+| Ingress           | Internal only, target port 4000                                           | External, HTTPS only, target port 3000 |
+| Liveness probe    | HTTP `GET /health/live`                                                   | HTTP `GET /en`                         |
+| Readiness probe   | HTTP `GET /health/ready` (checks the database)                            | HTTP `GET /en`                         |
+| Startup probe     | `GET /health/live`, up to 60 s                                            | `GET /en`, up to 60 s                  |
+| Scale             | 0 to 3 replicas, HTTP rule                                                | 0 to 3 replicas, HTTP rule             |
+| Termination grace | 30 s (longer than the emails in progress)                                 | 30 s                                   |
+| Identity          | Managed identity: Blob Storage, Key Vault, Communication Services (email) | —                                      |
 
 The browser never calls the API host: the web app forwards `/api/v1/*` to `API_INTERNAL_URL`, the internal address of the API app.
 
@@ -155,23 +155,23 @@ Secrets are Key Vault references in Container Apps, never plain values in the te
 
 **API** (`apps/api/.env.example` documents each variable):
 
-| Variable                                                            | Production value                                                                                      |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                                                          | `production` (set in the image)                                                                       |
-| `PORT`                                                              | `4000` (set in the image)                                                                             |
-| `WEB_ORIGIN`                                                        | Public address of the site, e.g. `https://jobs.example.com`                                           |
-| `WEB_INTERNAL_URL`                                                  | Internal address of the web app, for cache invalidation                                               |
-| `DATABASE_URL`                                                      | Secret. PostgreSQL Flexible Server, `sslmode=require`                                                 |
-| `AZURE_STORAGE_ACCOUNT_URL`                                         | `https://<account>.blob.core.windows.net` (managed identity); `AZURE_STORAGE_CONNECTION_STRING` empty |
-| `PUBLIC_MEDIA_BASE_URL`                                             | Public URL of the `public-media` container (or the CDN in front of it)                                |
-| `PASSPORT_ENCRYPTION_KEY`                                           | Secret. 32 bytes, base64. Losing it makes every stored passport number unreadable                     |
-| `JWT_ACCESS_SECRET`                                                 | Secret, at least 32 characters                                                                        |
-| `REVALIDATE_SECRET`                                                 | Secret, the same value in the web app                                                                 |
-| `TURNSTILE_SECRET_KEY`                                              | Secret. The real key (test keys are refused in production)                                            |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | The mail provider, port 587, STARTTLS (required in production)                                        |
-| `TRUST_PROXY_HOPS`                                                  | The proxies in front of the API (see below)                                                           |
-| `SCHEDULER_ENABLED`                                                 | `false`: the `tasks` job runs the tasks                                                               |
-| `MAIL_DELIVERY`                                                     | `background` (default)                                                                                |
+| Variable                                                       | Production value                                                                                                                                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NODE_ENV`                                                     | `production` (set in the image)                                                                                                                                                |
+| `PORT`                                                         | `4000` (set in the image)                                                                                                                                                      |
+| `WEB_ORIGIN`                                                   | Public address of the site, e.g. `https://jobs.example.com`                                                                                                                    |
+| `WEB_INTERNAL_URL`                                             | Internal address of the web app, for cache invalidation                                                                                                                        |
+| `DATABASE_URL`                                                 | Secret. PostgreSQL Flexible Server, `sslmode=require`                                                                                                                          |
+| `AZURE_STORAGE_ACCOUNT_URL`                                    | `https://<account>.blob.core.windows.net` (managed identity); `AZURE_STORAGE_CONNECTION_STRING` empty                                                                          |
+| `PUBLIC_MEDIA_BASE_URL`                                        | Public URL of the `public-media` container (or the CDN in front of it)                                                                                                         |
+| `PASSPORT_ENCRYPTION_KEY`                                      | Secret. 32 bytes, base64. Losing it makes every stored passport number unreadable                                                                                              |
+| `JWT_ACCESS_SECRET`                                            | Secret, at least 32 characters                                                                                                                                                 |
+| `REVALIDATE_SECRET`                                            | Secret, the same value in the web app                                                                                                                                          |
+| `TURNSTILE_SECRET_KEY`                                         | Secret. The real key (test keys are refused in production)                                                                                                                     |
+| `EMAIL_TRANSPORT`, `AZURE_COMMUNICATION_ENDPOINT`, `MAIL_FROM` | `azure`, the Communication Service's endpoint, `DoNotReply@<Azure-managed domain>`. No SMTP setting or password ([ADR-014](adr/ADR-014-email-azure-communication-services.md)) |
+| `TRUST_PROXY_HOPS`                                             | The proxies in front of the API (see below)                                                                                                                                    |
+| `SCHEDULER_ENABLED`                                            | `false`: the `tasks` job runs the tasks                                                                                                                                        |
+| `MAIL_DELIVERY`                                                | `background` (default)                                                                                                                                                         |
 
 **Migration job**: `DATABASE_URL`, `PASSPORT_ENCRYPTION_KEY`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` (secret; used only when no super admin exists yet). `NODE_ENV=production` is set in the image, so no sample data is ever written.
 
@@ -183,7 +183,7 @@ Secrets are Key Vault references in Container Apps, never plain values in the te
 
 Container Apps sends SIGTERM to process 1, then SIGKILL after the grace period.
 
-- **API**: stops accepting requests, finishes those in progress and the emails being sent, closes the SMTP and database connections, exits with 0. Measured locally: 0.6 s.
+- **API**: stops accepting requests, finishes those in progress and the emails being sent, closes the mail (SMTP locally) and database connections, exits with 0. Measured locally: 0.6 s.
 - **Web**: Next.js stops accepting requests, waits for those in progress, then exits with 143 (128 + SIGTERM), on purpose.
 
 ## Runbook: Azure with Terraform
@@ -205,7 +205,8 @@ Creates `rg-iconbridge-tfstate` and the storage account `sticonbridgetfstateitn`
 
 ```bash
 cp infra/terraform/envs/prod/terraform.tfvars.example infra/terraform/envs/prod/terraform.tfvars
-# owner_email, admin_ip_addresses (curl -s https://api.ipify.org), mail_from
+# owner_email, admin_ip_addresses (curl -s https://api.ipify.org)
+az provider register --namespace Microsoft.Communication --wait   # once, for the email resources
 make tf-init ENV=prod
 make tf-plan ENV=prod      # read the plan
 make tf-apply ENV=prod     # only after approval
@@ -214,19 +215,16 @@ terraform -chdir=infra/terraform/envs/prod output
 
 The apps start with Microsoft's public placeholder images and scale to zero; nothing runs yet.
 
+**Sender name of the emails** (once): Azure creates the sender `DoNotReply` with the managed domain, so Terraform cannot set its display name in the same apply. The command is in an output:
+
+```bash
+eval "$(terraform -chdir=infra/terraform/envs/prod output -raw mail_display_name_command)"
+terraform -chdir=infra/terraform/envs/prod output -raw mail_sender   # DoNotReply@<guid>.azurecomm.net
+```
+
 ### 3. External secrets
 
-The API refuses the Turnstile test keys and SMTP without TLS in production. Four secrets are created with the value `CHANGE_ME` and must be set by hand: `smtp-user`, `smtp-password`, `turnstile-site-key`, `turnstile-secret-key` (and `ghcr-pull-token` with `registry_type = "ghcr"`).
-
-**Brevo (SMTP, free plan: 300 emails a day)**
-
-1. Open <https://www.brevo.com>, choose **Sign up free**, create the account and confirm it from the email Brevo sends.
-2. Fill in the profile Brevo asks for (name, company, address): sending stays blocked until it is complete.
-3. Top right, open the account menu, then **Senders, Domains & Dedicated IPs** → **Senders** → **Add a sender**. Name `IconBridge Jobs`, email: the address in `mail_from`. Confirm it with the code or link Brevo sends to that address.
-4. Account menu → **SMTP & API** → tab **SMTP**. Note the **Login** (an address like `…@smtp-brevo.com`). Server `smtp-relay.brevo.com` and port `587` are already the Terraform defaults.
-5. **Generate a new SMTP key**, name it `iconbridge-prod`, copy it at once (it is shown only once). This is the SMTP password.
-
-Later, with a domain of your own: **Senders, Domains & Dedicated IPs** → **Domains** → authenticate it (DKIM, DMARC records) so emails do not land in spam.
+The API refuses the Turnstile test keys in production. Two secrets are created with the value `CHANGE_ME` and must be set by hand: `turnstile-site-key` and `turnstile-secret-key` (and `ghcr-pull-token` with `registry_type = "ghcr"`). Email needs no secret: the API sends through Azure Communication Services with its managed identity.
 
 **Cloudflare Turnstile (free)**
 
@@ -240,7 +238,7 @@ Later, with a domain of your own: **Senders, Domains & Dedicated IPs** → **Dom
 
 ```bash
 VAULT=kv-iconbridge-prod-itn
-for name in smtp-user smtp-password turnstile-site-key turnstile-secret-key; do
+for name in turnstile-site-key turnstile-secret-key; do
   read -rsp "$name: " value; echo
   az keyvault secret set --vault-name $VAULT --name $name --value "$value" --output none
 done
@@ -294,6 +292,10 @@ Then, in a browser: register, upload a CV, and check that the file is in the sto
 ```bash
 az storage blob list --auth-mode login --account-name sticonbridgeproditn -c candidate-documents --query "[].name" -o tsv
 ```
+
+**Email**: register with an address you can read. The verification email comes from `IconBridge Recruitment <DoNotReply@…azurecomm.net>`; look in the spam folder the first time. The outbox state is in the database (`email_outbox`), and the sends in the API logs (`Email sent: verify-email (en)`).
+
+**Email quota**: an Azure-managed domain sends at most 5 emails a minute and 10 an hour for the whole subscription, and this cannot be raised. Over it, Azure answers 429; the outbox waits as long as asked without spending an attempt (log `Email delayed`). A burst of job alerts therefore leaves over several hours. For more, connect a verified custom domain to the Email Communication Service (DNS records for SPF and DKIM) and ask for a quota increase ([ADR-014](adr/ADR-014-email-azure-communication-services.md)).
 
 **First super admin**: the address is `owner_email`; the password is in the vault. Sign in, then change it in the account settings at once.
 
