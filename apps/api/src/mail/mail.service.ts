@@ -2,12 +2,12 @@ import { Inject, Injectable, Logger, type OnModuleDestroy } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import type { Locale } from '@iconbridge/shared';
 import mjml2html from 'mjml';
-import type { Transporter } from 'nodemailer';
 import { Clock } from '../common/clock/clock.js';
 import { FieldCipher } from '../common/crypto/field-cipher.js';
 import type { Env } from '../config/env.js';
 import type { EmailStatus, Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { MailThrottledError, type MailTransport } from './mail-transport.js';
 import {
   emailContent,
   emailMjml,
@@ -70,7 +70,7 @@ export class MailService implements OnModuleDestroy {
   private readonly inline: boolean;
 
   constructor(
-    @Inject(MAIL_TRANSPORT) private readonly transport: Transporter,
+    @Inject(MAIL_TRANSPORT) private readonly transport: MailTransport,
     config: ConfigService<Env, true>,
     private readonly prisma: PrismaService,
     private readonly cipher: FieldCipher,
@@ -186,21 +186,30 @@ export class MailService implements OnModuleDestroy {
    * is taken by one of them only.
    */
   async sendDue(limit = OUTBOX_BATCH): Promise<{ sent: number; retried: number; failed: number }> {
+    const report = { sent: 0, retried: 0, failed: 0 };
+    if (this.clock.now().getTime() < this.pausedUntil) {
+      return report;
+    }
     const due = await this.prisma.emailOutbox.findMany({
       where: { status: 'PENDING', nextAttemptAt: { lte: this.clock.now() } },
       orderBy: [{ nextAttemptAt: 'asc' }, { createdAt: 'asc' }],
       take: limit,
       select: { id: true },
     });
-    const report = { sent: 0, retried: 0, failed: 0 };
     for (let start = 0; start < due.length; start += OUTBOX_CONCURRENCY) {
       const outcomes = await Promise.all(
         due.slice(start, start + OUTBOX_CONCURRENCY).map(({ id }) => this.attempt(id)),
       );
       for (const outcome of outcomes) {
-        if (outcome !== 'skipped') {
+        if (outcome === 'throttled') {
+          report.retried += 1;
+        } else if (outcome !== 'skipped') {
           report[outcome] += 1;
         }
+      }
+      // The mail service asked to wait: the rest of the batch would be refused too.
+      if (outcomes.includes('throttled')) {
+        break;
       }
     }
     return report;
@@ -216,8 +225,13 @@ export class MailService implements OnModuleDestroy {
   }
 
   /** One attempt for one row. The row is taken first, so two runners never send the same email. */
-  private async attempt(id: string): Promise<'sent' | 'retried' | 'failed' | 'skipped'> {
+  private async attempt(
+    id: string,
+  ): Promise<'sent' | 'retried' | 'throttled' | 'failed' | 'skipped'> {
     const now = this.clock.now();
+    if (now.getTime() < this.pausedUntil) {
+      return 'skipped';
+    }
     const taken = await this.prisma.emailOutbox.updateMany({
       where: { id, status: 'PENDING', nextAttemptAt: { lte: now } },
       // Until this moment the row is ours; if the process dies, it becomes due again.
@@ -248,6 +262,9 @@ export class MailService implements OnModuleDestroy {
       this.logger.log(`Email sent: ${row.template} (${row.locale})`);
       return 'sent';
     } catch (error) {
+      if (error instanceof MailThrottledError) {
+        return this.postpone(row, error.retryAfterMs);
+      }
       const name = error instanceof Error ? error.name : 'unknown error';
       const abandoned = row.attempts >= OUTBOX_MAX_ATTEMPTS;
       await this.prisma.emailOutbox.update({
@@ -266,6 +283,34 @@ export class MailService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * The mail service refused because of its sending quota (Azure-managed domain: 5 a
+   * minute, 10 an hour). Not the email's fault: the attempt is given back, the email waits
+   * as long as asked, and this process sends nothing until then.
+   */
+  private async postpone(
+    row: { id: string; template: string; locale: string },
+    waitMs: number,
+  ): Promise<'throttled'> {
+    const until = this.clock.now().getTime() + waitMs;
+    this.pausedUntil = Math.max(this.pausedUntil, until);
+    await this.prisma.emailOutbox.update({
+      where: { id: row.id },
+      data: {
+        attempts: { decrement: 1 },
+        lastError: 'MailThrottled',
+        nextAttemptAt: new Date(until),
+      },
+    });
+    this.logger.warn(
+      `Email delayed: ${row.template} (${row.locale}), the mail service asks to wait ${Math.ceil(waitMs / 1000)} s`,
+    );
+    return 'throttled';
+  }
+
+  /** Until then (epoch ms) the mail service asked this process to send nothing. */
+  private pausedUntil = 0;
+
   private running = false;
   private again = false;
   /** The background run in progress, if any. */
@@ -278,7 +323,7 @@ export class MailService implements OnModuleDestroy {
    */
   async onModuleDestroy(): Promise<void> {
     await this.loop;
-    (this.transport as { close?: () => void }).close?.();
+    this.transport.close?.();
   }
 
   private takeAgain(): boolean {

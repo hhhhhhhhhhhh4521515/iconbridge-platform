@@ -27,9 +27,70 @@ describe('validateEnv', () => {
     expect(env.SMTP_PORT).toBe(1025);
   });
 
-  it.each(Object.keys(valid))('refuses to start when %s is missing', (name) => {
-    const { [name]: _removed, ...rest } = valid as Record<string, string>;
-    expect(() => validateEnv(rest)).toThrow(new RegExp(`- ${name}: missing`));
+  /** Optional since the Azure transport: SMTP needs a host only (port 587, no credentials by default). */
+  const smtpDefaults = ['SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD'];
+
+  it.each(Object.keys(valid).filter((name) => !smtpDefaults.includes(name)))(
+    'refuses to start when %s is missing',
+    (name) => {
+      const { [name]: _removed, ...rest } = valid as Record<string, string>;
+      expect(() => validateEnv(rest)).toThrow(new RegExp(`- ${name}: missing`));
+    },
+  );
+
+  describe('email transport', () => {
+    const azure = {
+      ...valid,
+      EMAIL_TRANSPORT: 'azure',
+      AZURE_COMMUNICATION_ENDPOINT: 'https://acs-iconbridge.europe.communication.azure.com',
+      MAIL_FROM: 'DoNotReply@0000-1111.azurecomm.net',
+    };
+    const {
+      SMTP_HOST: _host,
+      SMTP_PORT: _port,
+      SMTP_USER: _user,
+      SMTP_PASSWORD: _pass,
+      ...noSmtp
+    } = azure;
+
+    it('uses SMTP by default, on port 587 without credentials', () => {
+      const { SMTP_PORT: _p, SMTP_USER: _u, SMTP_PASSWORD: _w, ...rest } = valid;
+      const env = validateEnv(rest);
+      expect(env.EMAIL_TRANSPORT).toBe('smtp');
+      expect(env.SMTP_PORT).toBe(587);
+      expect(env.SMTP_USER).toBe('');
+    });
+
+    it('needs no SMTP setting with Azure Communication Services', () => {
+      const env = validateEnv(noSmtp);
+      expect(env.EMAIL_TRANSPORT).toBe('azure');
+      expect(env.SMTP_PASSWORD).toBe('');
+    });
+
+    it('needs the endpoint of the Communication Service with Azure', () => {
+      expect(() => validateEnv({ ...noSmtp, AZURE_COMMUNICATION_ENDPOINT: '' })).toThrow(
+        /AZURE_COMMUNICATION_ENDPOINT/,
+      );
+      expect(() =>
+        validateEnv({ ...noSmtp, AZURE_COMMUNICATION_ENDPOINT: 'http://acs.example.test' }),
+      ).toThrow(/AZURE_COMMUNICATION_ENDPOINT/);
+    });
+
+    it('needs a bare sender address with Azure (the display name is set in Azure)', () => {
+      expect(() =>
+        validateEnv({ ...noSmtp, MAIL_FROM: 'IconBridge <DoNotReply@0000-1111.azurecomm.net>' }),
+      ).toThrow(/MAIL_FROM/);
+    });
+
+    it('needs a host with SMTP', () => {
+      expect(() => validateEnv({ ...valid, SMTP_HOST: '' })).toThrow(/SMTP_HOST/);
+    });
+
+    it('refuses an unknown transport', () => {
+      expect(() => validateEnv({ ...valid, EMAIL_TRANSPORT: 'sendgrid' })).toThrow(
+        /EMAIL_TRANSPORT/,
+      );
+    });
   });
 
   it('rejects a database URL that is not PostgreSQL', () => {
