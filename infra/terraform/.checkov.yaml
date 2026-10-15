@@ -1,0 +1,48 @@
+# checkov for infra/terraform:  checkov -d infra/terraform --config-file infra/terraform/.checkov.yaml
+#
+# Every skipped check is listed with its reason. Most come from one constraint: an Azure
+# for Students subscription with a 100 USD credit, one Container Apps environment on the
+# Consumption plan (no VNet), and the free tiers of PostgreSQL, Storage and ACR.
+# The trade-offs are written up in docs/adr/ADR-013-azure-infrastructure.md.
+framework:
+  - terraform
+skip-path:
+  - .terraform
+compact: true
+quiet: true
+skip-check:
+  # --- Network isolation (private endpoints, firewalls). A Consumption-plan Container Apps
+  # environment has no VNet and no fixed outbound address; private endpoints and a
+  # VNet-integrated environment cost more than the monthly budget (ADR-013). Access is
+  # controlled by Entra ID (RBAC, managed identity) and TLS instead.
+  - CKV2_AZURE_33 # Storage private endpoint
+  - CKV2_AZURE_32 # Key Vault private endpoint
+  - CKV2_AZURE_57 # PostgreSQL private endpoint
+  - CKV_AZURE_189 # Key Vault public network access: the apps reach it over the internet with their identity
+  - CKV_AZURE_109 # Key Vault firewall: no fixed source address to allow
+  - CKV_AZURE_59 # Storage public network access: Terraform, the apps and browsers (public media) reach it
+  - CKV2_AZURE_26 # PostgreSQL rule 0.0.0.0 ("Azure services"): the only way to admit Consumption-plan apps without a VNet
+  - CKV_AZURE_139 # ACR public network: private ACR needs the Premium tier
+  # --- Public media, on purpose. Job covers, slides and story photos are public pages'
+  # pictures. Only the `public-media` container is public; `candidate-documents` is private
+  # and served through 5-minute signed links.
+  - CKV_AZURE_34 # Container public-media has blob-level public read
+  - CKV_AZURE_190 # Account allows public containers (needed by public-media only)
+  - CKV2_AZURE_47 # Same rule as CKV_AZURE_190
+  # --- Redundancy and tiers, by cost. LRS storage, local backups, no zone redundancy.
+  - CKV_AZURE_206 # Storage replication beyond LRS
+  - CKV_AZURE_136 # PostgreSQL geo-redundant backup: not offered in italynorth, and outside the free offer
+  - CKV_AZURE_233 # ACR zone redundancy: Premium
+  - CKV_AZURE_165 # ACR geo-replication: Premium
+  - CKV_AZURE_164 # ACR content trust: Premium
+  - CKV_AZURE_166 # ACR quarantine: Premium
+  - CKV_AZURE_167 # ACR retention of untagged manifests: Premium
+  - CKV_AZURE_237 # ACR dedicated data endpoints: Premium
+  - CKV2_AZURE_1 # Customer-managed keys: Microsoft-managed keys (AES-256) are used; CMK needs extra Key Vault keys and rotation for no gain here
+  # --- Secrets
+  - CKV_AZURE_41 # Secret expiry dates: an expired secret would stop the site silently. Rotation is manual and written down in docs/DEPLOYMENT.md
+  # --- Logging
+  - CKV_AZURE_33 # Queue service logging: no queue is used
+  - CKV2_AZURE_21 # Classic blob logging: replaced by a diagnostic setting (StorageRead/Write/Delete to Log Analytics) on the application storage; the state storage keeps its versions instead
+  # --- False positive
+  - CKV_AZURE_43 # Storage naming: the name is built by an expression checkov cannot evaluate; it is 3-24 lower-case letters and digits

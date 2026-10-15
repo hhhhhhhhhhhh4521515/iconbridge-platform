@@ -2,12 +2,13 @@ import { Inject, Injectable, Logger, type OnModuleDestroy } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import type { Locale } from '@iconbridge/shared';
 import mjml2html from 'mjml';
-import type { Transporter } from 'nodemailer';
 import { Clock } from '../common/clock/clock.js';
 import { FieldCipher } from '../common/crypto/field-cipher.js';
 import type { Env } from '../config/env.js';
 import type { EmailStatus, Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { EMAIL_PRIORITY, HALF_QUOTA_TEMPLATES, halfQuotaCap } from './mail-priority.js';
+import { MailThrottledError, type MailTransport } from './mail-transport.js';
 import {
   emailContent,
   emailMjml,
@@ -41,6 +42,7 @@ const OUTBOX_BATCH = 200;
 /** Emails sent at the same time; the transport keeps as many SMTP connections open. */
 export const OUTBOX_CONCURRENCY = 3;
 const OUTBOX_LEASE_MS = 2 * 60_000;
+const HOUR_MS = 3_600_000;
 const OUTBOX_KEEP_MS = 30 * 24 * 3_600_000;
 
 /** Wait before the next attempt: 1, 2, 4... minutes, at most 6 hours. */
@@ -69,14 +71,18 @@ export class MailService implements OnModuleDestroy {
   /** True in the tests: `send` waits for the first attempt, so a test can read the email at once. */
   private readonly inline: boolean;
 
+  /** Most job alerts in any 60 minutes (half of EMAIL_HOURLY_QUOTA); null without a quota. */
+  private readonly halfQuotaCap: number | null;
+
   constructor(
-    @Inject(MAIL_TRANSPORT) private readonly transport: Transporter,
+    @Inject(MAIL_TRANSPORT) private readonly transport: MailTransport,
     config: ConfigService<Env, true>,
     private readonly prisma: PrismaService,
     private readonly cipher: FieldCipher,
     private readonly clock: Clock,
   ) {
     this.inline = config.get('MAIL_DELIVERY', { infer: true }) === 'inline';
+    this.halfQuotaCap = halfQuotaCap(config.get('EMAIL_HOURLY_QUOTA', { infer: true }));
     this.from = config.get('MAIL_FROM', { infer: true });
     this.webOrigin = config.get('WEB_ORIGIN', { infer: true });
   }
@@ -146,13 +152,14 @@ export class MailService implements OnModuleDestroy {
       data: {
         template,
         locale,
+        priority: EMAIL_PRIORITY[template],
         payload: this.cipher.encrypt(JSON.stringify(payload), OUTBOX_CONTEXT),
         nextAttemptAt: this.clock.now(),
       },
       select: { id: true },
     });
     if (this.inline) {
-      await this.attempt(row.id);
+      await this.attempt(row.id, template);
     } else {
       this.kick();
     }
@@ -181,26 +188,48 @@ export class MailService implements OnModuleDestroy {
   }
 
   /**
-   * Sends what is due, oldest first. Called by the task runner (`send-emails`) and,
-   * in the background, after each `send`. Several runners may call it at once: a row
-   * is taken by one of them only.
+   * Sends what is due: most urgent first (`EMAIL_PRIORITY`), then oldest first. Called by
+   * the task runner (`send-emails`) and, in the background, after each `send`. Several
+   * runners may call it at once: a row is taken by one of them only.
+   *
+   * Rows are fetched a few at a time, so an urgent email queued during a long run goes
+   * before the bulk still waiting. A template whose hourly cap is reached is left for a
+   * later run; a refusal for quota ends the run.
    */
   async sendDue(limit = OUTBOX_BATCH): Promise<{ sent: number; retried: number; failed: number }> {
-    const due = await this.prisma.emailOutbox.findMany({
-      where: { status: 'PENDING', nextAttemptAt: { lte: this.clock.now() } },
-      orderBy: [{ nextAttemptAt: 'asc' }, { createdAt: 'asc' }],
-      take: limit,
-      select: { id: true },
-    });
     const report = { sent: 0, retried: 0, failed: 0 };
-    for (let start = 0; start < due.length; start += OUTBOX_CONCURRENCY) {
+    const capped = new Set<string>();
+    let offered = 0;
+    while (offered < limit && this.clock.now().getTime() >= this.pausedUntil) {
+      const due = await this.prisma.emailOutbox.findMany({
+        where: {
+          status: 'PENDING',
+          nextAttemptAt: { lte: this.clock.now() },
+          ...(capped.size > 0 ? { template: { notIn: [...capped] } } : {}),
+        },
+        orderBy: [{ priority: 'asc' }, { nextAttemptAt: 'asc' }, { createdAt: 'asc' }],
+        take: Math.min(OUTBOX_CONCURRENCY, limit - offered),
+        select: { id: true, template: true },
+      });
+      if (due.length === 0) {
+        break;
+      }
+      offered += due.length;
       const outcomes = await Promise.all(
-        due.slice(start, start + OUTBOX_CONCURRENCY).map(({ id }) => this.attempt(id)),
+        due.map((row) => this.attempt(row.id, row.template as EmailTemplate)),
       );
-      for (const outcome of outcomes) {
-        if (outcome !== 'skipped') {
+      outcomes.forEach((outcome, index) => {
+        if (outcome === 'capped') {
+          capped.add(due[index]?.template ?? '');
+        } else if (outcome === 'throttled') {
+          report.retried += 1;
+        } else if (outcome !== 'skipped') {
           report[outcome] += 1;
         }
+      });
+      // The mail service asked to wait: the rest would be refused too.
+      if (outcomes.includes('throttled')) {
+        break;
       }
     }
     return report;
@@ -216,18 +245,31 @@ export class MailService implements OnModuleDestroy {
   }
 
   /** One attempt for one row. The row is taken first, so two runners never send the same email. */
-  private async attempt(id: string): Promise<'sent' | 'retried' | 'failed' | 'skipped'> {
+  private async attempt(
+    id: string,
+    template: EmailTemplate,
+  ): Promise<'sent' | 'retried' | 'throttled' | 'failed' | 'skipped' | 'capped'> {
     const now = this.clock.now();
-    const taken = await this.prisma.emailOutbox.updateMany({
-      where: { id, status: 'PENDING', nextAttemptAt: { lte: now } },
+    if (now.getTime() < this.pausedUntil) {
+      return 'skipped';
+    }
+    const claim = {
+      where: { id, status: 'PENDING' as const, nextAttemptAt: { lte: now } },
       // Until this moment the row is ours; if the process dies, it becomes due again.
       data: {
         attempts: { increment: 1 },
         nextAttemptAt: new Date(now.getTime() + OUTBOX_LEASE_MS),
         lastError: null,
       },
-    });
-    if (taken.count === 0) {
+    };
+    const taken =
+      this.halfQuotaCap !== null && HALF_QUOTA_TEMPLATES.includes(template)
+        ? await this.claimWithinHalfQuota(claim, now, this.halfQuotaCap)
+        : (await this.prisma.emailOutbox.updateMany(claim)).count;
+    if (taken === 'capped') {
+      return 'capped';
+    }
+    if (taken === 0) {
       return 'skipped';
     }
     const row = await this.prisma.emailOutbox.findUniqueOrThrow({ where: { id } });
@@ -248,6 +290,9 @@ export class MailService implements OnModuleDestroy {
       this.logger.log(`Email sent: ${row.template} (${row.locale})`);
       return 'sent';
     } catch (error) {
+      if (error instanceof MailThrottledError) {
+        return this.postpone(row, error.retryAfterMs);
+      }
       const name = error instanceof Error ? error.name : 'unknown error';
       const abandoned = row.attempts >= OUTBOX_MAX_ATTEMPTS;
       await this.prisma.emailOutbox.update({
@@ -266,6 +311,63 @@ export class MailService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Takes a job alert only if fewer than `cap` job alerts were sent, or are being sent, in
+   * the last 60 minutes. Counting and taking happen under one advisory lock, so the cap
+   * holds across API replicas and the task job.
+   */
+  private claimWithinHalfQuota(
+    claim: Prisma.EmailOutboxUpdateManyArgs,
+    now: Date,
+    cap: number,
+  ): Promise<number | 'capped'> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('email-outbox:half-quota', 0))::text AS locked`;
+      const used = await tx.emailOutbox.count({
+        where: {
+          template: { in: [...HALF_QUOTA_TEMPLATES] },
+          OR: [
+            { sentAt: { gt: new Date(now.getTime() - HOUR_MS) } },
+            // Taken by a runner and not finished yet (the lease of an attempt in progress).
+            { status: 'PENDING', attempts: { gt: 0 }, lastError: null, nextAttemptAt: { gt: now } },
+          ],
+        },
+      });
+      if (used >= cap) {
+        return 'capped';
+      }
+      return (await tx.emailOutbox.updateMany(claim)).count;
+    });
+  }
+
+  /**
+   * The mail service refused because of its sending quota (Azure-managed domain: 5 a
+   * minute, 10 an hour). Not the email's fault: the attempt is given back, the email waits
+   * as long as asked, and this process sends nothing until then.
+   */
+  private async postpone(
+    row: { id: string; template: string; locale: string },
+    waitMs: number,
+  ): Promise<'throttled'> {
+    const until = this.clock.now().getTime() + waitMs;
+    this.pausedUntil = Math.max(this.pausedUntil, until);
+    await this.prisma.emailOutbox.update({
+      where: { id: row.id },
+      data: {
+        attempts: { decrement: 1 },
+        lastError: 'MailThrottled',
+        nextAttemptAt: new Date(until),
+      },
+    });
+    this.logger.warn(
+      `Email delayed: ${row.template} (${row.locale}), the mail service asks to wait ${Math.ceil(waitMs / 1000)} s`,
+    );
+    return 'throttled';
+  }
+
+  /** Until then (epoch ms) the mail service asked this process to send nothing. */
+  private pausedUntil = 0;
+
   private running = false;
   private again = false;
   /** The background run in progress, if any. */
@@ -278,7 +380,7 @@ export class MailService implements OnModuleDestroy {
    */
   async onModuleDestroy(): Promise<void> {
     await this.loop;
-    (this.transport as { close?: () => void }).close?.();
+    this.transport.close?.();
   }
 
   private takeAgain(): boolean {

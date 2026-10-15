@@ -127,16 +127,16 @@ Region, quotas, budget and the identity of the pipeline are in [00-environment.m
 
 ### Container Apps
 
-| Setting           | API                                            | Web                                    |
-| ----------------- | ---------------------------------------------- | -------------------------------------- |
-| Image             | `iconbridge-api:<commit>`                      | `iconbridge-web:<commit>`              |
-| Ingress           | Internal only, target port 4000                | External, HTTPS only, target port 3000 |
-| Liveness probe    | HTTP `GET /health/live`                        | HTTP `GET /en`                         |
-| Readiness probe   | HTTP `GET /health/ready` (checks the database) | HTTP `GET /en`                         |
-| Startup probe     | `GET /health/live`, up to 60 s                 | `GET /en`, up to 60 s                  |
-| Scale             | 0 to 3 replicas, HTTP rule                     | 0 to 3 replicas, HTTP rule             |
-| Termination grace | 30 s (longer than the emails in progress)      | 30 s                                   |
-| Identity          | Managed identity: Blob Storage, Key Vault      | —                                      |
+| Setting           | API                                                                       | Web                                    |
+| ----------------- | ------------------------------------------------------------------------- | -------------------------------------- |
+| Image             | `iconbridge-api:<commit>`                                                 | `iconbridge-web:<commit>`              |
+| Ingress           | Internal only, target port 4000                                           | External, HTTPS only, target port 3000 |
+| Liveness probe    | HTTP `GET /health/live`                                                   | HTTP `GET /en`                         |
+| Readiness probe   | HTTP `GET /health/ready` (checks the database)                            | HTTP `GET /en`                         |
+| Startup probe     | `GET /health/live`, up to 60 s                                            | `GET /en`, up to 60 s                  |
+| Scale             | 0 to 3 replicas, HTTP rule                                                | 0 to 3 replicas, HTTP rule             |
+| Termination grace | 30 s (longer than the emails in progress)                                 | 30 s                                   |
+| Identity          | Managed identity: Blob Storage, Key Vault, Communication Services (email) | —                                      |
 
 The browser never calls the API host: the web app forwards `/api/v1/*` to `API_INTERNAL_URL`, the internal address of the API app.
 
@@ -155,23 +155,23 @@ Secrets are Key Vault references in Container Apps, never plain values in the te
 
 **API** (`apps/api/.env.example` documents each variable):
 
-| Variable                                                            | Production value                                                                                      |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                                                          | `production` (set in the image)                                                                       |
-| `PORT`                                                              | `4000` (set in the image)                                                                             |
-| `WEB_ORIGIN`                                                        | Public address of the site, e.g. `https://jobs.example.com`                                           |
-| `WEB_INTERNAL_URL`                                                  | Internal address of the web app, for cache invalidation                                               |
-| `DATABASE_URL`                                                      | Secret. PostgreSQL Flexible Server, `sslmode=require`                                                 |
-| `AZURE_STORAGE_ACCOUNT_URL`                                         | `https://<account>.blob.core.windows.net` (managed identity); `AZURE_STORAGE_CONNECTION_STRING` empty |
-| `PUBLIC_MEDIA_BASE_URL`                                             | Public URL of the `public-media` container (or the CDN in front of it)                                |
-| `PASSPORT_ENCRYPTION_KEY`                                           | Secret. 32 bytes, base64. Losing it makes every stored passport number unreadable                     |
-| `JWT_ACCESS_SECRET`                                                 | Secret, at least 32 characters                                                                        |
-| `REVALIDATE_SECRET`                                                 | Secret, the same value in the web app                                                                 |
-| `TURNSTILE_SECRET_KEY`                                              | Secret. The real key (test keys are refused in production)                                            |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | The mail provider, port 587, STARTTLS (required in production)                                        |
-| `TRUST_PROXY_HOPS`                                                  | The proxies in front of the API (see below)                                                           |
-| `SCHEDULER_ENABLED`                                                 | `false`: the `tasks` job runs the tasks                                                               |
-| `MAIL_DELIVERY`                                                     | `background` (default)                                                                                |
+| Variable                                                                             | Production value                                                                                                                                                               |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NODE_ENV`                                                                           | `production` (set in the image)                                                                                                                                                |
+| `PORT`                                                                               | `4000` (set in the image)                                                                                                                                                      |
+| `WEB_ORIGIN`                                                                         | Public address of the site, e.g. `https://jobs.example.com`                                                                                                                    |
+| `WEB_INTERNAL_URL`                                                                   | Internal address of the web app, for cache invalidation                                                                                                                        |
+| `DATABASE_URL`                                                                       | Secret. PostgreSQL Flexible Server, `sslmode=require`                                                                                                                          |
+| `AZURE_STORAGE_ACCOUNT_URL`                                                          | `https://<account>.blob.core.windows.net` (managed identity); `AZURE_STORAGE_CONNECTION_STRING` empty                                                                          |
+| `PUBLIC_MEDIA_BASE_URL`                                                              | Public URL of the `public-media` container (or the CDN in front of it)                                                                                                         |
+| `PASSPORT_ENCRYPTION_KEY`                                                            | Secret. 32 bytes, base64. Losing it makes every stored passport number unreadable                                                                                              |
+| `JWT_ACCESS_SECRET`                                                                  | Secret, at least 32 characters                                                                                                                                                 |
+| `REVALIDATE_SECRET`                                                                  | Secret, the same value in the web app                                                                                                                                          |
+| `TURNSTILE_SECRET_KEY`                                                               | Secret. The real key (test keys are refused in production)                                                                                                                     |
+| `EMAIL_TRANSPORT`, `AZURE_COMMUNICATION_ENDPOINT`, `MAIL_FROM`, `EMAIL_HOURLY_QUOTA` | `azure`, the Communication Service's endpoint, `DoNotReply@<Azure-managed domain>`. No SMTP setting or password ([ADR-014](adr/ADR-014-email-azure-communication-services.md)) |
+| `TRUST_PROXY_HOPS`                                                                   | The proxies in front of the API (see below)                                                                                                                                    |
+| `SCHEDULER_ENABLED`                                                                  | `false`: the `tasks` job runs the tasks                                                                                                                                        |
+| `MAIL_DELIVERY`                                                                      | `background` (default)                                                                                                                                                         |
 
 **Migration job**: `DATABASE_URL`, `PASSPORT_ENCRYPTION_KEY`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` (secret; used only when no super admin exists yet). `NODE_ENV=production` is set in the image, so no sample data is ever written.
 
@@ -183,8 +183,166 @@ Secrets are Key Vault references in Container Apps, never plain values in the te
 
 Container Apps sends SIGTERM to process 1, then SIGKILL after the grace period.
 
-- **API**: stops accepting requests, finishes those in progress and the emails being sent, closes the SMTP and database connections, exits with 0. Measured locally: 0.6 s.
+- **API**: stops accepting requests, finishes those in progress and the emails being sent, closes the mail (SMTP locally) and database connections, exits with 0. Measured locally: 0.6 s.
 - **Web**: Next.js stops accepting requests, waits for those in progress, then exits with 143 (128 + SIGTERM), on purpose.
+
+## Runbook: Azure with Terraform
+
+The infrastructure is in `infra/terraform` (see [ADR-013](adr/ADR-013-azure-infrastructure.md) and the diagram in [ARCHITECTURE.md](ARCHITECTURE.md#azure-infrastructure)). Every command runs from the repository root, signed in with `az login`; the Make targets load `.azure-context`.
+
+Names below are those of production in Italy North: resource group `rg-iconbridge-prod`, registry `acriconbridgeproditn`, vault `kv-iconbridge-prod-itn`, apps `ca-iconbridge-api-prod-itn` and `ca-iconbridge-web-prod-itn`, jobs `caj-iconbridge-migrate-prod-itn` and `caj-iconbridge-tasks-prod-itn`.
+
+### 1. State storage (once)
+
+```bash
+echo 'owner = "you@example.com"' > infra/terraform/bootstrap/terraform.tfvars
+make tf-bootstrap
+```
+
+Creates `rg-iconbridge-tfstate` and the storage account `sticonbridgetfstateitn` (container `tfstate`, versioning, soft delete, no account key). Its own state stays in `infra/terraform/bootstrap/terraform.tfstate` on this machine (git-ignored): keep a copy somewhere safe.
+
+### 2. Infrastructure
+
+```bash
+cp infra/terraform/envs/prod/terraform.tfvars.example infra/terraform/envs/prod/terraform.tfvars
+# owner_email, admin_ip_addresses (curl -s https://api.ipify.org)
+az provider register --namespace Microsoft.Communication --wait   # once, for the email resources
+make tf-init ENV=prod
+make tf-plan ENV=prod      # read the plan
+make tf-apply ENV=prod     # only after approval
+terraform -chdir=infra/terraform/envs/prod output
+```
+
+The apps start with Microsoft's public placeholder images and scale to zero; nothing runs yet. The environment is created in `ConsumptionOnly` mode with azapi: an Express environment (Azure's default for a request without a mode since October 2026) refuses Key Vault references and Jobs ([ADR-015](adr/ADR-015-container-apps-environment-mode.md)).
+
+**Sender name of the emails** (once): Azure creates the sender `DoNotReply` with the managed domain, so Terraform cannot set its display name in the same apply. The command is in an output:
+
+```bash
+eval "$(terraform -chdir=infra/terraform/envs/prod output -raw mail_display_name_command)"
+terraform -chdir=infra/terraform/envs/prod output -raw mail_sender   # DoNotReply@<guid>.azurecomm.net
+```
+
+### 3. External secrets
+
+The API refuses the Turnstile test keys in production. Two secrets are created with the value `CHANGE_ME` and must be set by hand: `turnstile-site-key` and `turnstile-secret-key` (and `ghcr-pull-token` with `registry_type = "ghcr"`). Email needs no secret: the API sends through Azure Communication Services with its managed identity.
+
+**Cloudflare Turnstile (free)**
+
+1. Open <https://dash.cloudflare.com/sign-up>, create the account and confirm the email.
+2. Left menu → **Turnstile** → **Add widget**.
+3. Widget name `IconBridge Jobs`. **Hostname management** → **Add hostnames**: the web app's address without `https://` (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`), and the custom domain if there is one.
+4. Widget mode **Managed**; pre-clearance **No**. **Create**.
+5. Copy the **Site Key** and the **Secret Key**.
+
+**Into Key Vault** (values are typed, not left in the shell history):
+
+```bash
+VAULT=kv-iconbridge-prod-itn
+for name in turnstile-site-key turnstile-secret-key; do
+  read -rsp "$name: " value; echo
+  az keyvault secret set --vault-name $VAULT --name $name --value "$value" --output none
+done
+unset value
+```
+
+Terraform ignores these values afterwards. A Container App reads its secrets when a revision starts: after changing one, restart it (`az containerapp revision restart`, or deploy a new image).
+
+### 4. Images
+
+```bash
+OUT=infra/terraform/envs/prod
+REGISTRY=$(terraform -chdir=$OUT output -raw registry_login_server)
+SITE=https://$(terraform -chdir=$OUT output -raw web_default_fqdn)
+SITE_KEY=$(az keyvault secret show --vault-name kv-iconbridge-prod-itn --name turnstile-site-key --query value -o tsv)
+REF=$(git rev-parse --short HEAD); NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+az acr login --name acriconbridgeproditn
+docker build -f apps/api/Dockerfile -t $REGISTRY/iconbridge-api:$REF --build-arg VCS_REF=$REF --build-arg BUILD_DATE=$NOW .
+docker build -f apps/api/Dockerfile --target migrate -t $REGISTRY/iconbridge-migrate:$REF --build-arg VCS_REF=$REF --build-arg BUILD_DATE=$NOW .
+docker build -f apps/web/Dockerfile -t $REGISTRY/iconbridge-web:$REF --build-arg VCS_REF=$REF --build-arg BUILD_DATE=$NOW \
+  --build-arg NEXT_PUBLIC_SITE_URL=$SITE --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=$SITE_KEY .
+for image in iconbridge-api iconbridge-migrate iconbridge-web; do docker push $REGISTRY/$image:$REF; done
+```
+
+### 5. Migrate, then deploy
+
+```bash
+RG=rg-iconbridge-prod
+az containerapp job update -g $RG -n caj-iconbridge-migrate-prod-itn --image $REGISTRY/iconbridge-migrate:$REF
+az containerapp job start -g $RG -n caj-iconbridge-migrate-prod-itn
+az containerapp job execution list -g $RG -n caj-iconbridge-migrate-prod-itn --query "[0].properties.status" -o tsv   # wait for Succeeded
+
+az containerapp update -g $RG -n ca-iconbridge-api-prod-itn --image $REGISTRY/iconbridge-api:$REF
+az containerapp update -g $RG -n ca-iconbridge-web-prod-itn --image $REGISTRY/iconbridge-web:$REF
+az containerapp job update -g $RG -n caj-iconbridge-tasks-prod-itn --image $REGISTRY/iconbridge-api:$REF
+```
+
+The logs of a job execution are in Log Analytics (`ContainerAppConsoleLogs_CL`), or `az containerapp job logs show`.
+
+### 6. Verify
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' $SITE/en           # 200 (the first request wakes both apps)
+curl -s $SITE/api/health/ready                              # {"status":"ok"}: the API and its database
+make tf-plan ENV=prod                                       # "No changes"
+```
+
+Then, in a browser: register, upload a CV, and check that the file is in the storage:
+
+```bash
+az storage blob list --auth-mode login --account-name sticonbridgeproditn -c candidate-documents --query "[].name" -o tsv
+```
+
+**Email**: register with an address you can read. The verification email comes from `IconBridge Recruitment <DoNotReply@…azurecomm.net>`; look in the spam folder the first time. The outbox state is in the database (`email_outbox`), and the sends in the API logs (`Email sent: verify-email (en)`).
+
+**Email quota**: an Azure-managed domain sends at most 5 emails a minute and 10 an hour for the whole subscription, and this cannot be raised. Over it, Azure answers 429; the outbox waits as long as asked without spending an attempt (log `Email delayed`). Account emails go first, then application emails, then the rest, and job alerts never use more than 5 of the 10 emails of an hour (`EMAIL_HOURLY_QUOTA`), so a burst of job alerts leaves over several hours without delaying a verification email. For more, connect a verified custom domain to the Email Communication Service (DNS records for SPF and DKIM) and ask for a quota increase ([ADR-014](adr/ADR-014-email-azure-communication-services.md)).
+
+**First super admin**: the address is `owner_email`; the password is in the vault. Sign in, then change it in the account settings at once.
+
+```bash
+az keyvault secret show --vault-name kv-iconbridge-prod-itn --name seed-admin-password --query value -o tsv
+```
+
+**TRUST_PROXY_HOPS**: after a sign-in, the back office's audit log shows the address of the request. It must be your public address. If it is an address of Azure, raise `trust_proxy_hops`; if you could choose it with an `X-Forwarded-For` header, lower it.
+
+### Routine deployment
+
+Steps 4 and 5 with a new commit, then `make tf-plan ENV=prod` to confirm Terraform sees no drift. Migrations must work with the API still running (see CLAUDE.md).
+
+### After the free year of the registry
+
+Set `registry_type = "ghcr"`, `ghcr_owner` and `ghcr_username` in `terraform.tfvars`; create a GitHub token with only `read:packages`; apply; set the secret `ghcr-pull-token`; push the images to `ghcr.io/<owner>/…`; deploy with the new names. Then the registry can be removed from the plan.
+
+### Custom domain (optional)
+
+1. At the DNS provider: a CNAME from the domain to the web app's default address (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`) and a TXT record `asuid.<domain>` with `terraform -chdir=infra/terraform/envs/prod output -raw custom_domain_verification_id`.
+2. In `terraform.tfvars`: `enable_custom_domain = true` and `custom_domain = "jobs.example.com"`; plan and apply. Terraform adds the host name to the web app and asks Azure for a free managed certificate (validated through the CNAME; it can take several minutes).
+3. Bind the certificate, once. The azurerm provider cannot do it; Terraform ignores the binding afterwards:
+
+   ```bash
+   OUT=infra/terraform/envs/prod
+   az containerapp hostname bind -g rg-iconbridge-prod \
+     -n "$(terraform -chdir=$OUT output -json container_app_names | jq -r .web)" \
+     --hostname jobs.example.com \
+     --environment cae-iconbridge-prod-itn \
+     --certificate "$(terraform -chdir=$OUT output -raw managed_certificate_name)"
+   ```
+
+4. Rebuild the web image with `NEXT_PUBLIC_SITE_URL=https://<domain>`, add the domain to the Turnstile widget, and apply again (CORS and `WEB_ORIGIN` follow the domain).
+
+### Costs
+
+| Resource                               | List price (Italy North)             | Expected                                                                                                     |
+| -------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| PostgreSQL B1ms, 32 GB, 7-day backups  | ~0.023 USD/hour + storage            | 0 within the free 750 h and 32 GB a month                                                                    |
+| Container Registry Standard            | 0.67 USD/day (about 20 USD a month)  | 0 within the free year, then ghcr                                                                            |
+| Container Apps (apps and jobs)         | per vCPU-second, GiB-second, request | 0 within the monthly free grant (scale to zero; the tasks job uses about 22 000 vCPU-seconds of the 180 000) |
+| Log Analytics and Application Insights | 2.99 USD/GB after 5 GB a month       | 0: capped at 0.15 GB a day                                                                                   |
+| Storage (files and state)              | ~0.018 USD/GB a month                | a few cents                                                                                                  |
+| Key Vault                              | 0.03 USD per 10 000 operations       | a few cents                                                                                                  |
+| Budget, identity, resource groups      | free                                 | 0                                                                                                            |
+
+The budget (15 USD a month) emails `owner_email` at 50, 80 and 100 %. The subscription's spending limit stops the resources when the credit is spent.
 
 ## Troubleshooting
 

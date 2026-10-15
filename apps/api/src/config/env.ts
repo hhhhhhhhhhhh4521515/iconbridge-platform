@@ -15,8 +15,24 @@ const baseEnvSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535),
   WEB_ORIGIN: z.url(),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
-  SMTP_HOST: z.string().min(1),
-  SMTP_PORT: z.coerce.number().int().min(1).max(65535),
+  /**
+   * smtp: Nodemailer (Mailpit locally). azure: Azure Communication Services Email with the
+   * managed identity (production), no SMTP setting or password.
+   */
+  EMAIL_TRANSPORT: z.enum(['smtp', 'azure']).default('smtp'),
+  /** azure: https://<communication service>.<geo>.communication.azure.com */
+  AZURE_COMMUNICATION_ENDPOINT: z
+    .union([z.literal(''), z.url({ protocol: /^https$/ })])
+    .default(''),
+  /**
+   * Emails the mail service accepts per hour (Azure-managed domain: 10). Job alerts then use
+   * at most half of it. 0: no known quota (SMTP), no cap.
+   */
+  EMAIL_HOURLY_QUOTA: z.coerce.number().int().min(0).default(0),
+  /** smtp only. */
+  SMTP_HOST: z.string().default(''),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  /** smtp: "Name <address>". azure: the address only; the display name is set in Azure. */
   MAIL_FROM: z.string().min(1),
   /**
    * background: a request queues its emails and returns; they are sent right after.
@@ -43,9 +59,9 @@ const baseEnvSchema = z.object({
   /** Shared with the web app (same variable there). Empty: the web app is not told; its cache ends after a minute. */
   REVALIDATE_SECRET: z.union([z.literal(''), z.string().min(24)]).default(''),
   TURNSTILE_SECRET_KEY: z.string().min(1),
-  /** Empty for a server without authentication (Mailpit). */
-  SMTP_USER: z.string(),
-  SMTP_PASSWORD: z.string(),
+  /** smtp only. Empty for a server without authentication (Mailpit). */
+  SMTP_USER: z.string().default(''),
+  SMTP_PASSWORD: z.string().default(''),
   /**
    * "false" switches the rate limits off, for a load test on a workstation only:
    * refused when NODE_ENV is production.
@@ -72,6 +88,18 @@ export const envSchema = baseEnvSchema
       message: 'Set exactly one of AZURE_STORAGE_CONNECTION_STRING and AZURE_STORAGE_ACCOUNT_URL',
     },
   )
+  .refine((env) => env.EMAIL_TRANSPORT !== 'smtp' || env.SMTP_HOST !== '', {
+    path: ['SMTP_HOST'],
+    message: 'Required with EMAIL_TRANSPORT=smtp',
+  })
+  .refine((env) => env.EMAIL_TRANSPORT !== 'azure' || env.AZURE_COMMUNICATION_ENDPOINT !== '', {
+    path: ['AZURE_COMMUNICATION_ENDPOINT'],
+    message: 'Required with EMAIL_TRANSPORT=azure',
+  })
+  .refine((env) => env.EMAIL_TRANSPORT !== 'azure' || z.email().safeParse(env.MAIL_FROM).success, {
+    path: ['MAIL_FROM'],
+    message: 'With EMAIL_TRANSPORT=azure, an address of the linked domain without a name',
+  })
   .refine(
     (env) => env.NODE_ENV !== 'production' || !TURNSTILE_TEST_SECRET.test(env.TURNSTILE_SECRET_KEY),
     {

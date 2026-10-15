@@ -14,6 +14,7 @@ import { Clock } from '../../src/common/clock/clock.js';
 import { FieldCipher } from '../../src/common/crypto/field-cipher.js';
 import { protectPassportNumber } from '../../src/common/crypto/passport.js';
 import { hashPassword } from '../../src/common/crypto/password.js';
+import { MailThrottledError } from '../../src/mail/mail-transport.js';
 import { MAIL_TRANSPORT } from '../../src/mail/mail.service.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
 import { StorageService } from '../../src/storage/storage.service.js';
@@ -44,9 +45,10 @@ export interface TestApp {
   outbox: SentEmail[];
   /**
    * Set `down` to true and the fake mail server refuses every message; `delayMs`
-   * makes it take that long to accept one.
+   * makes it take that long to accept one; `throttleMs` makes it refuse every message
+   * as over quota, asking to wait that long (Azure Communication Services, HTTP 429).
    */
-  mailServer: { down: boolean; delayMs: number };
+  mailServer: { down: boolean; delayMs: number; throttleMs: number };
   http: () => ReturnType<typeof request>;
   close: () => Promise<void>;
 }
@@ -77,7 +79,7 @@ export interface TestAppOptions {
 
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
   const outbox: SentEmail[] = [];
-  const mailServer = { down: false, delayMs: 0 };
+  const mailServer = { down: false, delayMs: 0, throttleMs: 0 };
   const files: TestApp['files'] = new Map();
   const privateFiles: TestApp['privateFiles'] = new Map();
   const clock = new FakeClock();
@@ -90,6 +92,9 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
       sendMail: async (message: SentEmail) => {
         if (mailServer.delayMs > 0) {
           await new Promise((resolve) => setTimeout(resolve, mailServer.delayMs));
+        }
+        if (mailServer.throttleMs > 0) {
+          return Promise.reject(new MailThrottledError(mailServer.throttleMs));
         }
         if (mailServer.down) {
           return Promise.reject(

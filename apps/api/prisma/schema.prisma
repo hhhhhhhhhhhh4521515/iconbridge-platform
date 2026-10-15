@@ -718,6 +718,9 @@ model EmailOutbox {
   /// variables hold one-time links. Emptied once the email is sent.
   payload       String
   status        EmailStatus @default(PENDING)
+  /// 1 account access (verification, password reset, invitation), 2 applications, 3 bulk
+  /// (job alerts, recruiter notices). Lower first: the mail quota goes to what matters.
+  priority      Int         @default(2) @db.SmallInt
   attempts      Int         @default(0)
   /// Not before this moment. Also the lease of an attempt in progress.
   nextAttemptAt DateTime    @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
@@ -729,7 +732,10 @@ model EmailOutbox {
 
   statusChanges ApplicationStatusHistory[]
 
-  /// The sender asks for "pending and due", oldest first.
+  /// The sender asks for "pending and due", most urgent first, then oldest first.
   @@index([status, nextAttemptAt])
+  @@index([status, priority, nextAttemptAt])
+  /// The job-alert cap counts the alerts sent in the last hour.
+  @@index([template, sentAt])
   @@map("email_outbox")
 }

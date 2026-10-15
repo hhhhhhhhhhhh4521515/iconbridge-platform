@@ -1,6 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import { LOCALES } from '@iconbridge/shared';
-import type { Transporter } from 'nodemailer';
+import type { MailTransport } from './mail-transport.js';
 import type { Env } from '../config/env.js';
 import { Clock } from '../common/clock/clock.js';
 import type { FieldCipher } from '../common/crypto/field-cipher.js';
@@ -16,7 +16,7 @@ const config = {
 } as unknown as ConfigService<Env, true>;
 
 function createService(sendMail = vi.fn().mockResolvedValue({})) {
-  const transport = { sendMail } as unknown as Transporter;
+  const transport = { sendMail } as unknown as MailTransport;
   // Rendering and the hand-over to the transport need no database; the outbox itself is
   // tested against PostgreSQL in test/e2e/email-outbox.e2e-spec.ts.
   const service = new MailService(

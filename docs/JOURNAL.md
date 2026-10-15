@@ -593,3 +593,52 @@ The next step is the deployment to Azure Container Apps; the images, the migrati
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/13>
 
 **Remaining**: Terraform for the Azure resources, the CI/CD pipeline (build, scan, push, migrate, deploy), alerting.
+
+## 2026-10-15 - Azure infrastructure with Terraform, first deployment
+
+**What**
+
+- Terraform in `infra/terraform`: `bootstrap` (state storage `sticonbridgetfstateitn`, versioning, soft delete, no account key, Entra ID only), eight modules (`observability`, `registry`, `identity`, `keyvault`, `database`, `storage`, `email`, `container_apps`) and `envs/prod`; Makefile targets `tf-bootstrap`, `tf-init`, `tf-plan`, `tf-apply`, `tf-destroy` (asks for the environment's name), `tf-check` (fmt, validate, tflint, checkov). Region `italynorth`, names `<type>-iconbridge-prod-itn`.
+- Production in `rg-iconbridge-prod`: Log Analytics (0.15 GB/day cap) and Application Insights; ACR Standard, admin user off; one user-assigned identity; Key Vault (RBAC, purge protection) with the generated secrets and two hand-set Turnstile keys; PostgreSQL 16 B1ms 32 GB, TLS, `pg_trgm`; storage with private `candidate-documents` and public `public-media`, no account key; Azure Communication Services Email; one Container Apps environment (`ConsumptionOnly`), the web app (external), the API (internal), the migration job and the tasks job (every 15 minutes); 15 USD budget with alerts at 50, 80 and 100 %.
+- **Email through Azure Communication Services** instead of SMTP (Brevo's phone verification did not work): an `azure` transport with `@azure/communication-email` and the managed identity, chosen by `EMAIL_TRANSPORT`; Mailpit stays locally. Sender `DoNotReply@<guid>.azurecomm.net`, "IconBridge Recruitment". [ADR-014](adr/ADR-014-email-azure-communication-services.md).
+- **Outbox for a quota of 10 emails an hour**: a refusal for quota (429) postpones the email without spending an attempt and pauses the outbox; an email Azure accepted is never sent twice because of a failed status check; priorities (account emails, then application emails, then job alerts and recruiter notices), fetched three at a time; job alerts use at most half of `EMAIL_HOURLY_QUOTA` over any 60 minutes, under an advisory lock. Migration `email_outbox_priority` (column, CHECK, two indexes, backfill).
+- Web health routes for the probes (`/api/health/live`) and for the API seen through the web app (`/api/health/ready`).
+- Runbook in `docs/DEPLOYMENT.md`, Mermaid diagram in `docs/ARCHITECTURE.md`, [ADR-013](adr/ADR-013-azure-infrastructure.md), [ADR-015](adr/ADR-015-container-apps-environment-mode.md). `.claude/settings.json`: `terraform apply`/`destroy` and changing `az` commands moved from deny to ask.
+
+**Why**
+
+Prompt 12: the platform had to run on the Azure for Students subscription within its policies (five regions, one Container Apps environment per region, 100 USD credit), with candidates' documents protected and no secret outside Key Vault.
+
+**Notes**
+
+- **Express environment.** The first apply created the Container Apps environment as "Express" (generally available this month), which refuses Key Vault references and Jobs: the two apps and two jobs failed. azurerm 4.81 cannot set the mode; the environment is now created with azapi, `environmentMode = "ConsumptionOnly"`, with a postcondition. The owner deleted the empty Express environment (the auto-mode classifier refused the delete) and ran that apply.
+- The Azure-managed email domain sends 5 emails a minute and 10 an hour, and this cannot be raised; a verified custom domain is needed before real traffic.
+- The display name of `DoNotReply` is set once with `az` (Azure creates that sender itself; the provider refuses to take it over).
+- `Microsoft.Communication` was registered by hand; Terraform never registers providers.
+- Flaky browser tests found and fixed: home-page counters read before a figure changed were kept for 10 minutes, and a page rendered while the web app was told to refresh kept old data for a minute. Counters read before a clear are no longer kept; the web app is told a second time 3 s later.
+- Optional custom domain fixed: the binding needed a certificate; Terraform now requests a managed certificate and the runbook binds it.
+- `az keyvault secret set` adds a `file-encoding` tag; ignored on hand-set secrets, so `terraform plan` stays clean.
+- RBAC on the new state storage took about a minute to reach the storage service (`tf-init` retried).
+- **Cold start: 100 s** when both apps are at zero: the web app scales up (17 s), its first call to the API makes the API scale up about 20 s later (scaling is triggered by polling), the API is ready 30 s after that and its readiness probe (every 15 s) lets traffic in. Keeping one replica of the web app, or of both, would remove most of it at a cost; decision left to the owner.
+- The workstation's public IP changed during the day (dynamic): the PostgreSQL firewall rule for the administrator is stale until `admin_ip_addresses` is updated.
+
+**Checks**
+
+| Check                                               | Result                                                                                                                                                           |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`         | Pass                                                                                                                                                             |
+| `pnpm test`                                         | Pass: 584 unit tests (shared 205, api 325, web 54)                                                                                                               |
+| `pnpm test:e2e`                                     | Pass: 505 tests (6 new: throttling, priorities, job-alert cap)                                                                                                   |
+| Browser suite against the production images         | Pass three times in a row: 144 passed, 6 skipped                                                                                                                 |
+| `make tf-check`                                     | fmt, validate, tflint: no issue; checkov: 0 failed (skips justified in `.checkov.yaml`)                                                                          |
+| hadolint, trivy (three images pushed as `17bc890`)  | No remark; 0 fixable high or critical                                                                                                                            |
+| Migration job on Azure                              | Succeeded in about 60 s: migrations, reference data, super admin; no sample data                                                                                 |
+| Done when: site reachable on the Azure URL          | Yes: `/en` 200 over HTTPS (warm 0.5–1 s; cold start with both apps at zero: 100 s, see Notes)                                                                    |
+| Done when: API health check green with the database | Yes: `/api/health/ready` → `{"status":"ok"}`                                                                                                                     |
+| Done when: a CV upload lands in Azure storage       | Yes: a PDF (180 KB) under a random name in `candidate-documents`; anonymous GET refused (404)                                                                    |
+| Real verification email                             | Sent through Azure Communication Services (API log `Email sent: verify-email (en)`), from "IconBridge Recruitment", link worked, arrived in the inbox (not spam) |
+| Done when: `terraform plan` shows no changes        | Yes: "No changes" (exit code 0)                                                                                                                                  |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/14>
+
+**Remaining**: CI/CD pipeline (build, scan, push, migrate, deploy with GitHub OIDC), alerting on failed emails and errors, a verified custom domain for email (quota and deliverability), change the first super admin's password, the decision on malware scanning (Microsoft Defender for Storage), legal review of retention periods and policy texts, a load test on Azure.

@@ -1,7 +1,9 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createTransport, type Transporter } from 'nodemailer';
+import { createTransport } from 'nodemailer';
 import type { Env } from '../config/env.js';
+import { AzureEmailTransport } from './azure-email.transport.js';
+import type { MailTransport } from './mail-transport.js';
 import { MAIL_TRANSPORT, MailService, OUTBOX_CONCURRENCY } from './mail.service.js';
 
 @Global()
@@ -10,7 +12,13 @@ import { MAIL_TRANSPORT, MailService, OUTBOX_CONCURRENCY } from './mail.service.
     {
       provide: MAIL_TRANSPORT,
       inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>): Transporter => {
+      useFactory: (config: ConfigService<Env, true>): MailTransport => {
+        // Azure: Communication Services Email with the managed identity, no password.
+        if (config.get('EMAIL_TRANSPORT', { infer: true }) === 'azure') {
+          return AzureEmailTransport.create(
+            config.get('AZURE_COMMUNICATION_ENDPOINT', { infer: true }),
+          );
+        }
         const user = config.get('SMTP_USER', { infer: true });
         const production = config.get('NODE_ENV', { infer: true }) === 'production';
         return createTransport({

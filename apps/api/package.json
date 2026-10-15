@@ -23,6 +23,7 @@
     "test:cov": "vitest run --config vitest.config.coverage.ts --coverage"
   },
   "dependencies": {
+    "@azure/communication-email": "^1.1.0",
     "@azure/identity": "^4.13.3",
     "@azure/storage-blob": "^12.34.0",
     "@date-fns/utc": "^2.1.1",

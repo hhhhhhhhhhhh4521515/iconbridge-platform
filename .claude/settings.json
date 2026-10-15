@@ -31,7 +31,34 @@
       "Bash(docker compose down --volumes:*)",
       "Bash(docker volume rm:*)",
       "Bash(docker volume prune:*)",
-      "Bash(docker system prune:*)"
+      "Bash(docker system prune:*)",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(terraform * apply:*)",
+      "Bash(terraform * destroy:*)",
+      "Bash(az group delete:*)",
+      "Bash(az * delete:*)",
+      "Bash(az * purge:*)",
+      "Bash(make tf-bootstrap:*)",
+      "Bash(make tf-apply:*)",
+      "Bash(make tf-destroy:*)",
+      "Bash(az * create:*)",
+      "Bash(az * update:*)",
+      "Bash(az * set:*)",
+      "Bash(az * add:*)",
+      "Bash(az * remove:*)",
+      "Bash(az * register:*)",
+      "Bash(az * unregister:*)",
+      "Bash(az * start:*)",
+      "Bash(az * stop:*)",
+      "Bash(az * restart:*)",
+      "Bash(az * bind:*)",
+      "Bash(az * unbind:*)",
+      "Bash(az * import:*)",
+      "Bash(az * recover:*)",
+      "Bash(az * assign:*)",
+      "Bash(az * login:*)",
+      "Bash(az acr build:*)"
     ],
     "deny": [
       "Bash(rm -rf /:*)",
@@ -45,14 +72,7 @@
       "Bash(git push -f:*)",
       "Bash(git push * --force:*)",
       "Bash(git push * -f:*)",
-      "Bash(git push * --force-with-lease:*)",
-      "Bash(terraform apply:*)",
-      "Bash(terraform destroy:*)",
-      "Bash(terraform * apply:*)",
-      "Bash(terraform * destroy:*)",
-      "Bash(az group delete:*)",
-      "Bash(az * delete:*)",
-      "Bash(az * purge:*)"
+      "Bash(git push * --force-with-lease:*)"
     ]
   }
 }

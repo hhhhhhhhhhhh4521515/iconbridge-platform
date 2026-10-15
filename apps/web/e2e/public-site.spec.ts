@@ -226,6 +226,18 @@ test.describe('other pages', () => {
     await expect(page.locator('html')).toHaveClass(/dark/);
   });
 
+  test('health routes: the web app alone, and the API with its database through it', async ({
+    request,
+  }) => {
+    const live = await request.get('/api/health/live');
+    expect(live.status()).toBe(200);
+    expect(await live.json()).toEqual({ status: 'ok' });
+    const ready = await request.get('/api/health/ready');
+    expect(ready.status()).toBe(200);
+    expect(await ready.json()).toEqual({ status: 'ok' });
+    expect(ready.headers()['cache-control']).toBe('no-store');
+  });
+
   test('robots.txt and sitemap.xml list the site and its jobs', async ({ request }) => {
     const robots = await (await request.get('/robots.txt')).text();
     expect(robots).toContain('Sitemap:');
