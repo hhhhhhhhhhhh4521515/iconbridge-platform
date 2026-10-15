@@ -24,6 +24,11 @@ const baseEnvSchema = z.object({
   AZURE_COMMUNICATION_ENDPOINT: z
     .union([z.literal(''), z.url({ protocol: /^https$/ })])
     .default(''),
+  /**
+   * Emails the mail service accepts per hour (Azure-managed domain: 10). Job alerts then use
+   * at most half of it. 0: no known quota (SMTP), no cap.
+   */
+  EMAIL_HOURLY_QUOTA: z.coerce.number().int().min(0).default(0),
   /** smtp only. */
   SMTP_HOST: z.string().default(''),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),

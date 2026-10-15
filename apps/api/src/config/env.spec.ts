@@ -86,6 +86,14 @@ describe('validateEnv', () => {
       expect(() => validateEnv({ ...valid, SMTP_HOST: '' })).toThrow(/SMTP_HOST/);
     });
 
+    it('has no hourly quota by default, and refuses a negative one', () => {
+      expect(validateEnv(valid).EMAIL_HOURLY_QUOTA).toBe(0);
+      expect(validateEnv({ ...noSmtp, EMAIL_HOURLY_QUOTA: '10' }).EMAIL_HOURLY_QUOTA).toBe(10);
+      expect(() => validateEnv({ ...valid, EMAIL_HOURLY_QUOTA: '-1' })).toThrow(
+        /EMAIL_HOURLY_QUOTA/,
+      );
+    });
+
     it('refuses an unknown transport', () => {
       expect(() => validateEnv({ ...valid, EMAIL_TRANSPORT: 'sendgrid' })).toThrow(
         /EMAIL_TRANSPORT/,

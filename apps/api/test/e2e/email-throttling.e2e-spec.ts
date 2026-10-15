@@ -50,11 +50,11 @@ describe('email outbox, mail service over quota (e2e)', () => {
 
     at(10);
     expect(await mail.sendDue()).toEqual({ sent: 3, retried: 0, failed: 0 });
-    // Oldest due first: the postponed email is now due after the two new ones.
-    expect(test.outbox.map((email) => email.to)).toEqual([
-      'two@example.test',
-      'three@example.test',
+    // All three leave (three at a time, so in any order).
+    expect(test.outbox.map((email) => email.to).sort()).toEqual([
       'one@example.test',
+      'three@example.test',
+      'two@example.test',
     ]);
     expect((await rows()).map((row) => [row.status, row.attempts])).toEqual([
       ['SENT', 1],
