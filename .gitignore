@@ -56,3 +56,7 @@ Thumbs.db
 apps/web/e2e/.created.jsonl
 test-results-webkit-stack/
 apps/api/dist-seed/
+
+# Terraform plans and local backend overrides
+infra/terraform/**/tfplan
+infra/terraform/**/*_override.tf
