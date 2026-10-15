@@ -639,6 +639,6 @@ Prompt 12: the platform had to run on the Azure for Students subscription within
 | Real verification email                             | Sent through Azure Communication Services (API log `Email sent: verify-email (en)`), from "IconBridge Recruitment", link worked, arrived in the inbox (not spam) |
 | Done when: `terraform plan` shows no changes        | Yes: "No changes" (exit code 0)                                                                                                                                  |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/14>
 
 **Remaining**: CI/CD pipeline (build, scan, push, migrate, deploy with GitHub OIDC), alerting on failed emails and errors, a verified custom domain for email (quota and deliverability), change the first super admin's password, the decision on malware scanning (Microsoft Defender for Storage), legal review of retention periods and policy texts, a load test on Azure.
