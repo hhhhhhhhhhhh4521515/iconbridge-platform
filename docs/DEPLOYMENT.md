@@ -213,7 +213,7 @@ make tf-apply ENV=prod     # only after approval
 terraform -chdir=infra/terraform/envs/prod output
 ```
 
-The apps start with Microsoft's public placeholder images and scale to zero; nothing runs yet.
+The apps start with Microsoft's public placeholder images and scale to zero; nothing runs yet. The environment is created in `ConsumptionOnly` mode with azapi: an Express environment (Azure's default for a request without a mode since October 2026) refuses Key Vault references and Jobs ([ADR-015](adr/ADR-015-container-apps-environment-mode.md)).
 
 **Sender name of the emails** (once): Azure creates the sender `DoNotReply` with the managed domain, so Terraform cannot set its display name in the same apply. The command is in an output:
 
