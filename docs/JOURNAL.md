@@ -678,6 +678,6 @@ Found by the owner on the first production test (registration of a real candidat
 | Production: country fields (desktop and phone) | Most used countries first; "tun" → Tunisia; "+356" → Malta; "algé" → Algérie; Arabic, no sideways scroll |
 | Production: passport step                      | Needs a candidate session: verified on the same commit locally; to be confirmed by the owner             |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/15>
 
 **Remaining**: the owner to retry the passport step on production; a decision on keeping a replica warm against the 100 s cold start; the items of the previous entry.
