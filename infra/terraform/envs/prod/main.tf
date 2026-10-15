@@ -209,9 +209,11 @@ module "container_apps" {
     EMAIL_TRANSPORT              = "azure"
     AZURE_COMMUNICATION_ENDPOINT = module.email.endpoint
     MAIL_FROM                    = module.email.sender_address
-    MAIL_DELIVERY                = "background"
-    TRUST_PROXY_HOPS             = tostring(var.trust_proxy_hops)
-    SCHEDULER_ENABLED            = "false"
+    # Emails the mail service accepts per hour: job alerts may use half (outbox priorities).
+    EMAIL_HOURLY_QUOTA = tostring(var.email_hourly_quota)
+    MAIL_DELIVERY      = "background"
+    TRUST_PROXY_HOPS   = tostring(var.trust_proxy_hops)
+    SCHEDULER_ENABLED  = "false"
   }
 
   api_secret_env = {

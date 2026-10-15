@@ -104,6 +104,17 @@ variable "mail_display_name" {
   default     = "IconBridge Recruitment"
 }
 
+variable "email_hourly_quota" {
+  description = "Emails Azure accepts per hour for the subscription: 10 with an Azure-managed domain (cannot be raised). Job alerts use at most half."
+  type        = number
+  default     = 10
+
+  validation {
+    condition     = var.email_hourly_quota >= 2
+    error_message = "At least 2, so job alerts get at least one email an hour."
+  }
+}
+
 variable "trust_proxy_hops" {
   description = "Proxies that add themselves to X-Forwarded-For before the API: the ingress of the web app and the web app itself. Check it after the first deployment (docs/DEPLOYMENT.md)."
   type        = number
