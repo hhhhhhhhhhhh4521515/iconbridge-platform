@@ -54,6 +54,7 @@ test.describe('accessibility', () => {
       for (const path of [
         '/en/account',
         '/en/account/profile?step=identity',
+        '/ar/account/profile?step=identity',
         '/en/account/profile?step=passport',
         '/en/account/profile?step=languages',
         '/en/account/documents',
@@ -63,6 +64,11 @@ test.describe('accessibility', () => {
       ]) {
         await check(page, path);
       }
+      // A country field with its list open (combobox and list box).
+      await page.goto('/en/account/profile?step=identity');
+      await page.getByRole('combobox', { name: /^Nationality/ }).fill('ma');
+      await expect(page.getByRole('listbox').filter({ visible: true })).toBeVisible();
+      expect(await violations(page), 'axe on an open country list').toEqual([]);
     } finally {
       await candidate.context.request.delete('/api/v1/me/account', {
         data: { password: 'harbour-violet-compass-58' },

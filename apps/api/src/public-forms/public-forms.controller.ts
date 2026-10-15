@@ -87,7 +87,7 @@ export class PublicFormsController {
   @ApiOperation({
     summary: 'Contact form',
     description:
-      'The message is stored and emailed to the agency (setting CONTACT_EMAIL), with the sender as reply-to.',
+      'The message is stored and emailed to the agency (setting CONTACT_EMAIL, when set), with the sender as reply-to.',
   })
   @ApiZodBody(contactMessageSchema)
   @ApiZodResponse(202, acknowledgementSchema)
@@ -110,9 +110,14 @@ export class PublicFormsController {
         ip,
       },
     });
-    // Stored first: if the email cannot leave, the message is not lost.
+    // Stored first: if the email cannot leave, the message is not lost. Until the super
+    // admin sets CONTACT_EMAIL, messages are only read in the back office.
+    const agency = await this.settings.get('CONTACT_EMAIL');
+    if (!agency) {
+      return CONTACT_ACK;
+    }
     await this.mail.send(
-      await this.settings.get('CONTACT_EMAIL'),
+      agency,
       'contact-message',
       'en',
       {

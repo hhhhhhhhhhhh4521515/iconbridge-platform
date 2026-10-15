@@ -483,6 +483,9 @@ describe('candidates, settings, dashboard, job alerts, contact and tasks (e2e)',
     });
 
     it('escapes HTML written in the message', async () => {
+      await as(test, superAdmin)
+        .put('/admin/settings/CONTACT_EMAIL', { value: 'agency@example.test' })
+        .expect(200);
       await test
         .http()
         .post(`${API}/contact`)

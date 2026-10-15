@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { pickDate, rememberApplications } from './support';
+import { pickCountry, pickDate, rememberApplications } from './support';
 
 /**
  * The whole road of a candidate, in a real browser against the real stack:
@@ -90,7 +90,7 @@ test.describe('candidate area', () => {
       await page.getByLabel(/^First name/).fill('Amira');
       await page.getByLabel(/^Last name/).fill('Ben Salah');
       await page.getByLabel(/^Email address/).fill(email);
-      await page.getByLabel(/^Country of residence/).selectOption('TN');
+      await pickCountry(page, /^Country of residence/, 'tun', 'Tunisia');
       await expect(page.getByTestId('phone-country')).toHaveValue('TN');
       await page.locator('input[name="phone"]').fill('20 123 456');
       await page.getByLabel(/^Password/).fill(PASSWORD);
@@ -123,7 +123,9 @@ test.describe('candidate area', () => {
       await expect(page).toHaveURL(/\/account\/profile\?step=identity/);
       // What was given at registration is already there.
       await expect(page.getByLabel(/^First name/)).toHaveValue('Amira');
-      await expect(page.getByLabel(/^Country of residence/)).toHaveValue('TN');
+      await expect(page.getByRole('combobox', { name: /^Country of residence/ })).toHaveValue(
+        'Tunisia',
+      );
       await expect(page.locator('input[name="phone"]')).toHaveValue('20123456');
       await page.getByLabel(/^Gender/).selectOption('FEMALE');
       // Too young: the rule of packages/shared answers in the page language.
@@ -131,14 +133,14 @@ test.describe('candidate area', () => {
       await saveAndContinue(page);
       await expect(page.getByText('You must be at least 18 years old.').last()).toBeVisible();
       await pickDate(page, /^Date of birth/, '1995-04-12');
-      await page.getByLabel(/^Nationality/).selectOption('TN');
+      await pickCountry(page, /^Nationality/, 'tun', 'Tunisia');
       await page.getByLabel(/^City/).fill('Tunis');
       await page.getByRole('checkbox', { name: 'Malta' }).check();
       await saveAndContinue(page);
 
       await expect(page).toHaveURL(/step=passport/);
       await page.getByLabel(/^Passport number/).fill('x1234567');
-      await page.getByLabel(/^Issued by/).selectOption('TN');
+      await pickCountry(page, /^Issued by/, 'TN', 'Tunisia');
       await pickDate(page, /^Issue date/, '2022-01-15');
       await pickDate(page, /^Expiry date/, '2032-01-14');
       await saveAndContinue(page);

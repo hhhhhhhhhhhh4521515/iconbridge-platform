@@ -697,7 +697,7 @@ Every export is logged with its format, columns, filters and row count. Cells th
 ### Public forms
 
 - **Job alerts**: `POST /job-alerts` records a request and emails a confirmation link (72 hours). Nothing is sent to an unconfirmed address. The batch sends each subscriber one email with the open jobs published since they confirmed that match their destinations and categories, and records each (subscriber, job) pair after the email left, so nothing is sent twice. Every email carries an unsubscribe link.
-- **Contact**: `POST /contact` stores the message, then emails it to the `CONTACT_EMAIL` setting with the sender as reply-to.
+- **Contact**: `POST /contact` stores the message, then emails it to the `CONTACT_EMAIL` setting with the sender as reply-to. The contact settings are empty until the super admin sets them: the site shows nothing for an empty one, and messages are only kept in the back office while there is no address (migration `clear_placeholder_contact_email` removed the old placeholder).
 - Both need a Turnstile token and are limited to 5 requests per minute and per IP.
 
 ### Scheduled tasks

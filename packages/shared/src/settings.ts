@@ -21,8 +21,12 @@ export const settingSchemas = {
   MAX_ACTIVE_APPLICATIONS: z.number().int().min(1).max(100),
   /** Largest accepted upload, in megabytes. */
   MAX_UPLOAD_SIZE_MB: z.number().int().min(1).max(25),
-  /** Contact details shown on the site. The contact form is emailed to CONTACT_EMAIL. */
-  CONTACT_EMAIL: z.email().max(254),
+  /**
+   * Contact details shown on the site; empty until the super admin sets them, and the
+   * site shows nothing for an empty one. The contact form is emailed to CONTACT_EMAIL
+   * (only stored while it is empty).
+   */
+  CONTACT_EMAIL: z.union([z.literal(''), z.email().max(254)]),
   CONTACT_PHONE: z.string().trim().max(30),
   CONTACT_WHATSAPP: z.string().trim().max(30),
   CONTACT_ADDRESS: z.string().trim().max(300),
@@ -59,7 +63,7 @@ export const DEFAULT_SETTINGS: SettingValues = {
   REAPPLY_COOLDOWN_MONTHS: 6,
   MAX_ACTIVE_APPLICATIONS: 5,
   MAX_UPLOAD_SIZE_MB: 5,
-  CONTACT_EMAIL: 'contact@iconbridge.local',
+  CONTACT_EMAIL: '',
   CONTACT_PHONE: '',
   CONTACT_WHATSAPP: '',
   CONTACT_ADDRESS: '',

@@ -283,6 +283,27 @@ describe('back-office adjustments (e2e)', () => {
     const list = async (user: TestUser, query = '') =>
       (await as(test, user).get(`/admin/contact-messages${query}`).expect(200)).body as Page;
 
+    it('only stores a message while no contact address is set, and emails the address once set', async () => {
+      // No placeholder address: the site shows nothing and nobody is emailed until the
+      // super admin sets one.
+      await as(test, superAdmin).put('/admin/settings/CONTACT_EMAIL', { value: '' }).expect(200);
+      test.outbox.length = 0;
+      await send('Amira', 'Visa');
+      expect(test.outbox).toHaveLength(0);
+      expect((await list(viewer)).total).toBe(1);
+      const info = (await test.http().get(`${API}/site-info`).expect(200)).body as {
+        CONTACT_EMAIL: string;
+      };
+      expect(info.CONTACT_EMAIL).toBe('');
+
+      await as(test, superAdmin)
+        .put('/admin/settings/CONTACT_EMAIL', { value: 'agency@example.test' })
+        .expect(200);
+      await send('Omar', 'Salary');
+      expect(test.outbox.map((email) => email.to)).toEqual(['agency@example.test']);
+      await as(test, superAdmin).put('/admin/settings/CONTACT_EMAIL', { value: '' }).expect(200);
+    });
+
     it('lists the messages to every back-office role, newest first, with the number left to handle', async () => {
       await send('Amira', 'Visa');
       await send('Omar', 'Salary');

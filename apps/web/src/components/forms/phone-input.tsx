@@ -9,7 +9,9 @@ import {
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import type { FieldError } from 'react-hook-form';
-import { countryName, flag } from '@/lib/countries';
+import { countryName } from '@/lib/countries';
+import { orderCountries } from '@/lib/country-search';
+import { CountryCombobox } from './country-combobox';
 import { control, Field, useHydrated } from './fields';
 
 const DIALLING_COUNTRIES = getCountries();
@@ -59,17 +61,21 @@ export function PhoneInput({
   const [parts, setParts] = useState(() => split(value, fallback));
   // As in CountrySelect: names are written by the browser, so the full list waits for it.
   const ready = useHydrated();
-  const options = useMemo(() => {
-    if (!ready) {
-      return [{ code: parts.country, name: '', dial: getCountryCallingCode(parts.country) }];
-    }
-    const collator = new Intl.Collator(locale);
-    return DIALLING_COUNTRIES.map((code) => ({
-      code,
-      name: countryName(code, locale),
-      dial: getCountryCallingCode(code),
-    })).sort((a, b) => collator.compare(a.name, b.name));
-  }, [locale, ready, parts.country]);
+  // Found by name, ISO code or calling code ("216", "+216").
+  const choices = useMemo(
+    () =>
+      ready
+        ? orderCountries(
+            DIALLING_COUNTRIES.map((code) => ({
+              code,
+              name: countryName(code, locale),
+              keywords: [getCountryCallingCode(code)],
+            })),
+            locale,
+          )
+        : [],
+    [locale, ready],
+  );
 
   const update = (next: { country: CountryCode; national: string }) => {
     setParts(next);
@@ -82,21 +88,21 @@ export function PhoneInput({
     <Field label={label} hint={hint} error={error} required={required}>
       {(props) => (
         <div dir="ltr" className="flex gap-2">
-          <select
+          <CountryCombobox
             aria-label={t('phoneCountry')}
-            className={`${control} max-w-36 shrink-0`}
+            name={`${name}-country`}
+            testId={`${name}-country`}
+            className="w-36 shrink-0"
+            listClassName="end-auto w-[min(20rem,calc(100vw-2rem))]"
+            choices={choices}
             value={parts.country}
-            data-testid={`${name}-country`}
-            onChange={(event) => {
-              update({ ...parts, country: event.target.value as CountryCode });
+            display={(choice) => `+${getCountryCallingCode(choice.code as CountryCode)}`}
+            optionDetail={(choice) => `+${getCountryCallingCode(choice.code as CountryCode)}`}
+            onChange={(code) => {
+              // A phone number always has a country: clearing the field keeps the last one.
+              if (code) update({ ...parts, country: code as CountryCode });
             }}
-          >
-            {options.map((option) => (
-              <option key={option.code} value={option.code}>
-                {flag(option.code)} +{option.dial} {option.name}
-              </option>
-            ))}
-          </select>
+          />
           <input
             {...props}
             name={name}

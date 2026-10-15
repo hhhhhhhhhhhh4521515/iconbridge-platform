@@ -739,6 +739,9 @@
     "loadFailed": "تعذّر التحميل. تحقق من اتصالك وحاول مرة أخرى.",
     "choose": "اختر…",
     "phoneCountry": "رمز الاتصال الدولي",
+    "countryPlaceholder": "اكتب اسم بلد",
+    "countryList": "البلدان",
+    "countryNone": "لا يوجد بلد مطابق",
     "date": {
       "day": "اليوم",
       "month": "الشهر",

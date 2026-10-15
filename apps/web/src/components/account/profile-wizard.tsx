@@ -12,17 +12,18 @@ import { EDUCATION_LEVELS, GENDERS, LANGUAGE_LEVELS } from '@iconbridge/shared/e
 import { Check, Plus, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   Controller,
   useFieldArray,
   useForm,
+  useWatch,
   type DefaultValues,
   type FieldValues,
   type UseFormReturn,
 } from 'react-hook-form';
 import { CheckGroup } from '@/components/forms/check-group';
-import { CountrySelect } from '@/components/forms/country-select';
+import { CountryField } from '@/components/forms/country-select';
 import { DateField } from '@/components/forms/date-field';
 import {
   CheckField,
@@ -250,16 +251,17 @@ function IdentityStep({ back, onSaved }: StepProps) {
         fromYear={THIS_YEAR}
         toYear={THIS_YEAR - 90}
       />
-      <CountrySelect
+      <CountryField
+        control={control}
+        name="nationality"
         label={t('nationality')}
         error={errors.nationality}
-        {...register('nationality')}
       />
-      <CountrySelect
+      <CountryField
+        control={control}
+        name="countryOfResidence"
         label={t('countryOfResidence')}
-        autoComplete="country"
         error={errors.countryOfResidence}
-        {...register('countryOfResidence')}
       />
       <TextField
         label={t('city')}
@@ -321,6 +323,13 @@ function IdentityStep({ back, onSaved }: StepProps) {
   );
 }
 
+const PASSPORT_FIELDS = [
+  'passportNumber',
+  'passportIssuingCountry',
+  'passportIssueDate',
+  'passportExpiryDate',
+] as const;
+
 interface PassportValues {
   passportNumber: string | null;
   passportIssuingCountry: string | null;
@@ -341,8 +350,20 @@ function PassportStep({ back, onSaved }: StepProps) {
     },
     onSaved,
   );
-  const { register, control, formState } = step.form;
+  const { register, control, formState, trigger } = step.form;
   const { errors } = formState;
+  // "Fill in every passport field, or none" spans the four fields but is shown on the
+  // number. Each field only checks itself when it changes, so the message stayed after
+  // the last field was filled in, as if the form refused it, and could go at the very
+  // moment "Save" was pressed, moving the button. All four are checked again as soon as
+  // one of them changes, while a problem is shown.
+  const passport = useWatch({ control, name: PASSPORT_FIELDS });
+  const shown = PASSPORT_FIELDS.some((name) => errors[name]);
+  useEffect(() => {
+    if (shown) void trigger(PASSPORT_FIELDS);
+    // Only a change of a value runs this again, not the errors it updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(passport)]);
   return (
     <StepForm title={t('steps.passport')} intro={t('passportIntro')} {...step} back={back}>
       <TextField
@@ -355,10 +376,11 @@ function PassportStep({ back, onSaved }: StepProps) {
         error={errors.passportNumber}
         {...register('passportNumber')}
       />
-      <CountrySelect
+      <CountryField
+        control={control}
+        name="passportIssuingCountry"
         label={t('passportIssuingCountry')}
         error={errors.passportIssuingCountry}
-        {...register('passportIssuingCountry')}
       />
       <DateField
         control={control}

@@ -739,6 +739,9 @@
     "loadFailed": "Le chargement a échoué. Vérifiez votre connexion et réessayez.",
     "choose": "Choisir…",
     "phoneCountry": "Indicatif du pays",
+    "countryPlaceholder": "Tapez un pays",
+    "countryList": "Pays",
+    "countryNone": "Aucun pays ne correspond",
     "date": {
       "day": "Jour",
       "month": "Mois",

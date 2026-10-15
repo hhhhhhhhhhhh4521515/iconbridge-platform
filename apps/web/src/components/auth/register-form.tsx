@@ -5,7 +5,7 @@ import { MailCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { CountrySelect } from '@/components/forms/country-select';
+import { CountryField } from '@/components/forms/country-select';
 import {
   Fields,
   CheckField,
@@ -144,12 +144,12 @@ export function RegisterForm({ siteKey }: { siteKey: string }) {
           error={errors.email}
           {...form.register('email')}
         />
-        <CountrySelect
+        <CountryField
+          control={form.control}
+          name="country"
           label={t('country')}
-          autoComplete="country"
           required
           error={errors.country}
-          {...form.register('country')}
         />
         <Controller
           control={form.control}
