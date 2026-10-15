@@ -70,7 +70,8 @@ resource "azurerm_key_vault_secret" "external" {
   depends_on   = [time_sleep.rbac]
 
   lifecycle {
-    # The real value is set outside Terraform and must stay.
-    ignore_changes = [value, content_type]
+    # The real value is set outside Terraform and must stay; `az keyvault secret set` also
+    # adds a `file-encoding` tag.
+    ignore_changes = [value, content_type, tags]
   }
 }
