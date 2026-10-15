@@ -240,6 +240,21 @@ export async function pickDate(scope: Page | Locator, label: RegExp, date: strin
   await group.getByLabel('Year').selectOption(year);
 }
 
+/**
+ * Chooses a country in a country field (a combobox): types `typed`, then picks the
+ * option named `name` in the list it shows.
+ */
+export async function pickCountry(
+  page: Page,
+  label: RegExp | string,
+  typed: string,
+  name: string | RegExp,
+): Promise<void> {
+  const field = page.getByRole('combobox', { name: label });
+  await field.fill(typed);
+  await page.getByRole('listbox').filter({ visible: true }).getByRole('option', { name }).click();
+}
+
 export const toast = (page: Page, text: string | RegExp): Locator =>
   page.locator('[data-sonner-toast]').filter({ hasText: text }).first();
 
