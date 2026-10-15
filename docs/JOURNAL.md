@@ -642,3 +642,42 @@ Prompt 12: the platform had to run on the Azure for Students subscription within
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/14>
 
 **Remaining**: CI/CD pipeline (build, scan, push, migrate, deploy with GitHub OIDC), alerting on failed emails and errors, a verified custom domain for email (quota and deliverability), change the first super admin's password, the decision on malware scanning (Microsoft Defender for Storage), legal review of retention periods and policy texts, a load test on Azure.
+
+## 2026-10-15 - Profile wizard fixes from the first production test
+
+**What**
+
+- **Country fields** (residence, nationality, passport issuing country, phone calling code): searchable WAI-ARIA comboboxes instead of native lists. Search by name in the page language (case, accents and Arabic letter variants ignored), by ISO code, and by calling code in the phone field; flag shown but never searched; Tunisia, Morocco, Algeria, Egypt, Malta, Poland first, then A to Z; keyboard (arrows, Home/End, Enter, Escape, Tab); 44 px rows; mirrored on Arabic pages. [ADR-016](adr/ADR-016-country-combobox.md).
+- **Passport step**: the "Fill in every passport field, or leave them all empty" message stayed after the last field was filled in. The rule spans four fields but is shown on the number, and only the field being changed was checked again. The four fields are now checked together on every change, so the message goes as soon as the step is complete.
+- **No placeholder contact details**: the seed wrote `contact@iconbridge.local`, which the production header showed. The default is now empty, the site shows nothing until the super admin sets an address, contact messages are only stored (not emailed) while there is none, and the data migration `clear_placeholder_contact_email` removes the placeholder (an address someone set is kept).
+
+**Why**
+
+Found by the owner on the first production test (registration of a real candidate).
+
+**Notes**
+
+- The passport report could not be reproduced as "never saves": with the reported values (U488799, Tunisia, dates chosen month, day, year), saving worked in Chromium (desktop and phone), Firefox and WebKit, also after skipping the step and coming back, and the production logs showed no refused save (every `PUT /me/profile` answered 200, so the form blocked it in the browser). What was reproduced is the message staying on screen after every field was filled in, which can also disappear at the moment "Save" is pressed and move the button. The new test fails on the old code at that point. If the owner still cannot save, the device and browser are needed.
+- The first country check on production found "Wallis & Futuna" with Tunisia for "tun": correct, it contains the letters; Tunisia comes first because its name starts with them.
+- A Playwright run against the production URL triggered the global clean-up of the local suite, which tried to sign in with the local admin address and was refused; the teardown is skipped for such checks now (not committed, run by hand).
+- Cold start measured after the deployment of PR #14: 100 s with both apps at zero (see the previous entry); unchanged here.
+
+**Checks**
+
+| Check                                          | Result                                                                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`    | Pass                                                                                                     |
+| `pnpm test`                                    | Pass: 598 unit tests (shared 206, api 325, web 67; 13 new for the country search)                        |
+| `pnpm test:e2e`                                | Pass: 506 tests (1 new: contact messages without an address)                                             |
+| `pnpm test:browser`                            | Pass: 153 passed, 6 skipped (9 new: passport step, country fields in en, fr, ar)                         |
+| WebKit (new and changed specs)                 | Pass: 6 passed                                                                                           |
+| axe                                            | No violation, including the Arabic identity step and an open country list                                |
+| trivy, images `bdeab57`                        | 0 fixable high or critical                                                                               |
+| Migration job on Azure                         | Succeeded; `CONTACT_EMAIL` is empty in production                                                        |
+| Production: contact details                    | `site-info` returns an empty address; no `iconbridge.local` and no `mailto:` link on the pages           |
+| Production: country fields (desktop and phone) | Most used countries first; "tun" → Tunisia; "+356" → Malta; "algé" → Algérie; Arabic, no sideways scroll |
+| Production: passport step                      | Needs a candidate session: verified on the same commit locally; to be confirmed by the owner             |
+
+**PR**: PR_LINK
+
+**Remaining**: the owner to retry the passport step on production; a decision on keeping a replica warm against the 100 s cold start; the items of the previous entry.
