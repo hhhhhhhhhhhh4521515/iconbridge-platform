@@ -739,6 +739,9 @@
     "loadFailed": "This could not be loaded. Check your connection and try again.",
     "choose": "Choose…",
     "phoneCountry": "Country calling code",
+    "countryPlaceholder": "Type a country",
+    "countryList": "Countries",
+    "countryNone": "No country matches",
     "date": {
       "day": "Day",
       "month": "Month",
