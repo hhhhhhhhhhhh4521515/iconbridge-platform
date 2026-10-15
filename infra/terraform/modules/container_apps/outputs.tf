@@ -27,3 +27,8 @@ output "tasks_job_name" {
   description = "Name of the scheduled tasks job."
   value       = azurerm_container_app_job.tasks.name
 }
+
+output "managed_certificate_name" {
+  description = "With a custom domain: name of its managed certificate, for `az containerapp hostname bind`."
+  value       = one(azurerm_container_app_environment_managed_certificate.web[*].name)
+}

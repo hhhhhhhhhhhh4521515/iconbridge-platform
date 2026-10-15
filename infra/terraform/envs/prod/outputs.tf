@@ -58,3 +58,8 @@ output "custom_domain_verification_id" {
   value       = azurerm_container_app_environment.this.custom_domain_verification_id
   sensitive   = true
 }
+
+output "managed_certificate_name" {
+  description = "With a custom domain: its managed certificate, to bind once (docs/DEPLOYMENT.md, \"Custom domain\")."
+  value       = module.container_apps.managed_certificate_name
+}

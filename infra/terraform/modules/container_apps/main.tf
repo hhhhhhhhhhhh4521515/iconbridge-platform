@@ -369,16 +369,32 @@ resource "azurerm_container_app_job" "tasks" {
 # Optional custom domain with a free managed certificate, for the web app only (the API
 # has no public address). The DNS records must exist first: a CNAME to the default
 # address of the web app and a TXT `asuid.<domain>` with the verification id (outputs).
+#
+# Terraform adds the host name (unbound) and asks Azure for the certificate, which Azure
+# issues and renews itself. The provider cannot bind a managed certificate, so the last
+# step is one `az containerapp hostname bind` (docs/DEPLOYMENT.md); the binding is then
+# ignored here.
 
 resource "azurerm_container_app_custom_domain" "web" {
   count = var.custom_domain == "" ? 0 : 1
 
   name             = var.custom_domain
   container_app_id = azurerm_container_app.web.id
-  # Azure issues and renews the managed certificate itself.
-  certificate_binding_type = "SniEnabled"
 
   lifecycle {
     ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
   }
+}
+
+resource "azurerm_container_app_environment_managed_certificate" "web" {
+  count = var.custom_domain == "" ? 0 : 1
+
+  name                         = "mc-${replace(var.custom_domain, ".", "-")}"
+  container_app_environment_id = var.environment_id
+  subject_name                 = var.custom_domain
+  domain_control_validation    = "CNAME"
+  tags                         = var.tags
+
+  # Azure validates the host name through the app that carries it.
+  depends_on = [azurerm_container_app_custom_domain.web]
 }

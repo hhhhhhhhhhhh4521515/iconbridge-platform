@@ -311,6 +311,23 @@ Steps 4 and 5 with a new commit, then `make tf-plan ENV=prod` to confirm Terrafo
 
 Set `registry_type = "ghcr"`, `ghcr_owner` and `ghcr_username` in `terraform.tfvars`; create a GitHub token with only `read:packages`; apply; set the secret `ghcr-pull-token`; push the images to `ghcr.io/<owner>/…`; deploy with the new names. Then the registry can be removed from the plan.
 
+### Custom domain (optional)
+
+1. At the DNS provider: a CNAME from the domain to the web app's default address (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`) and a TXT record `asuid.<domain>` with `terraform -chdir=infra/terraform/envs/prod output -raw custom_domain_verification_id`.
+2. In `terraform.tfvars`: `enable_custom_domain = true` and `custom_domain = "jobs.example.com"`; plan and apply. Terraform adds the host name to the web app and asks Azure for a free managed certificate (validated through the CNAME; it can take several minutes).
+3. Bind the certificate, once. The azurerm provider cannot do it; Terraform ignores the binding afterwards:
+
+   ```bash
+   OUT=infra/terraform/envs/prod
+   az containerapp hostname bind -g rg-iconbridge-prod \
+     -n "$(terraform -chdir=$OUT output -json container_app_names | jq -r .web)" \
+     --hostname jobs.example.com \
+     --environment cae-iconbridge-prod-itn \
+     --certificate "$(terraform -chdir=$OUT output -raw managed_certificate_name)"
+   ```
+
+4. Rebuild the web image with `NEXT_PUBLIC_SITE_URL=https://<domain>`, add the domain to the Turnstile widget, and apply again (CORS and `WEB_ORIGIN` follow the domain).
+
 ### Costs
 
 | Resource                               | List price (Italy North)             | Expected                                                                                                     |
