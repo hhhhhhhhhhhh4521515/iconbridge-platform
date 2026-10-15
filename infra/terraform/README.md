@@ -2,12 +2,12 @@
 
 Azure infrastructure of IconBridge Jobs. Runbook: [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md). Choices: [ADR-013](../../docs/adr/ADR-013-azure-infrastructure.md).
 
-| Folder          | Content                                                                                               | State                                 |
-| --------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `bootstrap/`    | Resource group `rg-iconbridge-tfstate`, storage account and container `tfstate` for the remote state  | Local (`bootstrap/terraform.tfstate`) |
-| `modules/`      | `observability`, `registry`, `identity`, `keyvault`, `database`, `storage`, `email`, `container_apps` | —                                     |
-| `envs/prod/`    | Production: composes the modules, creates the shared Container Apps environment, the budget           | `tfstate/prod.tfstate`                |
-| `envs/staging/` | Not deployed. How a staging environment would reuse the shared server and environment                 | —                                     |
+| Folder          | Content                                                                                                                                                       | State                                 |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `bootstrap/`    | Resource group `rg-iconbridge-tfstate`, storage account and container `tfstate` for the remote state                                                          | Local (`bootstrap/terraform.tfstate`) |
+| `modules/`      | `observability`, `registry`, `identity`, `keyvault`, `database`, `storage`, `email`, `container_apps` (the environment itself: azapi in `envs/prod`, ADR-015) | —                                     |
+| `envs/prod/`    | Production: composes the modules, creates the shared Container Apps environment, the budget                                                                   | `tfstate/prod.tfstate`                |
+| `envs/staging/` | Not deployed. How a staging environment would reuse the shared server and environment                                                                         | —                                     |
 
 Commands, from the repository root (they load `.azure-context` and use the `az login` session):
 

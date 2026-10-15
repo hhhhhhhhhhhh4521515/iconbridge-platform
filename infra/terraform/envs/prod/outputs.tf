@@ -55,7 +55,7 @@ output "identity_client_id" {
 
 output "custom_domain_verification_id" {
   description = "Value of the TXT record asuid.<domain> for a custom domain."
-  value       = azurerm_container_app_environment.this.custom_domain_verification_id
+  value       = azapi_resource.container_app_environment.output.properties.customDomainConfiguration.customDomainVerificationId
   sensitive   = true
 }
 

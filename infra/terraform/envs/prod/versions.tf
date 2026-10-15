@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.7"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.12"
+    }
     time = {
       source  = "hashicorp/time"
       version = "~> 0.13"
@@ -40,3 +44,7 @@ provider "azurerm" {
   # Storage containers are managed with Entra ID: the accounts have no usable key.
   storage_use_azuread = true
 }
+
+# Only for what azurerm cannot express yet (the mode of the Container Apps environment).
+# Same login and subscription as azurerm (ARM_SUBSCRIPTION_ID, az login).
+provider "azapi" {}

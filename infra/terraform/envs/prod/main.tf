@@ -29,7 +29,7 @@ locals {
   web_origin = (
     var.enable_custom_domain
     ? "https://${var.custom_domain}"
-    : "https://${local.web_app_name}.${azurerm_container_app_environment.this.default_domain}"
+    : "https://${local.web_app_name}.${azapi_resource.container_app_environment.output.properties.defaultDomain}"
   )
 }
 
@@ -169,13 +169,57 @@ module "keyvault" {
 
 # The only Container Apps environment the subscription allows in the region. A staging
 # environment of this repository reads it (data source) instead of creating its own.
-resource "azurerm_container_app_environment" "this" {
-  name                       = "cae-iconbridge-${local.name_suffix}"
-  location                   = var.location
-  resource_group_name        = azurerm_resource_group.this.name
-  log_analytics_workspace_id = module.observability.log_analytics_workspace_id
-  logs_destination           = "log-analytics"
-  tags                       = local.tags
+#
+# Created with azapi, not azurerm: since October 2026 Azure makes a new environment
+# "Express" when the request names no mode, and Express refuses Key Vault references and
+# Container Apps Jobs. azurerm 4.x uses an API version without `environmentMode`; API
+# 2026-07-01 lets the mode be set explicitly (ADR-015).
+resource "azapi_resource" "container_app_environment" {
+  type      = "Microsoft.App/managedEnvironments@2026-07-01"
+  name      = "cae-iconbridge-${local.name_suffix}"
+  location  = var.location
+  parent_id = azurerm_resource_group.this.id
+  tags      = local.tags
+  # azapi 2.13 embeds schemas up to 2026-01-01, which has no environmentMode. Azure still
+  # validates the request, and the postcondition below checks the result.
+  schema_validation_enabled = false
+
+  body = {
+    properties = {
+      # Serverless consumption only: no workload profile, no management fee.
+      environmentMode = "ConsumptionOnly"
+      zoneRedundant   = false
+      appLogsConfiguration = {
+        destination = "log-analytics"
+        logAnalyticsConfiguration = {
+          customerId = module.observability.log_analytics_customer_id
+        }
+      }
+    }
+  }
+
+  sensitive_body = {
+    properties = {
+      appLogsConfiguration = {
+        logAnalyticsConfiguration = {
+          sharedKey = module.observability.log_analytics_shared_key
+        }
+      }
+    }
+  }
+
+  response_export_values = [
+    "properties.defaultDomain",
+    "properties.environmentMode",
+    "properties.customDomainConfiguration.customDomainVerificationId",
+  ]
+
+  lifecycle {
+    postcondition {
+      condition     = self.output.properties.environmentMode == "ConsumptionOnly"
+      error_message = "Azure did not create a ConsumptionOnly environment: the apps need Key Vault references and Jobs (ADR-015)."
+    }
+  }
 }
 
 module "container_apps" {
@@ -184,7 +228,7 @@ module "container_apps" {
   location            = var.location
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.tags
-  environment_id      = azurerm_container_app_environment.this.id
+  environment_id      = azapi_resource.container_app_environment.id
   identity_id         = module.identity.id
   registry_type       = var.registry_type
   registry_server     = module.registry.server
