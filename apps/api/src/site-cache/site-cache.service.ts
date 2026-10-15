@@ -15,6 +15,12 @@ export const SITE_CACHE_TAGS = [
 export type SiteCacheTag = (typeof SITE_CACHE_TAGS)[number];
 
 const TIMEOUT_MS = 3000;
+/**
+ * The web app is told a second time this long after the change: a page that was being
+ * rendered with the old data when the first notice arrived would otherwise keep it for
+ * a minute.
+ */
+export const REPEAT_NOTICE_MS = 3000;
 
 /**
  * Tells the public site that something it shows has changed. The web app keeps the
@@ -48,7 +54,9 @@ export class SiteCacheService {
     if (!this.url || tags.length === 0) {
       return;
     }
-    void this.notify(this.url, tags);
+    const url = this.url;
+    void this.notify(url, tags);
+    setTimeout(() => void this.notify(url, tags), REPEAT_NOTICE_MS).unref();
   }
 
   private async notify(url: string, tags: readonly SiteCacheTag[]): Promise<void> {

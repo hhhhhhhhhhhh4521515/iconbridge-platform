@@ -11,6 +11,11 @@ export const STATS_TTL_MS = 10 * 60 * 1000;
 @Injectable()
 export class CatalogService {
   private stats: { value: PublicStats; expiresAt: number } | undefined;
+  /**
+   * Incremented by each clear. A computation that started before a clear read the old
+   * figures: it answers its caller but does not keep its result.
+   */
+  private statsGeneration = 0;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -63,6 +68,7 @@ export class CatalogService {
     if (this.stats && this.stats.expiresAt > now) {
       return this.stats.value;
     }
+    const generation = this.statsGeneration;
     const [[open], platform, history] = await Promise.all([
       this.prisma.$queryRaw<{ count: number }[]>`
         SELECT count(*)::int AS count FROM jobs j WHERE ${OPEN_JOB_SQL}`,
@@ -78,12 +84,15 @@ export class CatalogService {
       // Not a sum: the historical figure is the total number of countries served.
       countries: Math.max(platform.countries, history.countries),
     };
-    this.stats = { value, expiresAt: now + STATS_TTL_MS };
+    if (generation === this.statsGeneration) {
+      this.stats = { value, expiresAt: now + STATS_TTL_MS };
+    }
     return value;
   }
 
   /** Called when a historical figure changes, and by tests: the next read computes the counters again. */
   clearStatsCache(): void {
+    this.statsGeneration += 1;
     this.stats = undefined;
   }
 }
