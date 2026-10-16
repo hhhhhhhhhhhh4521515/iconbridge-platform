@@ -1,4 +1,5 @@
-import DOMPurify from 'isomorphic-dompurify';
+import { createRequire } from 'node:module';
+import type { DOMPurify as Purifier } from 'isomorphic-dompurify';
 
 /** True when a text holds HTML written with the editor of the back office. */
 export function isRichText(text: string): boolean {
@@ -31,21 +32,37 @@ interface ElementLike {
   removeAttribute(name: string): void;
 }
 
-// Links written by a recruiter open in a new tab and pass no ranking or referrer;
-// a link without a safe address keeps its text and loses the link.
-DOMPurify.addHook('afterSanitizeAttributes', (node: unknown) => {
-  const element = node as ElementLike;
-  if (element.tagName !== 'A') {
-    return;
+const load = createRequire(import.meta.url);
+let purifier: Purifier | undefined;
+
+/**
+ * DOMPurify and jsdom take about a second to load on the API's 0.5 vCPU, and the first
+ * requests after a cold start (home page, job list) do not need them: they are loaded
+ * with the first rich text, not when the API starts. Synchronous (a CommonJS require),
+ * so `cleanRichText` stays synchronous.
+ */
+function purify(): Purifier {
+  if (!purifier) {
+    const loaded = load('isomorphic-dompurify') as { default?: Purifier } & Purifier;
+    purifier = loaded.default ?? loaded;
+    // Links written by a recruiter open in a new tab and pass no ranking or referrer;
+    // a link without a safe address keeps its text and loses the link.
+    purifier.addHook('afterSanitizeAttributes', (node: unknown) => {
+      const element = node as ElementLike;
+      if (element.tagName !== 'A') {
+        return;
+      }
+      if (element.hasAttribute('href')) {
+        element.setAttribute('rel', 'noopener noreferrer nofollow');
+        element.setAttribute('target', '_blank');
+      } else {
+        element.removeAttribute('target');
+        element.removeAttribute('rel');
+      }
+    });
   }
-  if (element.hasAttribute('href')) {
-    element.setAttribute('rel', 'noopener noreferrer nofollow');
-    element.setAttribute('target', '_blank');
-  } else {
-    element.removeAttribute('target');
-    element.removeAttribute('rel');
-  }
-});
+  return purifier;
+}
 
 /**
  * Texts of a job (description, requirements, benefits) come from a rich-text editor.
@@ -57,11 +74,13 @@ export function cleanRichText(text: string): string {
   if (!isRichText(text)) {
     return text;
   }
-  return DOMPurify.sanitize(text, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR: ['href', 'rel', 'target'],
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:)/i,
-    ALLOW_DATA_ATTR: false,
-    ALLOW_ARIA_ATTR: false,
-  }).trim();
+  return purify()
+    .sanitize(text, {
+      ALLOWED_TAGS,
+      ALLOWED_ATTR: ['href', 'rel', 'target'],
+      ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:)/i,
+      ALLOW_DATA_ATTR: false,
+      ALLOW_ARIA_ATTR: false,
+    })
+    .trim();
 }

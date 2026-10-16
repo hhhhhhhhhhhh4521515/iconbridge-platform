@@ -1,16 +1,13 @@
 import type { Readable } from 'node:stream';
-import { DefaultAzureCredential } from '@azure/identity';
-import {
-  BlobSASPermissions,
+import type {
   BlobServiceClient,
-  generateBlobSASQueryParameters,
-  SASProtocol,
+  ContainerClient,
   StorageSharedKeyCredential,
-  type ContainerClient,
-  type UserDelegationKey,
+  UserDelegationKey,
 } from '@azure/storage-blob';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { lazy } from '../common/lazy.js';
 import type { Env } from '../config/env.js';
 import {
   CANDIDATE_DOCUMENTS_CONTAINER,
@@ -44,10 +41,11 @@ export function contentDisposition(fileName: string, inline = false): string {
 @Injectable()
 export class AzureStorageService extends StorageService {
   private readonly logger = new Logger(AzureStorageService.name);
-  private readonly service: BlobServiceClient;
-  private readonly sharedKey: StorageSharedKeyCredential | null;
-  private readonly publicMedia: ContainerClient;
-  private readonly documents: ContainerClient;
+  /**
+   * The Azure SDK (about a second of start-up on 0.5 vCPU) is loaded with the first file
+   * operation: public addresses, which most requests need, are plain text.
+   */
+  private readonly clients: () => Promise<Clients>;
   private readonly publicBaseUrl: string;
   private readonly ready = new Map<string, Promise<void>>();
   private delegationKey: { key: UserDelegationKey; expiresAt: number } | undefined;
@@ -55,20 +53,28 @@ export class AzureStorageService extends StorageService {
   constructor(config: ConfigService<Env, true>) {
     super();
     const connectionString = config.get('AZURE_STORAGE_CONNECTION_STRING', { infer: true });
-    if (connectionString) {
-      this.service = BlobServiceClient.fromConnectionString(connectionString);
-      const credential = this.service.credential;
-      this.sharedKey = credential instanceof StorageSharedKeyCredential ? credential : null;
-    } else {
-      this.service = new BlobServiceClient(
-        config.get('AZURE_STORAGE_ACCOUNT_URL', { infer: true }),
-        new DefaultAzureCredential(),
-      );
-      this.sharedKey = null;
-    }
-    this.publicMedia = this.service.getContainerClient(PUBLIC_MEDIA_CONTAINER);
-    this.documents = this.service.getContainerClient(CANDIDATE_DOCUMENTS_CONTAINER);
+    const accountUrl = config.get('AZURE_STORAGE_ACCOUNT_URL', { infer: true });
     this.publicBaseUrl = config.get('PUBLIC_MEDIA_BASE_URL', { infer: true });
+    this.clients = lazy(async () => {
+      const sdk = await import('@azure/storage-blob');
+      let service: BlobServiceClient;
+      let sharedKey: StorageSharedKeyCredential | null = null;
+      if (connectionString) {
+        service = sdk.BlobServiceClient.fromConnectionString(connectionString);
+        const credential = service.credential;
+        sharedKey = credential instanceof sdk.StorageSharedKeyCredential ? credential : null;
+      } else {
+        const { DefaultAzureCredential } = await import('@azure/identity');
+        service = new sdk.BlobServiceClient(accountUrl, new DefaultAzureCredential());
+      }
+      return {
+        sdk,
+        service,
+        sharedKey,
+        publicMedia: service.getContainerClient(PUBLIC_MEDIA_CONTAINER),
+        documents: service.getContainerClient(CANDIDATE_DOCUMENTS_CONTAINER),
+      };
+    });
   }
 
   publicUrl(path: string | null): string | null {
@@ -79,8 +85,9 @@ export class AzureStorageService extends StorageService {
 
   /** Paths contain a content hash, so public files are cached for a year. */
   async uploadPublic(path: string, content: Buffer, contentType: string): Promise<void> {
-    await this.ensureContainer(this.publicMedia, 'blob');
-    await this.publicMedia.getBlockBlobClient(path).uploadData(content, {
+    const { publicMedia } = await this.clients();
+    await this.ensureContainer(publicMedia, 'blob');
+    await publicMedia.getBlockBlobClient(path).uploadData(content, {
       blobHTTPHeaders: {
         blobContentType: contentType,
         blobCacheControl: 'public, max-age=31536000, immutable',
@@ -90,7 +97,8 @@ export class AzureStorageService extends StorageService {
 
   async deletePublic(path: string): Promise<void> {
     try {
-      await this.publicMedia.getBlockBlobClient(path).deleteIfExists();
+      const { publicMedia } = await this.clients();
+      await publicMedia.getBlockBlobClient(path).deleteIfExists();
     } catch (error) {
       this.logger.warn(
         `Public file not deleted: ${error instanceof Error ? error.name : 'unknown error'}`,
@@ -99,18 +107,21 @@ export class AzureStorageService extends StorageService {
   }
 
   async uploadPrivate(path: string, content: Buffer, contentType: string): Promise<void> {
-    await this.ensureContainer(this.documents, undefined);
-    await this.documents.getBlockBlobClient(path).uploadData(content, {
+    const { documents } = await this.clients();
+    await this.ensureContainer(documents, undefined);
+    await documents.getBlockBlobClient(path).uploadData(content, {
       blobHTTPHeaders: { blobContentType: contentType, blobCacheControl: 'private, no-store' },
     });
   }
 
   async deletePrivate(path: string): Promise<void> {
-    await this.documents.getBlockBlobClient(path).deleteIfExists();
+    const { documents } = await this.clients();
+    await documents.getBlockBlobClient(path).deleteIfExists();
   }
 
   async readPrivate(path: string): Promise<Readable> {
-    const response = await this.documents.getBlockBlobClient(path).download();
+    const { documents } = await this.clients();
+    const response = await documents.getBlockBlobClient(path).download();
     if (!response.readableStreamBody) {
       throw new Error('The storage returned no content');
     }
@@ -119,7 +130,9 @@ export class AzureStorageService extends StorageService {
 
   async privateDownloadUrl(path: string, options: DownloadLinkOptions): Promise<string> {
     const now = Date.now();
-    const blob = this.documents.getBlockBlobClient(path);
+    const { sdk, service, sharedKey, documents } = await this.clients();
+    const { BlobSASPermissions, SASProtocol, generateBlobSASQueryParameters } = sdk;
+    const blob = documents.getBlockBlobClient(path);
     const values = {
       containerName: CANDIDATE_DOCUMENTS_CONTAINER,
       blobName: path,
@@ -132,24 +145,24 @@ export class AzureStorageService extends StorageService {
       contentType: options.contentType,
       cacheControl: 'private, no-store',
     };
-    const signature = this.sharedKey
-      ? generateBlobSASQueryParameters(values, this.sharedKey)
+    const signature = sharedKey
+      ? generateBlobSASQueryParameters(values, sharedKey)
       : generateBlobSASQueryParameters(
           values,
-          await this.userDelegationKey(now),
-          this.service.accountName,
+          await this.userDelegationKey(service, now),
+          service.accountName,
         );
     return `${blob.url}?${signature.toString()}`;
   }
 
-  private async userDelegationKey(now: number): Promise<UserDelegationKey> {
+  private async userDelegationKey(
+    service: BlobServiceClient,
+    now: number,
+  ): Promise<UserDelegationKey> {
     if (!this.delegationKey || this.delegationKey.expiresAt - now < DELEGATION_KEY_MARGIN_MS) {
       const expiresAt = now + DELEGATION_KEY_TTL_MS;
       this.delegationKey = {
-        key: await this.service.getUserDelegationKey(
-          new Date(now - CLOCK_SKEW_MS),
-          new Date(expiresAt),
-        ),
+        key: await service.getUserDelegationKey(new Date(now - CLOCK_SKEW_MS), new Date(expiresAt)),
         expiresAt,
       };
     }
@@ -171,4 +184,12 @@ export class AzureStorageService extends StorageService {
     }
     return ready;
   }
+}
+
+interface Clients {
+  sdk: typeof import('@azure/storage-blob');
+  service: BlobServiceClient;
+  sharedKey: StorageSharedKeyCredential | null;
+  publicMedia: ContainerClient;
+  documents: ContainerClient;
 }

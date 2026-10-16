@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import sharp from 'sharp';
 import { AppException } from '../common/errors/app.exception.js';
 
 export const COVER_MAX_BYTES = 5 * 1024 * 1024;
@@ -33,6 +32,8 @@ export class JobCoverService {
     if (file.length === 0 || file.length > COVER_MAX_BYTES) {
       throw unsupported('The image must be between 1 byte and 5 MB');
     }
+    // Loaded with the first image, not when the API starts.
+    const { default: sharp } = await import('sharp');
     try {
       const image = sharp(file, { failOn: 'error', limitInputPixels: MAX_PIXELS });
       const { format } = await image.metadata();

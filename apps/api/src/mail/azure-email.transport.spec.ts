@@ -30,7 +30,8 @@ function transportWith(beginSend: (options: SendOptions) => Promise<unknown>) {
   const spy = vi.fn((_message: Parameters<BeginSend>[0], options?: SendOptions) =>
     beginSend(options ?? {}),
   );
-  return { transport: new AzureEmailTransport({ beginSend: spy as unknown as BeginSend }), spy };
+  const client = { beginSend: spy as unknown as BeginSend };
+  return { transport: new AzureEmailTransport(() => Promise.resolve(client)), spy };
 }
 
 describe('AzureEmailTransport', () => {

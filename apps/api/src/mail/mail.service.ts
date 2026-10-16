@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Locale } from '@iconbridge/shared';
-import mjml2html from 'mjml';
 import { Clock } from '../common/clock/clock.js';
 import { FieldCipher } from '../common/crypto/field-cipher.js';
 import type { Env } from '../config/env.js';
 import type { EmailStatus, Prisma } from '../generated/prisma/client.js';
+import { lazy } from '../common/lazy.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { EMAIL_PRIORITY, HALF_QUOTA_TEMPLATES, halfQuotaCap } from './mail-priority.js';
 import { MailThrottledError, type MailTransport } from './mail-transport.js';
@@ -18,6 +18,9 @@ import {
 } from './mail.templates.js';
 
 export const MAIL_TRANSPORT = Symbol('MAIL_TRANSPORT');
+
+/** mjml weighs about a second of start-up on 0.5 vCPU: loaded with the first email. */
+const loadMjml = lazy(async () => (await import('mjml')).default);
 
 /** Pages of the web app that email links open. The token travels in the query string. */
 export const EMAIL_LINK_PATHS = {
@@ -112,6 +115,7 @@ export class MailService implements OnModuleDestroy {
     variables: EmailVariables,
   ): Promise<RenderedEmail> {
     const content = emailContent(template, locale, variables);
+    const mjml2html = await loadMjml();
     const { html } = await mjml2html(emailMjml(content, locale, variables.actionUrl), {
       validationLevel: 'strict',
     });
