@@ -1,13 +1,18 @@
 # gitleaks configuration. Run: gitleaks git --redact .
 # The default rules apply. The only matches in the history are passwords of test
-# fixtures: fake accounts created in the test database or in memory, used nowhere else.
+# fixtures: fake accounts created in the test database or in memory, used nowhere else,
+# and the Terraform line that maps SEED_ADMIN_PASSWORD to the *name* of its Key Vault
+# secret ("seed-admin-password"), which holds no password.
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Passwords of test fixtures"
+description = "Passwords of test fixtures; names of Key Vault secrets"
 paths = [
   '''apps/api/test/.*''',
   '''apps/api/src/.*\.spec\.ts''',
   '''apps/web/e2e/.*''',
+]
+regexes = [
+  '''^"?seed-admin-password"?$''',
 ]
