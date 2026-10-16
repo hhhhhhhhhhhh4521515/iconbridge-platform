@@ -7,6 +7,7 @@ Azure infrastructure of IconBridge Jobs. Runbook: [docs/DEPLOYMENT.md](../../doc
 | `bootstrap/`    | Resource group `rg-iconbridge-tfstate`, storage account and container `tfstate` for the remote state                                                          | Local (`bootstrap/terraform.tfstate`) |
 | `modules/`      | `observability`, `registry`, `identity`, `keyvault`, `database`, `storage`, `email`, `container_apps` (the environment itself: azapi in `envs/prod`, ADR-015) | —                                     |
 | `envs/prod/`    | Production: composes the modules, creates the shared Container Apps environment, the budget                                                                   | `tfstate/prod.tfstate`                |
+| `github/`       | The three Entra identities of GitHub Actions (OIDC, no secret) and their roles; applied by the owner only ([ADR-018](../../docs/adr/ADR-018-ci-cd.md))        | `tfstate/github.tfstate`              |
 | `envs/staging/` | Not deployed. How a staging environment would reuse the shared server and environment                                                                         | —                                     |
 
 Commands, from the repository root (they load `.azure-context` and use the `az login` session):

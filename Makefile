@@ -6,13 +6,15 @@
 #   make tf-apply            apply the saved plan
 #   make tf-destroy          destroy an environment, after typing its name
 #   make tf-check            fmt, validate, tflint, checkov
+#   make tf-plan ENV=github  the identities of GitHub Actions (owner only, docs/CICD.md)
 #
 # Every target loads the subscription and tenant ids from .azure-context (git-ignored)
 # and uses the Azure CLI login (`az login`).
 
 ENV ?= prod
 TF_DIR := infra/terraform
-ENV_DIR := $(TF_DIR)/envs/$(ENV)
+# ENV=github: the identities of GitHub Actions (infra/terraform/github), applied by the owner only.
+ENV_DIR := $(if $(filter github,$(ENV)),$(TF_DIR)/github,$(TF_DIR)/envs/$(ENV))
 AZ_CONTEXT := set -a; . ./.azure-context; set +a;
 
 .PHONY: tf-bootstrap tf-init tf-plan tf-apply tf-destroy tf-fmt tf-validate tf-lint tf-checkov tf-check
@@ -25,7 +27,7 @@ tf-init:
 	$(AZ_CONTEXT) cd $(ENV_DIR) && terraform init -input=false
 
 tf-plan:
-	@test -f $(ENV_DIR)/terraform.tfvars || { echo "Copy $(ENV_DIR)/terraform.tfvars.example to terraform.tfvars and fill it in"; exit 1; }
+	@test -f $(ENV_DIR)/terraform.tfvars -o "$(ENV)" = github || { echo "Copy $(ENV_DIR)/terraform.tfvars.example to terraform.tfvars and fill it in"; exit 1; }
 	$(AZ_CONTEXT) cd $(ENV_DIR) && terraform plan -input=false -out=tfplan
 
 tf-apply:
@@ -44,7 +46,7 @@ tf-fmt:
 	terraform fmt -recursive -check -diff $(TF_DIR)
 
 tf-validate:
-	for dir in $(TF_DIR)/bootstrap $(TF_DIR)/envs/*/; do \
+	for dir in $(TF_DIR)/bootstrap $(TF_DIR)/github $(TF_DIR)/envs/*/; do \
 	  [ -f $$dir/versions.tf ] || continue; \
 	  (cd $$dir && terraform init -backend=false -input=false >/dev/null && terraform validate) || exit 1; \
 	done
