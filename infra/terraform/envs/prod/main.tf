@@ -119,7 +119,7 @@ module "storage" {
   resource_group_name   = azurerm_resource_group.this.name
   tags                  = local.tags
   apps_principal_id     = module.identity.principal_id
-  deployer_principal_id = data.azurerm_client_config.current.object_id
+  deployer_principal_id = var.owner_object_id
   cors_allowed_origins  = [local.web_origin]
 
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
@@ -140,7 +140,7 @@ module "keyvault" {
   resource_group_name   = azurerm_resource_group.this.name
   tags                  = local.tags
   tenant_id             = data.azurerm_client_config.current.tenant_id
-  deployer_principal_id = data.azurerm_client_config.current.object_id
+  deployer_principal_id = var.owner_object_id
   apps_principal_id     = module.identity.principal_id
 
   generated_secrets = {

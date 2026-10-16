@@ -19,6 +19,16 @@ variable "owner_email" {
   }
 }
 
+variable "owner_object_id" {
+  description = "Entra object id of the owner (az ad signed-in-user show --query id -o tsv). Gets the data roles Terraform needs on the vault and the file storage. Explicit, not \"whoever runs Terraform\": GitHub Actions runs it too (docs/adr/ADR-018-ci-cd.md)."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.owner_object_id))
+    error_message = "A GUID."
+  }
+}
+
 variable "admin_ip_addresses" {
   description = "Public IPv4 addresses allowed to reach PostgreSQL from outside Azure (your workstation: curl -s https://api.ipify.org)."
   type        = list(string)

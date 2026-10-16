@@ -1,0 +1,136 @@
+name: CI
+
+# Every pull request and every push on main; Firefox and WebKit on main and every night.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  # Every browser engine on main, at night and on demand; Chromium only on pull requests.
+  ALL_BROWSERS: ${{ github.event_name != 'pull_request' }}
+
+jobs:
+  checks:
+    name: Lint, types, unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  api-e2e:
+    name: API e2e and coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: iconbridge
+          POSTGRES_PASSWORD: iconbridge
+          POSTGRES_DB: iconbridge
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U iconbridge" --health-interval 5s --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Azurite
+        run: ./.github/scripts/azurite.sh
+      - name: Shared package and Prisma client
+        run: pnpm turbo run build --filter=@iconbridge/shared && pnpm db:generate
+      # API unit and e2e tests (against iconbridge_test), shared package and web libraries,
+      # with the coverage thresholds.
+      - run: pnpm test:cov
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: |
+            apps/api/coverage
+            apps/web/coverage
+            packages/shared/coverage
+          if-no-files-found: ignore
+          retention-days: 14
+
+  browser:
+    name: Browser tests (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: iconbridge
+          POSTGRES_PASSWORD: iconbridge
+          POSTGRES_DB: iconbridge
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U iconbridge" --health-interval 5s --health-timeout 3s
+          --health-retries 20
+      mailpit:
+        image: axllent/mailpit:latest
+        ports: ['2525:1025', '8025:8025']
+    steps:
+      - name: Skip other engines on pull requests
+        id: run
+        run: echo "go=${{ matrix.engine == 'chromium' || env.ALL_BROWSERS == 'true' }}" >> "$GITHUB_OUTPUT"
+      - if: steps.run.outputs.go == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - if: steps.run.outputs.go == 'true'
+        uses: ./.github/actions/setup
+      - if: steps.run.outputs.go == 'true'
+        name: Azurite
+        run: ./.github/scripts/azurite.sh
+      - if: steps.run.outputs.go == 'true'
+        name: Database and development data
+        run: pnpm turbo run build --filter=@iconbridge/shared && pnpm db:generate && pnpm --filter @iconbridge/api exec prisma migrate deploy && pnpm db:seed
+      - if: steps.run.outputs.go == 'true'
+        name: Build the API and the web app
+        run: pnpm build
+      - if: steps.run.outputs.go == 'true' && matrix.engine != 'webkit'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.engine }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - if: steps.run.outputs.go == 'true' && matrix.engine != 'webkit'
+        name: Browser
+        run: pnpm --filter @iconbridge/web exec playwright install --with-deps ${{ matrix.engine }}
+      # Playwright starts the built API (without rate limits) and the web app itself.
+      - if: steps.run.outputs.go == 'true' && matrix.engine == 'chromium'
+        run: pnpm --filter @iconbridge/web exec playwright test --project=desktop --project=phone --project=admin
+      - if: steps.run.outputs.go == 'true' && matrix.engine == 'firefox'
+        run: pnpm --filter @iconbridge/web exec playwright test --project=firefox --project=firefox-admin
+      # WebKit in the Playwright container, over HTTPS (Secure cookies), as on a workstation.
+      - if: steps.run.outputs.go == 'true' && matrix.engine == 'webkit'
+        run: pnpm test:browser:webkit
+      - if: always() && steps.run.outputs.go == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ matrix.engine }}
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 14

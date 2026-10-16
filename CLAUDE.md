@@ -6,19 +6,19 @@ Recruitment platform where candidates apply for jobs in Malta, Poland and on cru
 
 ## Folder map
 
-| Path                      | Content                                                                                                                          |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`                | Next.js App Router, Tailwind CSS, shadcn/ui. Port 3000                                                                           |
-| `apps/api`                | NestJS REST API (ESM), Prisma. Port 4000, prefix `/api/v1`, Swagger at `/api/docs`, probes at `/health/live` and `/health/ready` |
-| `packages/shared`         | zod schemas, enums (roles, application statuses, destinations) and types used by web and api                                     |
-| `packages/config`         | Shared ESLint, Prettier and tsconfig presets                                                                                     |
-| `infra/terraform`         | Azure infrastructure (empty for now)                                                                                             |
-| `.github/workflows`       | CI/CD (empty for now)                                                                                                            |
-| `docs/`                   | `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `QA-REPORT.md`, `JOURNAL.md`, `00-environment.md`, `adr/`                           |
-| `tests/load`              | k6 load tests (job list, applying)                                                                                               |
-| `scripts/`                | Development helpers (`env-init`, `dev-preflight`, WebKit tests in a container)                                                   |
-| `docker-compose.yml`      | Local PostgreSQL 16, Azurite, Mailpit, optional pgAdmin (profile `tools`)                                                        |
-| `docker-compose.prod.yml` | The production images on this machine (see `docs/DEPLOYMENT.md`)                                                                 |
+| Path                      | Content                                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`                | Next.js App Router, Tailwind CSS, shadcn/ui. Port 3000                                                                             |
+| `apps/api`                | NestJS REST API (ESM), Prisma. Port 4000, prefix `/api/v1`, Swagger at `/api/docs`, probes at `/health/live` and `/health/ready`   |
+| `packages/shared`         | zod schemas, enums (roles, application statuses, destinations) and types used by web and api                                       |
+| `packages/config`         | Shared ESLint, Prettier and tsconfig presets                                                                                       |
+| `infra/terraform`         | Azure infrastructure: `bootstrap`, `modules`, `envs/prod`, `github` (identities of GitHub Actions)                                 |
+| `.github/workflows`       | CI/CD: `ci`, `security`, `infra`, `deploy`, `release` (see `docs/CICD.md`)                                                         |
+| `docs/`                   | `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `QA-REPORT.md`, `JOURNAL.md`, `00-environment.md`, `DEPLOYMENT.md`, `CICD.md`, `adr/` |
+| `tests/load`              | k6 load tests (job list, applying)                                                                                                 |
+| `scripts/`                | Development helpers (`env-init`, `dev-preflight`, WebKit tests in a container)                                                     |
+| `docker-compose.yml`      | Local PostgreSQL 16, Azurite, Mailpit, optional pgAdmin (profile `tools`)                                                          |
+| `docker-compose.prod.yml` | The production images on this machine (see `docs/DEPLOYMENT.md`)                                                                   |
 
 ## Commands
 

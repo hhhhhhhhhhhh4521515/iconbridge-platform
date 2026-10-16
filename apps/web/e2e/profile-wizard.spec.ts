@@ -18,7 +18,9 @@ test.describe('profile wizard', () => {
   let page: Page;
 
   test.beforeEach(async ({ browser }, testInfo) => {
-    const tag = `-wizard-${testInfo.project.name}-${String(testInfo.workerIndex)}`;
+    // One candidate per test and attempt: a second registration of an address only sends
+    // the "account exists" email, without a verification link.
+    const tag = `-wizard-${testInfo.project.name}-${testInfo.testId.slice(-8)}-${String(testInfo.retry)}`;
     ({ context } = await verifiedCandidate(browser, tag));
     page = await context.newPage();
   });

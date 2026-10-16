@@ -308,7 +308,7 @@ az keyvault secret show --vault-name kv-iconbridge-prod-itn --name seed-admin-pa
 
 ### Routine deployment
 
-Steps 4 and 5 with a new commit, then `make tf-plan ENV=prod` to confirm Terraform sees no drift. Migrations must work with the API still running (see CLAUDE.md).
+Through GitHub Actions since 16 October 2026: merge a pull request, approve the `production` deployment, and `deploy.yml` builds, scans, migrates, deploys, smoke-tests and rolls back on failure ([CICD.md](CICD.md)). Steps 4 and 5 above stay the manual fallback. Migrations must work with the API still running (see CLAUDE.md).
 
 ### After the free year of the registry
 

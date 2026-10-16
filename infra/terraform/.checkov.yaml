@@ -11,6 +11,11 @@ skip-path:
 compact: true
 quiet: true
 skip-check:
+  # --- GitHub Actions OIDC (infra/terraform/github). The subjects are fully specific (one
+  # repository, one trigger each: pull_request, refs/heads/main, environment:production),
+  # in GitHub's immutable format "repo:owner@id/name@id:…" that this repository uses; the
+  # check only recognises "repo:owner/name:…" and fails them (ADR-018).
+  - CKV_AZURE_249 # GitHub Actions OIDC trust policy
   # --- Network isolation (private endpoints, firewalls). A Consumption-plan Container Apps
   # environment has no VNet and no fixed outbound address; private endpoints and a
   # VNet-integrated environment cost more than the monthly budget (ADR-013). Access is

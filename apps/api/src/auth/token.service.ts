@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -20,8 +20,15 @@ export interface OpaqueToken {
 export class TokenService {
   constructor(private readonly jwt: JwtService) {}
 
+  /**
+   * A random `jti` makes every token unique: two tokens for the same user signed in the
+   * same second (sign-in, then a quick refresh) would otherwise be identical, because
+   * `iat` and `exp` count whole seconds.
+   */
   signAccessToken(userId: string, tokenVersion: number): Promise<string> {
-    return this.jwt.signAsync({ sub: userId, tv: tokenVersion } satisfies AccessTokenPayload);
+    return this.jwt.signAsync({ sub: userId, tv: tokenVersion } satisfies AccessTokenPayload, {
+      jwtid: randomUUID(),
+    });
   }
 
   /** Null when the token is missing, malformed, expired or signed with another key. */

@@ -721,3 +721,38 @@ A visitor arriving after a quiet period waited more than a minute and a half. A 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/16>
 
 **Remaining**: `min_replicas = 1` for the web app (about 4–6 USD a month) would bring the first visit to roughly the API's share, about 35 s; both warm would remove it, at about 15 USD a month. Owner's decision.
+
+## 2026-10-16 - CI/CD with GitHub Actions
+
+**What**
+
+- **Repository made public** (owner's choice): on a private repository of a free account GitHub refused branch protection, rulesets, environment reviewers, CodeQL and dependency review. gitleaks on the 91 commits first (two false positives allow-listed: the name of a Key Vault secret, and later the Azurite well-known key flagged by gitleaks 8.28). Secret scanning with push protection, Dependabot alerts and security updates are on.
+- **Azure sign-in without secrets** (`infra/terraform/github`, applied by the owner): three Entra app registrations with OIDC federated credentials, one subject each, in GitHub's immutable subject format (`repo:owner@id/name@id:…`): `plan` (pull requests; custom role "IconBridge Terraform plan" = Reader plus the list actions Terraform's refresh calls, state and secrets read), `push` (main; AcrPush), `deploy` (`production` environment; Contributor on the resource group, state, vault and files). No identity can assign roles. Production's data roles now go to an explicit `owner_object_id`.
+- **Workflows**: `ci.yml` (format, lint, typecheck, unit tests; API e2e with coverage on a PostgreSQL service and Azurite; browser tests, Chromium on pull requests, Firefox and WebKit in the Playwright container on main, at night and by hand; coverage and Playwright reports as artifacts; Turborepo cache; concurrency), `security.yml` (CodeQL security-extended, dependency review, gitleaks, trivy fs with SARIF; weekly), `infra.yml` (static checks; plan posted on the pull request; apply on main through `production`), `deploy.yml` (images tagged with the git SHA, trivy before push, approval, migration job, new revisions, smoke test, automatic rollback, job summary), `release.yml` (release notes from `v*.*.*` tags). Dependabot for npm, Docker, Actions (all pinned to commit SHAs) and Terraform. PR template, CODEOWNERS.
+- **GitHub settings**: environment `production` (required reviewer: the owner, `main` only); branch protection of `main` (pull request, 4 required checks on an up-to-date branch, linear history, conversations resolved, no force push or deletion, administrators included); squash merge only, branches deleted after merge; secrets and variables listed in [CICD.md](CICD.md).
+- [CICD.md](CICD.md) with the pipeline diagram, [ADR-018](adr/ADR-018-ci-cd.md).
+
+**Why**
+
+Prompt 13: every change tested, scanned and deployed the same way, with the owner's approval before production and a way back when a deployment breaks the site.
+
+**Notes**
+
+- First runs found: dependency graph off (enabled); OIDC subjects in the immutable format, not `repo:owner/name:…` (credentials updated); checkov `CKV_AZURE_249` does not recognise that format (skip with reason); `Reader` cannot plan: the refresh needs `listKeys`/`listSecrets` (custom role, nothing the state does not already hold).
+- Two bugs found by CI's faster runners: two access tokens for the same user signed in the same second were identical (no `jti`; now a random one in every token, with a unit test), and the new wizard tests reused one candidate address when one worker ran them in a row (each test and attempt now has its own).
+- WebKit in CI: the Playwright container reaches the runner's services through `host.docker.internal`, mapped to the host gateway (`scripts/test-browser-webkit.sh`); Azurite runs with `docker run` because a service container cannot take its options.
+- In CI Playwright starts the apps the job already built (`CI` set), instead of building them again.
+
+**Checks**
+
+| Check                           | Result                                                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| actionlint, shellcheck          | No finding                                                                                                                                              |
+| `make tf-check`                 | Three roots valid; checkov 0 failed                                                                                                                     |
+| `infra/terraform/github`        | Applied: 3 applications, 3 service principals, 3 federated credentials, 1 custom role, 11 role assignments                                              |
+| Pull request #17, all workflows | Green: checks, API e2e and coverage, browser tests (Chromium), CodeQL, dependency review, gitleaks, trivy, Terraform checks, plan posted ("No changes") |
+| Branch protection               | Active before the merge of #17                                                                                                                          |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/17>
+
+**Remaining**: the end-to-end proof after the merge (deployment with approval, a small change through the whole flow, a forced smoke-test failure and its rollback), recorded in the next entry.
