@@ -718,6 +718,6 @@ A visitor arriving after a quiet period waited more than a minute and a half. A 
 | Production after deployment                 | `/en` 200, `/api/health/ready` ok                                         |
 | Cold start on Azure                         | 141 s → 58 s                                                              |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/16>
 
 **Remaining**: `min_replicas = 1` for the web app (about 4–6 USD a month) would bring the first visit to roughly the API's share, about 35 s; both warm would remove it, at about 15 USD a month. Owner's decision.
