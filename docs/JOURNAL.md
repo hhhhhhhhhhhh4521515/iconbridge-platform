@@ -681,3 +681,43 @@ Found by the owner on the first production test (registration of a real candidat
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/15>
 
 **Remaining**: the owner to retry the passport step on production; a decision on keeping a replica warm against the 100 s cold start; the items of the previous entry.
+
+## 2026-10-16 - Shorter cold starts
+
+**What**
+
+- **Measured** where a cold start went (`scripts/measure-cold-start.sh`: waits until both apps run no replica, requests the home page, prints the timeline from Log Analytics). 141 s on 15 October: the API only started when the first page called it, Nest took 13.7 s to start on 0.5 vCPU, and readiness probes ran every 15 s with a 1 s timeout that the first database check exceeded.
+- **API start-up 10.5 s → 4.2–4.9 s on 0.5 vCPU** (measured locally at the same CPU): mjml, exceljs, archiver, sharp, jsdom/DOMPurify and the Azure Storage and Email SDKs load on first use, date-fns by sub-path, zxcvbn builds its dictionaries on the first password; the first database connection opens right after the API listens.
+- **The web app wakes the API when it starts** (`instrumentation.ts`, one liveness request, not awaited): the two start-ups overlap.
+- **Probes**: startup every second without initial delay, readiness every 3 s with a 3 s timeout. **Web app at 0.5 vCPU / 1 GiB**: its start-up (3.5 → 1.8 s) and first render (1.4 → 0.7 s) are CPU-bound, and it is billed only while running.
+- The browser test clean-up refuses any non-local site (the teardown skips it, `cleanUp` throws); Playwright runs `*.spec.ts` only.
+- [ADR-017](adr/ADR-017-cold-start.md).
+
+**Why**
+
+A visitor arriving after a quiet period waited more than a minute and a half. A warm replica would cost every hour; the owner asked for the free improvements first.
+
+**Notes**
+
+- New cold start with both apps at zero: **58 s** (request at 00:47 UTC): web platform start 19.6 s, Next.js ready 20.7 s, API scale-up 21.7 s (1 s after the web app, thanks to the wake-up), API platform start until 43.5 s, Nest ready 48.1 s, first request served 55.3 s, page delivered 58 s. Warm page: 0.6 s.
+- What remains is mostly the platform's own start of each replica (about 18 s for the web app, 22 s for the API: scheduling, identity, Key Vault secrets, sidecars); only `min_replicas = 1` removes it.
+- Node's compile cache was measured (10.5 → 8.5 s alone, 4.5 → 3.9 s after lazy loading) and not adopted: 0.4 s for 16 MB and a start of the app during the image build.
+- jsdom is not warmed in the background: its synchronous load would block the event loop for about a second, possibly under the first request; the first job page with rich text pays it instead.
+- The image trace keeps the modules imported dynamically (checked in the image, and by the browser suite against the production images).
+
+**Checks**
+
+| Check                                       | Result                                                                    |
+| ------------------------------------------- | ------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | Pass                                                                      |
+| `pnpm test`                                 | Pass: 605 unit tests (shared 206, api 327, web 72)                        |
+| `pnpm test:e2e`                             | Pass: 506 tests                                                           |
+| Browser suite against the production images | Pass: 153 passed, 6 skipped                                               |
+| `make tf-check`; `terraform apply`          | No issue; 2 changed (probes, web size); then `terraform plan`: No changes |
+| trivy, images `c92a438`                     | 0 fixable high or critical                                                |
+| Production after deployment                 | `/en` 200, `/api/health/ready` ok                                         |
+| Cold start on Azure                         | 141 s → 58 s                                                              |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/16>
+
+**Remaining**: `min_replicas = 1` for the web app (about 4–6 USD a month) would bring the first visit to roughly the API's share, about 35 s; both warm would remove it, at about 15 USD a month. Owner's decision.

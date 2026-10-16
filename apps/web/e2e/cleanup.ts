@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { APIRequestContext } from '@playwright/test';
+import { assertLocalUrl } from './local-only';
 
 /**
  * What the browser tests leave in the database is written down here, then removed
@@ -50,7 +51,8 @@ const chunks = <Item>(list: Item[], size: number): Item[][] =>
  * Removes what the tests created and puts back what they changed. `request` is
  * signed in as the super admin. Returns what could not be undone, for the report.
  */
-export async function cleanUp(request: APIRequestContext): Promise<string[]> {
+export async function cleanUp(request: APIRequestContext, baseURL: string): Promise<string[]> {
+  assertLocalUrl(baseURL, 'The clean-up of the browser tests');
   const problems: string[] = [];
   const check = async (what: string, response: Promise<{ status(): number }>) => {
     const status = (await response).status();

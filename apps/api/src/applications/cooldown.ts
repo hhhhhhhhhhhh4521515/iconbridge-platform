@@ -1,5 +1,6 @@
 import { UTCDate } from '@date-fns/utc';
-import { addMonths } from 'date-fns';
+// The sub-path: the package root imports all of date-fns (about 250 modules).
+import { addMonths } from 'date-fns/addMonths';
 
 /**
  * First moment a candidate may apply to the same job again: the date of the last

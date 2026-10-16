@@ -7,7 +7,6 @@ import {
   type ExportApplicationsInput,
   type ExportColumn,
 } from '@iconbridge/shared';
-import ExcelJS from 'exceljs';
 import { z } from 'zod';
 import type { AuthUser } from '../../auth/auth.types.js';
 import { FieldCipher } from '../../common/crypto/field-cipher.js';
@@ -194,6 +193,8 @@ export class ApplicationExportService {
         rows: rows.length,
       };
     }
+    // Loaded with the first export, not when the API starts.
+    const { default: ExcelJS } = await import('exceljs');
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Applications');
     sheet.addRow(headers).font = { bold: true };

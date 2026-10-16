@@ -7,7 +7,7 @@ import {
   type MyJobAlert,
   type MyJobAlertInput,
 } from '@iconbridge/shared';
-import { ZipArchive, type Archiver } from 'archiver';
+import type { Archiver } from 'archiver';
 import { ApplicationsService } from '../applications/applications.service.js';
 import { ProfileService } from '../candidates/profile.service.js';
 import { Clock } from '../common/clock/clock.js';
@@ -77,6 +77,8 @@ export class AccountService {
       path: `documents/${String(index + 1).padStart(2, '0')}-${document.type}-${safeName(document.originalName)}`,
     }));
 
+    // Loaded with the first export, not when the API starts.
+    const { ZipArchive } = await import('archiver');
     const archive = new ZipArchive({ zlib: { level: 6 } });
     archive.append(
       JSON.stringify(

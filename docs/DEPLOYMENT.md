@@ -127,16 +127,17 @@ Region, quotas, budget and the identity of the pipeline are in [00-environment.m
 
 ### Container Apps
 
-| Setting           | API                                                                       | Web                                    |
-| ----------------- | ------------------------------------------------------------------------- | -------------------------------------- |
-| Image             | `iconbridge-api:<commit>`                                                 | `iconbridge-web:<commit>`              |
-| Ingress           | Internal only, target port 4000                                           | External, HTTPS only, target port 3000 |
-| Liveness probe    | HTTP `GET /health/live`                                                   | HTTP `GET /en`                         |
-| Readiness probe   | HTTP `GET /health/ready` (checks the database)                            | HTTP `GET /en`                         |
-| Startup probe     | `GET /health/live`, up to 60 s                                            | `GET /en`, up to 60 s                  |
-| Scale             | 0 to 3 replicas, HTTP rule                                                | 0 to 3 replicas, HTTP rule             |
-| Termination grace | 30 s (longer than the emails in progress)                                 | 30 s                                   |
-| Identity          | Managed identity: Blob Storage, Key Vault, Communication Services (email) | —                                      |
+| Setting           | API                                                                       | Web                                                     |
+| ----------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Image             | `iconbridge-api:<commit>`                                                 | `iconbridge-web:<commit>`                               |
+| Ingress           | Internal only, target port 4000                                           | External, HTTPS only, target port 3000                  |
+| Liveness probe    | `GET /health/live`, every 30 s                                            | `GET /api/health/live`, every 30 s                      |
+| Readiness probe   | `GET /health/ready` (checks the database), every 3 s, 3 s timeout         | `GET /api/health/live`, every 3 s                       |
+| Startup probe     | `GET /health/live` every second, up to 60 s                               | `GET /api/health/live` every second, up to 60 s         |
+| Size              | 0.5 vCPU / 1 GiB                                                          | 0.5 vCPU / 1 GiB ([ADR-017](adr/ADR-017-cold-start.md)) |
+| Scale             | 0 to 2 replicas, HTTP rule                                                | 0 to 2 replicas, HTTP rule                              |
+| Termination grace | 30 s (longer than the emails in progress)                                 | 30 s                                                    |
+| Identity          | Managed identity: Blob Storage, Key Vault, Communication Services (email) | —                                                       |
 
 The browser never calls the API host: the web app forwards `/api/v1/*` to `API_INTERNAL_URL`, the internal address of the API app.
 

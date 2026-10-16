@@ -1,5 +1,5 @@
-import { EmailClient, type EmailMessage } from '@azure/communication-email';
-import { DefaultAzureCredential } from '@azure/identity';
+import type { EmailClient, EmailMessage } from '@azure/communication-email';
+import { lazy } from '../common/lazy.js';
 import { MailThrottledError, type MailTransport, type OutgoingEmail } from './mail-transport.js';
 
 type SendOptions = NonNullable<Parameters<EmailClient['beginSend']>[1]>;
@@ -21,14 +21,21 @@ const MAX_RETRY_AFTER_MS = 3_600_000;
  * email a second time.
  */
 export class AzureEmailTransport implements MailTransport {
-  constructor(private readonly client: Pick<EmailClient, 'beginSend'>) {}
+  constructor(private readonly client: () => Promise<Pick<EmailClient, 'beginSend'>>) {}
 
+  /** The SDK is loaded with the first email, not when the API starts. */
   static create(endpoint: string): AzureEmailTransport {
     return new AzureEmailTransport(
-      new EmailClient(endpoint, new DefaultAzureCredential(), {
-        // The outbox retries, and waits as long as Azure asks; the SDK must not wait
-        // inside a send (its throttling policy would sleep for the Retry-After).
-        retryOptions: { maxRetries: 0 },
+      lazy(async () => {
+        const [{ EmailClient: Client }, { DefaultAzureCredential }] = await Promise.all([
+          import('@azure/communication-email'),
+          import('@azure/identity'),
+        ]);
+        return new Client(endpoint, new DefaultAzureCredential(), {
+          // The outbox retries, and waits as long as Azure asks; the SDK must not wait
+          // inside a send (its throttling policy would sleep for the Retry-After).
+          retryOptions: { maxRetries: 0 },
+        });
       }),
     );
   }
@@ -49,8 +56,9 @@ export class AzureEmailTransport implements MailTransport {
         post.accepted = true;
       }
     };
+    const client = await this.client();
     try {
-      await this.client.beginSend(message, { onResponse });
+      await client.beginSend(message, { onResponse });
     } catch (error) {
       if (post.accepted) {
         return;
