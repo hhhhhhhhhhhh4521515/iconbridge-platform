@@ -92,12 +92,15 @@ resource "azurerm_container_app" "api" {
         }
       }
 
+      # Cold starts (ADR-017): the startup probe asks every second from the start (no
+      # initial delay), so traffic is let in as soon as the API listens; up to 60 s.
       startup_probe {
         transport               = "HTTP"
         port                    = 4000
         path                    = "/health/live"
-        interval_seconds        = 3
-        failure_count_threshold = 20
+        interval_seconds        = 1
+        timeout                 = 1
+        failure_count_threshold = 60
       }
 
       liveness_probe {
@@ -105,14 +108,17 @@ resource "azurerm_container_app" "api" {
         port                    = 4000
         path                    = "/health/live"
         interval_seconds        = 30
+        timeout                 = 3
         failure_count_threshold = 3
       }
 
+      # Every 3 s, and 3 s to answer: the first check may open the first database connection.
       readiness_probe {
         transport               = "HTTP"
         port                    = 4000
         path                    = "/health/ready"
-        interval_seconds        = 15
+        interval_seconds        = 3
+        timeout                 = 3
         failure_count_threshold = 3
       }
     }
@@ -203,8 +209,9 @@ resource "azurerm_container_app" "web" {
         transport               = "HTTP"
         port                    = 3000
         path                    = "/api/health/live"
-        interval_seconds        = 3
-        failure_count_threshold = 20
+        interval_seconds        = 1
+        timeout                 = 1
+        failure_count_threshold = 60
       }
 
       liveness_probe {
@@ -212,6 +219,7 @@ resource "azurerm_container_app" "web" {
         port                    = 3000
         path                    = "/api/health/live"
         interval_seconds        = 30
+        timeout                 = 3
         failure_count_threshold = 3
       }
 
@@ -219,7 +227,8 @@ resource "azurerm_container_app" "web" {
         transport               = "HTTP"
         port                    = 3000
         path                    = "/api/health/live"
-        interval_seconds        = 15
+        interval_seconds        = 3
+        timeout                 = 3
         failure_count_threshold = 3
       }
     }

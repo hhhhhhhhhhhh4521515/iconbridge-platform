@@ -143,14 +143,14 @@ variable "api_size" {
 }
 
 variable "web_size" {
-  description = "Web container: 0.25 vCPU / 0.5 GiB, scale 0 to 2."
+  description = "Web container: 0.5 vCPU / 1 GiB (Next.js starts and renders the first page twice as fast as with 0.25, ADR-017; billed only while running), scale 0 to 2."
   type = object({
     cpu          = number
     memory       = string
     min_replicas = number
     max_replicas = number
   })
-  default = { cpu = 0.25, memory = "0.5Gi", min_replicas = 0, max_replicas = 2 }
+  default = { cpu = 0.5, memory = "1Gi", min_replicas = 0, max_replicas = 2 }
 
   validation {
     condition     = var.web_size.max_replicas <= 2 && var.web_size.min_replicas >= 0
