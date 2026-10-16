@@ -42,10 +42,16 @@ data "azurerm_container_registry" "images" {
 locals {
   issuer   = "https://token.actions.githubusercontent.com"
   audience = "api://AzureADTokenExchange"
+  # The repository uses immutable subjects: "repo:owner@owner-id/name@repo-id:…" (gh api
+  # repos/OWNER/REPO/actions/oidc/customization/sub). A repository deleted and created
+  # again under the same name cannot reuse these credentials.
+  owner  = split("/", var.github_repository)[0]
+  repo   = split("/", var.github_repository)[1]
+  prefix = "repo:${local.owner}@${var.github_owner_id}/${local.repo}@${var.github_repository_id}"
   subjects = {
-    plan   = "repo:${var.github_repository}:pull_request"
-    push   = "repo:${var.github_repository}:ref:refs/heads/main"
-    deploy = "repo:${var.github_repository}:environment:production"
+    plan   = "${local.prefix}:pull_request"
+    push   = "${local.prefix}:ref:refs/heads/main"
+    deploy = "${local.prefix}:environment:production"
   }
 
   # (identity, scope, role) triples, flattened below.
