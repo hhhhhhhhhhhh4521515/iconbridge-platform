@@ -4,7 +4,7 @@
 #
 # | Identity | Federated subject                  | Rights                                              |
 # | -------- | ---------------------------------- | --------------------------------------------------- |
-# | plan     | pull_request                       | read: resource group, state, secrets, file metadata |
+# | plan     | pull_request                       | read: resource group (custom role), state, secrets  |
 # | push     | ref:refs/heads/main                | push images to the registry                         |
 # | deploy   | environment:production (approved)  | change the resource group, state, secrets, files    |
 #
@@ -57,7 +57,7 @@ locals {
   # (identity, scope, role) triples, flattened below.
   roles = concat(
     [
-      { who = "plan", scope = data.azurerm_resource_group.prod.id, role = "Reader" },
+      { who = "plan", scope = data.azurerm_resource_group.prod.id, role = azurerm_role_definition.plan.name },
       { who = "plan", scope = data.azurerm_storage_account.tfstate.id, role = "Reader" },
       # The state holds generated secrets: whoever can plan can read them.
       { who = "plan", scope = data.azurerm_storage_account.tfstate.id, role = "Storage Blob Data Reader" },
@@ -72,6 +72,30 @@ locals {
     ],
     [for registry in data.azurerm_container_registry.images : { who = "push", scope = registry.id, role = "AcrPush" }],
   )
+}
+
+# Reader, plus the list actions Terraform's refresh calls to read attributes it keeps in
+# the state (access keys of the Communication Service and the storage account, shared
+# keys of the Log Analytics workspace, secrets of the Container Apps and Jobs). The state
+# already holds these values and the plan identity reads it, so they give it nothing new;
+# without them `terraform plan` stops with AuthorizationFailed.
+resource "azurerm_role_definition" "plan" {
+  name        = "IconBridge Terraform plan"
+  scope       = data.azurerm_resource_group.prod.id
+  description = "Read the production resource group as terraform plan needs (GitHub Actions, pull requests)."
+
+  permissions {
+    actions = [
+      "*/read",
+      "Microsoft.Communication/communicationServices/listKeys/action",
+      "Microsoft.OperationalInsights/workspaces/sharedKeys/action",
+      "Microsoft.Storage/storageAccounts/listKeys/action",
+      "Microsoft.App/containerApps/listSecrets/action",
+      "Microsoft.App/jobs/listSecrets/action",
+    ]
+  }
+
+  assignable_scopes = [data.azurerm_resource_group.prod.id]
 }
 
 resource "azuread_application" "github" {
