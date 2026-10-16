@@ -27,6 +27,8 @@ const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
 
 export default defineConfig({
   testDir: './e2e',
+  // Browser tests only: e2e/*.test.ts are unit tests of the helpers, run by Vitest.
+  testMatch: '**/*.spec.ts',
   // Removes what the tests created, even when one of them failed half-way.
   globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: true,
