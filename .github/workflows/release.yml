@@ -1,0 +1,22 @@
+name: Release
+
+# git tag -a v1.2.0 -m "v1.2.0" && git push origin v1.2.0
+# The notes list the pull requests merged since the previous tag, grouped by label
+# (.github/release.yml); commits follow Conventional Commits, so their titles read well.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: GitHub release with generated notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"

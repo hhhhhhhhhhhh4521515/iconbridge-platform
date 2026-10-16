@@ -1,0 +1,203 @@
+name: Deploy
+
+# After CI is green on a push to main, or by hand. Images are tagged with the git SHA.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Deploy these existing images (a full git SHA) instead of building main, e.g. to go back to a version
+        required: false
+        default: ''
+      force_smoke_failure:
+        description: Make the smoke test fail on purpose, to exercise the automatic rollback
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-iconbridge-prod
+  API_APP: ca-iconbridge-api-prod-itn
+  WEB_APP: ca-iconbridge-web-prod-itn
+  MIGRATE_JOB: caj-iconbridge-migrate-prod-itn
+  TASKS_JOB: caj-iconbridge-tasks-prod-itn
+  # registry_type of Terraform: "acr" (Azure Container Registry) or "ghcr".
+  REGISTRY: ${{ vars.REGISTRY_TYPE == 'ghcr' && format('ghcr.io/{0}', github.repository_owner) || format('{0}.azurecr.io', vars.ACR_NAME) }}
+  # The commit CI tested (workflow_run), the one chosen by hand, or the current one.
+  SHA: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  build:
+    name: Build, scan, push (${{ matrix.image }})
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+      || (github.event_name == 'workflow_dispatch' && inputs.image_tag == '')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - image: iconbridge-api
+            dockerfile: apps/api/Dockerfile
+            target: runtime
+          - image: iconbridge-migrate
+            dockerfile: apps/api/Dockerfile
+            target: migrate
+          - image: iconbridge-web
+            dockerfile: apps/web/Dockerfile
+            target: ''
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SHA }}
+      # Azure Container Registry with the push identity (federated with refs/heads/main).
+      - if: vars.REGISTRY_TYPE != 'ghcr'
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_PUSH }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - if: vars.REGISTRY_TYPE != 'ghcr'
+        run: az acr login --name "${{ vars.ACR_NAME }}"
+      - if: vars.REGISTRY_TYPE == 'ghcr'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build date
+        id: meta
+        run: echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      # Built into the runner first: nothing is pushed before the scan passes.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ matrix.image }}:${{ env.SHA }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          build-args: |
+            VCS_REF=${{ env.SHA }}
+            BUILD_DATE=${{ steps.meta.outputs.date }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.SITE_URL }}
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+      - name: Scan (HIGH or CRITICAL with a fix fails the deployment)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGISTRY }}/${{ matrix.image }}:${{ env.SHA }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - run: docker push "$REGISTRY/${{ matrix.image }}:$SHA"
+
+  deploy:
+    name: Deploy to production
+    needs: build
+    if: >-
+      always() && (needs.build.result == 'success'
+      || (github.event_name == 'workflow_dispatch' && inputs.image_tag != ''))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Waits for the approval of the required reviewer of the environment.
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+      - name: Start
+        run: echo "STARTED=$SECONDS" >> "$GITHUB_ENV"
+      # The deploy identity: federated with the production environment only.
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Current versions (for the rollback)
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
+          image() { az containerapp "$@" --query 'properties.template.containers[0].image' -o tsv; }
+          {
+            echo "PREVIOUS_API=$(image show -g "$RESOURCE_GROUP" -n "$API_APP")"
+            echo "PREVIOUS_WEB=$(image show -g "$RESOURCE_GROUP" -n "$WEB_APP")"
+            echo "PREVIOUS_TASKS=$(image job show -g "$RESOURCE_GROUP" -n "$TASKS_JOB")"
+            echo "PREVIOUS_MIGRATE=$(image job show -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB")"
+          } >> "$GITHUB_ENV"
+      - name: Migrations (Container Apps Job), then wait for success
+        run: |
+          az containerapp job update -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --image "$REGISTRY/iconbridge-migrate:$SHA" --only-show-errors -o none
+          execution=$(az containerapp job start -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --query name -o tsv)
+          echo "Execution $execution"
+          for _ in $(seq 1 90); do
+            status=$(az containerapp job execution show -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --job-execution-name "$execution" --query properties.status -o tsv)
+            case "$status" in
+              Succeeded) echo "Migrations applied"; exit 0 ;;
+              Failed|Stopped|Degraded) echo "::error::Migration job $status (logs: az containerapp job logs show -g $RESOURCE_GROUP -n $MIGRATE_JOB --execution $execution)"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Migration job still running after 15 minutes"
+          exit 1
+      - name: New revisions of the API and the web app
+        id: update
+        run: |
+          revision() { az containerapp update -g "$RESOURCE_GROUP" -n "$1" --image "$2" --query properties.latestRevisionName -o tsv --only-show-errors; }
+          echo "API_REVISION=$(revision "$API_APP" "$REGISTRY/iconbridge-api:$SHA")" >> "$GITHUB_ENV"
+          echo "WEB_REVISION=$(revision "$WEB_APP" "$REGISTRY/iconbridge-web:$SHA")" >> "$GITHUB_ENV"
+          az containerapp job update -g "$RESOURCE_GROUP" -n "$TASKS_JOB" --image "$REGISTRY/iconbridge-api:$SHA" --only-show-errors -o none
+      - name: Smoke test
+        id: smoke
+        run: ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}" ${{ inputs.force_smoke_failure && 'force-failure' || '' }}
+      # Single revision mode: going back means a new revision with the previous images.
+      # Migrations are not undone: they are written to work with the previous version too.
+      - name: Roll back to the previous version
+        id: rollback
+        if: failure() && steps.update.outcome != 'skipped'
+        run: |
+          az containerapp update -g "$RESOURCE_GROUP" -n "$API_APP" --image "$PREVIOUS_API" --only-show-errors -o none
+          az containerapp update -g "$RESOURCE_GROUP" -n "$WEB_APP" --image "$PREVIOUS_WEB" --only-show-errors -o none
+          az containerapp job update -g "$RESOURCE_GROUP" -n "$TASKS_JOB" --image "$PREVIOUS_TASKS" --only-show-errors -o none
+          az containerapp job update -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --image "$PREVIOUS_MIGRATE" --only-show-errors -o none
+          ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+          echo "::warning::Rolled back to ${PREVIOUS_API##*:}"
+      - name: Summary
+        if: always()
+        run: |
+          result="Deployed"
+          [ "${{ steps.rollback.outcome }}" = success ] && result="Smoke test failed: rolled back to the previous version"
+          [ "${{ steps.rollback.outcome }}" = failure ] && result="Smoke test failed and the rollback failed: check production now"
+          [ "${{ job.status }}" != success ] && [ "${{ steps.rollback.outcome }}" = skipped ] && result="Failed before the new revisions"
+          {
+            echo "## $result"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Commit | \`$SHA\` |"
+            echo "| Images | \`$REGISTRY/iconbridge-{api,web,migrate}:${SHA:0:12}…\` |"
+            echo "| Revisions | API \`${API_REVISION:--}\`, web \`${WEB_REVISION:--}\` |"
+            echo "| Previous images | API \`${PREVIOUS_API##*:}\`, web \`${PREVIOUS_WEB##*:}\` |"
+            echo "| Site | ${{ vars.SITE_URL }} |"
+            echo "| Health | ${{ vars.SITE_URL }}/api/health/ready |"
+            echo "| Duration | $(( (SECONDS - STARTED) / 60 )) min $(( (SECONDS - STARTED) % 60 )) s (after approval) |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,13 @@
+# Categories of the generated release notes (workflows/release.yml).
+changelog:
+  exclude:
+    authors: [dependabot]
+  categories:
+    - title: Features
+      labels: [feature, enhancement]
+    - title: Fixes
+      labels: [bug, fix]
+    - title: Infrastructure and delivery
+      labels: [infrastructure, ci]
+    - title: Other changes
+      labels: ['*']

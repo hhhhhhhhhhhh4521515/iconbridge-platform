@@ -1,0 +1,144 @@
+name: Infrastructure
+
+on:
+  pull_request:
+    paths: ['infra/**', '.github/workflows/infra.yml']
+  push:
+    branches: [main]
+    paths: ['infra/**', '.github/workflows/infra.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: 1.16.5
+  TF_IN_AUTOMATION: '1'
+  # Azure sign-in with GitHub's OIDC token, for the provider and the state backend.
+  ARM_USE_OIDC: 'true'
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  checks:
+    name: fmt, validate, tflint, checkov
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: v0.64.0
+      - run: pipx install checkov==3.3.26
+      - run: make tf-check
+
+  plan:
+    name: Plan (posted on the pull request)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      # Read-only identity (federated with pull_request): it can plan, not change.
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_PLAN }}
+    defaults:
+      run:
+        working-directory: infra/terraform/envs/prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: Variables (owner, administrator address) from the repository secret
+        env:
+          TF_VARS: ${{ secrets.TF_VARS_PROD }}
+        run: printf '%s\n' "$TF_VARS" > terraform.tfvars
+      - run: terraform init -input=false
+      # No lock: this identity can read the state, not write the lock. Nothing is applied.
+      - id: plan
+        run: |
+          set +e
+          terraform plan -input=false -lock=false -no-color -detailed-exitcode -out=tfplan > plan.log 2>&1
+          code=$?
+          set -e
+          cat plan.log
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          [ "$code" -ne 1 ]
+      - name: Comment the plan
+        if: always() && steps.plan.outputs.exitcode != ''
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const log = fs.readFileSync('infra/terraform/envs/prod/plan.log', 'utf8');
+            const code = process.env.EXIT_CODE;
+            const summary = code === '0' ? 'No changes' : code === '2'
+              ? (log.match(/Plan: .*/)?.[0] ?? 'Changes') : 'Plan failed';
+            const marker = '<!-- terraform-plan-prod -->';
+            const body = [
+              marker,
+              `### Terraform plan (envs/prod): ${summary}`,
+              `Commit ${context.sha.slice(0, 7)}. Applied after the merge, with the approval of the \`production\` environment.`,
+              '<details><summary>Plan</summary>',
+              '',
+              '```text',
+              log.length > 60000 ? `${log.slice(0, 60000)}\n... (truncated, see the job log)` : log,
+              '```',
+              '</details>',
+            ].join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  apply:
+    name: Apply (production, after approval)
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: production
+    # One change of production at a time (shared with deploy.yml).
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # The deploy identity: federated with the production environment only.
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+    defaults:
+      run:
+        working-directory: infra/terraform/envs/prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: Variables from the repository secret
+        env:
+          TF_VARS: ${{ secrets.TF_VARS_PROD }}
+        run: printf '%s\n' "$TF_VARS" > terraform.tfvars
+      - run: terraform init -input=false
+      - run: terraform plan -input=false -no-color -out=tfplan
+      # The identity cannot assign roles: a plan that adds role assignments stops here and
+      # is applied by the owner (make tf-apply), see docs/CICD.md.
+      - run: terraform apply -input=false -no-color tfplan
