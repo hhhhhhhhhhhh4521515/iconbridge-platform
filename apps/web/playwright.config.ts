@@ -24,6 +24,7 @@ const DESK = { width: 1440, height: 900 };
 const WEBKIT = Boolean(process.env.E2E_WEBKIT);
 /** Where the site answers. HTTPS with a self-made certificate in the WebKit container. */
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
+const START = process.env.CI ? 'pnpm start' : 'pnpm build && pnpm start';
 
 export default defineConfig({
   testDir: './e2e',
@@ -34,7 +35,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: [['list']],
+  // In CI also an HTML report, uploaded as an artifact by .github/workflows/ci.yml.
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   timeout: 45_000,
   use: {
     baseURL: BASE,
@@ -78,8 +80,9 @@ export default defineConfig({
   // the rate limits (5 sign-ins a minute for one address), which the tests would wait out.
   webServer: [
     {
-      // The built API, without rate limits: every test signs in from this machine.
-      command: 'pnpm build && pnpm start',
+      // The built API, without rate limits: every test signs in from this machine. In CI the
+      // apps are already built by the job (turbo), so they are only started.
+      command: START,
       cwd: '../api',
       env: { RATE_LIMITS_ENABLED: 'false' },
       url: 'http://localhost:4000/health/ready',
@@ -87,7 +90,7 @@ export default defineConfig({
       timeout: 240_000,
     },
     {
-      command: 'pnpm build && pnpm start',
+      command: START,
       url: `${BASE}/fr`,
       ignoreHTTPSErrors: BASE.startsWith('https://'),
       reuseExistingServer: true,
