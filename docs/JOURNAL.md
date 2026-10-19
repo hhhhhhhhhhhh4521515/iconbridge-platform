@@ -784,6 +784,6 @@ The rollback must protect against a new version that does not work; the check ha
 | Images built locally with `VCS_REF=feedc0de1234` | `/health/ready`, `/api/health/live`, `/api/health/ready` report it; the smoke test passes |
 | New smoke test against production (`2039c60`)    | Passes with the "no version" warning, as designed for older images                        |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/27>
 
 **Remaining**: after this merge and its deployment, run the rollback test again (redeploy `19ef9b6` with `force_smoke_failure`): the smoke test must now see the old title before failing, and the rollback must restore the deployed commit.
