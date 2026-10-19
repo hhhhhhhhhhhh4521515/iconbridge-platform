@@ -32,3 +32,13 @@ output "managed_certificate_name" {
   description = "With a custom domain: name of its managed certificate, for `az containerapp hostname bind`."
   value       = one(azurerm_container_app_environment_managed_certificate.web[*].name)
 }
+
+output "api_id" {
+  description = "Id of the API Container App (metrics, alerts)."
+  value       = azurerm_container_app.api.id
+}
+
+output "web_id" {
+  description = "Id of the web Container App (metrics, alerts)."
+  value       = azurerm_container_app.web.id
+}

@@ -292,6 +292,27 @@ module "container_apps" {
 }
 
 # ---------------------------------------------------------------------------
+# Alerts, availability tests and the operations workbook (ADR-019).
+
+module "monitoring" {
+  source                     = "../../modules/monitoring"
+  name_suffix                = local.name_suffix
+  location                   = var.location
+  resource_group_name        = azurerm_resource_group.this.name
+  tags                       = local.tags
+  alert_email                = var.owner_email
+  log_analytics_workspace_id = module.observability.log_analytics_workspace_id
+  application_insights_id    = module.observability.application_insights_id
+  api_app_id                 = module.container_apps.api_id
+  web_app_id                 = module.container_apps.web_id
+  tasks_job_name             = module.container_apps.tasks_job_name
+  postgres_server_id         = module.database.server_id
+  storage_account_id         = module.storage.account_id
+  site_url                   = local.web_origin
+  enable_availability_tests  = var.enable_availability_tests
+}
+
+# ---------------------------------------------------------------------------
 # Budget: emails at 50, 80 and 100 % of the month's amount. The spending limit of the
 # subscription stops resources at the end of the credit; this warns long before.
 

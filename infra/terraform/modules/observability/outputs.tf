@@ -19,3 +19,8 @@ output "log_analytics_shared_key" {
   value       = azurerm_log_analytics_workspace.this.primary_shared_key
   sensitive   = true
 }
+
+output "application_insights_id" {
+  description = "Id of Application Insights (alerts, availability tests, workbook)."
+  value       = azurerm_application_insights.this.id
+}

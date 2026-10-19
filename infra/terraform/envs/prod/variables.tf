@@ -167,3 +167,9 @@ variable "web_size" {
     error_message = "At most 2 replicas."
   }
 }
+
+variable "enable_availability_tests" {
+  description = "Availability tests (home page, /api/health/ready) every 15 minutes with their alert. Off: each test wakes the apps from zero, about 25-30 USD a month of compute (ADR-019). Turn on briefly to check them, or for good with a warm replica."
+  type        = bool
+  default     = false
+}
