@@ -787,3 +787,34 @@ The rollback must protect against a new version that does not work; the check ha
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/27>
 
 **Remaining**: after this merge and its deployment, run the rollback test again (redeploy `19ef9b6` with `force_smoke_failure`): the smoke test must now see the old title before failing, and the rollback must restore the deployed commit.
+
+## 2026-10-19 - Rollback proven; Prompt 13 done
+
+**What**
+
+- **Deployment of PR #27** (`268ddab`, run 39244980530): the job waited until the new revisions were ready (API `--0000009`), and the smoke test required both apps to report `268ddab`; production then answered `{"status":"ok","version":"268ddab…","api":"268ddab…"}`.
+- **Rollback test, second run** (run 39272520265: `image_tag` = `19ef9b6`, `force_smoke_failure`), approved by the owner:
+  - 15:16:25–15:16:42: the `19ef9b6` revisions (`--0000010`) waited for until ready, running and healthy;
+  - 15:16:42: the smoke test reached them and printed the **old title** ("Jobs in Malta, Poland and on cruise ships"), with the warning that this older image reports no version; then failed on purpose;
+  - 15:16:46–15:18:08: rollback: new revisions `--0000011` with `268ddab`, waited for, smoke test confirmed by the version both apps report, new title back ("Work in Malta…"). The run ends red, as it must; the summary says it was rolled back.
+- Production afterwards: images `268ddab` for the API and the web app, title "Work in Malta, Poland and on cruise ships".
+
+**Why**
+
+The last "Done when" item of Prompt 13: a forced failing smoke test triggers the rollback. The first attempt (19 October, run 39237821761) had shown the smoke test could check the old revision; this run shows the fixed pipeline tests the new one and restores the previous one.
+
+**Notes**
+
+- `/api/health/ready` answered `{"status":"unavailable"}` once, hours after the test, then `ok` on the next request: the API was at zero and the web app gives it 5 s to answer. Expected with scale to zero; a monitor of this route must retry or allow for a cold start (about 60 s, ADR-017).
+- Dependabot opened its first pull requests (#19–#26); they go through the same checks.
+
+**Checks**
+
+| "Done when" (Prompt 13)                                                                | Result                                                                                                                       |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| A small change goes PR → green CI → merge → approval → deployed on Azure automatically | Yes: PR #18 (home title), deployed by run 38856750809 after approval; the title is on the Azure URL                          |
+| A forced failing smoke test triggers the rollback                                      | Yes: run 39272520265 deployed `19ef9b6` (old title served), failed on purpose, rolled back to `268ddab`, verified by version |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/29>
+
+**Remaining**: the owner's decision on a warm replica (cold starts, ADR-017); a verified custom domain for email; alerting; review of the Dependabot pull requests; legal review of retention periods and policy texts; a load test on Azure.
