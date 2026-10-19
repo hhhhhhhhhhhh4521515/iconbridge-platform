@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: 'https', hostname: '*.blob.core.windows.net' }],
   },
   poweredByHeader: false,
+  // Loaded from node_modules at run time (instrumentation.ts), not bundled: the
+  // OpenTelemetry packages require their instrumentations by name.
+  serverExternalPackages: ['@azure/monitor-opentelemetry'],
   // Sent with every response. The Content Security Policy is not here: it carries a
   // nonce that changes with each page, so `src/proxy.ts` writes it.
   headers: () =>

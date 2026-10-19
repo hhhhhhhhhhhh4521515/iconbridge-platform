@@ -26,6 +26,7 @@ import { MailService } from '../mail/mail.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SettingsService } from '../settings/settings.service.js';
 import { isInCooldown, nextAllowedApplicationDate } from './cooldown.js';
+import { trackEvent } from '../telemetry/events.js';
 
 const APPLICATION_INCLUDE = {
   job: { select: { id: true, slug: true, title: true, destination: { select: { code: true } } } },
@@ -105,7 +106,24 @@ export class ApplicationsService {
       throw new AppException('CAPTCHA_FAILED', HttpStatus.BAD_REQUEST, 'The CAPTCHA check failed');
     }
 
-    const created = await this.prisma.$transaction(
+    let created: Awaited<ReturnType<typeof this.createApplication>>;
+    try {
+      created = await this.createApplication(user, jobId, input);
+    } catch (error) {
+      if (error instanceof AppException && error.code === 'REAPPLY_COOLDOWN') {
+        trackEvent('cooldown_blocked', { jobId });
+      }
+      throw error;
+    }
+
+    await this.notify(user, created.application.id, created.jobTitle);
+    trackEvent('application_submitted', { applicationId: created.application.id, jobId });
+    return toCandidateApplication(created.application);
+  }
+
+  /** The checks and the insert of `apply`, in one transaction under the candidate's locks. */
+  private createApplication(user: AuthUser, jobId: string, input: ApplyInput) {
+    return this.prisma.$transaction(
       async (tx) => {
         const profile = await this.profiles.findByUser(user.id, tx);
         // Requests of one candidate are handled one at a time: first all of them
@@ -190,9 +208,6 @@ export class ApplicationsService {
       },
       { timeout: 15_000 },
     );
-
-    await this.notify(user, created.application.id, created.jobTitle);
-    return toCandidateApplication(created.application);
   }
 
   async listOwn(userId: string): Promise<CandidateApplication[]> {

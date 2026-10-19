@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { trackEvent } from '../../telemetry/events.js';
 import {
   allowedApplicationTransitions,
   canTransitionApplication,
@@ -189,6 +190,7 @@ export class AdminApplicationsService {
   ): Promise<AdminApplicationDetail> {
     const change = await this.applyChange(id, input, user, ip);
     await this.notifyCandidate(change);
+    trackStatusChange(change);
     return this.get(id, user);
   }
 
@@ -332,6 +334,7 @@ export class AdminApplicationsService {
       try {
         const change = await this.applyChange(id, input, user, ip);
         await this.notifyCandidate(change);
+        trackStatusChange(change);
         results.push({ id, ok: true });
       } catch (error) {
         if (!(error instanceof AppException)) {
@@ -536,4 +539,9 @@ export class AdminApplicationsService {
         : allowedApplicationTransitions(row.status, user.role),
     };
   }
+}
+
+/** Business event for Application Insights: ids and statuses only. */
+function trackStatusChange(change: StatusChange): void {
+  trackEvent('status_changed', { applicationId: change.id, from: change.from, to: change.to });
 }
