@@ -410,8 +410,17 @@ describe('historical results and deletions (e2e)', () => {
         after: { reason: 'Asked by phone to be removed', deletedBy: 'SUPER_ADMIN' },
       });
       expect(entry.createdAt.getTime()).toBeGreaterThan(Date.now() - 60_000);
+      // What an entry says (not its random ids: a UUID can contain "567" by chance).
       const text = JSON.stringify(
-        await test.prisma.auditLog.findMany({ where: { action: 'candidate.delete' } }),
+        (await test.prisma.auditLog.findMany({ where: { action: 'candidate.delete' } })).map(
+          ({ action, entityType, before, after, ip }) => ({
+            action,
+            entityType,
+            before,
+            after,
+            ip,
+          }),
+        ),
       );
       for (const personal of [
         'Amira',
