@@ -229,12 +229,22 @@ test.describe('other pages', () => {
   test('health routes: the web app alone, and the API with its database through it', async ({
     request,
   }) => {
+    // Each app reports the commit it runs ("dev" from a local build, the image's VCS_REF
+    // otherwise); the deployment waits until both report the commit it deployed.
     const live = await request.get('/api/health/live');
     expect(live.status()).toBe(200);
-    expect(await live.json()).toEqual({ status: 'ok' });
+    const liveBody = (await live.json()) as { status: string; version: string };
+    expect(Object.keys(liveBody).sort()).toEqual(['status', 'version']);
+    expect(liveBody.status).toBe('ok');
+    expect(liveBody.version).toMatch(/^\S+$/);
     const ready = await request.get('/api/health/ready');
     expect(ready.status()).toBe(200);
-    expect(await ready.json()).toEqual({ status: 'ok' });
+    // Built from the same commit here: the web app and the API report the same version.
+    expect(await ready.json()).toEqual({
+      status: 'ok',
+      version: liveBody.version,
+      api: liveBody.version,
+    });
     expect(ready.headers()['cache-control']).toBe('no-store');
   });
 
