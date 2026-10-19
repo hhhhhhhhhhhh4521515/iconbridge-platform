@@ -20,12 +20,20 @@ describe('paginationQuerySchema', () => {
 });
 
 describe('readinessSchema', () => {
-  it('accepts a healthy response', () => {
-    const body = { status: 'ok', checks: { database: 'ok' } };
+  it('accepts a healthy response with the commit of the image', () => {
+    const body = { status: 'ok', version: 'abc1234', checks: { database: 'ok' } };
     expect(readinessSchema.parse(body)).toEqual(body);
   });
 
   it('rejects a response without the database check', () => {
-    expect(readinessSchema.safeParse({ status: 'ok', checks: {} }).success).toBe(false);
+    expect(
+      readinessSchema.safeParse({ status: 'ok', version: 'abc1234', checks: {} }).success,
+    ).toBe(false);
+  });
+
+  it('requires the version: the deployment waits for it', () => {
+    expect(readinessSchema.safeParse({ status: 'ok', checks: { database: 'ok' } }).success).toBe(
+      false,
+    );
   });
 });

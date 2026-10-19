@@ -1,23 +1,47 @@
 #!/usr/bin/env bash
-# Smoke test of a deployment: the API and its database answer through the web app, and the
-# home page renders. Retries for up to 5 minutes, the time of a cold start from zero.
+# Smoke test of a deployment, through the public address of the web app:
+# - /api/health/ready answers "ok": the API and its database work;
+# - with an expected commit, the web app and the API both report it (APP_VERSION), so the
+#   answer comes from the new revisions, not from the old ones still holding the traffic;
+# - the home page renders (its title is printed: it shows which version answered).
+# Retries for up to 5 minutes, the time of a cold start from zero.
 #
-#   smoke-test.sh https://site [force-failure]
+#   smoke-test.sh https://site [expected-commit] [force-failure]
 #
-# "force-failure" makes it fail after the checks, to exercise the automatic rollback.
+# Images built before 19 October 2026 report no version: for them the check relies on the
+# revision being ready (deploy.yml) and says so. "force-failure" makes it fail after the
+# checks, to exercise the automatic rollback.
 set -euo pipefail
 SITE=${1:?site URL}
-FORCE=${2:-}
+EXPECTED=${2:-}
+FORCE=${3:-}
 deadline=$((SECONDS + 300))
+last='no answer'
 
-until body=$(curl -fsS --max-time 60 "$SITE/api/health/ready" 2>/dev/null) && [ "$body" = '{"status":"ok"}' ]; do
+while :; do
+  if body=$(curl -fsS --max-time 60 "$SITE/api/health/ready" 2>/dev/null); then
+    last=$body
+    status=$(jq -r '.status // empty' <<<"$body" 2>/dev/null || true)
+    web=$(jq -r '.version // empty' <<<"$body" 2>/dev/null || true)
+    api=$(jq -r '.api // empty' <<<"$body" 2>/dev/null || true)
+    if [ "$status" = ok ]; then
+      if [ -z "$EXPECTED" ]; then
+        break
+      elif [ -z "$web" ]; then
+        echo "::warning::This image reports no version (built before 19 October 2026): checked by revision readiness only"
+        break
+      elif [ "$web" = "$EXPECTED" ] && [ "$api" = "$EXPECTED" ]; then
+        break
+      fi
+    fi
+  fi
   if [ $SECONDS -ge $deadline ]; then
-    echo "::error::$SITE/api/health/ready did not answer {\"status\":\"ok\"} within 5 minutes (last: ${body:-no answer})"
+    echo "::error::$SITE/api/health/ready did not report status ok${EXPECTED:+ and version $EXPECTED} within 5 minutes (last: $last)"
     exit 1
   fi
   sleep 5
 done
-echo "API and database: ok"
+echo "API and database: ok${web:+ (web ${web:0:12}, API ${api:0:12})}"
 
 page=$(mktemp)
 code=$(curl -sS --max-time 60 -o "$page" -w '%{http_code}' "$SITE/en")

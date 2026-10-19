@@ -81,5 +81,8 @@ COPY --from=build --chown=node:node /repo/apps/web/.next/static ./apps/web/.next
 COPY --from=build --chown=node:node /repo/apps/web/public ./apps/web/public
 USER 1000:1000
 EXPOSE 3000
+# The commit, shown by /api/health/live and /api/health/ready: the deployment waits for it.
+# Last, so a new commit does not invalidate the layers above.
+ENV APP_VERSION=${VCS_REF}
 # `node` is process 1 and stops cleanly on SIGTERM.
 CMD ["node", "apps/web/server.js"]

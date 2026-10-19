@@ -32,11 +32,39 @@ env:
   SHA: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
-  build:
-    name: Build, scan, push (${{ matrix.image }})
+  # A merge that only changes documentation deploys nothing (squash merges: one commit).
+  changes:
+    name: Anything to deploy?
     if: >-
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
-      || (github.event_name == 'workflow_dispatch' && inputs.image_tag == '')
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    outputs:
+      deploy: ${{ steps.files.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SHA }}
+          fetch-depth: 2
+      - id: files
+        run: |
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only HEAD^ HEAD)
+          printf '%s\n' "$files"
+          if grep -qvE '^docs/|\.md$' <<<"$files"; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Documentation only: nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  build:
+    # No matrix value in the name: GitHub would show the raw expression on a skipped run.
+    name: Build, scan, push
+    needs: changes
+    if: needs.changes.outputs.deploy == 'true' && (inputs.image_tag || '') == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -106,10 +134,10 @@ jobs:
 
   deploy:
     name: Deploy to production
-    needs: build
+    needs: [changes, build]
     if: >-
-      always() && (needs.build.result == 'success'
-      || (github.event_name == 'workflow_dispatch' && inputs.image_tag != ''))
+      always() && needs.changes.outputs.deploy == 'true'
+      && (needs.build.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.image_tag != ''))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     # Waits for the approval of the required reviewer of the environment.
@@ -166,20 +194,27 @@ jobs:
           echo "API_REVISION=$(revision "$API_APP" "$REGISTRY/iconbridge-api:$SHA")" >> "$GITHUB_ENV"
           echo "WEB_REVISION=$(revision "$WEB_APP" "$REGISTRY/iconbridge-web:$SHA")" >> "$GITHUB_ENV"
           az containerapp job update -g "$RESOURCE_GROUP" -n "$TASKS_JOB" --image "$REGISTRY/iconbridge-api:$SHA" --only-show-errors -o none
-      - name: Smoke test
+      # Until the new revisions are ready, the old ones keep the traffic: a smoke test run
+      # before that would check the previous version (seen on 19 October 2026).
+      - name: Wait until the new revisions are ready
+        run: ./.github/scripts/wait-revisions.sh "$API_APP=$API_REVISION" "$WEB_APP=$WEB_REVISION"
+      - name: Smoke test (the new version answers)
         id: smoke
-        run: ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}" ${{ inputs.force_smoke_failure && 'force-failure' || '' }}
+        run: ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}" "$SHA" ${{ inputs.force_smoke_failure && 'force-failure' || '' }}
       # Single revision mode: going back means a new revision with the previous images.
       # Migrations are not undone: they are written to work with the previous version too.
       - name: Roll back to the previous version
         id: rollback
         if: failure() && steps.update.outcome != 'skipped'
         run: |
-          az containerapp update -g "$RESOURCE_GROUP" -n "$API_APP" --image "$PREVIOUS_API" --only-show-errors -o none
-          az containerapp update -g "$RESOURCE_GROUP" -n "$WEB_APP" --image "$PREVIOUS_WEB" --only-show-errors -o none
+          revision() { az containerapp update -g "$RESOURCE_GROUP" -n "$1" --image "$2" --query properties.latestRevisionName -o tsv --only-show-errors; }
+          api=$(revision "$API_APP" "$PREVIOUS_API")
+          web=$(revision "$WEB_APP" "$PREVIOUS_WEB")
           az containerapp job update -g "$RESOURCE_GROUP" -n "$TASKS_JOB" --image "$PREVIOUS_TASKS" --only-show-errors -o none
           az containerapp job update -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --image "$PREVIOUS_MIGRATE" --only-show-errors -o none
-          ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+          ./.github/scripts/wait-revisions.sh "$API_APP=$api" "$WEB_APP=$web"
+          ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}" "${PREVIOUS_API##*:}"
+          echo "ROLLBACK_REVISIONS=API $api, web $web" >> "$GITHUB_ENV"
           echo "::warning::Rolled back to ${PREVIOUS_API##*:}"
       - name: Summary
         if: always()
@@ -197,6 +232,7 @@ jobs:
             echo "| Images | \`$REGISTRY/iconbridge-{api,web,migrate}:${SHA:0:12}…\` |"
             echo "| Revisions | API \`${API_REVISION:--}\`, web \`${WEB_REVISION:--}\` |"
             echo "| Previous images | API \`${PREVIOUS_API##*:}\`, web \`${PREVIOUS_WEB##*:}\` |"
+            [ -n "${ROLLBACK_REVISIONS:-}" ] && echo "| Rollback revisions | \`$ROLLBACK_REVISIONS\` |"
             echo "| Site | ${{ vars.SITE_URL }} |"
             echo "| Health | ${{ vars.SITE_URL }}/api/health/ready |"
             echo "| Duration | $(( (SECONDS - STARTED) / 60 )) min $(( (SECONDS - STARTED) % 60 )) s (after approval) |"
