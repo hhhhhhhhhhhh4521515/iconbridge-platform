@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { CandidatesModule } from '../candidates/candidates.module.js';
 import { JobsModule } from '../jobs/jobs.module.js';
+import { AdminDiagnosticsController } from './admin-diagnostics.controller.js';
 import { AdminSettingsController } from './admin-settings.controller.js';
 import { AdminStatsService } from './admin-stats.service.js';
 import { AdminApplicationsController } from './applications/admin-applications.controller.js';
@@ -28,6 +29,7 @@ import { AdminUsersService } from './users/admin-users.service.js';
     AdminApplicationsController,
     AdminCandidatesController,
     AdminSettingsController,
+    AdminDiagnosticsController,
     ContactMessagesController,
     HistoricalFiguresController,
     AdminJobAlertsController,
