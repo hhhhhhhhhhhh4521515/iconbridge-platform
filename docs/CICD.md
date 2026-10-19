@@ -79,10 +79,12 @@ make tf-init ENV=github && make tf-plan ENV=github && make tf-apply ENV=github
 
 ## Deploying
 
-1. Merge a pull request whose checks are green. CI runs on main; when it succeeds, `deploy.yml` builds, scans and pushes the images.
+1. Merge a pull request whose checks are green. CI runs on main; when it succeeds, `deploy.yml` builds, scans and pushes the images. A merge that only changes documentation (`docs/**`, `*.md`) deploys nothing.
 2. GitHub asks the reviewer of `production` to approve (Actions → the run → Review deployments).
-3. The deploy job runs the migration job and waits for it, updates the API, the web app and the tasks job, then runs the smoke test (`.github/scripts/smoke-test.sh`: `/api/health/ready` answers `{"status":"ok"}` within 5 minutes, the time of a cold start, and `/en` renders).
-4. If the smoke test fails, the previous images are put back (single revision mode: a new revision with the previous images) and checked again. Migrations are not undone: they must work with the previous version (CLAUDE.md).
+3. The deploy job runs the migration job and waits for it, updates the API, the web app and the tasks job, waits until the new revisions are the apps' latest ready revisions (`.github/scripts/wait-revisions.sh`, 6 minutes at most: until then the old revisions keep the traffic), then runs the smoke test (`.github/scripts/smoke-test.sh`: within 5 minutes, the time of a cold start, `/api/health/ready` answers `ok` with the deployed commit for both the web app and the API, and `/en` renders).
+4. If any of this fails, the previous images are put back (single revision mode: a new revision with the previous images), waited for and checked again. Migrations are not undone: they must work with the previous version (CLAUDE.md).
+
+The apps report the commit they run (`APP_VERSION`, set by the Dockerfiles from `VCS_REF`) in their health answers: `/api/health/live` (web), `/health/live` and `/health/ready` (API), and `/api/health/ready` gives both. Images built before 19 October 2026 report none: the smoke test then relies on the revision wait and says so.
 
 By hand (Actions → Deploy → Run workflow):
 

@@ -756,3 +756,34 @@ Prompt 13: every change tested, scanned and deployed the same way, with the owne
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/17>
 
 **Remaining**: the end-to-end proof after the merge (deployment with approval, a small change through the whole flow, a forced smoke-test failure and its rollback), recorded in the next entry.
+
+## 2026-10-19 - Deployment pipeline proven end to end; smoke test bound to the new revision
+
+**What**
+
+- **Proof of the flow** (Prompt 13, "Done when"):
+  - PR #17 merged → CI green on main → `infra.yml` apply approved (plan and apply: no changes) → `deploy.yml` built, scanned and pushed the three images of `19ef9b6`, the deployment was approved and ran in 170 s (migration job, new revisions, smoke test). Run 38851210088.
+  - PR #18 (home title "Work in Malta, Poland and on cruise ships", en/fr/ar) → green CI → merge → approval → deployed in 136 s; the title is on the Azure URL. Run 38856750809.
+  - Nightly CI runs on main start `deploy.yml` too and are skipped by it (runs 39010322812, 39105827001, 39214949749): only pushes deploy.
+- **Rollback test** (run 39237821761, `image_tag` = `19ef9b6`, `force_smoke_failure`): the smoke test failed on purpose and the previous images (`2039c60`) were put back and checked; production kept the new title. **But it exposed a gap**: the smoke test ran 25 s after the `19ef9b6` revisions were created, while they were still starting, and checked the old revisions, which keep the traffic until the new ones are ready (it printed the new title, not the old one). A new revision that never starts would therefore have been reported as deployed.
+- **Fix**: after updating the apps, `deploy.yml` waits until the new revisions are the apps' latest ready revisions (`.github/scripts/wait-revisions.sh`, 6 minutes, otherwise rollback), also during a rollback; the apps report the commit they run (`APP_VERSION` from the images' `VCS_REF`, in `/health/live`, `/health/ready` and the web app's `/api/health/*`), and the smoke test waits until the web app and the API both report the deployed commit. Images built earlier report no version: the smoke test then relies on the revision wait and says so.
+- A merge that only changes documentation no longer rebuilds and deploys (`changes` job). The build job has a fixed name (a skipped matrix job showed `${{ matrix.image }}`).
+
+**Why**
+
+The rollback must protect against a new version that does not work; the check has to look at the new version.
+
+**Checks**
+
+| Check                                            | Result                                                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`      | Pass                                                                                      |
+| `pnpm test`                                      | Pass: 611 unit tests (shared 207, api 329, web 75)                                        |
+| `pnpm test:e2e`                                  | Pass: 506 tests (health answers carry the version)                                        |
+| hadolint, actionlint, shellcheck                 | No finding                                                                                |
+| Images built locally with `VCS_REF=feedc0de1234` | `/health/ready`, `/api/health/live`, `/api/health/ready` report it; the smoke test passes |
+| New smoke test against production (`2039c60`)    | Passes with the "no version" warning, as designed for older images                        |
+
+**PR**: PR_LINK
+
+**Remaining**: after this merge and its deployment, run the rollback test again (redeploy `19ef9b6` with `force_smoke_failure`): the smoke test must now see the old title before failing, and the rollback must restore the deployed commit.
