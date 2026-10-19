@@ -815,6 +815,6 @@ The last "Done when" item of Prompt 13: a forced failing smoke test triggers the
 | A small change goes PR → green CI → merge → approval → deployed on Azure automatically | Yes: PR #18 (home title), deployed by run 38856750809 after approval; the title is on the Azure URL                          |
 | A forced failing smoke test triggers the rollback                                      | Yes: run 39272520265 deployed `19ef9b6` (old title served), failed on purpose, rolled back to `268ddab`, verified by version |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/29>
 
 **Remaining**: the owner's decision on a warm replica (cold starts, ADR-017); a verified custom domain for email; alerting; review of the Dependabot pull requests; legal review of retention periods and policy texts; a load test on Azure.
