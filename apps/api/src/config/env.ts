@@ -49,6 +49,8 @@ const baseEnvSchema = z.object({
     .transform((url) => url.replace(/\/+$/, '')),
   PASSPORT_ENCRYPTION_KEY: aes256KeySchema,
   JWT_ACCESS_SECRET: z.string().min(32),
+  /** Commit of the running image (set by the Dockerfile from VCS_REF), shown by the health endpoints. */
+  APP_VERSION: z.string().min(1).default('dev'),
   /** Lifetime of an access token, in seconds. 15 minutes; shorter only to test the silent refresh. */
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(1).max(3600).default(900),
   /**

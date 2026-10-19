@@ -1778,7 +1778,7 @@ export interface paths {
         put?: never;
         /**
          * Contact form
-         * @description The message is stored and emailed to the agency (setting CONTACT_EMAIL), with the sender as reply-to.
+         * @description The message is stored and emailed to the agency (setting CONTACT_EMAIL, when set), with the sender as reply-to.
          */
         post: operations["PublicFormsController_contact"];
         delete?: never;
@@ -5208,8 +5208,7 @@ export interface operations {
                         REAPPLY_COOLDOWN_MONTHS: number;
                         MAX_ACTIVE_APPLICATIONS: number;
                         MAX_UPLOAD_SIZE_MB: number;
-                        /** Format: email */
-                        CONTACT_EMAIL: string;
+                        CONTACT_EMAIL: "" | string;
                         CONTACT_PHONE: string;
                         CONTACT_WHATSAPP: string;
                         CONTACT_ADDRESS: string;

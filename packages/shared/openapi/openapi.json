@@ -12418,10 +12418,20 @@
                       "maximum": 25
                     },
                     "CONTACT_EMAIL": {
-                      "type": "string",
-                      "maxLength": 254,
-                      "format": "email",
-                      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            ""
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 254,
+                          "format": "email",
+                          "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        }
+                      ]
                     },
                     "CONTACT_PHONE": {
                       "type": "string",
@@ -40988,7 +40998,7 @@
     },
     "/api/v1/contact": {
       "post": {
-        "description": "The message is stored and emailed to the agency (setting CONTACT_EMAIL), with the sender as reply-to.",
+        "description": "The message is stored and emailed to the agency (setting CONTACT_EMAIL, when set), with the sender as reply-to.",
         "operationId": "PublicFormsController_contact",
         "parameters": [],
         "requestBody": {
@@ -41202,7 +41212,8 @@
               "application/json": {
                 "schema": {
                   "example": {
-                    "status": "ok"
+                    "status": "ok",
+                    "version": "dev"
                   }
                 }
               }
@@ -41227,6 +41238,7 @@
                 "schema": {
                   "example": {
                     "status": "ok",
+                    "version": "2039c607a36ddadb07b9332e404211b21f8178c6",
                     "checks": {
                       "database": "ok"
                     }
@@ -41242,6 +41254,7 @@
                 "schema": {
                   "example": {
                     "status": "error",
+                    "version": "2039c607a36ddadb07b9332e404211b21f8178c6",
                     "checks": {
                       "database": "error"
                     }

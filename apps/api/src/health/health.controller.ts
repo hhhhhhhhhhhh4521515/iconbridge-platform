@@ -1,4 +1,5 @@
 import { Controller, Get, HttpStatus, Logger, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -9,10 +10,15 @@ import type { Liveness, Readiness } from '@iconbridge/shared';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Public } from '../auth/decorators/index.js';
+import type { Env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const readinessExample = (status: 'ok' | 'error') => ({
-  example: { status, checks: { database: status } },
+  example: {
+    status,
+    version: '2039c607a36ddadb07b9332e404211b21f8178c6',
+    checks: { database: status },
+  },
 });
 
 /** Probe endpoints. Served at /health/*, outside the /api/v1 prefix. */
@@ -23,13 +29,21 @@ const readinessExample = (status: 'ok' | 'error') => ({
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  /** The commit of the image: the deployment waits until the new revision answers with it. */
+  private readonly version: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    config: ConfigService<Env, true>,
+  ) {
+    this.version = config.get('APP_VERSION', { infer: true });
+  }
 
   @Get('live')
   @ApiOperation({ summary: 'Liveness: the process is running' })
-  @ApiOkResponse({ schema: { example: { status: 'ok' } } })
+  @ApiOkResponse({ schema: { example: { status: 'ok', version: 'dev' } } })
   live(): Liveness {
-    return { status: 'ok' };
+    return { status: 'ok', version: this.version };
   }
 
   @Get('ready')
@@ -45,8 +59,8 @@ export class HealthController {
       );
       // Set directly: the probe body is not an API error and must keep its own shape.
       response.status(HttpStatus.SERVICE_UNAVAILABLE);
-      return { status: 'error', checks: { database: 'error' } };
+      return { status: 'error', version: this.version, checks: { database: 'error' } };
     }
-    return { status: 'ok', checks: { database: 'ok' } };
+    return { status: 'ok', version: this.version, checks: { database: 'ok' } };
   }
 }

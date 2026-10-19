@@ -119,4 +119,7 @@ EXPOSE 4000
 # No HEALTHCHECK: Container Apps probes these two addresses.
 # `node` is process 1 and receives SIGTERM itself: the API finishes the requests and the
 # emails in progress, then exits.
+# The commit, shown by /health/live and /health/ready: the deployment waits for it. Last,
+# so a new commit does not invalidate the layers above.
+ENV APP_VERSION=${VCS_REF}
 CMD ["node", "dist/main.js"]

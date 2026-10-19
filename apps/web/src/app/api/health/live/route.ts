@@ -3,8 +3,13 @@
  * a probe must not keep the API awake, and a stopped API is no reason to restart the web
  * app.
  */
+import { webVersion } from '@/lib/health';
+
 export const dynamic = 'force-dynamic';
 
 export function GET(): Response {
-  return Response.json({ status: 'ok' }, { headers: { 'Cache-Control': 'no-store' } });
+  return Response.json(
+    { status: 'ok', version: webVersion() },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

@@ -58,15 +58,23 @@ export type ValidationIssue = z.infer<typeof validationIssueSchema>;
 export const healthStatusSchema = z.enum(['ok', 'error']);
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
 
+/**
+ * Commit the running image was built from (APP_VERSION, set from the image's VCS_REF);
+ * "dev" outside an image. The deployment checks it to know the new revision answers.
+ */
+const versionSchema = z.string().min(1);
+
 /** Body of GET /health/live. */
 export const livenessSchema = z.object({
   status: z.literal('ok'),
+  version: versionSchema,
 });
 export type Liveness = z.infer<typeof livenessSchema>;
 
 /** Body of GET /health/ready (HTTP 200 when every check is ok, 503 otherwise). */
 export const readinessSchema = z.object({
   status: healthStatusSchema,
+  version: versionSchema,
   checks: z.object({
     database: healthStatusSchema,
   }),
