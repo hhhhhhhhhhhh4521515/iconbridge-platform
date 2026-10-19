@@ -850,6 +850,6 @@ Prompt 14: see what production does and be told when it breaks, within 15 USD a 
 | Images with telemetry on (0.5 vCPU)                 | API listens in 5.9–6.5 s, web in 2.9 s; no missing module                   |
 | `make tf-check`; plan                               | No issue; 7 to add (alerts, action group, workbook), 1 to change (sampling) |
 
-**PR**: PR_LINK
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/30>
 
 **Remaining**: after the deployment, fire the 5xx alert with the diagnostics endpoint and check the email; check the workbook with real data; switch the availability tests on briefly to check them.
