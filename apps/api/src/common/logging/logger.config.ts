@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { trace } from '@opentelemetry/api';
 import type { Params } from 'nestjs-pino';
 import type { Env } from '../../config/env.js';
 
@@ -58,6 +59,11 @@ export function loggerParams(nodeEnv: Env['NODE_ENV']): Params {
           url: req.url.split('?')[0],
         }),
         res: (res: { statusCode: number }) => ({ statusCode: res.statusCode }),
+      },
+      // Joins a log line to its request in Application Insights (operation id).
+      mixin: () => {
+        const context = trace.getActiveSpan()?.spanContext();
+        return context ? { traceId: context.traceId, spanId: context.spanId } : {};
       },
       customProps: (req: IncomingMessage) => ({
         userId: (req as IncomingMessage & { user?: { id: string } }).user?.id,

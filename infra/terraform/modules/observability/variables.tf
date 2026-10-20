@@ -41,9 +41,9 @@ variable "daily_quota_gb" {
 }
 
 variable "sampling_percentage" {
-  description = "Share of the Application Insights telemetry kept, in percent."
+  description = "Share of the Application Insights telemetry kept by ingestion sampling, in percent. 100: at this traffic, sampling dropped whole requests and made the 5xx alert blind (ADR-019); the daily cap protects the budget."
   type        = number
-  default     = 25
+  default     = 100
 
   validation {
     condition     = var.sampling_percentage > 0 && var.sampling_percentage <= 100

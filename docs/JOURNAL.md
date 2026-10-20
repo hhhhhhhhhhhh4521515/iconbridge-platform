@@ -818,3 +818,38 @@ The last "Done when" item of Prompt 13: a forced failing smoke test triggers the
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/29>
 
 **Remaining**: the owner's decision on a warm replica (cold starts, ADR-017); a verified custom domain for email; alerting; review of the Dependabot pull requests; legal review of retention periods and policy texts; a load test on Azure.
+
+## 2026-10-20 - Observability and alerts
+
+**What**
+
+- **Application Insights through OpenTelemetry** (`@azure/monitor-opentelemetry`) in the API (`node --import ./dist/telemetry/telemetry.js`) and the web app (`instrumentation.ts`), only when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set: requests, dependencies (PostgreSQL, the web app's calls to the API, Azure SDK), exceptions, and three business events: `application_submitted`, `status_changed`, `cooldown_blocked`. No query strings, no probes, no exception messages, ids and statuses only in events. Log lines carry `traceId`/`spanId` next to the request id.
+- **Ingestion sampling 100 %** (was 25 %), **workbook** and **alerts** in Terraform (`modules/monitoring`): action group to the owner's email; API 5xx (more than 5 in 5 minutes), database CPU above 80 %, storage availability below 99 %, scheduled tasks failing or not running for an hour, emails abandoned after all retries; standard availability tests on `/en` and `/api/health/ready` behind `enable_availability_tests` (off).
+- `POST /admin/diagnostics/error` (super admin, audited) to fire the 5xx alert on purpose. [ADR-019](adr/ADR-019-observability-and-alerts.md).
+
+**Why**
+
+Prompt 14: see what production does and be told when it breaks, within 15 USD a month.
+
+**Notes**
+
+- The ESM loader hook of OpenTelemetry doubled the API's start-up on 0.5 vCPU (4.2 s → 9.2 s or more) and needed more files kept in the image; without it the start-up is about 6 s and requests, database dependencies and events still arrive (checked against Application Insights with the role `iconbridge-api-localtest`). The web app's start-up: 1.6 → 2.9 s.
+- In that check the database calls of a request arrived but not the request: ingestion sampling at 25 % drops whole operations, too many at this traffic.
+- Availability tests stay off: each run wakes both apps from zero, and apps that scale to zero pay the active rate while a replica runs; every 15 minutes that is about 25–30 USD a month.
+- pnpm 12 refuses an install with an unapproved build script: `protobufjs` (OpenTelemetry) is listed as not needed in `allowBuilds`.
+- An intermittent e2e test fixed: the audit log check of a candidate deletion looked for "567" in text that included random UUIDs; it now checks what the entries say, not their ids.
+
+**Checks**
+
+| Check                                               | Result                                                                      |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`, format | Pass                                                                        |
+| `pnpm test`                                         | Pass: 616 unit tests (shared 207, api 332, web 77)                          |
+| `pnpm test:e2e`                                     | Pass: 508 tests, three full runs (2 new: diagnostics allowed and refused)   |
+| `pnpm test:browser`                                 | Pass: 153 passed, 6 skipped                                                 |
+| Images with telemetry on (0.5 vCPU)                 | API listens in 5.9–6.5 s, web in 2.9 s; no missing module                   |
+| `make tf-check`; plan                               | No issue; 7 to add (alerts, action group, workbook), 1 to change (sampling) |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/30>
+
+**Remaining**: after the deployment, fire the 5xx alert with the diagnostics endpoint and check the email; check the workbook with real data; switch the availability tests on briefly to check them.

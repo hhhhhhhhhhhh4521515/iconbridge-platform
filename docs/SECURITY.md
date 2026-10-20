@@ -117,6 +117,8 @@ Behind the Azure ingress, `TRUST_PROXY_HOPS` must be set so the limit applies to
 - Logs carry ids, never personal data. pino removes `password`, `token`, `passportNumber`, cookies and the authorization header wherever they appear (`logger.config.ts`); request bodies are not logged. After a full browser run (about 1 300 log lines) the API log contained no email address, no passport number, no password and no token.
 - Errors answer `{ code, message }`. No stack trace, no SQL, no file path (`security.e2e-spec.ts`). Configuration errors name the variable, never its value.
 - Emails waiting in the outbox are encrypted in the database; their content is erased once sent.
+- Telemetry (Application Insights) carries no personal data: query strings are removed from every URL (email links carry tokens), health probes are not recorded, exceptions keep their type and stack but not their message, custom events carry ids and statuses only (`apps/api/src/telemetry/telemetry.spec.ts`, `apps/web/src/lib/telemetry-redact.test.ts`, ADR-019).
+- `POST /admin/diagnostics/error` (fails on purpose, to check the alerts) is for super admins only and audited (`diagnostics.e2e-spec.ts`).
 - Production email has no password to leak: the API sends through Azure Communication Services with its managed identity, whose role is scoped to that one Communication Service. Open and click tracking is off on the domain and on every message (`azure-email.transport.spec.ts`). Data of the service stays in Europe.
 
 ## Data protection

@@ -7,6 +7,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { ConfigService } from '@nestjs/config';
 import type { ApiError, ApiErrorCode } from '@iconbridge/shared';
 import type { Response } from 'express';
@@ -106,10 +107,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
     const stack = exception instanceof Error ? exception.stack : undefined;
-    this.logger.error(
-      `Unhandled ${exception instanceof Error ? exception.name : typeof exception}`,
-      stack,
-    );
+    const name = exception instanceof Error ? exception.name : typeof exception;
+    this.logger.error(`Unhandled ${name}`, stack);
+    // Application Insights (exceptions table): the type and the stack, not the message,
+    // which could quote data, as in the log line above.
+    const span = trace.getActiveSpan();
+    span?.recordException({ name, message: name, ...(stack ? { stack } : {}) });
+    span?.setStatus({ code: SpanStatusCode.ERROR, message: name });
     return {
       status,
       body: {

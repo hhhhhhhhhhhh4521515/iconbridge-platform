@@ -22,6 +22,8 @@ allowBuilds:
   '@scarf/scarf': false
   esbuild: true
   prisma: true
+  # OpenTelemetry (Application Insights): its postinstall only checks the optional CLI.
+  protobufjs: false
   sharp: true
   unrs-resolver: true
 

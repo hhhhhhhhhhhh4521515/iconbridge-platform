@@ -680,6 +680,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/diagnostics/error": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fail on purpose (HTTP 500), to check the alerts
+         * @description Super admin only. Answers 500 INTERNAL_ERROR every time and is recorded in the audit log. More than 5 calls in 5 minutes fire the "API 5xx" alert.
+         */
+        post: operations["AdminDiagnosticsController_forceError"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/contact-messages": {
         parameters: {
             query?: never;
@@ -5315,6 +5335,62 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    AdminDiagnosticsController_forceError: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

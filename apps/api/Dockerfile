@@ -52,6 +52,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter @iconbridge/api deploy --prod --legacy --config.node-linker=hoisted /deployed \
     && cp -r apps/api/dist /deployed/dist \
     && node apps/api/scripts/trace-runtime.mjs /deployed /out dist/main.js dist/cli.js \
+      dist/telemetry/telemetry.js \
       # pino starts its worker from a file name; the API docs serve the files of swagger-ui.
       --keep node_modules/pino/lib/worker.js --keep node_modules/pino/file.js \
       --keep node_modules/thread-stream/lib/worker.js --keep node_modules/swagger-ui-dist \
@@ -122,4 +123,7 @@ EXPOSE 4000
 # The commit, shown by /health/live and /health/ready: the deployment waits for it. Last,
 # so a new commit does not invalidate the layers above.
 ENV APP_VERSION=${VCS_REF}
-CMD ["node", "dist/main.js"]
+# Telemetry (Application Insights) starts first, so OpenTelemetry hooks the CommonJS
+# modules (express and its http server, pg) as the API loads them. Without the ESM loader
+# hook: it doubled the start-up on 0.5 vCPU (ADR-019). Nothing without a connection string.
+CMD ["node", "--import", "./dist/telemetry/telemetry.js", "dist/main.js"]

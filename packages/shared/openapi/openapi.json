@@ -12935,6 +12935,213 @@
         ]
       }
     },
+    "/api/v1/admin/diagnostics/error": {
+      "post": {
+        "description": "Super admin only. Answers 500 INTERNAL_ERROR every time and is recorded in the audit log. More than 5 calls in 5 minutes fire the \"API 5xx\" alert.",
+        "operationId": "AdminDiagnosticsController_forceError",
+        "parameters": [],
+        "responses": {
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Fail on purpose (HTTP 500), to check the alerts",
+        "tags": [
+          "admin: diagnostics"
+        ]
+      }
+    },
     "/api/v1/admin/contact-messages": {
       "get": {
         "operationId": "ContactMessagesController_list",
