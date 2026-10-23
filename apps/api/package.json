@@ -51,7 +51,7 @@
     "exceljs": "^4.4.0",
     "file-type": "^22.1.1",
     "helmet": "^8.3.0",
-    "isomorphic-dompurify": "^4.5.0",
+    "isomorphic-dompurify": "^4.6.0",
     "mjml": "^5.4.1",
     "nestjs-pino": "^5.3.1",
     "nodemailer": "^10.0.16",
