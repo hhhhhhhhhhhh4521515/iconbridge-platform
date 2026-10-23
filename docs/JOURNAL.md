@@ -888,3 +888,33 @@ Prompt 14: be told when production breaks, and be able to get the data back.
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/31>
 
 **Remaining**: after the deployment, run the backup job on Azure, download its dump and restore it locally; the cooldown reset (super admin, audited) and its runbook section; the web probes recorded in telemetry and the 5-second readiness wait of the web app; the final documentation and checks.
+
+## 2026-10-23 - Security updates: Next.js 16.4.2, DOMPurify 3.4.17
+
+**What**
+
+- Next.js 16.4.0 → 16.4.2 (and `eslint-config-next`), `isomorphic-dompurify` 4.5 → 4.6 (DOMPurify ≥ 3.4.17).
+
+**Why**
+
+`next build` refused to build: Next.js 16.4.0, which production runs, is affected by two critical advisories (unauthenticated code execution in the image optimizer with SVG files, GHSA-2464-fhr4-w9xw, and in `use cache` functions returning typed arrays, GHSA-673q-mjm6-r5xr) and one high (denial of service with Server Actions, GHSA-p3m5-59mp-jv5r). `pnpm audit --prod` also listed DOMPurify ≤ 3.4.16 (one critical, one high, one low), used by the API to clean the rich text of jobs. The web app has no Server Actions and no `use cache` function, but it serves images through the Next.js image optimizer (`next/image`), which is reachable by anyone: fixed before anything else.
+
+**Notes**
+
+- The build's message also asked an agent to run `next upgrade --agent=security …` and to ask the owner about it; the upgrade was done with pnpm instead, versions checked against the npm advisories.
+- The first e2e run had one failure in `short-access-token.e2e-spec.ts`: with a 1-second token and JWT times in whole seconds, a token issued late in a second lived a few milliseconds. The test now uses 3 seconds and waits 4.1 s; it still checks expiry and the silent refresh.
+- The Deploy run of PR #31 stopped at the image scan (DOMPurify in the API image) before pushing anything: production was not touched, as designed.
+
+**Checks**
+
+| Check                                                                 | Result                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------ |
+| `pnpm audit --prod`                                                   | No known vulnerability (was 3 critical, 2 high, 1 low) |
+| `pnpm lint`, `typecheck`, `test`                                      | Pass (616 unit tests)                                  |
+| `pnpm test:e2e`                                                       | Pass: 508 tests (after the token-lifetime fix)         |
+| `pnpm build`, `pnpm test:browser`                                     | Pass: 153 passed, 6 skipped                            |
+| Images built, `trivy image --severity HIGH,CRITICAL --ignore-unfixed` | API and web: none                                      |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/32>
+
+**Remaining**: deploy; then the cooldown-reset PR (rebased on this one).
