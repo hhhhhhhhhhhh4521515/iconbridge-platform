@@ -6,6 +6,8 @@
 # - public-media: job covers, slides and story photos, readable blob by blob without a
 #   link (container access "blob"). The account allows public containers only because of
 #   this one; every other container stays private.
+# - backups: private. Weekly pg_dump files of the backup job, deleted after 30 days by the
+#   lifecycle policy below (ADR-020).
 
 resource "azurerm_storage_account" "this" {
   # Lower-case letters and digits only, globally unique, 24 characters at most.
@@ -101,6 +103,41 @@ resource "azurerm_storage_container" "public_media" {
   lifecycle {
     # Holds data: deleting it takes a deliberate edit of this file.
     prevent_destroy = true
+  }
+}
+
+resource "azurerm_storage_container" "backups" {
+  name                  = "backups"
+  storage_account_id    = azurerm_storage_account.this.id
+  container_access_type = "private"
+  depends_on            = [time_sleep.rbac]
+
+  lifecycle {
+    # Holds data: deleting it takes a deliberate edit of this file.
+    prevent_destroy = true
+  }
+}
+
+# Backups older than 30 days are deleted (then kept 7 more days by the blob soft delete).
+# The policy covers the backups container only: candidate files follow the retention task
+# of the API, public media their own life.
+resource "azurerm_storage_management_policy" "this" {
+  storage_account_id = azurerm_storage_account.this.id
+
+  rule {
+    name    = "delete-backups-after-${var.backup_retention_days}-days"
+    enabled = true
+
+    filters {
+      blob_types   = ["blockBlob"]
+      prefix_match = ["${azurerm_storage_container.backups.name}/"]
+    }
+
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = var.backup_retention_days
+      }
+    }
   }
 }
 

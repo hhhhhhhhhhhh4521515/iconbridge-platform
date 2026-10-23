@@ -143,6 +143,35 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "tasks" {
   }
 }
 
+# The weekly backup job failed (pg_dump or the upload; the script exits non-zero and the
+# execution is marked failed). Checked once a day over two days: cheap, and a Sunday
+# failure is reported on Sunday or Monday.
+resource "azurerm_monitor_scheduled_query_rules_alert_v2" "backup" {
+  name                 = "alert-backup-${var.name_suffix}"
+  resource_group_name  = var.resource_group_name
+  location             = var.location
+  scopes               = [var.log_analytics_workspace_id]
+  description          = "The weekly database backup failed. Run it again (docs/RUNBOOK.md, Backups) and read its logs."
+  severity             = 2
+  evaluation_frequency = "P1D"
+  window_duration      = "P2D"
+  tags                 = var.tags
+
+  criteria {
+    query                   = <<-KQL
+      ContainerAppSystemLogs_CL
+      | where JobName_s == "${var.backup_job_name}" and Reason_s == "SawCompletedJob" and Log_s has "Failed"
+    KQL
+    time_aggregation_method = "Count"
+    operator                = "GreaterThan"
+    threshold               = 0
+  }
+
+  action {
+    action_groups = [local.action.action_group_id]
+  }
+}
+
 # An email is given up after about three days of failed attempts (20 attempts): the API
 # and the tasks job log "Email not sent: … given up".
 resource "azurerm_monitor_scheduled_query_rules_alert_v2" "emails_abandoned" {

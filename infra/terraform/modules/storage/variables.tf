@@ -38,3 +38,9 @@ variable "log_analytics_workspace_id" {
   description = "Workspace receiving the access logs of the blobs."
   type        = string
 }
+
+variable "backup_retention_days" {
+  description = "Days a database backup is kept in the backups container before the lifecycle policy deletes it."
+  type        = number
+  default     = 30
+}
