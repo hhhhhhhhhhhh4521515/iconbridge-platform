@@ -941,3 +941,7 @@ Prompt 14: the runbook's cooldown reset must be a real, audited action; the tele
 | `pnpm test:e2e`                          | Pass: 515 tests (7 new in `cooldown-waiver.e2e-spec.ts`, boundary at one millisecond before the end) |
 | `pnpm build`, `pnpm test:browser`        | Pass: 153 passed, 6 skipped (the history test lifts a waiting period from the panel)                 |
 | `pnpm api:types`                         | Client regenerated (new route, error code, field)                                                    |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/34>
+
+**Remaining**: after the deployment, check in Application Insights that the web app no longer records probes, and that `/api/health/ready` answers ok on a cold start; then the final documentation and checks.
