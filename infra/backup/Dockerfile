@@ -21,4 +21,6 @@ COPY --chmod=0755 backup.sh /usr/local/bin/backup.sh
 USER 1000:1000
 WORKDIR /tmp
 ENV APP_VERSION=${VCS_REF}
+# A job that runs to completion: nothing to probe, its exit code is the result.
+HEALTHCHECK NONE
 ENTRYPOINT ["/usr/local/bin/backup.sh"]
