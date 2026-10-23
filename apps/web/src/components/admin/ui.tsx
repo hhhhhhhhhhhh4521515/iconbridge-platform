@@ -59,7 +59,8 @@ const TONES = {
   gold: 'bg-brand-gold text-brand-navy',
   // emerald-700: white text on emerald-600 has too little contrast (3.7 for 4.5 required).
   success: 'bg-emerald-700 text-white',
-  danger: 'bg-destructive/15 text-destructive',
+  // red-800 on red-100 (about 7:1): the destructive red on its own tint gave 3.6 for 4.5 required.
+  danger: 'bg-red-100 text-red-800',
   muted: 'bg-muted text-muted-foreground',
 } as const;
 export type Tone = keyof typeof TONES;

@@ -15,7 +15,8 @@ const TONES: Record<Status, string> = {
   VISA_PROCESSING: 'bg-emerald-100 text-emerald-900',
   VISA_APPROVED: 'bg-emerald-700 text-white',
   DEPLOYED: 'bg-emerald-700 text-white',
-  REJECTED: 'bg-destructive/15 text-destructive',
+  // red-800 on red-100 (about 7:1): the destructive red on its own tint gave 3.6 for 4.5 required.
+  REJECTED: 'bg-red-100 text-red-800',
   WITHDRAWN: 'bg-muted text-muted-foreground',
 };
 
