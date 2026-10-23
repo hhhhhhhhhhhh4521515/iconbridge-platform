@@ -221,7 +221,7 @@ test.describe('back office: history and deletions', () => {
 
       await page.goto('/en/admin/applications');
       await page.getByRole('searchbox').fill(candidate.email);
-      await page.getByRole('button', { name: `${firstName} Khelifi` }).click();
+      await page.getByRole('button', { name: `${firstName} Khelifi`, exact: true }).click();
       const detail = page.getByTestId('application-detail');
       await detail.getByRole('button', { name: 'Lift the waiting period' }).click();
       const dialog = page.getByTestId('waive-cooldown-dialog');
@@ -273,7 +273,8 @@ test.describe('back office: history and deletions', () => {
       const removed = page.getByTestId('delete-removed');
       await expect(removed).toContainText('The profile and the account');
       await expect(removed).toContainText('2 documents, removed from storage');
-      await expect(removed).toContainText('The personal content of 1 application');
+      // The rejected application of the previous step, and this one.
+      await expect(removed).toContainText('The personal content of 2 applications');
       await expect(page.getByTestId('delete-notes')).toContainText('anonymous rows');
       await confirmDeletion(page, 'Delete the candidate');
       await expect(toast(page, 'The candidate is deleted.')).toBeVisible();
