@@ -3,6 +3,7 @@ import { trackEvent } from '../../telemetry/events.js';
 import {
   allowedApplicationTransitions,
   canTransitionApplication,
+  FINAL_APPLICATION_STATUSES,
   localeSchema,
   parseJobQuestions,
   UNDO_STATUS_MINUTES,
@@ -23,6 +24,8 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { MailService } from '../../mail/mail.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { isInCooldown } from '../../applications/cooldown.js';
+import { SettingsService } from '../../settings/settings.service.js';
 
 const SUMMARY_INCLUDE = {
   job: { select: { id: true, title: true, slug: true, destination: { select: { code: true } } } },
@@ -111,6 +114,7 @@ export class AdminApplicationsService {
     private readonly audit: AuditService,
     private readonly mail: MailService,
     private readonly clock: Clock,
+    private readonly settings: SettingsService,
   ) {}
 
   async list(
@@ -147,6 +151,7 @@ export class AdminApplicationsService {
     return {
       ...this.toSummary(row, user),
       withdrawnAt: row.withdrawnAt?.toISOString() ?? null,
+      cooldownWaivedAt: row.cooldownWaivedAt?.toISOString() ?? null,
       coverLetter: row.coverLetter,
       answers: (row.answers as Record<string, string> | null) ?? null,
       questions: parseJobQuestions(row.questions),
@@ -191,6 +196,67 @@ export class AdminApplicationsService {
     const change = await this.applyChange(id, input, user, ip);
     await this.notifyCandidate(change);
     trackStatusChange(change);
+    return this.get(id, user);
+  }
+
+  /**
+   * Lifts the re-application waiting period of one finished application (SPEC
+   * section 6, rule 7): `ApplicationsService.evaluate` then ignores it, so the
+   * candidate may apply to the job again at once. Super admins only; the reason
+   * goes to the audit log. Nothing is sent to the candidate.
+   */
+  async waiveCooldown(
+    id: string,
+    reason: string,
+    user: AuthUser,
+    ip: string | null,
+  ): Promise<AdminApplicationDetail> {
+    const now = this.clock.now();
+    await this.prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<
+        { status: ApplicationStatus; applied_at: Date; waived: boolean; erased: boolean }[]
+      >`
+        SELECT a.status::text AS status, a.applied_at, a.cooldown_waived_at IS NOT NULL AS waived,
+               u.deleted_at IS NOT NULL AS erased
+        FROM applications a
+        JOIN candidate_profiles c ON c.id = a.candidate_id
+        JOIN users u ON u.id = c.user_id
+        WHERE a.id = ${id}::uuid
+        FOR UPDATE OF a`;
+      const current = locked[0];
+      if (!current) {
+        throw notFound('Application not found');
+      }
+      const refuse = (message: string) =>
+        new AppException('COOLDOWN_WAIVER_NOT_ALLOWED', HttpStatus.CONFLICT, message);
+      if (current.erased) {
+        throw refuse('The candidate of this application deleted their account');
+      }
+      if (!(FINAL_APPLICATION_STATUSES as readonly string[]).includes(current.status)) {
+        // An application in progress still holds the job: lifting it would allow a second one.
+        throw refuse('Only a deployed, rejected or withdrawn application can be lifted');
+      }
+      if (current.waived) {
+        throw refuse('The waiting period of this application is already lifted');
+      }
+      const months = await this.settings.get('REAPPLY_COOLDOWN_MONTHS', tx);
+      if (!isInCooldown(current.applied_at, months, now)) {
+        throw refuse('The waiting period of this application is already over');
+      }
+      await tx.application.update({ where: { id }, data: { cooldownWaivedAt: now } });
+      await this.audit.record(
+        {
+          actorId: user.id,
+          action: 'application.waive_cooldown',
+          entityType: 'application',
+          entityId: id,
+          before: { status: current.status, cooldownWaivedAt: null },
+          after: { status: current.status, cooldownWaivedAt: now.toISOString(), reason },
+          ip,
+        },
+        tx,
+      );
+    });
     return this.get(id, user);
   }
 

@@ -56,6 +56,7 @@ The reasons are recorded in [ADR-001](adr/ADR-001-stack-choice.md).
 | See the split "historical + platform" on the dashboard                                | -       | -         | Yes       | Yes                                                                 | Yes         |
 | Delete a candidate or an application (with a reason, audited)                         | -       | -         | -         | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
 | Delete a contact message, delete an admin account, erase the job alerts of an address | -       | -         | -         | -                                                                   | Yes         |
+| Lift the waiting period of one finished application (with a reason, audited)          | -       | -         | -         | -                                                                   | Yes         |
 
 - The first super admin is created by a seed script from environment variables.
 - There is no public sign-up for admins.
@@ -118,6 +119,7 @@ Exit statuses: Rejected (`REJECTED`) and Withdrawn (`WITHDRAWN`, by the candidat
 4. The job page shows "You applied on 12/03/2026 - you can apply again from 12/09/2026" instead of the Apply button.
 5. The API returns HTTP 409 with code `REAPPLY_COOLDOWN` and the next allowed date.
 6. Optional setting: maximum number of active applications per candidate (default 5).
+7. A super admin may lift the waiting period of one finished application (Deployed, Rejected or Withdrawn), with a reason kept in the audit log, for example when a candidate was rejected by mistake. That application then no longer counts for the rule; the next application starts a new period. Nothing is sent to the candidate.
 
 ## 7. Other features
 

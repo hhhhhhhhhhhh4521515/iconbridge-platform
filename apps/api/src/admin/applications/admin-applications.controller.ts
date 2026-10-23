@@ -33,6 +33,7 @@ import {
   noteSchema,
   PERMISSIONS,
   uuidParamSchema,
+  waiveCooldownSchema,
   type AdminApplicationDetail,
   type AdminApplicationListQuery,
   type AdminApplicationSummary,
@@ -44,6 +45,7 @@ import {
   type ExportApplicationsInput,
   type NoteInput,
   type Paginated,
+  type WaiveCooldownInput,
 } from '@iconbridge/shared';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
@@ -258,6 +260,30 @@ export class AdminApplicationsController {
     @Req() request: Request,
   ): Promise<AdminApplicationDetail> {
     return this.applications.undoStatus(params.id, user, requestMeta(request).ip);
+  }
+
+  @Post(':id/waive-cooldown')
+  @HttpCode(HttpStatus.OK)
+  @Roles(...PERMISSIONS.WAIVE_COOLDOWN)
+  @SkipAudit()
+  @ApiOperation({
+    summary: 'Lift the re-application waiting period of a finished application (super admin)',
+    description:
+      'For a Deployed, Rejected or Withdrawn application whose waiting period still runs. The application then ' +
+      'no longer stops the candidate from applying to the job again; the next application starts a new period. ' +
+      'The reason goes to the audit log (`application.waive_cooldown`); nothing is sent to the candidate.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiZodBody(waiveCooldownSchema)
+  @ApiZodResponse(200, adminApplicationDetailSchema)
+  @ApiErrors(400, 401, 403, 404, 409)
+  waiveCooldown(
+    @ZodParams(uuidParamSchema) params: IdParam,
+    @ZodBody(waiveCooldownSchema) body: WaiveCooldownInput,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<AdminApplicationDetail> {
+    return this.applications.waiveCooldown(params.id, body.reason, user, requestMeta(request).ip);
   }
 
   @Post(':id/notes')
