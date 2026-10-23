@@ -1,6 +1,8 @@
 // The lifetime is read when the application module is loaded: it is set before any import.
+// 3 s, not 1: token times are whole seconds, so a 1-second token issued late in a second
+// lived only a few milliseconds and the first call failed when the suite was busy.
 vi.hoisted(() => {
-  process.env.ACCESS_TOKEN_TTL_SECONDS = '1';
+  process.env.ACCESS_TOKEN_TTL_SECONDS = '3';
 });
 
 import {
@@ -32,7 +34,7 @@ describe('short access tokens (e2e)', () => {
       test.http().get(`${API}/me/profile`).set('Cookie', cookieHeader(cookies));
     await call(user.cookies).expect(200);
 
-    await new Promise((resolve) => setTimeout(resolve, 2100));
+    await new Promise((resolve) => setTimeout(resolve, 4100));
     const expired = await call(user.cookies).expect(401);
     expect((expired.body as { code: string }).code).toBe('UNAUTHENTICATED');
     // The page that shows "who is signed in" answers 200 with nobody: the browser then renews.
