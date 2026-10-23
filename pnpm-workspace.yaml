@@ -6,7 +6,7 @@ packages:
 # TypeScript stays on 6.0.x: typescript-eslint and the Nest CLI do not support 7 yet.
 # ESLint stays on 9.x: the plugins bundled in eslint-config-next do not support 10 yet.
 catalog:
-  typescript: ~6.0.3
+  typescript: ~7.0.2
   zod: ^4.6.5
   vitest: ^5.0.3
   eslint: ^9.39.5
