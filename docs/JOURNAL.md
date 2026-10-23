@@ -884,3 +884,7 @@ Prompt 14: be told when production breaks, and be able to get the data back.
 | Backup script locally                                   | Development database dumped (863 KB, 1 s); token request and Put Blob checked by a stand-in server (identity header, MD5 match) |
 | Restore of that upload                                  | Into a new local database: same counts (1 238 users, 12 jobs, 13 applications, 12 migrations); database dropped after           |
 | `make tf-check`; plan                                   | No issue; 4 to add (backups container, lifecycle policy, backup job, backup alert), 0 to change, no role assignment             |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/31>
+
+**Remaining**: after the deployment, run the backup job on Azure, download its dump and restore it locally; the cooldown reset (super admin, audited) and its runbook section; the web probes recorded in telemetry and the 5-second readiness wait of the web app; the final documentation and checks.
