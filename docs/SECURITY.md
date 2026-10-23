@@ -119,6 +119,7 @@ Behind the Azure ingress, `TRUST_PROXY_HOPS` must be set so the limit applies to
 - Emails waiting in the outbox are encrypted in the database; their content is erased once sent.
 - Telemetry (Application Insights) carries no personal data: query strings are removed from every URL (email links carry tokens), health probes are not recorded, exceptions keep their type and stack but not their message, custom events carry ids and statuses only (`apps/api/src/telemetry/telemetry.spec.ts`, `apps/web/src/lib/telemetry-redact.test.ts`, ADR-019).
 - `POST /admin/diagnostics/error` (fails on purpose, to check the alerts) is for super admins only and audited (`diagnostics.e2e-spec.ts`).
+- Database backups (weekly `pg_dump`) go to the private `backups` container with the managed identity: no account key, no SAS, no public access; passport numbers stay encrypted inside the dump. Reading a dump needs a data role on the storage account; a local copy for a restore test is deleted afterwards (docs/RUNBOOK.md).
 - Production email has no password to leak: the API sends through Azure Communication Services with its managed identity, whose role is scoped to that one Communication Service. Open and click tracking is off on the domain and on every message (`azure-email.transport.spec.ts`). Data of the service stays in Europe.
 
 ## Data protection
@@ -155,15 +156,16 @@ Tests: `gdpr.e2e-spec.ts` (12 tests), the browser tests of the account and of th
 
 Personal data is not kept for ever. The scheduled task `retention` (`RetentionService`) runs with the other scheduled tasks:
 
-| Data                                    | Kept                                                                   | Then                                                                         |
-| --------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Candidate account, profile, documents   | 24 months after the last activity (sign-in, application sent or moved) | A warning email 30 days before; then the same erasure as "Delete my account" |
-| Account with an application in progress | As long as the recruitment goes on                                     | Never erased by the task                                                     |
-| Messages of the contact form            | 24 months                                                              | Deleted                                                                      |
-| Job alert not confirmed                 | 72 hours                                                               | Deleted                                                                      |
-| Sent and cancelled emails of the outbox | 30 days (content already erased when sent)                             | Deleted                                                                      |
-| Refresh tokens                          | 7 days                                                                 | Expired; removed with the session                                            |
-| Anonymous applications, audit log       | Kept                                                                   | They hold no personal data of candidates: reasons and counts only            |
+| Data                                    | Kept                                                                           | Then                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Candidate account, profile, documents   | 24 months after the last activity (sign-in, application sent or moved)         | A warning email 30 days before; then the same erasure as "Delete my account"                            |
+| Account with an application in progress | As long as the recruitment goes on                                             | Never erased by the task                                                                                |
+| Messages of the contact form            | 24 months                                                                      | Deleted                                                                                                 |
+| Job alert not confirmed                 | 72 hours                                                                       | Deleted                                                                                                 |
+| Sent and cancelled emails of the outbox | 30 days (content already erased when sent)                                     | Deleted                                                                                                 |
+| Refresh tokens                          | 7 days                                                                         | Expired; removed with the session                                                                       |
+| Anonymous applications, audit log       | Kept                                                                           | They hold no personal data of candidates: reasons and counts only                                       |
+| Database backups                        | 7 days (automatic backups), 30 days (weekly dumps, then 7 days of soft delete) | Deleted: an erased account leaves the backups after 37 days at most ([ADR-020](adr/ADR-020-backups.md)) |
 
 Signing in after the warning is enough to keep the account. Each automatic erasure writes an audit entry (`candidate.retention_delete`, actor "system") with counts, not names. The periods are constants of `packages/shared` (`RETENTION_MONTHS`, `RETENTION_NOTICE_DAYS`); the privacy policy of the site must say the same, and both should be confirmed by the agency's legal adviser.
 

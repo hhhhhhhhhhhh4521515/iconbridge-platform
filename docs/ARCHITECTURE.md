@@ -939,11 +939,12 @@ flowchart LR
       API["ca-iconbridge-api-prod-itn<br/>internal ingress, 0-2 replicas"]
       MIG["caj-iconbridge-migrate-prod-itn<br/>manual"]
       TASKS["caj-iconbridge-tasks-prod-itn<br/>every 15 min"]
+      BAK["caj-iconbridge-backup-prod-itn<br/>Sunday 03:00 UTC"]
     end
     ID(["id-iconbridge-prod-itn<br/>managed identity"])
     KV[("kv-iconbridge-prod-itn<br/>Key Vault, RBAC")]
     PG[("psql-iconbridge-prod-itn<br/>PostgreSQL 16, B1ms")]
-    ST[("sticonbridgeproditn<br/>candidate-documents, public-media")]
+    ST[("sticonbridgeproditn<br/>candidate-documents, public-media, backups")]
     ACR[("acriconbridgeproditn<br/>or ghcr.io")]
     LOG[("log / appi-iconbridge-prod-itn<br/>0.15 GB a day")]
     ACS[("acs / ecs-iconbridge-prod-itn<br/>Communication Services Email<br/>Azure-managed domain, data in Europe")]
@@ -952,10 +953,12 @@ flowchart LR
   API --> PG
   MIG --> PG
   TASKS --> PG
+  BAK -- "pg_dump" --> PG
+  BAK -- "weekly dump" --> ST
   API -- "files, signed links" --> ST
   API & TASKS -- "emails" --> ACS
   U -- "public media, signed links" --> ST
-  WEB & API & MIG & TASKS -. "identity" .-> ID
+  WEB & API & MIG & TASKS & BAK -. "identity" .-> ID
   ID -. "secrets" .-> KV
   ID -. "AcrPull" .-> ACR
   ID -. "send email" .-> ACS
@@ -971,16 +974,17 @@ flowchart LR
 | Email                       | `ecs-…`, `acs-iconbridge-prod-itn`  | Azure-managed domain, sender `DoNotReply@<guid>.azurecomm.net` "IconBridge Recruitment", no tracking; 5 emails/min, 10/h ([ADR-014](adr/ADR-014-email-azure-communication-services.md)) |
 | Key Vault                   | `kv-iconbridge-prod-itn`            | RBAC, purge protection, 7-day soft delete; generated and hand-set secrets                                                                                                               |
 | PostgreSQL Flexible Server  | `psql-iconbridge-prod-itn`          | v16, B1ms, 32 GB, 7-day LRS backups, TLS 1.2, `pg_trgm`, firewall: Azure services + admin IP                                                                                            |
-| Storage account             | `sticonbridgeproditn`               | LRS Hot, TLS 1.2, no account key, `public-media` public per blob, `candidate-documents` private, 7-day soft delete, access logs                                                         |
+| Storage account             | `sticonbridgeproditn`               | LRS Hot, TLS 1.2, no account key, `public-media` public per blob, `candidate-documents` and `backups` private, `backups` deleted after 30 days, 7-day soft delete, access logs          |
 | Container Apps environment  | `cae-iconbridge-prod-itn`           | `ConsumptionOnly` mode set explicitly with azapi (not Express, [ADR-015](adr/ADR-015-container-apps-environment-mode.md)), the only one allowed in the region (shared with any staging) |
 | Web app                     | `ca-iconbridge-web-prod-itn`        | External HTTPS, 0.5 vCPU / 1 GiB, probes `/api/health/live`, wakes the API when it starts ([ADR-017](adr/ADR-017-cold-start.md))                                                        |
 | API                         | `ca-iconbridge-api-prod-itn`        | Internal, 0.5 vCPU / 1 GiB, probes `/health/live` and `/health/ready`, `SCHEDULER_ENABLED=false`                                                                                        |
 | Migration job               | `caj-iconbridge-migrate-prod-itn`   | Manual trigger, before each deployment                                                                                                                                                  |
 | Tasks job                   | `caj-iconbridge-tasks-prod-itn`     | `*/15 * * * *`, API image, `node dist/cli.js all`                                                                                                                                       |
+| Backup job                  | `caj-iconbridge-backup-prod-itn`    | `0 3 * * 0`, image `iconbridge-backup`: `pg_dump` to the `backups` container ([ADR-020](adr/ADR-020-backups.md), [RUNBOOK.md](RUNBOOK.md#backups))                                      |
 
 ## Container images
 
-Three images: the API, the migration job (`--target migrate` of the API Dockerfile) and the web app. Built from the repository root with `turbo prune`, `pnpm fetch` and an offline install; the runtime is Alpine with its Node 22 package, user 1000, no package manager. The API keeps only the files its entry points load (`apps/api/scripts/trace-runtime.mjs`, `@vercel/nft`); the web app uses the Next.js standalone output. `docker-compose.prod.yml` runs them on this machine against the development services. Build, check and Azure settings: [DEPLOYMENT.md](DEPLOYMENT.md); choices: [ADR-012](adr/ADR-012-container-images.md).
+Four images: the API, the migration job (`--target migrate` of the API Dockerfile), the web app, and the weekly backup (`infra/backup`, Alpine with the PostgreSQL 16 client, [ADR-020](adr/ADR-020-backups.md)). The first three are built from the repository root with `turbo prune`, `pnpm fetch` and an offline install; the runtime is Alpine with its Node 22 package, user 1000, no package manager. The API keeps only the files its entry points load (`apps/api/scripts/trace-runtime.mjs`, `@vercel/nft`); the web app uses the Next.js standalone output. `docker-compose.prod.yml` runs them on this machine against the development services. Build, check and Azure settings: [DEPLOYMENT.md](DEPLOYMENT.md); choices: [ADR-012](adr/ADR-012-container-images.md).
 
 ## Not built yet
 
