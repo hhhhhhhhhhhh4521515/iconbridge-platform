@@ -914,3 +914,7 @@ Prompt 14: be told when production breaks, and be able to get the data back.
 | `pnpm test:e2e`                                                       | Pass: 508 tests (after the token-lifetime fix)         |
 | `pnpm build`, `pnpm test:browser`                                     | Pass: 153 passed, 6 skipped                            |
 | Images built, `trivy image --severity HIGH,CRITICAL --ignore-unfixed` | API and web: none                                      |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/32>
+
+**Remaining**: deploy; then the cooldown-reset PR (rebased on this one).
