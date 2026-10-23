@@ -42,3 +42,8 @@ output "web_id" {
   description = "Id of the web Container App (metrics, alerts)."
   value       = azurerm_container_app.web.id
 }
+
+output "backup_job_name" {
+  description = "Name of the database backup job."
+  value       = azurerm_container_app_job.backup.name
+}

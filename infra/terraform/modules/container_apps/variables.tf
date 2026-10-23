@@ -118,6 +118,22 @@ variable "tasks_cron" {
   default     = "*/15 * * * *"
 }
 
+variable "backup_cron" {
+  description = "Schedule of the database backup job (UTC). Weekly, Sunday 03:00."
+  type        = string
+  default     = "0 3 * * 0"
+}
+
+variable "backup_container_url" {
+  description = "Private container the backup job writes to."
+  type        = string
+}
+
+variable "identity_client_id" {
+  description = "Client id of the user-assigned identity (AZURE_CLIENT_ID of the backup job)."
+  type        = string
+}
+
 variable "custom_domain" {
   description = "Custom domain of the web app, e.g. jobs.example.com. Empty: the default Azure address only."
   type        = string

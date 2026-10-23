@@ -1,6 +1,6 @@
 # Deployment
 
-How the three container images of IconBridge Jobs are built, checked and run: on this machine with `docker-compose.prod.yml`, then in Azure Container Apps. The Azure resources themselves (Terraform) and the CI/CD pipeline are not written yet; this document gives what they need.
+How the container images of IconBridge Jobs are built, checked and run: on this machine with `docker-compose.prod.yml`, then in Azure Container Apps. The Azure resources themselves (Terraform) and the CI/CD pipeline are not written yet; this document gives what they need.
 
 ## Images
 
@@ -9,10 +9,11 @@ How the three container images of IconBridge Jobs are built, checked and run: on
 | `iconbridge-api`     | `apps/api/Dockerfile`           | The API, port 4000 (`node dist/main.js`)                  | 203 MB / 66 MB                |
 | `iconbridge-migrate` | `apps/api/Dockerfile` `migrate` | `prisma migrate deploy`, then the seed of reference data  | 259 MB / 90 MB                |
 | `iconbridge-web`     | `apps/web/Dockerfile`           | The Next.js server, port 3000 (`node apps/web/server.js`) | 166 MB / 63 MB                |
+| `iconbridge-backup`  | `infra/backup/Dockerfile`       | Weekly `pg_dump` uploaded to the `backups` container      | 30 MB / 9 MB                  |
 
 The scheduled tasks use the API image with another command: `node dist/cli.js all`.
 
-All three:
+The three application images (the backup image is plain Alpine with the PostgreSQL 16 client, curl and jq, user 1000: [ADR-020](adr/ADR-020-backups.md)):
 
 - run as user 1000 (`node`), never root, with `node` as process 1 so it receives SIGTERM;
 - start from `alpine:3.22` with Alpine's Node 22 package and the full ICU data (dates in French and Arabic); no npm, yarn or pnpm in the final image;
@@ -123,7 +124,7 @@ Region, quotas, budget and the identity of the pipeline are in [00-environment.m
 1. Build, scan and push the three images to Azure Container Registry, tagged with the git commit.
 2. Start the Container Apps Job `migrate` with the new image tag and wait for it to succeed. Migrations must stay backward compatible with the running API (add columns, then remove them in a later release), because the old revision serves traffic until step 3 ends.
 3. Update the API, then the web app, to the new tag. Container Apps starts the new revision, waits for its readiness probe, then moves the traffic and stops the old one (SIGTERM).
-4. Update the scheduled job to the new API tag.
+4. Update the tasks job to the new API tag and the backup job to the new backup tag.
 
 ### Container Apps
 
@@ -147,6 +148,7 @@ The browser never calls the API host: the web app forwards `/api/v1/*` to `API_I
 | --------- | ----------------------------- | ---------------------------------------------- | ---------------------------- |
 | `migrate` | `iconbridge-migrate:<commit>` | Manual, by the pipeline before each deployment | default (`CMD` of the image) |
 | `tasks`   | `iconbridge-api:<commit>`     | Schedule `*/15 * * * *`                        | `node dist/cli.js all`       |
+| `backup`  | `iconbridge-backup:<commit>`  | Schedule `0 3 * * 0` (Sunday 03:00 UTC)        | `backup.sh` (`ENTRYPOINT`)   |
 
 The task job sends the emails the API could not send at once, closes expired jobs, sends job alerts and applies the retention rules. Each task takes a PostgreSQL advisory lock, so two runs never overlap. Emails do not wait for this job: the API sends each one right after its database transaction, and the job only retries those that failed (`apps/api/test/e2e/email-immediate.e2e-spec.ts`).
 

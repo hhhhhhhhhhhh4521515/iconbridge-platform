@@ -2,6 +2,7 @@
 #
 #   internet ──HTTPS──▶ web (external ingress) ──/api/v1/*──▶ api (internal ingress)
 #   migrate job (manual, before each deployment)     tasks job (cron, every 15 min)
+#   backup job (cron, weekly pg_dump to the backups container)
 #
 # The environment itself is created by envs/prod (variable environment_id): the
 # subscription allows one per region, so a staging app would live in it too.
@@ -365,6 +366,74 @@ resource "azurerm_container_app_job" "tasks" {
           name        = env.key
           secret_name = env.value
         }
+      }
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
+  }
+}
+
+# Weekly logical backup (ADR-020): pg_dump to the private backups container, with the
+# identity of the apps (Storage Blob Data Contributor on the account). Image
+# iconbridge-backup (infra/backup), set by the deployment pipeline.
+resource "azurerm_container_app_job" "backup" {
+  name                         = "caj-iconbridge-backup-${var.name_suffix}"
+  location                     = var.location
+  resource_group_name          = var.resource_group_name
+  container_app_environment_id = var.environment_id
+  replica_timeout_in_seconds   = 1800
+  replica_retry_limit          = 1
+  tags                         = var.tags
+
+  schedule_trigger_config {
+    cron_expression          = var.backup_cron
+    parallelism              = 1
+    replica_completion_count = 1
+  }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [var.identity_id]
+  }
+
+  registry {
+    server               = var.registry_server
+    identity             = local.uses_identity_pull ? var.identity_id : null
+    username             = local.uses_identity_pull ? null : var.registry_username
+    password_secret_name = local.uses_identity_pull ? null : var.registry_password_secret_name
+  }
+
+  dynamic "secret" {
+    for_each = setunion(toset(["database-url"]), local.registry_secret_names)
+    content {
+      name                = secret.value
+      key_vault_secret_id = var.secret_ids[secret.value]
+      identity            = var.identity_id
+    }
+  }
+
+  template {
+    container {
+      name   = "backup"
+      image  = var.placeholder_job_image
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
+      }
+
+      env {
+        name  = "BACKUP_CONTAINER_URL"
+        value = var.backup_container_url
+      }
+
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = var.identity_client_id
       }
     }
   }

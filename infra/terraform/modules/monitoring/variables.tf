@@ -48,6 +48,11 @@ variable "tasks_job_name" {
   type        = string
 }
 
+variable "backup_job_name" {
+  description = "Name of the Container Apps Job of the weekly database backup."
+  type        = string
+}
+
 variable "postgres_server_id" {
   description = "PostgreSQL Flexible Server (CPU alert)."
   type        = string

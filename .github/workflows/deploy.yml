@@ -26,6 +26,7 @@ env:
   WEB_APP: ca-iconbridge-web-prod-itn
   MIGRATE_JOB: caj-iconbridge-migrate-prod-itn
   TASKS_JOB: caj-iconbridge-tasks-prod-itn
+  BACKUP_JOB: caj-iconbridge-backup-prod-itn
   # registry_type of Terraform: "acr" (Azure Container Registry) or "ghcr".
   REGISTRY: ${{ vars.REGISTRY_TYPE == 'ghcr' && format('ghcr.io/{0}', github.repository_owner) || format('{0}.azurecr.io', vars.ACR_NAME) }}
   # The commit CI tested (workflow_run), the one chosen by hand, or the current one.
@@ -72,13 +73,21 @@ jobs:
       matrix:
         include:
           - image: iconbridge-api
+            context: .
             dockerfile: apps/api/Dockerfile
             target: runtime
           - image: iconbridge-migrate
+            context: .
             dockerfile: apps/api/Dockerfile
             target: migrate
           - image: iconbridge-web
+            context: .
             dockerfile: apps/web/Dockerfile
+            target: ''
+          # Weekly pg_dump (ADR-020).
+          - image: iconbridge-backup
+            context: infra/backup
+            dockerfile: infra/backup/Dockerfile
             target: ''
     permissions:
       contents: read
@@ -110,7 +119,7 @@ jobs:
       # Built into the runner first: nothing is pushed before the scan passes.
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: .
+          context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           target: ${{ matrix.target }}
           load: true
@@ -171,6 +180,8 @@ jobs:
             echo "PREVIOUS_WEB=$(image show -g "$RESOURCE_GROUP" -n "$WEB_APP")"
             echo "PREVIOUS_TASKS=$(image job show -g "$RESOURCE_GROUP" -n "$TASKS_JOB")"
             echo "PREVIOUS_MIGRATE=$(image job show -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB")"
+            # Empty until infra.yml has created the backup job (first deployment with it).
+            echo "PREVIOUS_BACKUP=$(image job show -g "$RESOURCE_GROUP" -n "$BACKUP_JOB" 2>/dev/null || true)"
           } >> "$GITHUB_ENV"
       - name: Migrations (Container Apps Job), then wait for success
         run: |
@@ -194,6 +205,11 @@ jobs:
           echo "API_REVISION=$(revision "$API_APP" "$REGISTRY/iconbridge-api:$SHA")" >> "$GITHUB_ENV"
           echo "WEB_REVISION=$(revision "$WEB_APP" "$REGISTRY/iconbridge-web:$SHA")" >> "$GITHUB_ENV"
           az containerapp job update -g "$RESOURCE_GROUP" -n "$TASKS_JOB" --image "$REGISTRY/iconbridge-api:$SHA" --only-show-errors -o none
+          if [ -n "$PREVIOUS_BACKUP" ]; then
+            az containerapp job update -g "$RESOURCE_GROUP" -n "$BACKUP_JOB" --image "$REGISTRY/iconbridge-backup:$SHA" --only-show-errors -o none
+          else
+            echo "::warning::$BACKUP_JOB does not exist yet (infra.yml creates it): its image is set by the next deployment"
+          fi
       # Until the new revisions are ready, the old ones keep the traffic: a smoke test run
       # before that would check the previous version (seen on 19 October 2026).
       - name: Wait until the new revisions are ready
@@ -212,6 +228,7 @@ jobs:
           web=$(revision "$WEB_APP" "$PREVIOUS_WEB")
           az containerapp job update -g "$RESOURCE_GROUP" -n "$TASKS_JOB" --image "$PREVIOUS_TASKS" --only-show-errors -o none
           az containerapp job update -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --image "$PREVIOUS_MIGRATE" --only-show-errors -o none
+          [ -n "$PREVIOUS_BACKUP" ] && az containerapp job update -g "$RESOURCE_GROUP" -n "$BACKUP_JOB" --image "$PREVIOUS_BACKUP" --only-show-errors -o none
           ./.github/scripts/wait-revisions.sh "$API_APP=$api" "$WEB_APP=$web"
           ./.github/scripts/smoke-test.sh "${{ vars.SITE_URL }}" "${PREVIOUS_API##*:}"
           echo "ROLLBACK_REVISIONS=API $api, web $web" >> "$GITHUB_ENV"
@@ -229,7 +246,7 @@ jobs:
             echo "| | |"
             echo "| --- | --- |"
             echo "| Commit | \`$SHA\` |"
-            echo "| Images | \`$REGISTRY/iconbridge-{api,web,migrate}:${SHA:0:12}…\` |"
+            echo "| Images | \`$REGISTRY/iconbridge-{api,web,migrate,backup}:${SHA:0:12}…\` |"
             echo "| Revisions | API \`${API_REVISION:--}\`, web \`${WEB_REVISION:--}\` |"
             echo "| Previous images | API \`${PREVIOUS_API##*:}\`, web \`${PREVIOUS_WEB##*:}\` |"
             [ -n "${ROLLBACK_REVISIONS:-}" ] && echo "| Rollback revisions | \`$ROLLBACK_REVISIONS\` |"

@@ -238,6 +238,9 @@ module "container_apps" {
   api                 = var.api_size
   web                 = var.web_size
 
+  identity_client_id   = module.identity.client_id
+  backup_container_url = module.storage.backups_container_url
+
   api_env = {
     NODE_ENV   = "production"
     PORT       = "4000"
@@ -306,6 +309,7 @@ module "monitoring" {
   api_app_id                 = module.container_apps.api_id
   web_app_id                 = module.container_apps.web_id
   tasks_job_name             = module.container_apps.tasks_job_name
+  backup_job_name            = module.container_apps.backup_job_name
   postgres_server_id         = module.database.server_id
   storage_account_id         = module.storage.account_id
   site_url                   = local.web_origin

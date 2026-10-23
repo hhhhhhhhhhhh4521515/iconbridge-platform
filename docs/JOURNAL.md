@@ -853,3 +853,38 @@ Prompt 14: see what production does and be told when it breaks, within 15 USD a 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/30>
 
 **Remaining**: after the deployment, fire the 5xx alert with the diagnostics endpoint and check the email; check the workbook with real data; switch the availability tests on briefly to check them.
+
+## 2026-10-23 - Alert emails proved, weekly backups, runbook
+
+**What**
+
+- **Alert emails proved end to end.** The 5xx alert of 20 October fired but no email arrived: the action group's email receiver had never been verified (Azure Monitor asks for a one-time code within 30 minutes of saving a receiver, and an unverified receiver gets nothing although it shows "Enabled"). After the owner verified it, test notifications answered `Conflict: Free subscription not supported`, so a real alert was used: six forced errors at 12:29 (Tunis time), "Fired: Sev1 alert-api-5xx-prod-itn" received at 12:32, "Resolved" at 12:39.
+- **Weekly logical backup**: Container Apps Job `caj-iconbridge-backup-prod-itn` (Sunday 03:00 UTC), image `iconbridge-backup` (`infra/backup`: Alpine, PostgreSQL 16 client, curl, jq), `pg_dump --format=custom` uploaded with the managed identity to the new private `backups` container; lifecycle policy deletes dumps after 30 days; `alert-backup` on a failed execution. Built, scanned, deployed and rolled back by `deploy.yml` with the other images.
+- `scripts/restore-backup.sh` restores a local file or a blob into any PostgreSQL 16 database.
+- PostgreSQL's automated backups confirmed: 7 days, earliest restore point 16 October 2026 15:31 UTC.
+- `docs/RUNBOOK.md`: deploy, roll back, alerts (receiver verification, how to check alerts arrive, first look per alert), backups and restores, RPO/RTO, secret rotation, adding an admin, stopping the database, destroying everything at the end. [ADR-020](adr/ADR-020-backups.md).
+
+**Why**
+
+Prompt 14: be told when production breaks, and be able to get the data back.
+
+**Notes**
+
+- azcopy 10.32.8 (first version of the image) embeds Go 1.25.13: trivy found five fixable HIGH vulnerabilities in it, which would have blocked every deployment. One dump is one Put Blob, so `curl` with a token of the Container Apps identity endpoint and `Content-MD5` replaces it; the image is now 30 MB and has no fixable HIGH or CRITICAL finding.
+- The job uses the apps' identity, which already has Storage Blob Data Contributor on the account: no new role assignment, so `infra.yml` can apply the change (CI identities cannot assign roles).
+- Re-saving the action group unchanged did not reliably send a new verification code; the portal's **Resend** is the documented way (RUNBOOK).
+
+**Checks**
+
+| Check                                                   | Result                                                                                                                          |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `typecheck`, `test`, `build`, format       | Pass (616 unit tests); no application code changed, so no e2e or browser run                                                    |
+| hadolint, shellcheck, actionlint                        | No issue                                                                                                                        |
+| `trivy image --severity HIGH,CRITICAL --ignore-unfixed` | Backup image: none                                                                                                              |
+| Backup script locally                                   | Development database dumped (863 KB, 1 s); token request and Put Blob checked by a stand-in server (identity header, MD5 match) |
+| Restore of that upload                                  | Into a new local database: same counts (1 238 users, 12 jobs, 13 applications, 12 migrations); database dropped after           |
+| `make tf-check`; plan                                   | No issue; 4 to add (backups container, lifecycle policy, backup job, backup alert), 0 to change, no role assignment             |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/31>
+
+**Remaining**: after the deployment, run the backup job on Azure, download its dump and restore it locally; the cooldown reset (super admin, audited) and its runbook section; the web probes recorded in telemetry and the 5-second readiness wait of the web app; the final documentation and checks.
