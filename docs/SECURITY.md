@@ -184,6 +184,8 @@ Run during the audit, and to run again before each release:
 | `gitleaks dir`                    | Working tree                           | 9 hits, all in git-ignored files (the local `.env`, the Next.js build output); none is tracked |
 | `eslint-plugin-security`          | All workspaces, part of `pnpm lint`    | No finding                                                                                     |
 
+23 October 2026: `next build` stopped on new advisories for Next.js 16.4.0 (GHSA-2464-fhr4-w9xw and GHSA-673q-mjm6-r5xr, critical, unauthenticated code execution; GHSA-p3m5-59mp-jv5r, high, denial of service) and `pnpm audit --prod` also listed DOMPurify ≤ 3.4.16 (GHSA-cg2g-xh64-v4q7 critical, GHSA-mrv2-3pqr-j5jr high, GHSA-c6gr-qvv4-5v3f low) through `isomorphic-dompurify`. Raised to Next.js 16.4.2 (with `eslint-config-next`) and `isomorphic-dompurify` 4.6.0 (DOMPurify ≥ 3.4.17); `pnpm audit --prod` is clean again. Dependabot and the weekly `security.yml` run keep watching.
+
 Fixed during the audit: `uuid` (through exceljs), `mysql2` and `deepmerge-ts` were raised with `pnpm.overrides`; the `shadcn` package, which was only needed for one CSS file, was removed and the file vendored.
 
 **Accepted: `braces` ≤ 3.0.3** (GHSA-vfj7-8cjw-p6xm, stack exhaustion with deeply nested brace patterns; no fixed version exists). It comes only through `eslint-config-next → fast-glob → micromatch`, a lint tool. It is not installed in production, and the only patterns it ever receives are the ones written in our own ESLint configuration. To revisit when `braces` or `@next/eslint-plugin-next` publishes a fix.
