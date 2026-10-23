@@ -187,6 +187,17 @@ There is no public sign-up for back-office accounts (SPEC).
 
 If no super admin can sign in any more, the migration job's seed creates the first super admin only when none exists: reset the password of the existing one with **Forgot password** on the sign-in page (the email goes to its address).
 
+## Reset the waiting period for a candidate
+
+A candidate may apply to the same job only once every 6 months (SPEC section 6, setting `REAPPLY_COOLDOWN_MONTHS`). When the agency decides a candidate must be able to apply again sooner (for example after a rejection by mistake), a **super admin** lifts the waiting period of that one application:
+
+1. **Back office** → **Applications** → search the candidate → open the application.
+2. The application must be **Deployed**, **Rejected** or **Withdrawn** (an application in progress still holds the job) and its period must still run.
+3. **Lift the waiting period** → enter a reason (kept in the audit log; no personal data) → confirm.
+4. The panel shows "Waiting period lifted on …". The candidate can apply at once from the job page; nothing is emailed. Their next application starts a new period.
+
+Audited as `application.waive_cooldown` (who, when, reason): **Back office** → **Audit log**, filter `waive`. API: `POST /api/v1/admin/applications/{id}/waive-cooldown` with `{ "reason": "…" }` (super admin only; recruiters and viewers get 403). It cannot be undone; deleting the application (with a reason) has the same effect and also removes it.
+
 ## Stop and start the database
 
 A stopped server costs no compute (storage is still billed) and Azure **starts it again after 7 days** on its own.

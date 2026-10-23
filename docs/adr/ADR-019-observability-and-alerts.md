@@ -30,6 +30,11 @@ Prompt 14 asks for traces and business events in Application Insights, a workboo
 9. **Forced error for checks**: `POST /admin/diagnostics/error` (super admin, audited) answers 500 on purpose; more than 5 calls in 5 minutes must fire the API 5xx alert (docs/RUNBOOK.md).
 10. **Workbook in Terraform**: requests per minute, p95 latency, error rate, applications per day, business events, scheduled tasks, exceptions by type, container restarts (Container Apps metric `RestartCount`).
 
+## Later changes
+
+- 23 October 2026: the web app recorded its health probes (111 rows of `GET /api/health/live` in 20 minutes): Next.js creates the span of each request itself, so the HTTP instrumentation's ignore hook never applies. The distro takes no sampler object (environment variables only), so a span processor placed before the exporting one clears the "sampled" flag of probe and static-file spans and of their children (`probeFilterProcessor`, `telemetry-redact.ts`).
+- 23 October 2026: `/api/health/ready` of the web app waits up to 70 s for the API instead of 5 s: an API starting from zero needs about 58 s, and the first check after a quiet period answered "unavailable" although nothing was wrong.
+
 ## Consequences
 
 - Monitoring costs about 1–2 USD a month (four metric alerts at about 0.10 USD, two log alerts at about 0.50 USD, telemetry inside the free 5 GB).
