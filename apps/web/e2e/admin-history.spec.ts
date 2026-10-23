@@ -8,6 +8,7 @@ import { readyCandidate, seededAdmin, signIn, STAMP } from './support';
  * - 250 historical visas for Malta show on the dashboard as "total = historical +
  *   platform", disappear with "Platform only", and reach the counter of the home page;
  * - deleting an application lets the candidate apply again at once;
+ * - lifting the waiting period of a rejected application does the same, audited;
  * - deleting a candidate removes the files from the storage and keeps the totals.
  */
 
@@ -202,6 +203,43 @@ test.describe('back office: history and deletions', () => {
         ((await (await candidate.context.request.get('/api/v1/me/documents')).json()) as unknown[])
           .length,
       ).toBe(2);
+    });
+
+    await test.step('lifting the waiting period of a rejected application lets the candidate apply again', async () => {
+      const applied = await apply();
+      expect(applied.status()).toBe(201);
+      const applicationId = ((await applied.json()) as { id: string }).id;
+      remember({ kind: 'application', id: applicationId });
+      expect(
+        (
+          await admin.request.patch(`/api/v1/admin/applications/${applicationId}/status`, {
+            data: { status: 'REJECTED' },
+          })
+        ).status(),
+      ).toBe(200);
+      expect((await eligibility()).reasons).toContain('REAPPLY_COOLDOWN');
+
+      await page.goto('/en/admin/applications');
+      await page.getByRole('searchbox').fill(candidate.email);
+      await page.getByRole('button', { name: `${firstName} Khelifi` }).click();
+      const detail = page.getByTestId('application-detail');
+      await detail.getByRole('button', { name: 'Lift the waiting period' }).click();
+      const dialog = page.getByTestId('waive-cooldown-dialog');
+      const confirm = dialog.getByRole('button', { name: 'Lift the waiting period' });
+      await expect(confirm).toBeDisabled();
+      await dialog.getByLabel('Reason').fill(REASON);
+      await confirm.click();
+      await expect(toast(page, 'The waiting period is lifted.')).toBeVisible();
+      await expect(detail.getByTestId('cooldown-waived')).toContainText('Waiting period lifted on');
+      await expect(detail.getByRole('button', { name: 'Lift the waiting period' })).toHaveCount(0);
+
+      expect(await eligibility()).toMatchObject({ canApply: true, reasons: [] });
+      const audit = (await (
+        await admin.request.get('/api/v1/admin/audit-logs?action=application.waive_cooldown')
+      ).json()) as { items: { entityId: string; after: { reason?: string } | null }[] };
+      expect(audit.items.find((entry) => entry.entityId === applicationId)?.after?.reason).toBe(
+        REASON,
+      );
     });
 
     await test.step('deleting a candidate removes the files and keeps the totals', async () => {

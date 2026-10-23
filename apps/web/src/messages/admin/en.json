@@ -59,7 +59,8 @@
     "VALIDATION_ERROR": "Some values are not valid. Check the form.",
     "UNSUPPORTED_FILE": "This kind of file is not accepted here.",
     "FILE_TOO_LARGE": "This file is too large (5 MB at most).",
-    "NOT_FOUND": "This record no longer exists."
+    "NOT_FOUND": "This record no longer exists.",
+    "COOLDOWN_WAIVER_NOT_ALLOWED": "The waiting period of this application cannot be lifted: it must be deployed, rejected or withdrawn, and its period must still run."
   },
   "status": {
     "SUBMITTED": "Submitted",
@@ -328,7 +329,15 @@
     "cooldownLifted": "The candidate will be able to apply to this job again at once: the 6-month waiting period no longer applies.",
     "hiredKept": "A deployed candidate keeps the position: the number of hired candidates of the job does not decrease.",
     "deleted": "The application is deleted.",
-    "deletedMany": "{count, plural, one {# application deleted} other {# applications deleted}}."
+    "deletedMany": "{count, plural, one {# application deleted} other {# applications deleted}}.",
+    "waiveCooldown": "Lift the waiting period",
+    "waiveCooldownTitle": "Lift the waiting period of this application?",
+    "waiveCooldownText": "The candidate will be able to apply to this job again at once; their next application starts a new waiting period. Nothing is sent to the candidate.",
+    "waiveCooldownReason": "Reason",
+    "waiveCooldownReasonHint": "Kept in the audit log. Do not write personal data.",
+    "waiveCooldownConfirm": "Lift the waiting period",
+    "cooldownWaivedToast": "The waiting period is lifted.",
+    "cooldownWaived": "Waiting period lifted on {date}: this application no longer stops the candidate from applying again."
   },
   "snapshot": {
     "dateOfBirth": "Date of birth",

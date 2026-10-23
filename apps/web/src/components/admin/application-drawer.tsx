@@ -1,7 +1,8 @@
 'use client';
 
+import { FINAL_APPLICATION_STATUSES } from '@iconbridge/shared/admin';
 import { answerText } from '@iconbridge/shared/questions';
-import { Award, Pencil, Trash2, Undo2 } from 'lucide-react';
+import { Award, Hourglass, Pencil, Trash2, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
 import { useLoaded } from '@/components/account/account-context';
@@ -354,6 +355,126 @@ function Notes({ detail, onChanged }: { detail: AdminApplicationDetail; onChange
   );
 }
 
+const MIN_REASON = 5;
+
+/**
+ * Super admins lift the re-application waiting period of a finished application
+ * (SPEC section 6, rule 7), with a reason that goes to the audit log. Everyone in the
+ * back office sees when it was lifted.
+ */
+function CooldownWaiver({
+  detail,
+  onChanged,
+}: {
+  detail: AdminApplicationDetail;
+  onChanged: (next: AdminApplicationDetail) => void;
+}) {
+  const t = useTranslations('admin.applications');
+  const locale = useLocale();
+  const call = useCall();
+  const { can } = useAdmin();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const finished = (FINAL_APPLICATION_STATUSES as readonly ApplicationStatus[]).includes(
+    detail.status,
+  );
+
+  if (detail.cooldownWaivedAt) {
+    return (
+      <p className="flex items-center gap-2 text-sm" data-testid="cooldown-waived">
+        <Hourglass className="size-4 text-muted-foreground" aria-hidden />
+        {t('cooldownWaived', { date: dateTime(detail.cooldownWaivedAt, locale) })}
+      </p>
+    );
+  }
+  if (!finished || !can('WAIVE_COOLDOWN')) {
+    return null;
+  }
+  const close = () => {
+    setOpen(false);
+    setReason('');
+  };
+  return (
+    <>
+      <button
+        type="button"
+        className={cta.outline}
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        <Hourglass className="size-4" aria-hidden />
+        {t('waiveCooldown')}
+      </button>
+      <Modal
+        open={open}
+        onClose={close}
+        title={t('waiveCooldownTitle')}
+        closeLabel={t('cancelNote')}
+      >
+        <form
+          className="space-y-4"
+          data-testid="waive-cooldown-dialog"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (reason.trim().length < MIN_REASON) {
+              return;
+            }
+            setBusy(true);
+            void call(
+              api.POST('/api/v1/admin/applications/{id}/waive-cooldown', {
+                params: { path: { id: detail.id } },
+                body: { reason: reason.trim() },
+              }),
+              t('cooldownWaivedToast'),
+            )
+              .then((result) => {
+                if (result.ok) {
+                  close();
+                  onChanged(result.data);
+                }
+              })
+              .finally(() => {
+                setBusy(false);
+              });
+          }}
+        >
+          <p className="text-sm">{t('waiveCooldownText')}</p>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">{t('waiveCooldownReason')}</span>
+            <textarea
+              rows={2}
+              required
+              className={input}
+              value={reason}
+              onChange={(event) => {
+                setReason(event.target.value);
+              }}
+            />
+            <span className="mt-1 block text-xs text-muted-foreground">
+              {t('waiveCooldownReasonHint')}
+            </span>
+          </label>
+          <div className="flex flex-wrap justify-end gap-3">
+            <button type="button" className={cta.outline} onClick={close}>
+              {t('cancelNote')}
+            </button>
+            <button
+              type="submit"
+              className={cta.primary}
+              disabled={reason.trim().length < MIN_REASON || busy}
+              aria-busy={busy}
+            >
+              {t('waiveCooldownConfirm')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </>
+  );
+}
+
 function Detail({
   detail,
   setDetail,
@@ -421,6 +542,14 @@ function Detail({
           />
         </section>
       ) : null}
+
+      <CooldownWaiver
+        detail={detail}
+        onChanged={(next) => {
+          setDetail(next);
+          onChanged();
+        }}
+      />
 
       {can('MANAGE_CONTENT') &&
       (detail.status === 'VISA_APPROVED' || detail.status === 'DEPLOYED') ? (
