@@ -930,3 +930,14 @@ Prompt 14: be told when production breaks, and be able to get the data back.
 **Why**
 
 Prompt 14: the runbook's cooldown reset must be a real, audited action; the telemetry issues were found while checking the alerts.
+
+- Red badges (rejected applications, danger tone of the back office) now use red-800 on red-100: the destructive red on its own tint measured 3.6:1 for 4.5:1 required. The accessibility check found it once the new browser test left a rejected application on screen.
+
+**Checks**
+
+| Check                                    | Result                                                                                               |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `typecheck`, `test`, format | Pass (618 unit tests, 2 new: permission row, probe filter)                                           |
+| `pnpm test:e2e`                          | Pass: 515 tests (7 new in `cooldown-waiver.e2e-spec.ts`, boundary at one millisecond before the end) |
+| `pnpm build`, `pnpm test:browser`        | Pass: 153 passed, 6 skipped (the history test lifts a waiting period from the panel)                 |
+| `pnpm api:types`                         | Client regenerated (new route, error code, field)                                                    |
