@@ -21,7 +21,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@iconbridge/shared": "workspace:*",
     "@opentelemetry/api": "^1.9.1",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.3.1",
     "@tiptap/pm": "^3.31.4",
     "@tiptap/react": "^3.31.4",
     "@tiptap/starter-kit": "^3.31.4",
