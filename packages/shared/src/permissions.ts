@@ -26,6 +26,8 @@ export const PERMISSIONS = {
   MANAGE_ADMIN_USERS: ['SUPER_ADMIN'],
   /** Global settings (cooldown period, upload limits), audit log. */
   MANAGE_SETTINGS: ['SUPER_ADMIN'],
+  /** Lift the re-application waiting period of one finished application (reason, audited). */
+  WAIVE_COOLDOWN: ['SUPER_ADMIN'],
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

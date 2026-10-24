@@ -15,6 +15,7 @@ const SPEC_TABLE: Record<Permission, [boolean, boolean, boolean, boolean]> = {
   EXPORT_APPLICATIONS: [false, false, true, true],
   MANAGE_ADMIN_USERS: [false, false, false, true],
   MANAGE_SETTINGS: [false, false, false, true],
+  WAIVE_COOLDOWN: [false, false, false, true],
 };
 
 const COLUMNS: UserRole[] = ['CANDIDATE', 'VIEWER', 'RECRUITER', 'SUPER_ADMIN'];
@@ -48,6 +49,7 @@ describe('PERMISSIONS', () => {
       'EXPORT_APPLICATIONS',
       'MANAGE_ADMIN_USERS',
       'MANAGE_SETTINGS',
+      'WAIVE_COOLDOWN',
     ];
     expect(backOffice.some((p) => hasPermission('CANDIDATE', p))).toBe(false);
   });

@@ -918,3 +918,30 @@ Prompt 14: be told when production breaks, and be able to get the data back.
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/32>
 
 **Remaining**: deploy; then the cooldown-reset PR (rebased on this one).
+
+## 2026-10-23 - Cooldown reset, quieter web telemetry
+
+**What**
+
+- **Lifting the re-application waiting period** (SPEC section 6, rule 7): `POST /admin/applications/:id/waive-cooldown` with a reason, super admins only (new permission `WAIVE_COOLDOWN`), for a deployed, rejected or withdrawn application whose period still runs. It sets `applications.cooldown_waived_at` (additive migration); `ApplicationsService.evaluate` ignores such applications, so the eligibility endpoint and `apply` follow. Audited as `application.waive_cooldown` with the reason; nothing reaches the candidate. Back-office button "Lift the waiting period" with a reason dialog; the panel then shows when it was lifted. [ADR-021](adr/ADR-021-cooldown-waiver.md), RUNBOOK "Reset the waiting period for a candidate".
+- **Web telemetry without health probes**: a span processor clears the "sampled" flag of the request spans Next.js makes for `/api/health/*` and static files, and of their children (the distro takes no sampler object).
+- **`/api/health/ready` of the web app waits up to 70 s** for an API starting from zero (was 5 s, which answered "unavailable" on every cold start); the smoke test's curl limit follows (90 s).
+
+**Why**
+
+Prompt 14: the runbook's cooldown reset must be a real, audited action; the telemetry issues were found while checking the alerts.
+
+- Red badges (rejected applications, danger tone of the back office) now use red-800 on red-100: the destructive red on its own tint measured 3.6:1 for 4.5:1 required. The accessibility check found it once the new browser test left a rejected application on screen.
+
+**Checks**
+
+| Check                                    | Result                                                                                               |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `pnpm lint`, `typecheck`, `test`, format | Pass (618 unit tests, 2 new: permission row, probe filter)                                           |
+| `pnpm test:e2e`                          | Pass: 515 tests (7 new in `cooldown-waiver.e2e-spec.ts`, boundary at one millisecond before the end) |
+| `pnpm build`, `pnpm test:browser`        | Pass: 153 passed, 6 skipped (the history test lifts a waiting period from the panel)                 |
+| `pnpm api:types`                         | Client regenerated (new route, error code, field)                                                    |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/34>
+
+**Remaining**: after the deployment, check in Application Insights that the web app no longer records probes, and that `/api/health/ready` answers ok on a cold start; then the final documentation and checks.

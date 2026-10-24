@@ -1,6 +1,6 @@
-import type { Span } from '@opentelemetry/api';
+import type { Context, Span } from '@opentelemetry/api';
 import type { IncomingMessage } from 'node:http';
-import { isIgnoredPath, withoutQuery } from './telemetry-redact';
+import { isIgnoredPath, probeFilterProcessor, withoutQuery } from './telemetry-redact';
 
 /** Attributes of HTTP spans that hold a URL or its query string. */
 const URL_ATTRIBUTES = ['url.full', 'url.query', 'http.url', 'http.target', 'next.route'];
@@ -14,6 +14,11 @@ export async function startTelemetry(connectionString: string): Promise<void> {
   process.env['OTEL_SERVICE_NAME'] ??= 'iconbridge-web';
   // Renamed: despite its name it is not a React hook.
   const { useAzureMonitor: startAzureMonitor } = await import('@azure/monitor-opentelemetry');
+  const { isSpanContextValid, trace } = await import('@opentelemetry/api');
+  const probeFilter = probeFilterProcessor((parentContext) => {
+    const parent = trace.getSpanContext(parentContext as Context);
+    return parent && isSpanContextValid(parent) ? parent.traceFlags : undefined;
+  });
   const stripQuery = (span: Span) => {
     const attributes = (span as unknown as { attributes?: Record<string, unknown> }).attributes;
     for (const key of URL_ATTRIBUTES) {
@@ -33,6 +38,7 @@ export async function startTelemetry(connectionString: string): Promise<void> {
   startAzureMonitor({
     azureMonitorExporterOptions: { connectionString },
     tracesPerSecond: 5,
+    spanProcessors: [probeFilter],
     enableLiveMetrics: false,
     instrumentationOptions: {
       http,

@@ -162,6 +162,11 @@ export type AdminApplicationSummary = z.infer<typeof adminApplicationSummarySche
 
 export const adminApplicationDetailSchema = adminApplicationSummarySchema.extend({
   withdrawnAt: z.iso.datetime().nullable(),
+  /**
+   * Set when a super admin lifted the re-application waiting period of this application:
+   * it no longer stops the candidate from applying to the job again.
+   */
+  cooldownWaivedAt: z.iso.datetime().nullable(),
   coverLetter: z.string().nullable(),
   answers: z.record(z.string(), z.string()).nullable(),
   /** The questions of the job as they were when the candidate applied; `answers` is keyed by their ids. */
@@ -508,6 +513,14 @@ export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
 // ---------------------------------------------------------------------------
 
 export const updateSettingSchema = z.object({ value: z.unknown() });
+
+// ---------------------------------------------------------------------------
+// Lifting the re-application waiting period (SPEC section 6)
+// ---------------------------------------------------------------------------
+
+/** Why the waiting period is lifted; kept in the audit log. It must not contain personal data. */
+export const waiveCooldownSchema = z.object({ reason: z.string().trim().min(5).max(500) });
+export type WaiveCooldownInput = z.infer<typeof waiveCooldownSchema>;
 
 // ---------------------------------------------------------------------------
 // Deleting candidates and applications

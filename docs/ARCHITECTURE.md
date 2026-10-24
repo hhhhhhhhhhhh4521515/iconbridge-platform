@@ -226,6 +226,7 @@ erDiagram
     jsonb profile_snapshot
     timestamptz applied_at
     timestamptz withdrawn_at
+    timestamptz cooldown_waived_at
   }
   application_documents {
     uuid id PK

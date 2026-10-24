@@ -19,7 +19,8 @@ deadline=$((SECONDS + 300))
 last='no answer'
 
 while :; do
-  if body=$(curl -fsS --max-time 60 "$SITE/api/health/ready" 2>/dev/null); then
+  # The web app waits up to 70 s for an API starting from zero.
+  if body=$(curl -fsS --max-time 90 "$SITE/api/health/ready" 2>/dev/null); then
     last=$body
     status=$(jq -r '.status // empty' <<<"$body" 2>/dev/null || true)
     web=$(jq -r '.version // empty' <<<"$body" 2>/dev/null || true)

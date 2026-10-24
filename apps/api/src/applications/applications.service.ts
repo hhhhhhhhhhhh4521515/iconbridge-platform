@@ -306,9 +306,10 @@ export class ApplicationsService {
       reasons.push('JOB_NOT_OPEN');
     }
 
-    // The 6-month rule: the latest application to this job counts, whatever became of it.
+    // The 6-month rule: the latest application to this job counts, whatever became of it,
+    // unless a super admin lifted its waiting period (SPEC section 6, rule 7).
     const last = await client.application.findFirst({
-      where: { candidateId: profile.id, jobId },
+      where: { candidateId: profile.id, jobId, cooldownWaivedAt: null },
       orderBy: { appliedAt: 'desc' },
       select: { appliedAt: true },
     });

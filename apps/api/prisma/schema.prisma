@@ -439,21 +439,23 @@ model Job {
 
 /// Not unique on (candidate, job): a candidate may apply again after the cooldown.
 model Application {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  jobId           String            @map("job_id") @db.Uuid
-  candidateId     String            @map("candidate_id") @db.Uuid
-  status          ApplicationStatus @default(SUBMITTED)
-  coverLetter     String?           @map("cover_letter")
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jobId            String            @map("job_id") @db.Uuid
+  candidateId      String            @map("candidate_id") @db.Uuid
+  status           ApplicationStatus @default(SUBMITTED)
+  coverLetter      String?           @map("cover_letter")
   /// Answers to job-specific questions, keyed by question id.
-  answers         Json?
+  answers          Json?
   /// The questions of the job as they were when applying, so later edits do not change what was asked.
-  questions       Json?
+  questions        Json?
   /// Candidate profile as it was when applying. Holds the masked passport number only.
-  profileSnapshot Json              @map("profile_snapshot")
-  appliedAt       DateTime          @default(now()) @map("applied_at") @db.Timestamptz(3)
-  withdrawnAt     DateTime?         @map("withdrawn_at") @db.Timestamptz(3)
-  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  profileSnapshot  Json              @map("profile_snapshot")
+  appliedAt        DateTime          @default(now()) @map("applied_at") @db.Timestamptz(3)
+  withdrawnAt      DateTime?         @map("withdrawn_at") @db.Timestamptz(3)
+  /// A super admin lifted the re-application waiting period of this application (reason in the audit log).
+  cooldownWaivedAt DateTime?         @map("cooldown_waived_at") @db.Timestamptz(3)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   job            Job                        @relation(fields: [jobId], references: [id], onDelete: Restrict)
   candidate      CandidateProfile           @relation(fields: [candidateId], references: [id], onDelete: Cascade)

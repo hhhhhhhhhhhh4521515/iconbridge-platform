@@ -59,7 +59,8 @@
     "VALIDATION_ERROR": "Certaines valeurs ne sont pas valides. Vérifiez le formulaire.",
     "UNSUPPORTED_FILE": "Ce type de fichier n'est pas accepté ici.",
     "FILE_TOO_LARGE": "Ce fichier est trop volumineux (5 Mo au maximum).",
-    "NOT_FOUND": "Cet élément n'existe plus."
+    "NOT_FOUND": "Cet élément n'existe plus.",
+    "COOLDOWN_WAIVER_NOT_ALLOWED": "Le délai d'attente de cette candidature ne peut pas être levé : elle doit être en poste, refusée ou retirée, et son délai doit encore courir."
   },
   "status": {
     "SUBMITTED": "Envoyée",
@@ -328,7 +329,15 @@
     "cooldownLifted": "Le candidat pourra postuler de nouveau à cette offre immédiatement : le délai d'attente de 6 mois ne s'applique plus.",
     "hiredKept": "Un candidat en poste garde son poste : le nombre de recrutés de l'offre ne diminue pas.",
     "deleted": "La candidature est supprimée.",
-    "deletedMany": "{count, plural, one {# candidature supprimée} other {# candidatures supprimées}}."
+    "deletedMany": "{count, plural, one {# candidature supprimée} other {# candidatures supprimées}}.",
+    "waiveCooldown": "Lever le délai d'attente",
+    "waiveCooldownTitle": "Lever le délai d'attente de cette candidature ?",
+    "waiveCooldownText": "Le candidat pourra postuler de nouveau à cette offre immédiatement ; sa prochaine candidature ouvre un nouveau délai. Rien n'est envoyé au candidat.",
+    "waiveCooldownReason": "Motif",
+    "waiveCooldownReasonHint": "Conservé dans le journal d'audit. N'écrivez pas de données personnelles.",
+    "waiveCooldownConfirm": "Lever le délai d'attente",
+    "cooldownWaivedToast": "Le délai d'attente est levé.",
+    "cooldownWaived": "Délai d'attente levé le {date} : cette candidature n'empêche plus le candidat de postuler de nouveau."
   },
   "snapshot": {
     "dateOfBirth": "Date de naissance",
