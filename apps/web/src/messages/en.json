@@ -101,8 +101,7 @@
   "destinations": {
     "title": "Where would you like to work?",
     "subtitle": "Three destinations, with employers we know and visit.",
-    "openJobs": "{count, plural, =0 {No open job} one {# open job} other {# open jobs}}",
-    "viewJobs": "View jobs in {name}"
+    "openJobs": "{count, plural, =0 {No open job} one {# open job} other {# open jobs}}"
   },
   "categories": {
     "title": "Jobs by category",
