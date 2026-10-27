@@ -998,3 +998,5 @@ The deployment of PR #34 stopped at the image scan (web image: msal-node, throug
 | `pnpm test:e2e`                          | Pass: 516 tests (1 new: access of every route in the API document) |
 | `pnpm build`, `pnpm test:browser`        | Pass: 153 passed, 8 skipped (the screenshot run is on demand)      |
 | `pnpm api:types`                         | 120 operations in 21 groups written to docs/API.md                 |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/40>
