@@ -19,11 +19,13 @@ k6 run tests/load/jobs-list.js
 k6 run tests/load/apply.js        # also needs Mailpit (http://localhost:8025)
 ```
 
-`RATE_LIMITS_ENABLED=false` is refused when `NODE_ENV=production`. Never run these
-scripts against the production site: `apply.js` creates accounts and applications
+`RATE_LIMITS_ENABLED=false` is refused when `NODE_ENV=production`. Never run
+`apply.js` against the production site: it creates accounts and applications
 (with `ADMIN_EMAIL` and `ADMIN_PASSWORD` of a super admin it deletes both at the end;
 without them the accounts erase themselves and their applications stay as anonymous,
 withdrawn rows).
 
-Options: `API_URL`, `MAILPIT_URL`, and for `apply.js` `VUS`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Results of the last run are in
+Options: `API_URL`, `MAILPIT_URL`; `VUS` for both; for `jobs-list.js` `DURATION` and `THINK_SECONDS`; for `apply.js` `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+
+**Against production** only `jobs-list.js` (read only), under the rate limit, with the owner's agreement on cost (a few minutes of both apps running): `API_URL=https://<site> VUS=20 DURATION=3m THINK_SECONDS=40 k6 run tests/load/jobs-list.js`. The web app forwards `/api/v1/*` to the API. Results of the last run are in
 `docs/QA-REPORT.md`.
