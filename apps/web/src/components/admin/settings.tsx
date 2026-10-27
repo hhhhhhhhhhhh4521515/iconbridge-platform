@@ -269,7 +269,7 @@ export function AuditLog() {
   return (
     <>
       <PageHeader title={t('title')} intro={t('intro')} />
-      <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5" data-testid="audit-filters">
+      <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3" data-testid="audit-filters">
         <Labelled label={t('action')}>
           <input
             className={input}
