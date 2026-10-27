@@ -253,7 +253,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
                 <Reveal delay={index * 0.1}>
                   <Link
                     href={`/jobs?destination=${destination.code}`}
-                    aria-label={t('destinations.viewJobs', { name })}
                     className="group relative block h-64 overflow-hidden rounded-2xl bg-brand-navy text-white shadow-sm"
                   >
                     {image ? (

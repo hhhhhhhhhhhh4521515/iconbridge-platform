@@ -1028,3 +1028,11 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/41>
 
 **Remaining**: listed in the final report of Prompt 14.
+
+## 2026-10-27 - Destination cards: accessible name matches the visible text
+
+**What**: the destination cards of the home page lose their `aria-label` ("View jobs in Malta"); their name is now their visible text ("Malta, 5 open jobs"). The unused message key is removed in the three languages.
+
+**Why**: axe-core 4.14 (in the Dependabot group #39) checks WCAG 2.5.3 "Label in Name": a person using voice control says what they see ("Malta"), and the old name did not start with it. The group's accessibility tests failed on `/en`, `/fr`, `/ar` and the dark home page.
+
+**Checks**: the accessibility tests with axe-core 4.14 installed temporarily: 32 passed (desk and phone); `pnpm lint`, `typecheck`, `test` pass.
