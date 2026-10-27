@@ -7,7 +7,7 @@ packages:
 # ESLint stays on 9.x: the plugins bundled in eslint-config-next do not support 10 yet.
 catalog:
   typescript: ~6.0.3
-  zod: ^4.6.5
+  zod: ^4.6.7
   vitest: ^5.0.3
   eslint: ^9.39.5
   '@types/node': ^22.20.5
@@ -30,6 +30,15 @@ allowBuilds:
 # Patched versions of indirect dependencies with known vulnerabilities (pnpm audit, trivy).
 # Remove an entry once the package that brings it in depends on a fixed version itself.
 overrides:
+  # CVE-2026-109461 (HIGH, fixed in 7.1.0): @azure/identity 4.14 still asks for ^6. Managed
+  # identity only; the one breaking change of 7.0 is the interactive browser flow, unused here.
+  '@azure/msal-node': ^7.1.0
   'exceljs>uuid': ^11.1.1
+  # 24 October 2026 advisories (denial of service), through NestJS (express, multer) and mjml
+  # (cheerio > undici): raised to the fixed versions until the parents publish them.
+  body-parser@2: ^2.4.0
+  multer@2: ^2.5.0
+  undici@6: ^6.29.1
+  undici@7: ^7.30.1
   mysql2: ^3.23.1
   deepmerge-ts: ^8.0.0

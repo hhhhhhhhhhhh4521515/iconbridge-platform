@@ -945,3 +945,31 @@ Prompt 14: the runbook's cooldown reset must be a real, audited action; the tele
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/34>
 
 **Remaining**: after the deployment, check in Application Insights that the web app no longer records probes, and that `/api/health/ready` answers ok on a cold start; then the final documentation and checks.
+
+## 2026-10-24 - Dependency advisories: msal-node 7, zod, body-parser, multer, undici, nodemailer
+
+**What**
+
+- `@azure/msal-node` 6.0.1 → 7.1.1 with a pnpm override (CVE-2026-109461, HIGH): `@azure/identity` 4.14, the latest, still requires ^6.
+- Overrides `body-parser@2` ^2.4.0, `multer@2` ^2.5.0 (through NestJS), `undici@6` ^6.29.1, `undici@7` ^7.30.1 (through mjml and cheerio); `zod` 4.6.7 in the catalog; `nodemailer` 10.2.1.
+- `rich-text.spec.ts` loads DOMPurify once in `beforeAll` (30 s): its first test timed out at 5 s while every workspace tested at once. Measured: 1.3 s alone, the same with or without the overrides.
+
+**Why**
+
+The deployment of PR #34 stopped at the image scan (web image: msal-node, through the Application Insights distro), before anything was pushed. The same day `pnpm audit --prod` listed 5 high and 6 moderate advisories, all denial of service or parsing issues with fixed versions.
+
+**Notes**
+
+- msal-node 7.0 removes only the `responseMode` option of the interactive browser flow; the apps use managed identity (`ManagedIdentityCredential` through `DefaultAzureCredential`). The e2e tests use Azurite with a connection string, so the identity path is checked in Azure after the deployment.
+
+**Checks**
+
+| Check                                                                 | Result                                                                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `pnpm audit --prod`                                                   | No known vulnerability (was 5 high, 6 moderate)                                                        |
+| `pnpm lint`, `typecheck`, `test`                                      | Pass (618 unit tests, after the DOMPurify warm-up)                                                     |
+| `pnpm test:e2e`                                                       | Pass: 515 tests                                                                                        |
+| `pnpm build`, `pnpm test:browser`                                     | Pass, except one sign-in that took longer than 5 s under load; that file then passed 24 of 24 repeated |
+| Images built, `trivy image --severity HIGH,CRITICAL --ignore-unfixed` | API and web: none                                                                                      |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/38>
