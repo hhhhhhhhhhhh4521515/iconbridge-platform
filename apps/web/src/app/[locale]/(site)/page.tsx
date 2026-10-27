@@ -4,22 +4,14 @@ import {
   BadgeCheck,
   Briefcase,
   ClipboardList,
-  ConciergeBell,
-  Factory,
   Handshake,
-  HardHat,
   HeartHandshake,
-  Megaphone,
   MessagesSquare,
   Plane,
   Search,
-  Ship,
   ShieldAlert,
   Stamp,
-  Truck,
   UserRoundPlus,
-  Wheat,
-  type LucideIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -35,6 +27,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { SnapCarousel } from '@/components/ui/snap-carousel';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { CATEGORY_ICONS } from '@/lib/category-icons';
 import { env } from '@/lib/env';
 import { DESTINATION_IMAGES, pick } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
@@ -42,16 +35,6 @@ import { card, cta, field } from '@/lib/ui';
 
 /** Public data: rebuilt in the background at most once a minute. */
 export const revalidate = 60;
-
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  'concierge-bell': ConciergeBell,
-  'hard-hat': HardHat,
-  wheat: Wheat,
-  truck: Truck,
-  factory: Factory,
-  megaphone: Megaphone,
-  ship: Ship,
-};
 
 const STEPS = [
   { key: 'profile', icon: UserRoundPlus },

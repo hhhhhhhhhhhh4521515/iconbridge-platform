@@ -8,6 +8,7 @@ import { Logger } from 'nestjs-pino';
 import { API_PREFIX, DOCS_PATH } from './app.constants.js';
 import { ACCESS_COOKIE } from './auth/auth.constants.js';
 import { originCheck } from './common/http/origin-check.js';
+import { addAccessExtensions } from './common/swagger/access-extension.js';
 import type { Env } from './config/env.js';
 
 export { API_PREFIX, DOCS_PATH };
@@ -53,7 +54,7 @@ export function configureHttp(app: NestExpressApplication): void {
 }
 
 export function buildOpenApiDocument(app: NestExpressApplication) {
-  return SwaggerModule.createDocument(
+  const document = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
       .setTitle('IconBridge Jobs API')
@@ -66,6 +67,7 @@ export function buildOpenApiDocument(app: NestExpressApplication) {
       .addCookieAuth(ACCESS_COOKIE)
       .build(),
   );
+  return addAccessExtensions(app, document);
 }
 
 /** Idle time before the API closes a kept-alive connection. */

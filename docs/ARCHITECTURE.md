@@ -2,13 +2,72 @@
 
 Current state of the repository. Feature scope is in [SPEC.md](SPEC.md); decisions are in [adr/](adr/).
 
-## Overview
+## System views (C4)
+
+Three levels, from the outside in. The deployment view (Azure resources) is in [Azure infrastructure](#azure-infrastructure).
+
+### Level 1: system context
+
+```mermaid
+flowchart TB
+  candidate(["Candidate<br/>looks for work in Malta, Poland<br/>or on cruise ships"])
+  staff(["Agency staff<br/>viewer, recruiter, super admin"])
+  visitor(["Visitor<br/>reads jobs and success stories"])
+  system["IconBridge Jobs<br/>public site, candidate area, back office"]
+  email["Azure Communication Services<br/>email (managed domain)"]
+  captcha["Cloudflare Turnstile<br/>bot check on public forms"]
+  owner(["Owner<br/>receives alerts and budget emails"])
+  monitor["Azure Monitor<br/>alerts, action group"]
+
+  visitor -- "browses (HTTPS)" --> system
+  candidate -- "registers, builds a profile,<br/>uploads documents, applies" --> system
+  staff -- "publishes jobs, moves applications<br/>through the visa pipeline" --> system
+  system -- "account and status emails" --> email
+  email -- "emails" --> candidate
+  system -- "checks tokens" --> captcha
+  system -- "telemetry" --> monitor
+  monitor -- "alert emails" --> owner
+```
+
+### Level 2: containers
+
+```mermaid
+flowchart LR
+  browser(["Browser"])
+  subgraph platform["IconBridge Jobs"]
+    web["Web app<br/>Next.js 16 (App Router), React 19<br/>public site, candidate area, back office<br/>forwards /api/v1/* to the API"]
+    api["API<br/>NestJS 12, Prisma 7<br/>REST /api/v1, rules, auth, audit"]
+    tasks["Scheduled tasks<br/>same image as the API, CLI<br/>emails, closing jobs, alerts, retention"]
+    migrate["Migration job<br/>prisma migrate deploy + seed"]
+    backup["Backup job<br/>pg_dump weekly"]
+    db[("PostgreSQL 16<br/>data, outbox, audit log")]
+    blob[("Blob Storage<br/>candidate documents (private),<br/>public media, backups (private)")]
+  end
+  acs["Azure Communication<br/>Services Email"]
+  appi["Application Insights<br/>Log Analytics"]
+
+  browser -- "HTTPS, cookies" --> web
+  browser -- "public media,<br/>5-minute signed links" --> blob
+  web -- "HTTP inside the environment" --> api
+  api -- "SQL (TLS)" --> db
+  api -- "managed identity" --> blob
+  api -- "managed identity" --> acs
+  tasks --> db
+  tasks --> acs
+  migrate --> db
+  backup -- "pg_dump" --> db
+  backup -- "managed identity" --> blob
+  web & api -. "OpenTelemetry" .-> appi
+```
+
+`packages/shared` (zod schemas, enums, the typed API client) is compiled into both the web app and the API: the same schema validates a form in the browser and the request in the API.
+
+## Overview (local development)
 
 ```mermaid
 flowchart LR
   browser[Browser] --> web["apps/web<br/>Next.js :3000"]
-  browser --> api["apps/api<br/>NestJS :4000"]
-  web --> api
+  web -- "/api/v1/*" --> api["apps/api<br/>NestJS :4000"]
   api --> pg[(PostgreSQL 16<br/>:5432)]
   api --> blob[(Blob storage<br/>Azurite :10000)]
   api --> smtp[SMTP<br/>Mailpit :2525, inbox :8025]

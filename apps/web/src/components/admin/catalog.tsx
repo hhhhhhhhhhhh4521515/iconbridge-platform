@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
 import { LoadFailed, Loading } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
+import { CATEGORY_ICONS } from '@/lib/category-icons';
 import { api, type AdminCategory, type AdminDestination } from '@/lib/client-api';
 import { pick } from '@/lib/format';
 import { card, cta } from '@/lib/ui';
@@ -21,6 +22,19 @@ import {
   useCall,
   useConfirm,
 } from './ui';
+
+/** A category's icon as on the home page; an emoji or any other value as typed. */
+function EntryIcon({ icon }: { icon: string | null }) {
+  if (!icon) {
+    return null;
+  }
+  const Icon = CATEGORY_ICONS[icon];
+  return Icon ? (
+    <Icon className="me-1 inline size-4 align-[-2px] text-muted-foreground" aria-hidden />
+  ) : (
+    <span className="me-1">{icon}</span>
+  );
+}
 
 type Kind = 'destinations' | 'categories';
 type Entry = (AdminDestination | AdminCategory) & {
@@ -216,7 +230,7 @@ function Section({ kind, entries, reload }: { kind: Kind; entries: Entry[]; relo
           >
             <div>
               <span className="font-medium">
-                {entry.icon ? `${entry.icon} ` : ''}
+                <EntryIcon icon={entry.icon} />
                 {pick(entry.name, locale)}
               </span>{' '}
               <span className="text-xs text-muted-foreground" dir="ltr">

@@ -973,3 +973,30 @@ The deployment of PR #34 stopped at the image scan (web image: msal-node, throug
 | Images built, `trivy image --severity HIGH,CRITICAL --ignore-unfixed` | API and web: none                                                                                      |
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/38>
+
+## 2026-10-27 - Final documentation
+
+**What**
+
+- **API reference generated from the code**: the API adds `x-access`, `x-roles` and `x-verified-email` to every operation of its OpenAPI document from the guards' own metadata (`access-extension.ts`); `scripts/api-doc.mjs` writes [API.md](API.md) from it, run by `pnpm api:types`. A new test in `security.e2e-spec.ts` checks that the document gives every route exactly the access the guards enforce.
+- **ARCHITECTURE.md**: C4 system context and container diagrams; the local overview no longer shows the browser calling the API directly (it goes through the web app).
+- **User guides** for candidates and the back office with 20 screenshots taken by `e2e/admin-guide-screenshots.spec.ts` (on demand, `SCREENSHOTS=1`) from the local stack: sample jobs and a test candidate created and removed by the run. Every screenshot was looked at before committing.
+- **README** (badges, screenshots, features, stack, quick start), [docs/README.md](README.md) (documents mapped to the chapters of the internship report), [adr/README.md](adr/README.md) (index of the 21 ADRs), [TIMELINE.md](TIMELINE.md).
+- **Production checks prepared**: `playwright.production.config.ts` and `e2e/production.prod.ts` (test candidate only, one test document uploaded and deleted, no email, public figures compared before and after); `tests/load/jobs-list.js` takes `VUS`, `DURATION` and `THINK_SECONDS` to stay under the production rate limit (120 requests a minute per address).
+- Fixes found while taking the screenshots: the date filters of the audit log were cut at desk width (three columns instead of five); category icons showed as their names in the back office (the icon map is shared with the home page now).
+
+**Notes**
+
+- The success stories and home slides of the local data have photos that are not test images: no screenshot of those pages, the repository is public.
+- The deadline of the job form is a browser `datetime-local` input, which follows the browser's language (CLAUDE.md asks for `DateField`): left as is, listed in the remaining work.
+
+**Checks**
+
+| Check                                    | Result                                                             |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| `pnpm lint`, `typecheck`, `test`, format | Pass (618 unit tests)                                              |
+| `pnpm test:e2e`                          | Pass: 516 tests (1 new: access of every route in the API document) |
+| `pnpm build`, `pnpm test:browser`        | Pass: 153 passed, 8 skipped (the screenshot run is on demand)      |
+| `pnpm api:types`                         | 120 operations in 21 groups written to docs/API.md                 |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/40>

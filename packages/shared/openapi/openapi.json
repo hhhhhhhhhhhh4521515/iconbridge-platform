@@ -225,7 +225,10 @@
         "summary": "Create a candidate account",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/verify-email": {
@@ -388,7 +391,10 @@
         "summary": "Confirm an email address with the token of the verification link",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/resend-verification": {
@@ -565,7 +571,10 @@
         "summary": "Send the verification email again",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/login": {
@@ -854,7 +863,10 @@
         "summary": "Sign in",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/refresh": {
@@ -1055,7 +1067,10 @@
         "summary": "Get a new access token",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/logout": {
@@ -1070,7 +1085,10 @@
         "summary": "Sign out: revokes the session and clears the cookies",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/forgot-password": {
@@ -1247,7 +1265,10 @@
         "summary": "Send a password-reset link (valid 1 hour, usable once)",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/reset-password": {
@@ -1417,7 +1438,10 @@
         "summary": "Set a new password",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/session": {
@@ -1500,7 +1524,10 @@
         "summary": "Who is signed in, if anyone",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/auth/me": {
@@ -1641,7 +1668,10 @@
         "summary": "The signed-in user",
         "tags": [
           "auth"
-        ]
+        ],
+        "x-access": "session",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/users": {
@@ -1912,7 +1942,12 @@
         "summary": "List back-office accounts (super admin)",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "description": "The account has no password; an invitation email with a set-password link is sent.",
@@ -2286,7 +2321,12 @@
         "summary": "Create a back-office account",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/users/{id}/role": {
@@ -2721,7 +2761,12 @@
         "summary": "Change the role of a back-office account",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/users/{id}/disable": {
@@ -3069,7 +3114,12 @@
         "summary": "Disable an account and sign it out",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/users/{id}/enable": {
@@ -3353,7 +3403,12 @@
         "summary": "Enable a disabled account",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/users/{id}/force-logout": {
@@ -3637,7 +3692,12 @@
         "summary": "End every session of an account immediately",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/users/{id}": {
@@ -3923,7 +3983,12 @@
         "summary": "Delete a back-office account",
         "tags": [
           "admin: users"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/audit-logs": {
@@ -4274,7 +4339,12 @@
         "summary": "Audit log, newest first, with filters (super admin)",
         "tags": [
           "admin: audit log"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications": {
@@ -4736,7 +4806,14 @@
         "summary": "List applications",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/bulk-status": {
@@ -5055,7 +5132,13 @@
         "summary": "Change the status of several applications",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/bulk-delete": {
@@ -5351,7 +5434,13 @@
         "summary": "Delete several applications",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/export": {
@@ -5877,7 +5966,13 @@
         "summary": "Export applications to CSV or Excel",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/{id}": {
@@ -6552,7 +6647,14 @@
         "summary": "One application: snapshot, documents, history and internal notes",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "description": "For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history and the internal notes go with it; the documents stay with the candidate. A position taken by a deployed candidate stays taken (hiredCount does not change), and the candidate may apply to the job again at once.",
@@ -6856,7 +6958,13 @@
         "summary": "Delete an application",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/{id}/status": {
@@ -7703,7 +7811,13 @@
         "summary": "Change the status of an application",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/{id}/undo-status": {
@@ -8443,7 +8557,13 @@
         "summary": "Undo my last status change",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/{id}/waive-cooldown": {
@@ -9267,7 +9387,12 @@
         "summary": "Lift the re-application waiting period of a finished application (super admin)",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/{id}/notes": {
@@ -9590,7 +9715,13 @@
         "summary": "Add an internal note (never visible to the candidate)",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/applications/{id}/notes/{noteId}": {
@@ -9921,7 +10052,13 @@
         "summary": "Edit an internal note (its author, or a super admin)",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "operationId": "AdminApplicationsController_removeNote",
@@ -10148,7 +10285,13 @@
         "summary": "Delete an internal note (its author, or a super admin)",
         "tags": [
           "admin: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/candidates": {
@@ -10520,7 +10663,14 @@
         "summary": "Search candidates (passport numbers masked)",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/candidates/bulk-delete": {
@@ -10816,7 +10966,13 @@
         "summary": "Delete several candidates",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/candidates/{id}": {
@@ -11153,7 +11309,13 @@
         "summary": "Delete a candidate",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "get": {
         "description": "The passport number is masked for every role. Recruiters and super admins get the clear number through `POST /admin/candidates/{id}/reveal-passport`.",
@@ -11901,7 +12063,14 @@
         "summary": "One candidate: profile, documents and all applications",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/candidates/{id}/reveal-passport": {
@@ -12141,7 +12310,13 @@
         "summary": "Show the full passport number of a candidate",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/candidates/{id}/disable": {
@@ -12444,7 +12619,13 @@
         "summary": "Disable a candidate account and sign it out",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/candidates/{id}/enable": {
@@ -12747,7 +12928,13 @@
         "summary": "Enable a disabled candidate account",
         "tags": [
           "admin: candidates"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/stats": {
@@ -13179,7 +13366,14 @@
         "summary": "Dashboard figures",
         "tags": [
           "admin: settings and dashboard"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/capabilities": {
@@ -13344,7 +13538,14 @@
         "summary": "What I may do beyond the fixed rights of my role",
         "tags": [
           "admin: settings and dashboard"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/settings": {
@@ -13582,7 +13783,12 @@
         "summary": "Every global setting with its current value (super admin)",
         "tags": [
           "admin: settings and dashboard"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/settings/{key}": {
@@ -13895,7 +14101,12 @@
         "summary": "Change a setting (super admin)",
         "tags": [
           "admin: settings and dashboard"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/diagnostics/error": {
@@ -14105,7 +14316,12 @@
         "summary": "Fail on purpose (HTTP 500), to check the alerts",
         "tags": [
           "admin: diagnostics"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/contact-messages": {
@@ -14442,7 +14658,14 @@
         "summary": "Messages of the contact form, newest first",
         "tags": [
           "admin: contact messages"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/contact-messages/{id}/handle": {
@@ -14716,7 +14939,13 @@
         "summary": "Mark a message as handled",
         "tags": [
           "admin: contact messages"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/contact-messages/{id}/reopen": {
@@ -14990,7 +15219,13 @@
         "summary": "Put a message back among those to handle",
         "tags": [
           "admin: contact messages"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/contact-messages/{id}": {
@@ -15212,7 +15447,12 @@
         "summary": "Delete a message for good (super admin)",
         "tags": [
           "admin: contact messages"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/historical-figures": {
@@ -15428,7 +15668,12 @@
         "summary": "Every historical figure (super admin)",
         "tags": [
           "admin: historical results"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "put": {
         "description": "One figure per metric, year and destination: sending it again replaces the value. The two global metrics (PARTNER_COMPANIES, COUNTRIES_SERVED) have neither year nor destination. The change is written to the audit log with the value before and after, and the public counters are computed again.",
@@ -15754,7 +15999,12 @@
         "summary": "Set one historical figure (super admin)",
         "tags": [
           "admin: historical results"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/historical-figures/{id}": {
@@ -15975,7 +16225,12 @@
         "summary": "Remove one historical figure (super admin)",
         "tags": [
           "admin: historical results"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/job-alerts/erase": {
@@ -16224,7 +16479,12 @@
         "summary": "Remove every job alert of an email address (super admin)",
         "tags": [
           "admin: job alerts"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/profile": {
@@ -16648,7 +16908,12 @@
         "summary": "My profile",
         "tags": [
           "candidate: profile"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       },
       "put": {
         "description": "Send every field; null means \"not provided\". Rules: 18 or older, ISO 3166 country codes, E.164 phone numbers, passport not expired. The passport number is stored encrypted.",
@@ -17326,7 +17591,12 @@
         "summary": "Replace my profile",
         "tags": [
           "candidate: profile"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/documents": {
@@ -17530,7 +17800,12 @@
         "summary": "My documents",
         "tags": [
           "candidate: documents"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "description": "Multipart form with `type` and `file`, 5 MB at most. The format is checked from the content of the file: PDF or DOCX for a CV; JPG or PNG for a photo; PDF, JPG or PNG for everything else.",
@@ -18020,7 +18295,12 @@
         "summary": "Upload a document",
         "tags": [
           "candidate: documents"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/documents/{id}": {
@@ -18306,7 +18586,12 @@
         "summary": "Delete one of my documents",
         "tags": [
           "candidate: documents"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/documents/{id}/download": {
@@ -18541,7 +18826,15 @@
         "summary": "Download a document",
         "tags": [
           "candidate: documents"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE",
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/jobs/{id}/eligibility": {
@@ -18838,7 +19131,12 @@
         "summary": "Can I apply to this job?",
         "tags": [
           "candidate: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/jobs/{id}/apply": {
@@ -19412,7 +19710,12 @@
         "summary": "Apply to a job",
         "tags": [
           "candidate: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": true
       }
     },
     "/api/v1/me/applications": {
@@ -19743,7 +20046,12 @@
         "summary": "My applications with their status history",
         "tags": [
           "candidate: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/applications/{id}/withdraw": {
@@ -20207,7 +20515,12 @@
         "summary": "Withdraw an application (possible until the contract is signed)",
         "tags": [
           "candidate: applications"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/settings": {
@@ -20399,7 +20712,15 @@
         "summary": "Change my language (used for the emails)",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE",
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/password": {
@@ -20702,7 +21023,15 @@
         "summary": "Change my password",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE",
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/job-alerts": {
@@ -20895,7 +21224,12 @@
         "summary": "My job alerts",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "description": "Active at once, without a confirmation email: the address is already verified.",
@@ -21245,7 +21579,12 @@
         "summary": "Create a job alert for my address",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": true
       }
     },
     "/api/v1/me/job-alerts/{id}": {
@@ -21466,7 +21805,12 @@
         "summary": "Delete one of my job alerts",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/export": {
@@ -21679,7 +22023,12 @@
         "summary": "Download a copy of my data",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/me/account": {
@@ -21976,7 +22325,12 @@
         "summary": "Delete my account",
         "tags": [
           "candidate: my data (GDPR)"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "CANDIDATE"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/jobs": {
@@ -22514,7 +22868,10 @@
         "summary": "Search open jobs",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/jobs/{slug}": {
@@ -22922,7 +23279,10 @@
         "summary": "One open job, with its destination and category",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/destinations": {
@@ -23003,7 +23363,10 @@
         "summary": "Active destinations with their number of open jobs",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/categories": {
@@ -23078,7 +23441,10 @@
         "summary": "Active job categories with their number of open jobs",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/stats": {
@@ -23136,7 +23502,10 @@
         "summary": "Counters of the home page",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs": {
@@ -23820,7 +24189,14 @@
         "summary": "List jobs of every status, newest first",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "description": "The slug is generated from the title and the destination.",
@@ -24644,7 +25020,13 @@
         "summary": "Create a job as a draft",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}": {
@@ -25244,7 +25626,14 @@
         "summary": "One job, including a deleted one",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "patch": {
         "description": "The slug follows the title only while the job has never been published.",
@@ -26127,7 +26516,13 @@
         "summary": "Edit a job",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "description": "Soft delete by default: the job disappears from the site and stays in the database. `permanent=true` removes the row, and is refused when the job has applications.",
@@ -26423,7 +26818,13 @@
         "summary": "Delete a job",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/publish": {
@@ -27087,7 +27488,13 @@
         "summary": "Publish a draft (needs a future deadline and free positions)",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/close": {
@@ -27751,7 +28158,13 @@
         "summary": "Close a published job",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/reopen": {
@@ -28415,7 +28828,13 @@
         "summary": "Reopen a closed job (needs a future deadline and free positions)",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/archive": {
@@ -29079,7 +29498,13 @@
         "summary": "Archive a job (final)",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/duplicate": {
@@ -29679,7 +30104,13 @@
         "summary": "Copy a job into a new draft",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/feature": {
@@ -30279,7 +30710,13 @@
         "summary": "Mark a job as featured",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/unfeature": {
@@ -30879,7 +31316,13 @@
         "summary": "Remove the featured mark",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/jobs/{id}/cover": {
@@ -31691,7 +32134,13 @@
         "summary": "Upload the cover image",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "operationId": "AdminJobsController_removeCover",
@@ -32289,7 +32738,13 @@
         "summary": "Remove the cover image",
         "tags": [
           "admin: jobs"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/destinations": {
@@ -32507,7 +32962,14 @@
         "summary": "All destinations, active or not",
         "tags": [
           "admin: destinations"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "operationId": "AdminDestinationsController_create",
@@ -32906,7 +33368,13 @@
         "summary": "Add a destination",
         "tags": [
           "admin: destinations"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/destinations/{id}": {
@@ -33306,7 +33774,13 @@
         "summary": "Edit a destination (the code cannot change)",
         "tags": [
           "admin: destinations"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "description": "Deleted when unused; deactivated when jobs, stories or slides refer to it.",
@@ -33546,7 +34020,13 @@
         "summary": "Remove a destination",
         "tags": [
           "admin: destinations"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/categories": {
@@ -33758,7 +34238,14 @@
         "summary": "All job categories, active or not",
         "tags": [
           "admin: categories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "VIEWER",
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "operationId": "AdminCategoriesController_create",
@@ -34146,7 +34633,13 @@
         "summary": "Add a job category",
         "tags": [
           "admin: categories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/categories/{id}": {
@@ -34535,7 +35028,13 @@
         "summary": "Edit a job category (the slug cannot change)",
         "tags": [
           "admin: categories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "description": "Deleted when unused; deactivated when jobs refer to it.",
@@ -34775,7 +35274,13 @@
         "summary": "Remove a job category",
         "tags": [
           "admin: categories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/success-stories": {
@@ -34893,7 +35398,10 @@
         "summary": "Published success stories",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/home-slides": {
@@ -35024,7 +35532,10 @@
         "summary": "Active slides of the home page, in order",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/site-info": {
@@ -35089,7 +35600,10 @@
         "summary": "Contact details and social links shown on the site, and the upload size limit",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories": {
@@ -35378,7 +35892,13 @@
         "summary": "Every success story, published or not",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "operationId": "AdminSuccessStoriesController_create",
@@ -35796,7 +36316,13 @@
         "summary": "Create a success story (unpublished)",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/from-application/{id}": {
@@ -36221,7 +36747,13 @@
         "summary": "Create a draft story from an application",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/order": {
@@ -36599,7 +37131,13 @@
         "summary": "Reorder: send every story id, first shown first",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/{id}": {
@@ -37084,7 +37622,13 @@
         "summary": "Edit a success story",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "operationId": "AdminSuccessStoriesController_remove",
@@ -37303,7 +37847,13 @@
         "summary": "Delete a story with its photo and consent document",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/{id}/photo": {
@@ -37873,7 +38423,13 @@
         "summary": "Upload the photo (JPEG, PNG or WebP, 5 MB at most)",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/{id}/consent": {
@@ -38444,7 +39000,13 @@
         "summary": "Upload the candidate's signed consent (PDF, JPG or PNG)",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "get": {
         "operationId": "AdminSuccessStoriesController_consentDownload",
@@ -38663,7 +39225,13 @@
         "summary": "Download the consent document (302 to a 5-minute link, audited)",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/{id}/publish": {
@@ -39086,7 +39654,13 @@
         "summary": "Publish (refused without a consent document)",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/success-stories/{id}/unpublish": {
@@ -39445,7 +40019,13 @@
         "summary": "Remove from the site",
         "tags": [
           "admin: success stories"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/home-slides": {
@@ -39720,7 +40300,13 @@
         "summary": "Every home slide, active or not",
         "tags": [
           "admin: home slides"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "post": {
         "operationId": "AdminHomeSlidesController_create",
@@ -40149,7 +40735,13 @@
         "summary": "Create a slide (inactive until it has an image)",
         "tags": [
           "admin: home slides"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/home-slides/order": {
@@ -40513,7 +41105,13 @@
         "summary": "Reorder: send every slide id, first shown first",
         "tags": [
           "admin: home slides"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/home-slides/{id}": {
@@ -41081,7 +41679,13 @@
         "summary": "Edit a slide; `isActive` shows or hides it",
         "tags": [
           "admin: home slides"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       },
       "delete": {
         "operationId": "AdminHomeSlidesController_remove",
@@ -41300,7 +41904,13 @@
         "summary": "Delete a slide and its image",
         "tags": [
           "admin: home slides"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/admin/home-slides/{id}/image": {
@@ -41856,7 +42466,13 @@
         "summary": "Upload the image (JPEG, PNG or WebP, 5 MB at most; stored as WebP, 1920 px wide at most)",
         "tags": [
           "admin: home slides"
-        ]
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "RECRUITER",
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
       }
     },
     "/api/v1/job-alerts": {
@@ -42067,7 +42683,10 @@
         "summary": "Subscribe to job alerts",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/job-alerts/confirm": {
@@ -42230,7 +42849,10 @@
         "summary": "Confirm a job alert with the token of the email link (valid 72 hours)",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/job-alerts/unsubscribe": {
@@ -42393,7 +43015,10 @@
         "summary": "Stop a job alert with the token of the unsubscribe link",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/contact": {
@@ -42600,7 +43225,10 @@
         "summary": "Contact form",
         "tags": [
           "public"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/health/live": {
@@ -42625,7 +43253,10 @@
         "summary": "Liveness: the process is running",
         "tags": [
           "health"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/health/ready": {
@@ -42669,7 +43300,10 @@
         "summary": "Readiness: the API can reach its database",
         "tags": [
           "health"
-        ]
+        ],
+        "x-access": "public",
+        "x-roles": [],
+        "x-verified-email": false
       }
     }
   },
