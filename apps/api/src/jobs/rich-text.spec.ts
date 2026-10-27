@@ -1,6 +1,12 @@
 import { cleanRichText, isRichText } from './rich-text.js';
 
 describe('cleanRichText', () => {
+  // The first call loads DOMPurify and its jsdom window (about 1.3 s alone, more when every
+  // workspace tests at once): done here, so no test's 5 s budget is spent on it.
+  beforeAll(() => {
+    cleanRichText('<p>warm up</p>');
+  }, 30_000);
+
   it('leaves plain text untouched, including characters that look like HTML', () => {
     const text = 'Salary > 1200 & meals included.\nTwo lines.';
     expect(isRichText(text)).toBe(false);
