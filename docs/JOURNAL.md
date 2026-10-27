@@ -1025,4 +1025,6 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 | Production Playwright check | 1 passed (19 s)                                                                                                                                          |
 | Application Insights        | Managed identity token, upload and delete succeeded; the expected failures only (`EnvironmentCredential` first in the chain, 409 of `createIfNotExists`) |
 
-**Remaining**: listed in the final report of Prompt 14 (pull request of this entry).
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/41>
+
+**Remaining**: listed in the final report of Prompt 14.
