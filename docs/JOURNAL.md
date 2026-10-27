@@ -971,3 +971,5 @@ The deployment of PR #34 stopped at the image scan (web image: msal-node, throug
 | `pnpm test:e2e`                                                       | Pass: 515 tests                                                                                        |
 | `pnpm build`, `pnpm test:browser`                                     | Pass, except one sign-in that took longer than 5 s under load; that file then passed 24 of 24 repeated |
 | Images built, `trivy image --severity HIGH,CRITICAL --ignore-unfixed` | API and web: none                                                                                      |
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/38>
