@@ -13,7 +13,7 @@ import {
   seedCatalog,
   type TestApp,
 } from './app.js';
-import { KEEP_ALIVE_MS } from '../../src/app.setup.js';
+import { buildOpenApiDocument, KEEP_ALIVE_MS } from '../../src/app.setup.js';
 
 interface Route {
   method: string;
@@ -122,6 +122,30 @@ describe('security (e2e)', () => {
           `${route.method} ${route.path} has no @Roles`,
         ).toBeGreaterThan(0);
         expect(route.roles, `${route.method} ${route.path}`).not.toContain('CANDIDATE');
+      }
+    });
+
+    it('documents the access of every route in the OpenAPI document (docs/API.md)', () => {
+      const document = buildOpenApiDocument(test.app);
+      const documented = new Map<string, { access: string; roles: string[] }>();
+      for (const [path, item] of Object.entries(document.paths)) {
+        for (const [method, operation] of Object.entries(item as Record<string, object>)) {
+          const extensions = operation as { 'x-access'?: string; 'x-roles'?: string[] };
+          documented.set(`${method.toUpperCase()} ${path.replace(/\{(\w+)\}/g, ':$1')}`, {
+            access: extensions['x-access'] ?? 'missing',
+            roles: extensions['x-roles'] ?? [],
+          });
+        }
+      }
+      expect(documented.size).toBe(routes.length);
+      for (const route of routes) {
+        const key = `${route.method} ${route.path}`;
+        const expected = route.open
+          ? { access: 'public', roles: [] }
+          : route.roles
+            ? { access: 'roles', roles: [...route.roles] }
+            : { access: 'session', roles: [] };
+        expect(documented.get(key), key).toEqual(expected);
       }
     });
 
