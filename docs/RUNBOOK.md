@@ -126,7 +126,7 @@ scripts/restore-backup.sh \
 
 Downloading needs **Storage Blob Data Reader** on the account (the owner has Contributor). The dump holds personal data: delete the local copy and the local database after the check (`DROP DATABASE restore_check`).
 
-Tests (journal): 20 October 2026, the development database (863 KB) restored in 2 s with identical row counts in all 23 tables, and the API started on it; 23 October 2026, the same through the backup image's upload path; then a real backup from Azure, downloaded and restored locally.
+Tests (journal): 20 October 2026, the development database (863 KB) restored in 2 s with identical row counts in all 23 tables, and the API started on it; 23 October 2026, the same through the backup image's upload path; 25 October 2026, the first scheduled backup on Azure (03:00 UTC, 83 KB, 4 s); 27 October 2026, a manual run on Azure, downloaded with this script and restored locally in 2 s (23 tables, 13 migrations, the same open jobs and success stories as the public site, passport numbers still encrypted), then the local database dropped.
 
 **Into production** (data loss, owner's decision): prefer the point-in-time restore when the loss is less than 7 days old. Otherwise create an empty database on the server (`az postgres flexible-server db create … --database-name iconbridge_restored`), restore into it from a machine allowed by the server's firewall (`admin_ip_addresses`), point the `database-url` secret at it, restart the API revision, and keep the old database until the site is checked. Writes made between the backup and the switch are lost.
 

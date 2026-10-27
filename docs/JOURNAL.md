@@ -1000,3 +1000,29 @@ The deployment of PR #34 stopped at the image scan (web image: msal-node, throug
 | `pnpm api:types`                         | 120 operations in 21 groups written to docs/API.md                 |
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/40>
+
+## 2026-10-27 - Final checks against production; Prompt 14 done
+
+**What**
+
+- **Backups on Azure**: the first scheduled run (Sunday 25 October, 03:00 UTC) succeeded on its own (83 KB, 4 s); a manual run on 27 October too. The dump of 27 October was downloaded with `scripts/restore-backup.sh` and restored into a local database in 2 s: 23 tables, 13 migrations (the last one the cooldown column), 1 published job and 2 success stories like the public site, passport numbers still encrypted. The local database was dropped and no copy of the dump was kept.
+- **Load test on Azure**, 20 virtual users for 3 minutes under the production rate limit: 319 requests, 0 failed, 0 refused; p95 144 ms, median 47 ms.
+- **Production check** with the test candidate (`playwright.production.config.ts`): passed. The test document it uploaded went through `ManagedIdentityCredential` (msal-node 7.1.1) to Blob Storage and was deleted; open jobs, success stories and counters (with the historical figures) were identical before and after; no email was sent.
+- **Telemetry**: no health-probe rows after the deployment of `d951372` (0 of 15 web requests).
+- QA-REPORT.md starts with the final check; RUNBOOK.md lists the restore tests on Azure.
+
+**Why**
+
+Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore was tested (local on 20 October, from Azure on 27 October), and the documentation folder can be used for the internship report (PR #40).
+
+**Checks**
+
+| Check                       | Result                                                                                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backup job on Azure         | 2 executions, both `Succeeded`; 2 dumps in the private `backups` container (30-day lifecycle)                                                            |
+| Restore from Azure          | 2 s; counts match the public site                                                                                                                        |
+| k6, 20 VUs, 3 min, Azure    | All thresholds met; p95 144 ms                                                                                                                           |
+| Production Playwright check | 1 passed (19 s)                                                                                                                                          |
+| Application Insights        | Managed identity token, upload and delete succeeded; the expected failures only (`EnvironmentCredential` first in the chain, 409 of `createIfNotExists`) |
+
+**Remaining**: listed in the final report of Prompt 14 (pull request of this entry).
