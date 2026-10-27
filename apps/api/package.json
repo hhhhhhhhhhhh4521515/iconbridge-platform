@@ -54,7 +54,7 @@
     "isomorphic-dompurify": "^4.6.0",
     "mjml": "^5.4.1",
     "nestjs-pino": "^5.3.1",
-    "nodemailer": "^10.0.16",
+    "nodemailer": "^10.2.1",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
