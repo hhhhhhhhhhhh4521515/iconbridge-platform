@@ -1035,6 +1035,6 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 
 **Why**: axe-core 4.14 (in the Dependabot group #39) checks WCAG 2.5.3 "Label in Name": a person using voice control says what they see ("Malta"), and the old name did not start with it. The group's accessibility tests failed on `/en`, `/fr`, `/ar` and the dark home page.
 
-**Checks**: the accessibility tests with axe-core 4.14 installed temporarily: 32 passed (desk and phone); `pnpm lint`, `typecheck`, `test` pass.
+**Checks**: the accessibility tests with axe-core 4.14 installed temporarily: 32 passed (desk and phone); `pnpm lint`, `typecheck`, `test` pass; `pnpm test:browser` 153 passed (the home page test finds the Malta card by its visible name and its link).
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/42>

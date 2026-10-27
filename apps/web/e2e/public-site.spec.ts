@@ -59,7 +59,10 @@ test.describe('home page', () => {
   test('shows the counters, the destinations and the anti-scam notice', async ({ page }) => {
     await page.goto('/en');
     await expect(page.getByText('Open jobs').first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /View jobs in Malta/ })).toBeVisible();
+    // Named by its visible text (WCAG 2.5.3): "Malta", then the number of open jobs.
+    const malta = page.getByRole('link', { name: /^Malta\b/ });
+    await expect(malta).toBeVisible();
+    await expect(malta).toHaveAttribute('href', /destination=MALTA/);
     await expect(
       page.getByRole('heading', { name: 'We never ask candidates for money to apply' }),
     ).toBeVisible();
