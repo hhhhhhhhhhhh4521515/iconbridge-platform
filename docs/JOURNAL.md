@@ -1082,3 +1082,22 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Also**: a deploy waiting for approval cancelled the infrastructure apply waiting in the same concurrency group; CICD.md explains the order to approve in.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/46>
+
+## 2026-10-28 - iconbridgerecruitment.com live
+
+**What**: certificates bound (`az containerapp hostname bind`, both `SniEnabled`, GeoTrust, valid until 28 April 2027, renewed by Azure), repository variable `SITE_URL=https://iconbridgerecruitment.com`, Deploy run by hand and approved (run 40632687856, commit 612899f).
+
+**Checks after the deploy**:
+
+| Check                                                  | Result                                                                            |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `https://iconbridgerecruitment.com/api/health/ready`   | `ok`, web and API on 612899f; smoke test passed                                   |
+| `https://www.iconbridgerecruitment.com/fr/jobs?q=chef` | 308 to `https://iconbridgerecruitment.com/fr/jobs?q=chef`                         |
+| Default Azure address `/en/jobs`                       | 308 to the domain; `/api/health/ready` there still answers 200                    |
+| `http://iconbridgerecruitment.com/en`                  | 301 to HTTPS                                                                      |
+| robots, sitemap, canonical link                        | all on `https://iconbridgerecruitment.com`                                        |
+| Production Playwright check (`PROD_URL` = the domain)  | passed in 25 s (sign-in, pages, test document uploaded and deleted)               |
+| Password-reset email to the test account               | accepted by Azure 4 s after the request, from `noreply@iconbridgerecruitment.com` |
+| Warm pages                                             | 0.25–0.55 s                                                                       |
+
+**Remaining**: the bill of a full month with warm replicas (Cost Management); a support request if 100 emails an hour is not enough.
