@@ -25,6 +25,7 @@ test.describe('accessibility of the back office', () => {
         '/en/admin/users',
         '/en/admin/settings',
         '/en/admin/audit',
+        '/en/admin/password',
         '/fr/admin',
       ]) {
         await check(page, path);
