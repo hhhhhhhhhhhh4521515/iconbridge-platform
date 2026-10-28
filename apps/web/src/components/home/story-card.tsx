@@ -13,7 +13,10 @@ export interface StoryLabels {
   photoAlt: string;
 }
 
-/** One success story: the picture, a "Visa approved" badge, who, which job, where, when, and the quote. */
+/**
+ * One success story: the picture, a "Visa approved" badge, who, which job, where, when, and
+ * the quote when there is one (it is optional, ADR-024).
+ */
 export function StoryCard({
   story,
   locale,
@@ -24,6 +27,7 @@ export function StoryCard({
   labels: StoryLabels;
 }) {
   const destination = pick(story.destination.name, locale);
+  const quote = pick(story.quote, locale).trim();
   return (
     <figure className={`${card} flex h-full flex-col overflow-hidden`}>
       <div className="relative aspect-[4/5] bg-brand-navy">
@@ -52,9 +56,11 @@ export function StoryCard({
             {labels.visaDate.replace('{date}', longDate(story.visaApprovedAt, locale))}
           </p>
         ) : null}
-        <blockquote className="mt-3 border-s-2 border-brand-gold ps-3 text-sm text-foreground">
-          {pick(story.quote, locale)}
-        </blockquote>
+        {quote ? (
+          <blockquote className="mt-3 border-s-2 border-brand-gold ps-3 text-sm text-foreground">
+            {quote}
+          </blockquote>
+        ) : null}
       </figcaption>
     </figure>
   );

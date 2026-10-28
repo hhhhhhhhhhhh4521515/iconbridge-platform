@@ -68,13 +68,8 @@ function StoryEditor({
   const set = <Key extends keyof Draft>(key: Key, value: Draft[Key]) => {
     setDraft((before) => ({ ...before, [key]: value }));
   };
-  const complete =
-    draft.firstName.trim() &&
-    draft.jobTitle.trim() &&
-    draft.destinationId &&
-    draft.quote.en.trim() &&
-    draft.quote.fr.trim() &&
-    draft.quote.ar.trim();
+  // "What the candidate says" is optional in every language (ADR-024).
+  const complete = draft.firstName.trim() && draft.jobTitle.trim() && draft.destinationId;
   const save = async () => {
     setBusy(true);
     const body = { ...draft, visaApprovedAt: draft.visaApprovedAt || null };
@@ -167,7 +162,7 @@ function StoryEditor({
       </div>
       <LocalizedInput
         label={t('quote')}
-        required
+        hint={t('quoteHint')}
         multiline
         value={draft.quote}
         onChange={(quote) => {
