@@ -31,6 +31,10 @@ Rejected for now:
 - Node's compile cache filled at image build: 0.4 s more after lazy loading, for 16 MB and a start of the app during the build.
 - Background loading of jsdom after start-up: a synchronous load blocks the event loop for about a second on 0.5 vCPU, possibly under the first request.
 
+## Later changes
+
+- 28 October 2026: the owner raised the budget to 40 USD a month and both apps keep one warm replica ([ADR-022](ADR-022-warm-replicas.md)). The measures above still shorten the start of a second replica and of every new revision.
+
 ## Consequences
 
 - What remains is mostly the platform's own start of each replica (about 10–20 s per app), which only a warm replica avoids.
