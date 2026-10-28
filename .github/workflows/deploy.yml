@@ -189,7 +189,7 @@ jobs:
           execution=$(az containerapp job start -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --query name -o tsv)
           echo "Execution $execution"
           for _ in $(seq 1 90); do
-            status=$(az containerapp job execution show -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --job-execution-name "$execution" --query properties.status -o tsv)
+            status=$(az containerapp job execution show -g "$RESOURCE_GROUP" -n "$MIGRATE_JOB" --job-execution-name "$execution" --query properties.status -o tsv) || status="(az call failed, retrying)"
             case "$status" in
               Succeeded) echo "Migrations applied"; exit 0 ;;
               Failed|Stopped|Degraded) echo "::error::Migration job $status (logs: az containerapp job logs show -g $RESOURCE_GROUP -n $MIGRATE_JOB --execution $execution)"; exit 1 ;;
