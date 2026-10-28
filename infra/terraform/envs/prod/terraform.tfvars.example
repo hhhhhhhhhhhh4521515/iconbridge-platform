@@ -14,8 +14,8 @@ registry_type = "acr"
 # ghcr_owner    = "your-github-account"
 # ghcr_username = "your-github-account"
 
+# The amount and the other public settings are in production.auto.tfvars (committed).
 enable_budget     = true
-budget_amount     = 40
 budget_start_date = "2026-10-01T00:00:00Z"
 
 # Emails leave from DoNotReply@<Azure-managed domain> (Azure Communication Services).

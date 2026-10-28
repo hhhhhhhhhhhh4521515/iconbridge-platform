@@ -17,6 +17,8 @@ dist/
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+# Settings of production that are not secret (reviewed in pull requests).
+!infra/terraform/envs/prod/production.auto.tfvars
 crash.log
 
 # Build and tool caches
