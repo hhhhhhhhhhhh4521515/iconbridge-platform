@@ -30,7 +30,7 @@ Separately, many success stories have no quote from the candidate, and the form 
 
 7. **Forced change at first login.** While `password_change_required` is set, `RolesGuard` refuses every authenticated route with 403 `PASSWORD_CHANGE_REQUIRED`, except those marked `@AllowPasswordChange()`: the session, `GET /auth/me`, logout and `POST /me/password`. Changing the password, or resetting it through the email link, clears the flag. The back office sends such a user to its new page "My password" (`/admin/password`), which every back-office user can also open later.
 
-8. **Optional story quote.** The three texts of "What the candidate says" may be empty (`optionalLocalizedTextSchema`, same JSON column, no migration). The public cards and the success-stories page show the quote of the page's language only when it is not empty; a story is saved and published without one.
+8. **Optional story quote.** The three texts of "What the candidate says" may be empty (`optionalLocalizedTextSchema`, same JSON column, no migration). The public cards and the success-stories page show the quote like the other translated texts (the page's language, else English, else French) and no quote block when all three are empty; a story is saved and published without one.
 
 ## Consequences
 

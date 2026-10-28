@@ -6,11 +6,12 @@ Screenshots come from a test environment with sample jobs and a test candidate; 
 
 ## Roles
 
-| Role            | Can                                                                                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Viewer**      | Read jobs, candidates, applications and documents. No button that writes is shown, and the API refuses writes                                                            |
-| **Recruiter**   | Everything a viewer can, plus: jobs, application statuses and internal notes, success stories, slides, destinations and categories, exports, revealing a passport number |
-| **Super admin** | Everything, plus: users and roles, settings, audit log, historical results, full passport numbers in exports, lifting a waiting period, deleting records                 |
+| Role              | Can                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Viewer**        | Read jobs, candidates, applications and documents. No button that writes is shown, and the API refuses writes                                                                                                                                                                                                                                                              |
+| **Country agent** | Only the candidates whose **nationality** is one of the agent's countries (not their country of residence): their profile, documents, applications and history; moves applications through the pipeline with a message to the candidate, adds internal notes. Sees nothing else: no jobs, content, exports, settings or users, and the dashboard counts his countries only |
+| **Recruiter**     | Everything a viewer can, plus: jobs, application statuses and internal notes, success stories, slides, destinations and categories, exports, revealing a passport number                                                                                                                                                                                                   |
+| **Super admin**   | Everything, plus: users and roles, settings, audit log, historical results, full passport numbers in exports, lifting a waiting period, deleting records                                                                                                                                                                                                                   |
 
 Deleting a candidate or an application is for super admins, and for recruiters only when the setting `ALLOW_RECRUITER_DELETE` is on (off by default). Accounts are created by a super admin (**Users and roles** → **Invite a user**): there is no public sign-up for staff.
 
@@ -62,7 +63,7 @@ The candidate page shows the profile, the documents and the applications. **Show
 
 ## Site content
 
-- **Success stories**: photo, text, destination; a story can be published only with the signed consent document of the person, and the public name is shortened.
+- **Success stories**: photo, text, destination; a story can be published only with the signed consent document of the person, and the public name is shortened. "What the candidate says" is optional: leave the three languages empty and the site shows the story without a quote.
 - **Home slides**: image, title and text of the slider, in order (drag to reorder).
 - **Destinations and categories**: the lists used by jobs, filters and alerts; a category's icon is a name (`hard-hat`, `ship`, …) or an emoji.
 
@@ -82,7 +83,11 @@ Rules applied by the API at once: months before applying again to the same job (
 
 ![Users and roles](screenshots/admin-09-users.png)
 
-**Invite a user** sends a set-password link; the role can be changed, the account disabled or signed out everywhere. The last super admin cannot be disabled or demoted.
+**Invite a user** either sends a set-password link (the person chooses the password) or, with **Set the password now**, creates the account with a password you give the person yourself: it is not shown again, and the person must choose a new one at the first sign-in before doing anything else. **Set a password** does the same for an existing account (it signs it out everywhere). The role can be changed, the account disabled or signed out everywhere. The last super admin cannot be disabled or demoted.
+
+**Country agents**: choose the role **Country agent**, then one or more countries (the nationality of the candidates he follows). The countries column shows them; click it to change them. Agents use an address on the domain (`bihi@iconbridgerecruitment.com`, `majdi@iconbridgerecruitment.com`), which Cloudflare forwards to their inbox (DEPLOYMENT.md, "Mail for agent addresses").
+
+**My password** (top bar): every back-office user changes his own password there.
 
 ## Audit log (super admin)
 
