@@ -46,9 +46,13 @@ async function applicant(
   nationality: string,
   jobId: string,
 ): Promise<{ context: BrowserContext; email: string; name: string }> {
+  // Unique per project: Chromium and Firefox run this file at the same time, and the agent
+  // rightly sees the candidates of both runs.
+  const project = tag().replace(/[^a-z]/g, '');
+  const unique = `${firstName}${project.charAt(0).toUpperCase()}${project.slice(1)}`;
   const candidate = await readyCandidate(
     browser,
-    firstName,
+    unique,
     `-${nationality.toLowerCase()}-${tag()}`,
     nationality,
   );
@@ -63,7 +67,7 @@ async function applicant(
   });
   expect(applied.status(), `application of ${candidate.email}`).toBe(201);
   await rememberApplications(candidate.context.request);
-  return { ...candidate, name: `${firstName} Khelifi` };
+  return { ...candidate, name: `${unique} Khelifi` };
 }
 
 /** Every candidate the agent's session can list has one of these nationalities. */
