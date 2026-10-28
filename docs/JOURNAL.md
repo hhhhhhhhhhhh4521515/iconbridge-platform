@@ -1060,3 +1060,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: `make tf-check` (fmt, validate, tflint, checkov 28 passed); local plan: 3 to change (budget amount, api and web `min_replicas`), nothing added or destroyed.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/44>
+
+## 2026-10-28 - iconbridgerecruitment.com prepared for the site and its emails
+
+**What**: the API accepts other addresses of the site as origins (`WEB_ORIGIN_ALIASES`, CSRF check and CORS); the web app redirects pages asked for on `www.` or on the default Azure address to the origin of `NEXT_PUBLIC_SITE_URL` (308, never `/api/v1` or the health endpoints); Terraform takes an apex domain with aliases (managed certificates, HTTP and CNAME validation), an email domain and its sender, and outputs every DNS record (`dns_records`). The names are set in `production.auto.tfvars`; the switches stay off until the Cloudflare records resolve and the email domain is verified. ADR-023, DEPLOYMENT ("Custom domain", "Email on the site's domain"), RUNBOOK ("Domain and email domain").
+
+**Why**: the owner bought `iconbridgerecruitment.com` (DNS at Cloudflare) for the site and for email; the Azure-managed email domain is limited to 10 emails an hour.
+
+**Checks**: lint, typecheck; unit tests (web 82, api 333, shared 208); `test:e2e` 517; `test:browser` 153 passed; `pnpm build`; a production build of the web app with the new site address answered 308 for `www.` and the Azure host, 200 for the domain, health and `/api/v1` not redirected, robots and sitemap on the new domain; `make tf-check`; local plan: the email domain added, an empty `WEB_ORIGIN_ALIASES`, nothing destroyed.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/45>
