@@ -9,7 +9,8 @@
     "VIEWER": "Viewer",
     "RECRUITER": "Recruiter",
     "SUPER_ADMIN": "Super admin",
-    "CANDIDATE": "Candidate"
+    "CANDIDATE": "Candidate",
+    "COUNTRY_AGENT": "Country agent"
   },
   "nav": {
     "label": "Back office",
@@ -124,7 +125,8 @@
     "companiesTotal": "Partner companies",
     "countriesTotal": "Countries",
     "visasPerYear": "Visas approved per year",
-    "visasPerDestination": "Visas approved per destination"
+    "visasPerDestination": "Visas approved per destination",
+    "scope": "Figures for the candidates of your countries: {countries}."
   },
   "editor": {
     "toolbar": "Formatting",
@@ -443,6 +445,7 @@
     "destination": "Destination",
     "visaApprovedAt": "Visa approved on",
     "quote": "What the candidate says",
+    "quoteHint": "Optional. Leave all three empty if the candidate gave no quote: the site then shows none.",
     "created": "The story is created as a draft.",
     "noPhoto": "No photo",
     "photo": "Photo",
@@ -537,7 +540,8 @@
     "roleHelp": {
       "VIEWER": "Viewer: reads jobs, applications, candidates and messages. Cannot change anything, export, or see full passport numbers.",
       "RECRUITER": "Recruiter: manages jobs, applications and site content, exports, and can show a passport number (logged).",
-      "SUPER_ADMIN": "Super admin: everything, plus users, settings and the audit log."
+      "SUPER_ADMIN": "Super admin: everything, plus users, settings and the audit log.",
+      "COUNTRY_AGENT": "Country agent: sees only the candidates whose nationality is one of his countries, with their documents and applications; changes application statuses, writes to the candidate and adds notes. Cannot edit profiles, delete, export, or touch jobs, content or settings."
     },
     "empty": "No account.",
     "you": "you",
@@ -563,7 +567,31 @@
     "forceLogout": "Log out everywhere",
     "logoutTitle": "Log this user out?",
     "logoutText": "Every session of {email} ends at once. The person can log in again.",
-    "loggedOut": "The user is logged out."
+    "loggedOut": "The user is logged out.",
+    "created": "The account {email} is created. Give the password to the person yourself: it is not shown again.",
+    "createAccount": "Create the account",
+    "access": "Access",
+    "accessMode": {
+      "invitation": "Send an invitation email",
+      "password": "Set the password now"
+    },
+    "accessHelp": {
+      "invitation": "The person receives a link to choose a password. The link works 72 hours.",
+      "password": "No email is sent. The person must choose a new password at the first sign-in. The password is never shown again."
+    },
+    "countries": "Countries",
+    "countriesHint": "Nationality of the candidates this agent follows. Type a country name, then choose it.",
+    "removeCountry": "Remove {country}",
+    "countriesTitle": "Countries of the agent",
+    "countriesText": "{email} sees and moves only the candidates whose nationality is one of these countries.",
+    "saveCountries": "Save the countries",
+    "countriesSaved": "The countries are saved.",
+    "editCountries": "Change the countries of {email}",
+    "mustChangePassword": "Must change password",
+    "setPassword": "Set a password",
+    "setPasswordTitle": "Set a password",
+    "setPasswordText": "{email} is logged out everywhere and must choose a new password at the next sign-in. A pending invitation link stops working. The password is never shown again.",
+    "passwordSet": "The password is set. The person must change it at the next sign-in."
   },
   "messages": {
     "title": "Contact messages",
@@ -688,5 +716,16 @@
     "audited": "Every change is written to the audit log with the value before and after.",
     "save": "Save the figures",
     "saved": "{count, plural, one {# figure saved} other {# figures saved}}. The counters of the site are updated."
+  },
+  "password": {
+    "menu": "My password",
+    "title": "My password",
+    "text": "Choose a password of at least 10 characters that you use nowhere else. Every other session is logged out.",
+    "forcedTitle": "Choose your password",
+    "forcedText": "Your password was set by an administrator. Choose your own before using the back office.",
+    "current": "Current password",
+    "given": "Password you were given",
+    "save": "Change my password",
+    "saved": "Your password is changed."
   }
 }

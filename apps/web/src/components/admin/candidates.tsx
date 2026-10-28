@@ -280,7 +280,7 @@ function Passport({ candidateId, masked }: { candidateId: string; masked: string
       <span dir="ltr" className="font-mono" data-testid="passport-number">
         {clear ?? masked}
       </span>
-      {can('MANAGE_APPLICATIONS') ? (
+      {can('MANAGE_CANDIDATES') ? (
         clear ? (
           <button
             type="button"
@@ -385,7 +385,7 @@ export function CandidateDetail({ id }: { id: string }) {
     <>
       <PageHeader title={`${data.firstName} ${data.lastName}`}>
         {data.isActive ? null : <Badge tone="danger">{t('candidates.disabled')}</Badge>}
-        {can('MANAGE_APPLICATIONS') ? (
+        {can('MANAGE_CANDIDATES') ? (
           <button
             type="button"
             className={

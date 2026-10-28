@@ -25,7 +25,14 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
   ).default;
   return (
     <NextIntlClientProvider
-      messages={{ common: messages.common, errors: messages.errors, forms: messages.forms, admin }}
+      messages={{
+        common: messages.common,
+        errors: messages.errors,
+        forms: messages.forms,
+        // The password fields of "My password" and of the accounts page.
+        auth: messages.auth,
+        admin,
+      }}
     >
       <AdminShell>{children}</AdminShell>
     </NextIntlClientProvider>

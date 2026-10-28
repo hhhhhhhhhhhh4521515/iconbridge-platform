@@ -792,7 +792,8 @@
       "CONSENT_REQUIRED": "Your consent is required.",
       "RATE_LIMITED": "Too many attempts. Wait a minute and try again.",
       "REAPPLY_COOLDOWN": "You have already applied to this job.",
-      "INTERNAL_ERROR": "Something went wrong. Try again in a moment."
+      "INTERNAL_ERROR": "Something went wrong. Try again in a moment.",
+      "PASSWORD_CHANGE_REQUIRED": "Choose a new password first."
     }
   },
   "auth": {

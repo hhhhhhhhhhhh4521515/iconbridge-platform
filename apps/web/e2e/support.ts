@@ -118,6 +118,7 @@ export async function readyCandidate(
   browser: Browser,
   firstName: string,
   tag = '',
+  nationality = 'TN',
 ): Promise<{ context: BrowserContext; email: string }> {
   const email = `e2e-candidate-${STAMP}${tag}@example.test`;
   const context = await browser.newContext();
@@ -145,7 +146,7 @@ export async function readyCandidate(
       lastName: 'Khelifi',
       gender: 'FEMALE',
       dateOfBirth: '1995-04-12',
-      nationality: 'TN',
+      nationality,
       countryOfResidence: 'TN',
       city: 'Tunis',
       phone: '+21620123456',
