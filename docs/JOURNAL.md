@@ -1070,3 +1070,15 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: lint, typecheck; unit tests (web 82, api 333, shared 208); `test:e2e` 517; `test:browser` 153 passed; `pnpm build`; a production build of the web app with the new site address answered 308 for `www.` and the Azure host, 200 for the domain, health and `/api/v1` not redirected, robots and sitemap on the new domain; `make tf-check`; local plan: the email domain added, an empty `WEB_ORIGIN_ALIASES`, nothing destroyed.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/45>
+
+## 2026-10-28 - iconbridgerecruitment.com switched on
+
+**What**: `enable_custom_domain` and `use_email_domain` turned on: the web app gets the host names `iconbridgerecruitment.com` and `www.iconbridgerecruitment.com` with managed certificates, the API links to the domain (`WEB_ORIGIN`) and keeps the Azure address as an alias, emails leave from `noreply@iconbridgerecruitment.com` ("IconBridge Recruitment") with 100 emails an hour. Then the certificates are bound and the web image rebuilt with the new `SITE_URL`.
+
+**Why**: second step of ADR-023, once the 9 Cloudflare records resolved (DNS only) and Azure verified the email domain (Domain, SPF, DKIM, DKIM2).
+
+**Turnstile**: Cloudflare warned "Siteverify isn't being called". In production, register, contact and job alerts sent with a fake token answered `400 CAPTCHA_FAILED` in 15–60 ms with no "verification unavailable" log, so the API asks Cloudflare and Cloudflare refuses the token; apply calls the same check first (`applications.service.ts`). The warning comes from the ratio: the widget solves on every view of a page that holds it, the home page included, and only one form was sent since 20 October.
+
+**Also**: a deploy waiting for approval cancelled the infrastructure apply waiting in the same concurrency group; CICD.md explains the order to approve in.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/46>

@@ -237,6 +237,8 @@ The API refuses the Turnstile test keys in production. Two secrets are created w
 4. Widget mode **Managed**; pre-clearance **No**. **Create**.
 5. Copy the **Site Key** and the **Secret Key**.
 
+Cloudflare's widget page may warn "Siteverify isn't being called". It compares the tokens the widget hands out with the `siteverify` calls it receives. The widget solves silently on every view of a page that holds it, including the home page (job alerts form), and its tokens are refreshed while the page stays open, but `siteverify` is called only when a form is sent; with few submissions the ratio looks like a missing check. The check itself: a form sent with a fake token answers `400 CAPTCHA_FAILED` (`TurnstileService`, called first by register, apply, contact and job alerts).
+
 **Into Key Vault** (values are typed, not left in the shell history):
 
 ```bash
