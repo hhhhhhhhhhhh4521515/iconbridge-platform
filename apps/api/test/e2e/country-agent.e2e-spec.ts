@@ -74,7 +74,7 @@ describe('country agents (e2e)', () => {
   });
 
   const ids = (body: unknown) =>
-    ((body as { items: { id: string }[] }).items ?? []).map((item) => item.id).sort();
+    (body as { items: { id: string }[] }).items.map((item) => item.id).sort();
 
   describe('scope: by nationality only', () => {
     it('lists only the candidates of the agent nationalities, never by residence', async () => {
