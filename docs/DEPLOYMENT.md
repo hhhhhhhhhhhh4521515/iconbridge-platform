@@ -136,7 +136,7 @@ Region, quotas, budget and the identity of the pipeline are in [00-environment.m
 | Readiness probe   | `GET /health/ready` (checks the database), every 3 s, 3 s timeout         | `GET /api/health/live`, every 3 s                       |
 | Startup probe     | `GET /health/live` every second, up to 60 s                               | `GET /api/health/live` every second, up to 60 s         |
 | Size              | 0.5 vCPU / 1 GiB                                                          | 0.5 vCPU / 1 GiB ([ADR-017](adr/ADR-017-cold-start.md)) |
-| Scale             | 0 to 2 replicas, HTTP rule                                                | 0 to 2 replicas, HTTP rule                              |
+| Scale             | 1 to 2 replicas, HTTP rule ([ADR-022](adr/ADR-022-warm-replicas.md))      | 1 to 2 replicas, HTTP rule                              |
 | Termination grace | 30 s (longer than the emails in progress)                                 | 30 s                                                    |
 | Identity          | Managed identity: Blob Storage, Key Vault, Communication Services (email) | —                                                       |
 
@@ -335,17 +335,17 @@ Set `registry_type = "ghcr"`, `ghcr_owner` and `ghcr_username` in `terraform.tfv
 
 ### Costs
 
-| Resource                               | List price (Italy North)             | Expected                                                                                                     |
-| -------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| PostgreSQL B1ms, 32 GB, 7-day backups  | ~0.023 USD/hour + storage            | 0 within the free 750 h and 32 GB a month                                                                    |
-| Container Registry Standard            | 0.67 USD/day (about 20 USD a month)  | 0 within the free year, then ghcr                                                                            |
-| Container Apps (apps and jobs)         | per vCPU-second, GiB-second, request | 0 within the monthly free grant (scale to zero; the tasks job uses about 22 000 vCPU-seconds of the 180 000) |
-| Log Analytics and Application Insights | 2.99 USD/GB after 5 GB a month       | 0: capped at 0.15 GB a day                                                                                   |
-| Storage (files and state)              | ~0.018 USD/GB a month                | a few cents                                                                                                  |
-| Key Vault                              | 0.03 USD per 10 000 operations       | a few cents                                                                                                  |
-| Budget, identity, resource groups      | free                                 | 0                                                                                                            |
+| Resource                               | List price (Italy North)             | Expected                                                                                      |
+| -------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| PostgreSQL B1ms, 32 GB, 7-day backups  | ~0.023 USD/hour + storage            | 0 within the free 750 h and 32 GB a month                                                     |
+| Container Registry Standard            | 0.67 USD/day (about 20 USD a month)  | 0 within the free year, then ghcr                                                             |
+| Container Apps (apps and jobs)         | per vCPU-second, GiB-second, request | 30 to 37 USD: one warm replica per app, mostly idle ([ADR-022](adr/ADR-022-warm-replicas.md)) |
+| Log Analytics and Application Insights | 2.99 USD/GB after 5 GB a month       | 0: capped at 0.15 GB a day                                                                    |
+| Storage (files and state)              | ~0.018 USD/GB a month                | a few cents                                                                                   |
+| Key Vault                              | 0.03 USD per 10 000 operations       | a few cents                                                                                   |
+| Budget, identity, resource groups      | free                                 | 0                                                                                             |
 
-The budget (15 USD a month) emails `owner_email` at 50, 80 and 100 %. The subscription's spending limit stops the resources when the credit is spent.
+The budget (40 USD a month, [ADR-022](adr/ADR-022-warm-replicas.md)) emails `owner_email` at 50, 80 and 100 %. The subscription's spending limit stops the resources when the credit is spent.
 
 ## Troubleshooting
 

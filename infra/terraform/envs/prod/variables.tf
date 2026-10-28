@@ -70,9 +70,9 @@ variable "enable_budget" {
 }
 
 variable "budget_amount" {
-  description = "Monthly budget in USD. 15 a month makes the 100 USD credit last the internship."
+  description = "Monthly budget in USD: 40 since the apps keep a warm replica each (ADR-022)."
   type        = number
-  default     = 15
+  default     = 40
 
   validation {
     condition     = var.budget_amount > 0 && var.budget_amount <= 100
@@ -137,14 +137,14 @@ variable "trust_proxy_hops" {
 }
 
 variable "api_size" {
-  description = "API container: 0.5 vCPU / 1 GiB, scale 0 to 2."
+  description = "API container: 0.5 vCPU / 1 GiB, scale 1 to 2 (one warm replica, no cold start: ADR-022)."
   type = object({
     cpu          = number
     memory       = string
     min_replicas = number
     max_replicas = number
   })
-  default = { cpu = 0.5, memory = "1Gi", min_replicas = 0, max_replicas = 2 }
+  default = { cpu = 0.5, memory = "1Gi", min_replicas = 1, max_replicas = 2 }
 
   validation {
     condition     = var.api_size.max_replicas <= 2 && var.api_size.min_replicas >= 0
@@ -153,14 +153,14 @@ variable "api_size" {
 }
 
 variable "web_size" {
-  description = "Web container: 0.5 vCPU / 1 GiB (Next.js starts and renders the first page twice as fast as with 0.25, ADR-017; billed only while running), scale 0 to 2."
+  description = "Web container: 0.5 vCPU / 1 GiB (Next.js starts and renders the first page twice as fast as with 0.25, ADR-017), scale 1 to 2 (one warm replica: ADR-022)."
   type = object({
     cpu          = number
     memory       = string
     min_replicas = number
     max_replicas = number
   })
-  default = { cpu = 0.5, memory = "1Gi", min_replicas = 0, max_replicas = 2 }
+  default = { cpu = 0.5, memory = "1Gi", min_replicas = 1, max_replicas = 2 }
 
   validation {
     condition     = var.web_size.max_replicas <= 2 && var.web_size.min_replicas >= 0

@@ -152,6 +152,15 @@ Then either copy what was lost from the new server, or point the apps at it: upd
 | Candidate file deleted                           | none within 7 days                                | minutes: undelete the blob (soft delete)                                                          |
 | Region lost                                      | everything since the last copy taken out of Azure | hours: no geo-redundancy within the budget (ADR-013)                                              |
 
+## Costs and the budget
+
+Both apps keep one warm replica, so the site never cold-starts ([ADR-022](adr/ADR-022-warm-replicas.md)). Expected cost: 30 to 37 USD a month, almost all Container Apps memory and idle vCPU; the budget `budget-iconbridge-prod-itn` (40 USD) emails the owner at 20, 32 and 40 USD.
+
+- **See the bill**: portal → **Cost Management** → **Cost analysis**, scope `rg-iconbridge-prod`, group by **Meter**. "Idle Usage" should be most of the vCPU; much "Active Usage" means the replicas are busy (traffic, or something polling the site).
+- **Remaining credit**: portal → search **Education** → **Overview**. Credit divided by the month's cost is how long the site stays up: the spending limit stops every resource when the credit is spent.
+- **Back to scale to zero** (saves about 30 USD, brings back a 20–60 s wait for the first visitor): set `min_replicas = 0` in `api_size` and `web_size` (`infra/terraform/envs/prod/variables.tf`) through a pull request; `infra.yml` applies it after approval.
+- **Cheaper middle ground**: the API at `cpu = 0.25, memory = "0.5Gi"` (about 7.5 USD less), or `min_replicas = 1` for the web app only.
+
 ## Rotate secrets
 
 Secrets live in Key Vault; the apps read them when a revision starts. After any change, restart:
