@@ -49,9 +49,9 @@ Files are never served from a public address. `GET /documents/:id/download` chec
 Two layers:
 
 1. The session cookies are `SameSite=Lax`, `HttpOnly`, `Secure`: a form or a script on another site cannot send them with a POST.
-2. `originCheck` (`apps/api/src/common/http/origin-check.ts`) refuses any state-changing request whose `Origin` (or `Referer`) is not the web app. Requests without either header (curl, server-to-server) go on to the normal checks, where they still need a session.
+2. `originCheck` (`apps/api/src/common/http/origin-check.ts`) refuses any state-changing request whose `Origin` (or `Referer`) is not the web app (`WEB_ORIGIN`, or one of `WEB_ORIGIN_ALIASES`: the default Azure address, whose pages the web app redirects to the custom domain). Requests without either header (curl, server-to-server) go on to the normal checks, where they still need a session.
 
-The browser only ever talks to the web origin; the web app forwards `/api/v1/*` to the API. CORS on the API is limited to the web origin.
+The browser only ever talks to the web origin; the web app forwards `/api/v1/*` to the API. CORS on the API is limited to the same origins.
 
 ## Injection and XSS
 

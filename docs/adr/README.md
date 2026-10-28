@@ -26,3 +26,4 @@ Each record gives the context, the decision and its consequences. All are accept
 | [020](ADR-020-backups.md)                              | Database backups and restore                                             | Operations     |
 | [021](ADR-021-cooldown-waiver.md)                      | Lifting the re-application waiting period                                | Product        |
 | [022](ADR-022-warm-replicas.md)                        | One warm replica for the web app and the API (40 USD budget)             | Infrastructure |
+| [023](ADR-023-custom-domain-and-email-domain.md)       | The site and its emails on iconbridgerecruitment.com                     | Infrastructure |

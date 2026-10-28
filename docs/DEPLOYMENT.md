@@ -233,7 +233,7 @@ The API refuses the Turnstile test keys in production. Two secrets are created w
 
 1. Open <https://dash.cloudflare.com/sign-up>, create the account and confirm the email.
 2. Left menu → **Turnstile** → **Add widget**.
-3. Widget name `IconBridge Jobs`. **Hostname management** → **Add hostnames**: the web app's address without `https://` (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`), and the custom domain if there is one.
+3. Widget name `IconBridge Jobs`. **Hostname management** → **Add hostnames**: the web app's address without `https://` (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`), and the custom domain if there is one (`example.com`; a hostname also covers its subdomains, so `www.example.com` needs no entry of its own).
 4. Widget mode **Managed**; pre-clearance **No**. **Create**.
 5. Copy the **Site Key** and the **Secret Key**.
 
@@ -298,7 +298,7 @@ az storage blob list --auth-mode login --account-name sticonbridgeproditn -c can
 
 **Email**: register with an address you can read. The verification email comes from `IconBridge Recruitment <DoNotReply@…azurecomm.net>`; look in the spam folder the first time. The outbox state is in the database (`email_outbox`), and the sends in the API logs (`Email sent: verify-email (en)`).
 
-**Email quota**: an Azure-managed domain sends at most 5 emails a minute and 10 an hour for the whole subscription, and this cannot be raised. Over it, Azure answers 429; the outbox waits as long as asked without spending an attempt (log `Email delayed`). Account emails go first, then application emails, then the rest, and job alerts never use more than 5 of the 10 emails of an hour (`EMAIL_HOURLY_QUOTA`), so a burst of job alerts leaves over several hours without delaying a verification email. For more, connect a verified custom domain to the Email Communication Service (DNS records for SPF and DKIM) and ask for a quota increase ([ADR-014](adr/ADR-014-email-azure-communication-services.md)).
+**Email quota**: an Azure-managed domain sends at most 5 emails a minute and 10 an hour for the whole subscription, and this cannot be raised. Over it, Azure answers 429; the outbox waits as long as asked without spending an attempt (log `Email delayed`). Account emails go first, then application emails, then the rest, and job alerts never use more than 5 of the 10 emails of an hour (`EMAIL_HOURLY_QUOTA`), so a burst of job alerts leaves over several hours without delaying a verification email. For more, send from the site's domain ("Email on the site's domain" below) and ask for a quota increase ([ADR-014](adr/ADR-014-email-azure-communication-services.md)).
 
 **First super admin**: the address is `owner_email`; the password is in the vault. Sign in, then change it in the account settings at once.
 
@@ -316,22 +316,55 @@ Through GitHub Actions since 16 October 2026: merge a pull request, approve the 
 
 Set `registry_type = "ghcr"`, `ghcr_owner` and `ghcr_username` in `terraform.tfvars`; create a GitHub token with only `read:packages`; apply; set the secret `ghcr-pull-token`; push the images to `ghcr.io/<owner>/…`; deploy with the new names. Then the registry can be removed from the plan.
 
-### Custom domain (optional)
+### Custom domain
 
-1. At the DNS provider: a CNAME from the domain to the web app's default address (`terraform -chdir=infra/terraform/envs/prod output -raw web_default_fqdn`) and a TXT record `asuid.<domain>` with `terraform -chdir=infra/terraform/envs/prod output -raw custom_domain_verification_id`.
-2. In `terraform.tfvars`: `enable_custom_domain = true` and `custom_domain = "jobs.example.com"`; plan and apply. Terraform adds the host name to the web app and asks Azure for a free managed certificate (validated through the CNAME; it can take several minutes).
-3. Bind the certificate, once. The azurerm provider cannot do it; Terraform ignores the binding afterwards:
+The site is served on `custom_domain` (an apex domain such as `example.com`); each name in `custom_domain_aliases` (`www.example.com`) and the default Azure address keep answering and the web app redirects their pages to it with a 308 ([ADR-023](adr/ADR-023-custom-domain-and-email-domain.md)). The DNS records must be "DNS only" (grey cloud in Cloudflare), never proxied: Azure validates and renews the certificates over plain DNS, and a proxy would also add a hop to `X-Forwarded-For` (`trust_proxy_hops`).
+
+1. In `production.auto.tfvars` (pull request): `custom_domain`, `custom_domain_aliases` and, for email, `email_domain`. After the apply, the records to create:
+
+   ```bash
+   terraform -chdir=infra/terraform/envs/prod output -json dns_records | jq -r '.[] | [.type, .name, .value] | @tsv'
+   ```
+
+   An `A` record from the domain to the environment's static IP and a `TXT` `asuid.<domain>`; for each alias a `CNAME` to the web app's default address and a `TXT` `asuid.<alias>` (the same verification id); the email records are in the next section.
+
+2. Check that the records resolve (`dig +short A example.com`, `dig +short TXT asuid.example.com`, `dig +short CNAME www.example.com`), then `enable_custom_domain = true` (pull request, apply). Terraform adds the host names to the web app and asks Azure for a free managed certificate each (HTTP validation for the apex, CNAME for the aliases; several minutes). `WEB_ORIGIN`, the storage CORS rule, the availability tests and the links in emails follow the domain; `WEB_ORIGIN_ALIASES` keeps the default address allowed for pages opened before the switch.
+
+3. Bind each certificate, once. The azurerm provider cannot do it; Terraform ignores the binding afterwards:
 
    ```bash
    OUT=infra/terraform/envs/prod
-   az containerapp hostname bind -g rg-iconbridge-prod \
-     -n "$(terraform -chdir=$OUT output -json container_app_names | jq -r .web)" \
-     --hostname jobs.example.com \
-     --environment cae-iconbridge-prod-itn \
-     --certificate "$(terraform -chdir=$OUT output -raw managed_certificate_name)"
+   for host in $(terraform -chdir=$OUT output -json managed_certificate_names | jq -r 'keys[]'); do
+     az containerapp hostname bind -g rg-iconbridge-prod -n ca-iconbridge-web-prod-itn \
+       --hostname "$host" --environment cae-iconbridge-prod-itn \
+       --certificate "$(terraform -chdir=$OUT output -json managed_certificate_names | jq -r --arg h "$host" '.[$h]')"
+   done
    ```
 
-4. Rebuild the web image with `NEXT_PUBLIC_SITE_URL=https://<domain>`, add the domain to the Turnstile widget, and apply again (CORS and `WEB_ORIGIN` follow the domain).
+4. Set the repository variable `SITE_URL` to `https://<domain>` (GitHub → Settings → Secrets and variables → Actions → Variables) and run **Deploy** by hand: the web image is built with `NEXT_PUBLIC_SITE_URL` (sitemap, robots, canonical links, redirects), and the smoke test checks the new address.
+
+5. Add the domain to the Turnstile widget (section 3) before step 4: the widget refuses to load on a host it does not list.
+
+Sessions are cookies of one host: people signed in on the old address sign in again once.
+
+### Email on the site's domain
+
+1. With `email_domain` set and applied, `dns_records` lists the email records: a `TXT` on the domain with `ms-domain-verification=…`, the SPF `TXT` (`v=spf1 include:spf.protection.outlook.com -all`) and two DKIM `CNAME`s (`selector1-azurecomm-prod-net._domainkey`, `selector2-…`). A domain has one SPF record: if another mail service already sends for it, merge the `include:` into the existing record. Add a DMARC record too: `TXT` `_dmarc` with `v=DMARC1; p=none;` (large mailbox providers expect one).
+
+2. When they resolve, ask Azure to verify each one (a few minutes each):
+
+   ```bash
+   for type in Domain SPF DKIM DKIM2; do
+     az communication email domain initiate-verification -g rg-iconbridge-prod \
+       --email-service-name ecs-iconbridge-prod-itn --domain-name example.com --verification-type $type
+   done
+   az communication email domain show -g rg-iconbridge-prod --email-service-name ecs-iconbridge-prod-itn \
+     --name example.com --query verificationStates
+   ```
+
+3. When all four are `Verified`: `use_email_domain = true` (pull request, apply). Terraform creates the sender `noreply@<domain>` with the display name `mail_display_name`, links the domain to the Communication Service and switches `MAIL_FROM`; the API picks it up with the new revision. `EMAIL_HOURLY_QUOTA` becomes 100, Azure's starting limit for a custom domain; set `email_hourly_quota` when Azure raises it.
+
+4. **Higher sending limit**: Azure raises it on request only, for a verified custom domain with a good record (few bounces and failed sends). Portal → **Help + support** → **Create a support request** → issue type **Service and subscription limits (quotas)** if Communication Services is listed there, else **Technical** → service **Azure Communication Services** → problem **Email** → "Increase email sending limits". Give the domain, the resource `ecs-iconbridge-prod-itn`, the emails a minute and an hour you need, what the emails are (account, application updates, opt-in job alerts) and how bounces and unsubscribes are handled. Technical requests may need a paid support plan on this offer; quota requests do not.
 
 ### Costs
 
