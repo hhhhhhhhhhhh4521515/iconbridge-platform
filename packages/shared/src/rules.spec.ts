@@ -31,7 +31,8 @@ describe('application transitions: the whole matrix', () => {
     'as %s from %s',
     (role, from) => {
       const allowed = allowedApplicationTransitions(from, role);
-      const staff = role === 'RECRUITER' || role === 'SUPER_ADMIN';
+      // A country agent moves applications like a recruiter (his countries only, checked by the API).
+      const staff = role === 'RECRUITER' || role === 'SUPER_ADMIN' || role === 'COUNTRY_AGENT';
       const index = (APPLICATION_PIPELINE as readonly string[]).indexOf(from);
       const expected = !staff
         ? []
@@ -61,6 +62,7 @@ describe('who may delete records', () => {
     ['RECRUITER', false, false],
     ['RECRUITER', true, true],
     ['VIEWER', true, false],
+    ['COUNTRY_AGENT', true, false],
     ['CANDIDATE', true, false],
   ] as const)('%s with the recruiter setting %s: %s', (role, setting, expected) => {
     expect(canDeleteRecords(role, setting)).toBe(expected);

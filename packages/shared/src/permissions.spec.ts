@@ -3,22 +3,24 @@ import { USER_ROLES, type UserRole } from './enums.js';
 import { hasPermission, PERMISSIONS, type Permission } from './permissions.js';
 
 // Rows of the privileges table in docs/SPEC.md, in the column order
-// Candidate, Viewer, Recruiter, Super admin.
-const SPEC_TABLE: Record<Permission, [boolean, boolean, boolean, boolean]> = {
-  MANAGE_OWN_PROFILE: [true, false, false, false],
-  APPLY_TO_JOBS: [true, false, false, false],
-  MANAGE_OWN_DATA: [true, false, false, false],
-  VIEW_CANDIDATES: [false, true, true, true],
-  MANAGE_JOBS: [false, false, true, true],
-  MANAGE_APPLICATIONS: [false, false, true, true],
-  MANAGE_CONTENT: [false, false, true, true],
-  EXPORT_APPLICATIONS: [false, false, true, true],
-  MANAGE_ADMIN_USERS: [false, false, false, true],
-  MANAGE_SETTINGS: [false, false, false, true],
-  WAIVE_COOLDOWN: [false, false, false, true],
+// Candidate, Viewer, Country agent, Recruiter, Super admin.
+const SPEC_TABLE: Record<Permission, [boolean, boolean, boolean, boolean, boolean]> = {
+  MANAGE_OWN_PROFILE: [true, false, false, false, false],
+  APPLY_TO_JOBS: [true, false, false, false, false],
+  MANAGE_OWN_DATA: [true, false, false, false, false],
+  VIEW_CANDIDATES: [false, true, true, true, true],
+  VIEW_BACK_OFFICE: [false, true, false, true, true],
+  MANAGE_JOBS: [false, false, false, true, true],
+  MANAGE_APPLICATIONS: [false, false, true, true, true],
+  MANAGE_CANDIDATES: [false, false, false, true, true],
+  MANAGE_CONTENT: [false, false, false, true, true],
+  EXPORT_APPLICATIONS: [false, false, false, true, true],
+  MANAGE_ADMIN_USERS: [false, false, false, false, true],
+  MANAGE_SETTINGS: [false, false, false, false, true],
+  WAIVE_COOLDOWN: [false, false, false, false, true],
 };
 
-const COLUMNS: UserRole[] = ['CANDIDATE', 'VIEWER', 'RECRUITER', 'SUPER_ADMIN'];
+const COLUMNS: UserRole[] = ['CANDIDATE', 'VIEWER', 'COUNTRY_AGENT', 'RECRUITER', 'SUPER_ADMIN'];
 
 describe('PERMISSIONS', () => {
   it('covers every row of the specification and nothing else', () => {
@@ -37,12 +39,21 @@ describe('PERMISSIONS', () => {
     const viewer = (Object.keys(PERMISSIONS) as Permission[]).filter((p) =>
       hasPermission('VIEWER', p),
     );
-    expect(viewer).toEqual(['VIEW_CANDIDATES']);
+    expect(viewer).toEqual(['VIEW_CANDIDATES', 'VIEW_BACK_OFFICE']);
+  });
+
+  it('gives the country agent the candidates of his countries and their applications, nothing else', () => {
+    const agent = (Object.keys(PERMISSIONS) as Permission[]).filter((p) =>
+      hasPermission('COUNTRY_AGENT', p),
+    );
+    expect(agent).toEqual(['VIEW_CANDIDATES', 'MANAGE_APPLICATIONS']);
   });
 
   it('gives a candidate no back-office capability', () => {
     const backOffice: Permission[] = [
       'VIEW_CANDIDATES',
+      'VIEW_BACK_OFFICE',
+      'MANAGE_CANDIDATES',
       'MANAGE_JOBS',
       'MANAGE_APPLICATIONS',
       'MANAGE_CONTENT',

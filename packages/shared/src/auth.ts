@@ -71,6 +71,10 @@ export const currentUserSchema = z.object({
   locale: localeSchema,
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
+  /** Set when a super admin chose the password: only a password change is allowed until then. */
+  passwordChangeRequired: z.boolean(),
+  /** COUNTRY_AGENT: nationalities of the candidates he follows. Empty for other roles. */
+  assignedCountries: z.array(z.string()),
 });
 export type CurrentUser = z.infer<typeof currentUserSchema>;
 
@@ -83,16 +87,53 @@ export type Acknowledgement = z.infer<typeof acknowledgementSchema>;
 export const adminRoleSchema = z.enum(ADMIN_ROLES);
 export type AdminRole = z.infer<typeof adminRoleSchema>;
 
-export const createAdminUserSchema = z.object({
-  email: emailSchema,
-  role: adminRoleSchema,
-  /** Language of the invitation email. */
-  locale: localeSchema.default('en'),
-});
+/** ISO codes of a country agent: at least one, each once. */
+export const assignedCountriesSchema = z
+  .array(countryCodeSchema)
+  .max(50)
+  .refine((codes) => new Set(codes).size === codes.length, {
+    message: 'Each country may appear once',
+  });
+
+/** A country agent needs at least one country; the other roles take none. */
+const countriesMatchRole = (body: { role: AdminRole; countries?: string[] | undefined }) =>
+  body.role === 'COUNTRY_AGENT'
+    ? (body.countries?.length ?? 0) > 0
+    : (body.countries?.length ?? 0) === 0;
+const countriesIssue = {
+  message: 'A country agent needs at least one country; other roles take none',
+  path: ['countries'],
+};
+
+export const createAdminUserSchema = z
+  .object({
+    email: emailSchema,
+    role: adminRoleSchema,
+    /** Language of the invitation email. */
+    locale: localeSchema.default('en'),
+    /** COUNTRY_AGENT only: the nationalities he follows. */
+    countries: assignedCountriesSchema.optional(),
+    /**
+     * Set the first password now instead of sending an invitation. The person must change
+     * it at the first sign-in; it is never returned or logged.
+     */
+    password: passwordSchema.optional(),
+  })
+  .refine(countriesMatchRole, countriesIssue);
 export type CreateAdminUserInput = z.infer<typeof createAdminUserSchema>;
 
-export const changeAdminRoleSchema = z.object({ role: adminRoleSchema });
+export const changeAdminRoleSchema = z
+  .object({
+    role: adminRoleSchema,
+    /** COUNTRY_AGENT only, and required for it. */
+    countries: assignedCountriesSchema.optional(),
+  })
+  .refine(countriesMatchRole, countriesIssue);
 export type ChangeAdminRoleInput = z.infer<typeof changeAdminRoleSchema>;
+
+/** A super admin sets the password of a back-office account; it must be changed at the next sign-in. */
+export const setAdminPasswordSchema = z.object({ password: passwordSchema });
+export type SetAdminPasswordInput = z.infer<typeof setAdminPasswordSchema>;
 
 export const listAdminUsersQuerySchema = paginationQuerySchema.extend({
   role: adminRoleSchema.optional(),
@@ -106,6 +147,10 @@ export const adminUserSchema = z.object({
   isActive: z.boolean(),
   /** False while the invitation has not been accepted. */
   hasPassword: z.boolean(),
+  /** True while a password chosen by a super admin has not been changed by the person. */
+  passwordChangeRequired: z.boolean(),
+  /** COUNTRY_AGENT: his countries (ISO codes). Empty for other roles. */
+  assignedCountries: z.array(z.string()),
   locale: localeSchema,
   lastLoginAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),

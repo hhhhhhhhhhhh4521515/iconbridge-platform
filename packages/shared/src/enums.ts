@@ -2,12 +2,26 @@ import './zod-setup.js';
 import { z } from 'zod';
 
 /** Account roles. Visitors are unauthenticated and have no role. */
-export const USER_ROLES = ['CANDIDATE', 'VIEWER', 'RECRUITER', 'SUPER_ADMIN'] as const;
+export const USER_ROLES = [
+  'CANDIDATE',
+  'VIEWER',
+  'COUNTRY_AGENT',
+  'RECRUITER',
+  'SUPER_ADMIN',
+] as const;
 export const userRoleSchema = z.enum(USER_ROLES);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
-/** Roles that can sign in to the admin area. VIEWER is read only. */
-export const ADMIN_ROLES = ['VIEWER', 'RECRUITER', 'SUPER_ADMIN'] as const satisfies UserRole[];
+/**
+ * Roles that can sign in to the admin area. VIEWER is read only; COUNTRY_AGENT only reaches
+ * the candidates whose nationality is one of his countries (ADR-024).
+ */
+export const ADMIN_ROLES = [
+  'VIEWER',
+  'COUNTRY_AGENT',
+  'RECRUITER',
+  'SUPER_ADMIN',
+] as const satisfies UserRole[];
 
 /**
  * Built-in destinations. Destinations live in a database table so admins can add
