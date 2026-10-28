@@ -1051,7 +1051,7 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 
 ## 2026-10-28 - One warm replica per app, 40 USD budget
 
-**What**: the web app and the API keep one replica running (`min_replicas = 1`, sizes unchanged); the budget of the resource group goes from 15 to 40 USD a month. ADR-022 records the cost, the runbook gains "Costs and the budget".
+**What**: the web app and the API keep one replica running (`min_replicas = 1`, sizes unchanged); the budget of the resource group goes from 15 to 40 USD a month. ADR-022 records the cost, the runbook gains "Costs and the budget". Public settings of production move to a committed `production.auto.tfvars`, which Terraform reads after the `TF_VARS_PROD` secret: they now change through pull requests.
 
 **Why**: the owner raised the budget to remove the cold start (10–20 s per app of platform start-up that ADR-017 could not remove).
 
