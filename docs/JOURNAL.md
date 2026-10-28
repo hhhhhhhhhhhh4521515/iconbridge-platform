@@ -1048,3 +1048,15 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: a fake `az` that fails twice then answers: the script reports the revision ready; shellcheck, actionlint and prettier clean; the full CI on the PR.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/43>
+
+## 2026-10-28 - One warm replica per app, 40 USD budget
+
+**What**: the web app and the API keep one replica running (`min_replicas = 1`, sizes unchanged); the budget of the resource group goes from 15 to 40 USD a month. ADR-022 records the cost, the runbook gains "Costs and the budget".
+
+**Why**: the owner raised the budget to remove the cold start (10–20 s per app of platform start-up that ADR-017 could not remove).
+
+**Cost**: about 30 USD a month with no visitor (memory and idle vCPU of two 0.5 vCPU / 1 GiB replicas at Italy North prices), 30 to 37 expected. Measured while running over 25–28 October: API 0.055 vCPU and 190 MB on average, web 0.040 vCPU and 125 MB. The CLI cannot read prices on this offer; the portal's Cost Management will confirm after a few days.
+
+**Checks**: `make tf-check` (fmt, validate, tflint, checkov 28 passed); local plan: 3 to change (budget amount, api and web `min_replicas`), nothing added or destroyed.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/44>
