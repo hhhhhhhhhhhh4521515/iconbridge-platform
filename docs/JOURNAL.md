@@ -1038,3 +1038,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: the accessibility tests with axe-core 4.14 installed temporarily: 32 passed (desk and phone); `pnpm lint`, `typecheck`, `test` pass; `pnpm test:browser` 153 passed (the home page test finds the Malta card by its visible name and its link).
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/42>
+
+## 2026-10-28 - Deployment polling survives a passing Azure outage
+
+**What**: `wait-revisions.sh` and the migration wait in `deploy.yml` treat a failed `az` read as "not ready yet" and retry until their deadline (6 and 15 minutes, unchanged). One-off writes still fail the step.
+
+**Why**: the deployment of c3a0ad6 (run 40594817103) rolled back because Azure Resource Manager answered 503 once while the new revisions were polled. The rollback worked and production stayed on d951372, but a passing Azure outage should not cancel a good release.
+
+**Checks**: a fake `az` that fails twice then answers: the script reports the revision ready; shellcheck, actionlint and prettier clean; the full CI on the PR.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/43>
