@@ -202,6 +202,19 @@ describe('security (e2e)', () => {
       await login().expect(401);
     });
 
+    it('accepts the other addresses of the site (WEB_ORIGIN_ALIASES) like the web origin', async () => {
+      await login('http://old-address.localhost:3000').expect(401);
+      const response = await test
+        .http()
+        .get(`${API}/auth/session`)
+        .set('Origin', 'http://old-address.localhost:3000')
+        .expect(200);
+      expect(response.headers['access-control-allow-origin']).toBe(
+        'http://old-address.localhost:3000',
+      );
+      await login('http://other-address.localhost:3000').expect(403);
+    });
+
     it('does not let another site read the API with the visitor session (CORS)', async () => {
       const response = await test
         .http()

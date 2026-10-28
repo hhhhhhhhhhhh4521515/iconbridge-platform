@@ -28,9 +28,9 @@ output "tasks_job_name" {
   value       = azurerm_container_app_job.tasks.name
 }
 
-output "managed_certificate_name" {
-  description = "With a custom domain: name of its managed certificate, for `az containerapp hostname bind`."
-  value       = one(azurerm_container_app_environment_managed_certificate.web[*].name)
+output "managed_certificate_names" {
+  description = "Custom host name => name of its managed certificate, for `az containerapp hostname bind`."
+  value       = { for name, certificate in azurerm_container_app_environment_managed_certificate.web : name => certificate.name }
 }
 
 output "api_id" {

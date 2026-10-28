@@ -30,8 +30,12 @@ export function configureHttp(app: NestExpressApplication): void {
     }),
   );
   app.use(cookieParser());
+  const webOrigins = [
+    config.get('WEB_ORIGIN', { infer: true }),
+    ...config.get('WEB_ORIGIN_ALIASES', { infer: true }),
+  ];
   // State-changing requests started by a page of another site are refused (CSRF).
-  app.use(originCheck([config.get('WEB_ORIGIN', { infer: true })]));
+  app.use(originCheck(webOrigins));
 
   app.setGlobalPrefix(API_PREFIX, {
     exclude: [
@@ -40,8 +44,8 @@ export function configureHttp(app: NestExpressApplication): void {
     ],
   });
   // The web app proxies /api/v1 on its own origin, so browsers normally make no
-  // cross-origin call. CORS stays limited to the web origin for tools and tests.
-  app.enableCors({ origin: config.get('WEB_ORIGIN', { infer: true }), credentials: true });
+  // cross-origin call. CORS stays limited to the web origins for tools and tests.
+  app.enableCors({ origin: webOrigins, credentials: true });
   app.enableShutdownHooks();
 
   // The web app and the Azure ingress keep their connections to the API open and use

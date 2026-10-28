@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
+import { canonicalRedirectUrl } from './lib/canonical-host';
 import { contentSecurityPolicy, createNonce, parseOrigins } from './lib/csp';
 
 const handleI18n = createIntlMiddleware(routing);
@@ -65,6 +66,16 @@ function privateAreaRedirect(request: NextRequest): NextResponse | null {
 export default function proxy(request: NextRequest): NextResponse {
   if (request.nextUrl.pathname.startsWith(API_PREFIX)) {
     return proxyToApi(request);
+  }
+  // Pages only: /api/v1 calls of a page still open on an old address keep working, and
+  // the health endpoints (outside the matcher) stay reachable on the Azure address.
+  const canonical = canonicalRedirectUrl(
+    process.env.NEXT_PUBLIC_SITE_URL,
+    request.headers.get('host'),
+    `${request.nextUrl.pathname}${request.nextUrl.search}`,
+  );
+  if (canonical) {
+    return NextResponse.redirect(canonical, 308);
   }
   const redirect = privateAreaRedirect(request);
   if (redirect) {

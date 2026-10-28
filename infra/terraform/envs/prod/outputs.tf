@@ -59,9 +59,46 @@ output "custom_domain_verification_id" {
   sensitive   = true
 }
 
-output "managed_certificate_name" {
-  description = "With a custom domain: its managed certificate, to bind once (docs/DEPLOYMENT.md, \"Custom domain\")."
-  value       = module.container_apps.managed_certificate_name
+output "managed_certificate_names" {
+  description = "With a custom domain: host name => its managed certificate, to bind once (docs/DEPLOYMENT.md, \"Custom domain\")."
+  value       = module.container_apps.managed_certificate_names
+}
+
+output "dns_records" {
+  description = "Records to create at the DNS provider (DNS only, not proxied) for custom_domain, its aliases and email_domain. Available as soon as the names are set, before enable_custom_domain and use_email_domain."
+  value = concat(
+    var.custom_domain == "" ? [] : [
+      {
+        purpose = "site address"
+        type    = "A"
+        name    = var.custom_domain
+        value   = data.azurerm_container_app_environment.this.static_ip_address
+      },
+      {
+        purpose = "site ownership"
+        type    = "TXT"
+        name    = "asuid.${var.custom_domain}"
+        value   = nonsensitive(azapi_resource.container_app_environment.output.properties.customDomainConfiguration.customDomainVerificationId)
+      },
+    ],
+    flatten([
+      for alias in var.custom_domain_aliases : [
+        {
+          purpose = "site alias"
+          type    = "CNAME"
+          name    = alias
+          value   = module.container_apps.web_fqdn
+        },
+        {
+          purpose = "site alias ownership"
+          type    = "TXT"
+          name    = "asuid.${alias}"
+          value   = nonsensitive(azapi_resource.container_app_environment.output.properties.customDomainConfiguration.customDomainVerificationId)
+        },
+      ]
+    ]),
+    module.email.dns_records,
+  )
 }
 
 output "mail_sender" {

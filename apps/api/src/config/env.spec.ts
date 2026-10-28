@@ -101,6 +101,19 @@ describe('validateEnv', () => {
     });
   });
 
+  it('reads the other addresses of the site as a list, empty by default', () => {
+    expect(validateEnv(valid).WEB_ORIGIN_ALIASES).toEqual([]);
+    expect(
+      validateEnv({
+        ...valid,
+        WEB_ORIGIN_ALIASES: ' https://old.example.test , https://www.example.test,',
+      }).WEB_ORIGIN_ALIASES,
+    ).toEqual(['https://old.example.test', 'https://www.example.test']);
+    expect(() => validateEnv({ ...valid, WEB_ORIGIN_ALIASES: 'old.example.test' })).toThrow(
+      /WEB_ORIGIN_ALIASES/,
+    );
+  });
+
   it('rejects a database URL that is not PostgreSQL', () => {
     expect(() => validateEnv({ ...valid, DATABASE_URL: 'mysql://localhost/db' })).toThrow(
       /DATABASE_URL/,

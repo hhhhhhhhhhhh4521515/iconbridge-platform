@@ -5,6 +5,8 @@ Object.assign(process.env, {
   NODE_ENV: 'test',
   PORT: '4001',
   WEB_ORIGIN: 'http://localhost:3000',
+  // Like the default Azure address while a custom domain takes over.
+  WEB_ORIGIN_ALIASES: 'http://old-address.localhost:3000',
   DATABASE_URL: testDatabaseUrl(),
   SMTP_HOST: 'localhost',
   SMTP_PORT: '1',

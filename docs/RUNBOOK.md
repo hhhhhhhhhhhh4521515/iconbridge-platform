@@ -161,6 +161,16 @@ Both apps keep one warm replica, so the site never cold-starts ([ADR-022](adr/AD
 - **Back to scale to zero** (saves about 30 USD, brings back a 20–60 s wait for the first visitor): set `min_replicas = 0` in `api_size` and `web_size` (`infra/terraform/envs/prod/variables.tf`) through a pull request; `infra.yml` applies it after approval.
 - **Cheaper middle ground**: the API at `cpu = 0.25, memory = "0.5Gi"` (about 7.5 USD less), or `min_replicas = 1` for the web app only.
 
+## Domain and email domain
+
+The site is `https://iconbridgerecruitment.com`; `www.` and the default Azure address redirect to it ([ADR-023](adr/ADR-023-custom-domain-and-email-domain.md)). Emails leave from `noreply@iconbridgerecruitment.com` once the email domain is verified. DNS is at Cloudflare; every record of `terraform -chdir=infra/terraform/envs/prod output -json dns_records` must stay **DNS only** (grey cloud).
+
+- **Check**: `curl -sI https://www.iconbridgerecruitment.com/en | grep -i location` (308 to the apex), `curl -s https://iconbridgerecruitment.com/api/health/ready`, and `az containerapp hostname list -g rg-iconbridge-prod -n ca-iconbridge-web-prod-itn -o table` (each name `SniEnabled` with a certificate).
+- **Certificates** are Azure's managed ones and renew themselves while the A, CNAME and `asuid` records stay unchanged and unproxied. If a renewal fails (portal: environment → **Certificates**), check the records with `dig`, then bind again (DEPLOYMENT.md, "Custom domain", step 3).
+- **Site down on the domain but up on the Azure address**: a DNS change at Cloudflare (proxy switched on, record edited or deleted). Put the records back as `dns_records` lists them.
+- **Emails refused or in spam**: `az communication email domain show -g rg-iconbridge-prod --email-service-name ecs-iconbridge-prod-itn --name iconbridgerecruitment.com --query verificationStates`; every state must be `Verified`. To fall back while it is fixed: `use_email_domain = false` in `production.auto.tfvars` (pull request), and emails leave from the Azure-managed domain again (10 an hour).
+- **Sending limit**: starting limit 100 emails an hour (`EMAIL_HOURLY_QUOTA`); raising it is a support request (DEPLOYMENT.md, "Email on the site's domain", step 4), then `email_hourly_quota` in `production.auto.tfvars`.
+
 ## Rotate secrets
 
 Secrets live in Key Vault; the apps read them when a revision starts. After any change, restart:

@@ -17,6 +17,8 @@ describe('the clean-up of the browser tests', () => {
   it('refuses the production site and anything else', () => {
     for (const url of [
       'https://ca-iconbridge-web-prod-itn.ambitioushill-65b541eb.italynorth.azurecontainerapps.io',
+      'https://iconbridgerecruitment.com',
+      'https://www.iconbridgerecruitment.com',
       'https://jobs.example.com',
       'http://localhost.evil.example',
       'http://10.0.0.5:3000',
