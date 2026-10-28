@@ -92,35 +92,69 @@ variable "budget_start_date" {
 }
 
 variable "enable_custom_domain" {
-  description = "Serve the web app on custom_domain with a free managed certificate."
+  description = "Serve the web app on custom_domain (and custom_domain_aliases) with free managed certificates. Their DNS records (output dns_records) must exist first."
   type        = bool
   default     = false
 }
 
 variable "custom_domain" {
-  description = "With enable_custom_domain: e.g. jobs.example.com. Its CNAME and TXT records must exist first."
+  description = "Main address of the site, an apex domain such as example.com (A record to the environment). Set it before enable_custom_domain to get the DNS records."
   type        = string
   default     = ""
 
   validation {
     condition     = var.custom_domain == "" || can(regex("^([a-z0-9-]+\\.)+[a-z]{2,}$", var.custom_domain))
-    error_message = "A host name such as jobs.example.com."
+    error_message = "A host name such as example.com."
+  }
+}
+
+variable "custom_domain_aliases" {
+  description = "Other names of the site, each a CNAME to the web app (e.g. www.example.com): they get a certificate and the web app redirects them to custom_domain."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for alias in var.custom_domain_aliases : can(regex("^([a-z0-9-]+\\.)+[a-z]{2,}$", alias))])
+    error_message = "Host names such as www.example.com."
+  }
+}
+
+variable "email_domain" {
+  description = "Domain the emails are sent from, e.g. example.com. Azure creates it unverified and gives its DNS records (output dns_records). Empty: the Azure-managed domain only."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.email_domain == "" || can(regex("^([a-z0-9-]+\\.)+[a-z]{2,}$", var.email_domain))
+    error_message = "A domain such as example.com."
+  }
+}
+
+variable "use_email_domain" {
+  description = "Send from noreply@<email_domain> (display name mail_display_name). Only after the domain is verified (docs/DEPLOYMENT.md, \"Email on the site's domain\")."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.use_email_domain || var.email_domain != ""
+    error_message = "use_email_domain needs email_domain."
   }
 }
 
 variable "mail_display_name" {
-  description = "Display name of the sender DoNotReply@<Azure-managed domain>, set once with az after the first apply (docs/DEPLOYMENT.md)."
+  description = "Display name of the sender: set by Terraform on noreply@<email_domain>; on DoNotReply@<Azure-managed domain> it is set once with az (docs/DEPLOYMENT.md)."
   type        = string
   default     = "IconBridge Recruitment"
 }
 
 variable "email_hourly_quota" {
-  description = "Emails Azure accepts per hour for the subscription: 10 with an Azure-managed domain (cannot be raised). Job alerts use at most half."
+  description = "Emails Azure accepts per hour for the subscription (job alerts use at most half). Null: 10 with the Azure-managed domain (cannot be raised), 100 with a verified custom domain (Azure's starting limit); set it after Azure raises the limit."
   type        = number
-  default     = 10
+  default     = null
+  nullable    = true
 
   validation {
-    condition     = var.email_hourly_quota >= 2
+    condition     = var.email_hourly_quota == null || try(var.email_hourly_quota >= 2, false)
     error_message = "At least 2, so job alerts get at least one email an hour."
   }
 }

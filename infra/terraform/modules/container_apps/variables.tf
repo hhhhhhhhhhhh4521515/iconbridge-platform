@@ -134,8 +134,13 @@ variable "identity_client_id" {
   type        = string
 }
 
-variable "custom_domain" {
-  description = "Custom domain of the web app, e.g. jobs.example.com. Empty: the default Azure address only."
-  type        = string
-  default     = ""
+variable "custom_domains" {
+  description = "Custom host names of the web app, each with the validation of its managed certificate: \"HTTP\" for a name with an A record (apex domain), \"CNAME\" for a name with a CNAME record (www). Empty: the default Azure address only."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition     = alltrue([for method in values(var.custom_domains) : contains(["HTTP", "CNAME"], method)])
+    error_message = "Each validation is \"HTTP\" or \"CNAME\"."
+  }
 }

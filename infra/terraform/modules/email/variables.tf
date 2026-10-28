@@ -29,3 +29,32 @@ variable "sender_username" {
   type        = string
   default     = "DoNotReply"
 }
+
+variable "custom_domain" {
+  description = "The site's own email domain, e.g. example.com. Empty: the Azure-managed domain only."
+  type        = string
+  default     = ""
+}
+
+variable "use_custom_domain" {
+  description = "Send from custom_sender_username@custom_domain. Only once the domain is verified: Azure refuses to link it before."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.use_custom_domain || var.custom_domain != ""
+    error_message = "use_custom_domain needs custom_domain."
+  }
+}
+
+variable "custom_sender_username" {
+  description = "Local part of the sender address on the custom domain."
+  type        = string
+  default     = "noreply"
+}
+
+variable "display_name" {
+  description = "Display name of the sender on the custom domain."
+  type        = string
+  default     = "IconBridge Recruitment"
+}

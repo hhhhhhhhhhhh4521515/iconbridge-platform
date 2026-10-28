@@ -25,12 +25,21 @@ locals {
   }
 
   # The default address of an external Container App: <app name>.<environment domain>.
-  web_app_name = "ca-iconbridge-web-${local.name_suffix}"
-  web_origin = (
-    var.enable_custom_domain
-    ? "https://${var.custom_domain}"
-    : "https://${local.web_app_name}.${azapi_resource.container_app_environment.output.properties.defaultDomain}"
-  )
+  web_app_name   = "ca-iconbridge-web-${local.name_suffix}"
+  default_origin = "https://${local.web_app_name}.${azapi_resource.container_app_environment.output.properties.defaultDomain}"
+  web_origin     = var.enable_custom_domain ? "https://${var.custom_domain}" : local.default_origin
+
+  # With the custom domain, the default address keeps answering: the web app redirects its
+  # pages to the domain, and the API and storage still accept it as an origin, so a page
+  # opened before the switch keeps working (ADR-023).
+  web_origin_aliases = var.enable_custom_domain ? [local.default_origin] : []
+
+  # Host name => validation of its managed certificate: the apex domain has an A record
+  # (HTTP validation), the aliases a CNAME.
+  custom_domains = var.enable_custom_domain ? merge(
+    { (var.custom_domain) = "HTTP" },
+    { for alias in var.custom_domain_aliases : alias => "CNAME" },
+  ) : {}
 }
 
 resource "azurerm_resource_group" "this" {
@@ -120,7 +129,7 @@ module "storage" {
   tags                  = local.tags
   apps_principal_id     = module.identity.principal_id
   deployer_principal_id = var.owner_object_id
-  cors_allowed_origins  = [local.web_origin]
+  cors_allowed_origins  = concat([local.web_origin], local.web_origin_aliases)
 
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
 }
@@ -131,6 +140,9 @@ module "email" {
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.tags
   apps_principal_id   = module.identity.principal_id
+  custom_domain       = var.email_domain
+  use_custom_domain   = var.use_email_domain
+  display_name        = var.mail_display_name
 }
 
 module "keyvault" {
@@ -222,6 +234,12 @@ resource "azapi_resource" "container_app_environment" {
   }
 }
 
+# Static IP of the environment: the A record of an apex custom domain points to it.
+data "azurerm_container_app_environment" "this" {
+  name                = azapi_resource.container_app_environment.name
+  resource_group_name = azurerm_resource_group.this.name
+}
+
 module "container_apps" {
   source              = "../../modules/container_apps"
   name_suffix         = local.name_suffix
@@ -234,7 +252,7 @@ module "container_apps" {
   registry_server     = module.registry.server
   registry_username   = var.ghcr_username
   secret_ids          = module.keyvault.secret_ids
-  custom_domain       = var.enable_custom_domain ? var.custom_domain : ""
+  custom_domains      = local.custom_domains
   api                 = var.api_size
   web                 = var.web_size
 
@@ -242,9 +260,10 @@ module "container_apps" {
   backup_container_url = module.storage.backups_container_url
 
   api_env = {
-    NODE_ENV   = "production"
-    PORT       = "4000"
-    WEB_ORIGIN = local.web_origin
+    NODE_ENV           = "production"
+    PORT               = "4000"
+    WEB_ORIGIN         = local.web_origin
+    WEB_ORIGIN_ALIASES = join(",", local.web_origin_aliases)
     # Empty: the API tells the web app about changes through WEB_ORIGIN.
     WEB_INTERNAL_URL                = ""
     AZURE_STORAGE_ACCOUNT_URL       = module.storage.blob_endpoint
@@ -257,7 +276,7 @@ module "container_apps" {
     AZURE_COMMUNICATION_ENDPOINT = module.email.endpoint
     MAIL_FROM                    = module.email.sender_address
     # Emails the mail service accepts per hour: job alerts may use half (outbox priorities).
-    EMAIL_HOURLY_QUOTA = tostring(var.email_hourly_quota)
+    EMAIL_HOURLY_QUOTA = tostring(coalesce(var.email_hourly_quota, var.use_email_domain ? 100 : 10))
     MAIL_DELIVERY      = "background"
     TRUST_PROXY_HOPS   = tostring(var.trust_proxy_hops)
     SCHEDULER_ENABLED  = "false"

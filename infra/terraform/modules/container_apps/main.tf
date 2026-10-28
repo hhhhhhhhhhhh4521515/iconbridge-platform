@@ -444,19 +444,21 @@ resource "azurerm_container_app_job" "backup" {
 }
 
 # ---------------------------------------------------------------------------
-# Optional custom domain with a free managed certificate, for the web app only (the API
-# has no public address). The DNS records must exist first: a CNAME to the default
-# address of the web app and a TXT `asuid.<domain>` with the verification id (outputs).
+# Optional custom domains with free managed certificates, for the web app only (the API
+# has no public address). The DNS records must exist first (output dns_records of the
+# environment): for an apex domain an A record to the environment's IP, for a subdomain a
+# CNAME to the default address of the web app, and for each a TXT `asuid.<name>` with the
+# verification id.
 #
-# Terraform adds the host name (unbound) and asks Azure for the certificate, which Azure
+# Terraform adds each host name (unbound) and asks Azure for its certificate, which Azure
 # issues and renews itself. The provider cannot bind a managed certificate, so the last
-# step is one `az containerapp hostname bind` (docs/DEPLOYMENT.md); the binding is then
-# ignored here.
+# step is one `az containerapp hostname bind` per name (docs/DEPLOYMENT.md); the binding
+# is then ignored here.
 
 resource "azurerm_container_app_custom_domain" "web" {
-  count = var.custom_domain == "" ? 0 : 1
+  for_each = var.custom_domains
 
-  name             = var.custom_domain
+  name             = each.key
   container_app_id = azurerm_container_app.web.id
 
   lifecycle {
@@ -465,12 +467,12 @@ resource "azurerm_container_app_custom_domain" "web" {
 }
 
 resource "azurerm_container_app_environment_managed_certificate" "web" {
-  count = var.custom_domain == "" ? 0 : 1
+  for_each = var.custom_domains
 
-  name                         = "mc-${replace(var.custom_domain, ".", "-")}"
+  name                         = "mc-${replace(each.key, ".", "-")}"
   container_app_environment_id = var.environment_id
-  subject_name                 = var.custom_domain
-  domain_control_validation    = "CNAME"
+  subject_name                 = each.key
+  domain_control_validation    = each.value
   tags                         = var.tags
 
   # Azure validates the host name through the app that carries it.
