@@ -29,6 +29,18 @@ const registration = {
   locale: 'fr',
 };
 
+/**
+ * No password, hash or token in an answer: no key that holds one (the flag
+ * `passwordChangeRequired` is a boolean, not a secret) and no argon2 hash or JWT anywhere.
+ */
+function expectNoSecret(body: unknown): void {
+  const text = JSON.stringify(body);
+  expect(text).not.toMatch(
+    /"(password|passwordHash|currentPassword|newPassword|token|accessToken|refreshToken)"\s*:/i,
+  );
+  expect(text).not.toMatch(/\$argon2|eyJ[A-Za-z0-9_-]+\.eyJ/);
+}
+
 describe('authentication (e2e)', () => {
   let test: TestApp;
 
@@ -113,7 +125,7 @@ describe('authentication (e2e)', () => {
       locale: 'fr',
       firstName: 'Amira',
     });
-    expect(JSON.stringify(loggedIn.body)).not.toMatch(/password|token/i);
+    expectNoSecret(loggedIn.body);
     const cookies = cookiesFrom(loggedIn);
     expect(cookies.access?.split('.')).toHaveLength(3);
     expect(cookies.refresh).toMatch(/^[A-Za-z0-9_-]{43}$/);
@@ -544,7 +556,7 @@ describe('authentication (e2e)', () => {
       expect(session.body).toMatchObject({
         user: { id: user.id, role: 'CANDIDATE', emailVerified: true },
       });
-      expect(JSON.stringify(session.body)).not.toMatch(/password|token/i);
+      expectNoSecret(session.body);
 
       await test.prisma.user.update({ where: { id: user.id }, data: { isActive: false } });
       const after = await test

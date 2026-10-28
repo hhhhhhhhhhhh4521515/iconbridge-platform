@@ -71,7 +71,10 @@ const pageSchema = z.object({
 });
 const idSchema = z.object({ id: z.uuid() });
 
-/** Applications in the back office. Viewers read; recruiters and super admins act. */
+/**
+ * Applications in the back office. Viewers read; country agents act on the candidates of
+ * their countries only (404 for the others); recruiters and super admins act on all.
+ */
 @ApiTags('admin: applications')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_APPLICATIONS)
@@ -133,6 +136,7 @@ export class AdminApplicationsController {
 
   @Post('bulk-delete')
   @HttpCode(HttpStatus.OK)
+  @Roles(...PERMISSIONS.MANAGE_CANDIDATES)
   @SkipAudit()
   @ApiOperation({
     summary: 'Delete several applications',
@@ -199,6 +203,7 @@ export class AdminApplicationsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(...PERMISSIONS.MANAGE_CANDIDATES)
   @SkipAudit()
   @ApiOperation({
     summary: 'Delete an application',

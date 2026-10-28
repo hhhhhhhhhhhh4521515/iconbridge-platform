@@ -21,7 +21,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import {
-  ADMIN_ROLES,
   adminJobListQuerySchema,
   adminJobSchema,
   createJobSchema,
@@ -76,7 +75,7 @@ export class AdminJobsController {
   constructor(private readonly jobs: AdminJobsService) {}
 
   @Get()
-  @Roles(...ADMIN_ROLES)
+  @Roles(...PERMISSIONS.VIEW_BACK_OFFICE)
   @ApiOperation({ summary: 'List jobs of every status, newest first' })
   @ApiQuery({ name: 'status', required: false, enum: JOB_STATUSES })
   @ApiQuery({ name: 'destinationId', required: false })
@@ -97,7 +96,7 @@ export class AdminJobsController {
   }
 
   @Get(':id')
-  @Roles(...ADMIN_ROLES)
+  @Roles(...PERMISSIONS.VIEW_BACK_OFFICE)
   @ApiOperation({ summary: 'One job, including a deleted one' })
   @ApiId()
   @ApiZodResponse(200, adminJobSchema)

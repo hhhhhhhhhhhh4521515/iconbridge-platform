@@ -15,7 +15,7 @@ import { AppException, notFound } from '../common/errors/app.exception.js';
 import { inspectDocument } from '../documents/file-inspection.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { JobCoverService } from '../jobs/job-cover.service.js';
-import { localized } from '../jobs/job.mapper.js';
+import { localized, optionalLocalized } from '../jobs/job.mapper.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 
@@ -55,7 +55,7 @@ export class ContentService {
       jobTitle: row.jobTitle,
       destination: { code: row.destination.code, name: localized(row.destination.name) },
       visaApprovedAt: dateOnly(row.visaApprovedAt),
-      quote: localized(row.quote),
+      quote: optionalLocalized(row.quote),
     }));
   }
 
@@ -89,8 +89,8 @@ export class ContentService {
 
   /**
    * A draft story from an application that reached Visa approved or Deployed:
-   * name, job, destination and visa date are copied; the quote, the photo and
-   * the consent document still have to be added before it can be published.
+   * name, job, destination and visa date are copied; the photo and the consent
+   * document still have to be added before it can be published, the quote if any.
    */
   async createStoryFromApplication(applicationId: string): Promise<AdminSuccessStory> {
     const application = await this.prisma.application.findUnique({
@@ -124,7 +124,8 @@ export class ContentService {
         jobTitle: application.job.title,
         destinationId: application.job.destinationId,
         visaApprovedAt: dateOnly(application.statusHistory[0]?.createdAt ?? null),
-        quote: { en: '-', fr: '-', ar: '-' },
+        // Optional (ADR-024): the recruiter adds the candidate's words if there are any.
+        quote: { en: '', fr: '', ar: '' },
       },
       applicationId,
     );
@@ -387,7 +388,7 @@ export class ContentService {
         name: localized(row.destination.name),
       },
       visaApprovedAt: dateOnly(row.visaApprovedAt),
-      quote: localized(row.quote),
+      quote: optionalLocalized(row.quote),
       hasConsentDocument: row.consentDocumentPath !== null,
       isPublished: row.isPublished,
       sortOrder: row.sortOrder,
