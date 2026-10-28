@@ -31,35 +31,42 @@ The reasons are recorded in [ADR-001](adr/ADR-001-stack-choice.md).
 
 ## 2. Roles and privileges
 
-| Role              | Code in `packages/shared` | Who                        |
-| ----------------- | ------------------------- | -------------------------- |
-| Visitor           | none (not signed in)      | Anyone                     |
-| Candidate         | `CANDIDATE`               | Registered job seeker      |
-| Viewer (agent)    | `VIEWER`                  | Read-only back-office user |
-| Recruiter (admin) | `RECRUITER`               | Back-office user           |
-| Super admin       | `SUPER_ADMIN`             | Platform owner             |
+| Role              | Code in `packages/shared` | Who                                                                        |
+| ----------------- | ------------------------- | -------------------------------------------------------------------------- |
+| Visitor           | none (not signed in)      | Anyone                                                                     |
+| Candidate         | `CANDIDATE`               | Registered job seeker                                                      |
+| Viewer (agent)    | `VIEWER`                  | Read-only back-office user                                                 |
+| Country agent     | `COUNTRY_AGENT`           | Recruitment agent for one or more countries (ISO codes stored on the user) |
+| Recruiter (admin) | `RECRUITER`               | Back-office user                                                           |
+| Super admin       | `SUPER_ADMIN`             | Platform owner                                                             |
 
-| Capability                                                                            | Visitor | Candidate | Viewer    | Recruiter                                                           | Super admin |
-| ------------------------------------------------------------------------------------- | ------- | --------- | --------- | ------------------------------------------------------------------- | ----------- |
-| Browse jobs, home, success stories                                                    | Yes     | Yes       | Yes       | Yes                                                                 | Yes         |
-| Register, verify email, manage own profile and documents                              | -       | Yes       | -         | -                                                                   | -           |
-| Apply to a job, withdraw, track status                                                | -       | Yes       | -         | -                                                                   | -           |
-| Download / delete own data (GDPR)                                                     | -       | Yes       | -         | -                                                                   | -           |
-| See candidates, applications, documents                                               | -       | -         | Read only | Yes                                                                 | Yes         |
-| Create / edit / publish / close / delete job offers                                   | -       | -         | -         | Yes                                                                 | Yes         |
-| Change application status, add internal notes                                         | -       | -         | -         | Yes                                                                 | Yes         |
-| Manage success stories, home slides, categories, destinations                         | -       | -         | -         | Yes                                                                 | Yes         |
-| Export applications to CSV / Excel                                                    | -       | -         | -         | Yes                                                                 | Yes         |
-| Create / disable admin accounts, assign roles                                         | -       | -         | -         | -                                                                   | Yes         |
-| Global settings (cooldown period, upload limits), audit log                           | -       | -         | -         | -                                                                   | Yes         |
-| Enter historical results (figures from before the platform)                           | -       | -         | -         | -                                                                   | Yes         |
-| See the split "historical + platform" on the dashboard                                | -       | -         | Yes       | Yes                                                                 | Yes         |
-| Delete a candidate or an application (with a reason, audited)                         | -       | -         | -         | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
-| Delete a contact message, delete an admin account, erase the job alerts of an address | -       | -         | -         | -                                                                   | Yes         |
-| Lift the waiting period of one finished application (with a reason, audited)          | -       | -         | -         | -                                                                   | Yes         |
+A candidate belongs to a country by **nationality** only, never by country of residence. "Own countries" below means: only candidates whose nationality is one of the agent's countries; any other candidate, application or document answers 404, as if it did not exist ([ADR-024](adr/ADR-024-country-agents.md)).
+
+| Capability                                                                            | Visitor | Candidate | Viewer    | Country agent                  | Recruiter                                                           | Super admin |
+| ------------------------------------------------------------------------------------- | ------- | --------- | --------- | ------------------------------ | ------------------------------------------------------------------- | ----------- |
+| Browse jobs, home, success stories                                                    | Yes     | Yes       | Yes       | Yes                            | Yes                                                                 | Yes         |
+| Register, verify email, manage own profile and documents                              | -       | Yes       | -         | -                              | -                                                                   | -           |
+| Apply to a job, withdraw, track status                                                | -       | Yes       | -         | -                              | -                                                                   | -           |
+| Download / delete own data (GDPR)                                                     | -       | Yes       | -         | -                              | -                                                                   | -           |
+| See candidates, applications, status history, documents (5-minute links, audited)     | -       | -         | Read only | Own countries, read only       | Yes                                                                 | Yes         |
+| See the back-office lists of jobs (drafts included) and contact messages              | -       | -         | Yes       | -                              | Yes                                                                 | Yes         |
+| Create / edit / publish / close / delete job offers                                   | -       | -         | -         | -                              | Yes                                                                 | Yes         |
+| Change application status (with a message to the candidate), add internal notes       | -       | -         | -         | Own countries                  | Yes                                                                 | Yes         |
+| Disable / enable a candidate account, reveal a full passport number (audited)         | -       | -         | -         | -                              | Yes                                                                 | Yes         |
+| Manage success stories, home slides, categories, destinations                         | -       | -         | -         | -                              | Yes                                                                 | Yes         |
+| Export applications to CSV / Excel                                                    | -       | -         | -         | -                              | Yes                                                                 | Yes         |
+| Create / disable admin accounts, assign roles and countries, set a first password     | -       | -         | -         | -                              | -                                                                   | Yes         |
+| Global settings (cooldown period, upload limits), audit log                           | -       | -         | -         | -                              | -                                                                   | Yes         |
+| Enter historical results (figures from before the platform)                           | -       | -         | -         | -                              | -                                                                   | Yes         |
+| See the dashboard                                                                     | -       | -         | Yes       | Own countries only, no history | Yes                                                                 | Yes         |
+| See the split "historical + platform" on the dashboard                                | -       | -         | Yes       | -                              | Yes                                                                 | Yes         |
+| Delete a candidate or an application (with a reason, audited)                         | -       | -         | -         | -                              | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
+| Delete a contact message, delete an admin account, erase the job alerts of an address | -       | -         | -         | -                              | -                                                                   | Yes         |
+| Lift the waiting period of one finished application (with a reason, audited)          | -       | -         | -         | -                              | -                                                                   | Yes         |
 
 - The first super admin is created by a seed script from environment variables.
-- There is no public sign-up for admins.
+- There is no public sign-up for admins. A super admin creates a back-office account either with an invitation email (the person chooses the password) or by setting the first password directly; in that case the person must choose a new password at the first sign-in and can do nothing else before. The password follows the same strength rules, is never shown again, logged or audited.
+- A country agent has at least one country; other roles have none. Only a super admin changes them, and the change is audited.
 
 ## 3. Candidate profile
 
@@ -139,7 +146,7 @@ Animated hero slider (Malta, Poland, cruise ship slides managed by admin), job s
 
 Historical figures are stored apart from applications (year, destination, metric, value, note), every change is written to the audit log, and the back-office dashboard shows each total with its split (for example 253 = 250 historical + 3 platform) and can switch to "Platform only". Candidates deployed is a dashboard figure only.
 
-A success story has a photo, name, job, destination, visa date and short quote. It is published only with the candidate's written consent.
+A success story has a photo, name, job, destination, visa date and an optional short quote ("What the candidate says", in English, French and Arabic; the site shows no quote block when it is empty). It is published only with the candidate's written consent.
 
 ### 7.2 Jobs page
 
@@ -151,7 +158,7 @@ Email on registration, verification, application received, every status change, 
 
 ### 7.4 Admin dashboard
 
-KPIs (open jobs, applications this month, visas approved, by destination), a Kanban/table view of applications, candidate search, document preview, CSV export, audit log.
+KPIs (open jobs, applications this month, visas approved, by destination), a Kanban/table view of applications, candidate search, document preview, CSV export, audit log. A country agent sees the figures of his countries only.
 
 ### 7.5 Security and legal
 
