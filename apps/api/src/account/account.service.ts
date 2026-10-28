@@ -130,10 +130,18 @@ export class AccountService {
   ): Promise<{ tokenVersion: number }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { email: true, passwordHash: true },
+      select: { email: true, passwordHash: true, passwordChangeRequired: true },
     });
     if (!user.passwordHash || !(await verifyPassword(user.passwordHash, input.currentPassword))) {
       throw new AppException('INVALID_CREDENTIALS', HttpStatus.FORBIDDEN, 'Wrong password');
+    }
+    if (user.passwordChangeRequired && input.newPassword === input.currentPassword) {
+      // The password a super admin chose must really be replaced.
+      throw new AppException(
+        'WEAK_PASSWORD',
+        HttpStatus.BAD_REQUEST,
+        'Choose a password different from the one you were given',
+      );
     }
     this.passwordPolicy.assertStrong(input.newPassword, [user.email]);
     const passwordHash = await hashPassword(input.newPassword);
@@ -146,6 +154,7 @@ export class AccountService {
           tokenVersion: { increment: 1 },
           failedLoginCount: 0,
           lockedUntil: null,
+          passwordChangeRequired: false,
         },
         select: { tokenVersion: true },
       });

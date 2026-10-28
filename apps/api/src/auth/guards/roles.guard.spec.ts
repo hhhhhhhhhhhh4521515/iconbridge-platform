@@ -1,7 +1,13 @@
 import { PERMISSIONS, USER_ROLES, type UserRole } from '@iconbridge/shared';
 import { contextFor, user } from '../../../test/unit/context.js';
 import { AppException } from '../../common/errors/app.exception.js';
-import { IS_PUBLIC_KEY, ROLES_KEY, SELF_SERVICE_KEY } from '../decorators/index.js';
+import {
+  ALLOW_PASSWORD_CHANGE_KEY,
+  IS_PUBLIC_KEY,
+  OPTIONAL_AUTH_KEY,
+  ROLES_KEY,
+  SELF_SERVICE_KEY,
+} from '../decorators/index.js';
 import { isAdminPath, RolesGuard } from './roles.guard.js';
 
 function check(
@@ -25,6 +31,48 @@ describe('RolesGuard', () => {
     expect(check({ path: '/api/v1/auth/login', method: 'POST' }, { [IS_PUBLIC_KEY]: true })).toBe(
       'allowed',
     );
+  });
+
+  describe('a password chosen by a super admin (ADR-024)', () => {
+    const pending = (role: UserRole) => user(role, { passwordChangeRequired: true });
+
+    it('refuses every route until the password is changed, with PASSWORD_CHANGE_REQUIRED', () => {
+      const { context, reflector } = contextFor(
+        {
+          path: '/api/v1/admin/candidates',
+          method: 'GET',
+          user: pending('COUNTRY_AGENT'),
+        },
+        { [ROLES_KEY]: PERMISSIONS.VIEW_CANDIDATES },
+      );
+      expect(() => new RolesGuard(reflector).canActivate(context)).toThrow(
+        expect.objectContaining({ code: 'PASSWORD_CHANGE_REQUIRED' }),
+      );
+      expect(
+        check({ path: '/api/v1/me/settings', method: 'PATCH', user: pending('SUPER_ADMIN') }),
+      ).toBe(403);
+    });
+
+    it('keeps the password change, the session and the routes open to visitors', () => {
+      expect(
+        check(
+          { path: '/api/v1/me/password', method: 'POST', user: pending('COUNTRY_AGENT') },
+          { [ALLOW_PASSWORD_CHANGE_KEY]: true, [SELF_SERVICE_KEY]: true },
+        ),
+      ).toBe('allowed');
+      expect(
+        check(
+          { path: '/api/v1/auth/session', user: pending('VIEWER') },
+          { [OPTIONAL_AUTH_KEY]: true },
+        ),
+      ).toBe('allowed');
+    });
+
+    it('changes nothing for a user without the flag', () => {
+      expect(check({ path: '/api/v1/me/settings', method: 'PATCH', user: user('RECRUITER') })).toBe(
+        'allowed',
+      );
+    });
   });
 
   it('answers 401 when no user is attached to a protected route', () => {

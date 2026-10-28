@@ -1,10 +1,11 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { READ_ONLY_ROLES, type UserRole } from '@iconbridge/shared';
 import { ADMIN_PATH } from '../../app.constants.js';
-import { forbidden, unauthenticated } from '../../common/errors/app.exception.js';
+import { AppException, forbidden, unauthenticated } from '../../common/errors/app.exception.js';
 import type { RequestWithUser } from '../auth.types.js';
 import {
+  ALLOW_PASSWORD_CHANGE_KEY,
   IS_PUBLIC_KEY,
   OPTIONAL_AUTH_KEY,
   ROLES_KEY,
@@ -19,10 +20,12 @@ export function isAdminPath(path: string): boolean {
 
 /**
  * Global guard, after JwtAuthGuard. On top of the @Roles() lists it applies
- * three rules that do not depend on a decorator being remembered:
- * 1. a candidate never reaches a route under /admin;
- * 2. a route under /admin without @Roles() is refused to everybody;
- * 3. a read-only role (VIEWER) never performs a write, unless the route is @SelfService().
+ * four rules that do not depend on a decorator being remembered:
+ * 1. a user who must replace a password chosen by a super admin reaches nothing but the
+ *    routes marked @AllowPasswordChange() (ADR-024);
+ * 2. a candidate never reaches a route under /admin;
+ * 3. a route under /admin without @Roles() is refused to everybody;
+ * 4. a read-only role (VIEWER) never performs a write, unless the route is @SelfService().
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -41,6 +44,17 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
     if (!user) {
       throw unauthenticated();
+    }
+
+    if (
+      user.passwordChangeRequired &&
+      !this.reflector.getAllAndOverride<boolean | undefined>(ALLOW_PASSWORD_CHANGE_KEY, targets)
+    ) {
+      throw new AppException(
+        'PASSWORD_CHANGE_REQUIRED',
+        HttpStatus.FORBIDDEN,
+        'Choose a new password first',
+      );
     }
 
     const roles = this.reflector.getAllAndOverride<readonly UserRole[] | undefined>(

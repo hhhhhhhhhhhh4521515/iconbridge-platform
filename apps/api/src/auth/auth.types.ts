@@ -8,6 +8,10 @@ export interface AuthUser {
   role: UserRole;
   emailVerified: boolean;
   locale: Locale;
+  /** COUNTRY_AGENT: nationalities of the candidates he may reach (ADR-024). Empty otherwise. */
+  assignedCountries: string[];
+  /** Only a password change is allowed until the user replaces a password chosen by a super admin. */
+  passwordChangeRequired: boolean;
 }
 
 export type RequestWithUser = Request & { user?: AuthUser };

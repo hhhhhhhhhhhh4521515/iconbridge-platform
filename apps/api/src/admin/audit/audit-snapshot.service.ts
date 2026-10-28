@@ -26,6 +26,9 @@ export class AuditSnapshotService {
           tokenVersion: true,
           emailVerifiedAt: true,
           deletedAt: true,
+          // Whether a password was set and must be changed, never the password or its hash.
+          assignedCountries: true,
+          passwordChangeRequired: true,
         },
       });
       return user

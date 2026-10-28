@@ -6,13 +6,16 @@ import {
   localeSchema,
   type AdminRole,
   type AdminUser,
+  type ChangeAdminRoleInput,
   type CreateAdminUserInput,
   type ListAdminUsersQuery,
   type Paginated,
 } from '@iconbridge/shared';
 import { INVITATION_TTL_MS, msToHours } from '../../auth/auth.constants.js';
 import { EmailTokenService } from '../../auth/email-token.service.js';
+import { PasswordPolicyService } from '../../auth/password-policy.service.js';
 import { SessionService } from '../../auth/session.service.js';
+import { hashPassword } from '../../common/crypto/password.js';
 import { AppException, notFound } from '../../common/errors/app.exception.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { MailService } from '../../mail/mail.service.js';
@@ -24,6 +27,8 @@ const ADMIN_SELECT = {
   role: true,
   isActive: true,
   passwordHash: true,
+  passwordChangeRequired: true,
+  assignedCountries: true,
   locale: true,
   lastLoginAt: true,
   createdAt: true,
@@ -38,6 +43,8 @@ function toAdminUser(row: AdminRow): AdminUser {
     role: adminRoleSchema.parse(row.role),
     isActive: row.isActive,
     hasPassword: row.passwordHash !== null,
+    passwordChangeRequired: row.passwordChangeRequired,
+    assignedCountries: row.assignedCountries,
     locale: localeSchema.catch('en').parse(row.locale),
     lastLoginAt: row.lastLoginAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
@@ -51,7 +58,11 @@ const lastSuperAdmin = () =>
     'The platform must keep at least one active super admin',
   );
 
-/** Back-office accounts (VIEWER, RECRUITER, SUPER_ADMIN). Candidate accounts are out of scope: they answer 404. */
+/**
+ * Back-office accounts (VIEWER, COUNTRY_AGENT, RECRUITER, SUPER_ADMIN). Candidate accounts
+ * are out of scope: they answer 404. Passwords a super admin sets are hashed at once and
+ * never returned, logged or audited; the person must change them at the next sign-in.
+ */
 @Injectable()
 export class AdminUsersService {
   constructor(
@@ -59,6 +70,7 @@ export class AdminUsersService {
     private readonly sessions: SessionService,
     private readonly emailTokens: EmailTokenService,
     private readonly mail: MailService,
+    private readonly passwordPolicy: PasswordPolicyService,
   ) {}
 
   async list(query: ListAdminUsersQuery): Promise<Paginated<AdminUser>> {
@@ -79,7 +91,11 @@ export class AdminUsersService {
     return { items: rows.map(toAdminUser), page: query.page, pageSize: query.pageSize, total };
   }
 
-  /** Creates the account without a password and emails a set-password link. */
+  /**
+   * Creates the account. Without `password`, it has none and an invitation email with a
+   * set-password link is sent. With one (checked like every password), no email is sent
+   * and the person must choose a new password at the first sign-in (ADR-024).
+   */
   async create(input: CreateAdminUserInput): Promise<AdminUser> {
     const existing = await this.prisma.user.findUnique({
       where: { email: input.email },
@@ -92,11 +108,25 @@ export class AdminUsersService {
         'An account already uses this email address',
       );
     }
+    const data = {
+      email: input.email,
+      role: input.role,
+      locale: input.locale,
+      assignedCountries: input.role === 'COUNTRY_AGENT' ? (input.countries ?? []) : [],
+    };
+    if (input.password) {
+      this.passwordPolicy.assertStrong(input.password, [input.email]);
+      const passwordHash = await hashPassword(input.password);
+      return toAdminUser(
+        await this.prisma.user.create({
+          // The person chose nothing yet: an email address of their own is not proven either.
+          data: { ...data, passwordHash, passwordChangeRequired: true },
+          select: ADMIN_SELECT,
+        }),
+      );
+    }
     const { row, token } = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
-        data: { email: input.email, role: input.role, locale: input.locale },
-        select: ADMIN_SELECT,
-      });
+      const created = await tx.user.create({ data, select: ADMIN_SELECT });
       return {
         row: created,
         token: await this.emailTokens.issue(created.id, 'INVITATION', INVITATION_TTL_MS, tx),
@@ -109,14 +139,59 @@ export class AdminUsersService {
     return toAdminUser(row);
   }
 
-  async changeRole(id: string, role: AdminRole): Promise<AdminUser> {
+  /** The role, and for a country agent his countries; other roles keep none. */
+  async changeRole(id: string, input: ChangeAdminRoleInput): Promise<AdminUser> {
+    const role: AdminRole = input.role;
     return this.prisma.$transaction(async (tx) => {
       const target = await this.lockAdmin(tx, id);
       if (target.role === 'SUPER_ADMIN' && role !== 'SUPER_ADMIN' && target.isActive) {
         await this.assertAnotherSuperAdmin(tx, id);
       }
       return toAdminUser(
-        await tx.user.update({ where: { id }, data: { role }, select: ADMIN_SELECT }),
+        await tx.user.update({
+          where: { id },
+          data: {
+            role,
+            assignedCountries: role === 'COUNTRY_AGENT' ? (input.countries ?? []) : [],
+          },
+          select: ADMIN_SELECT,
+        }),
+      );
+    });
+  }
+
+  /**
+   * Sets the password of a back-office account (e.g. a new agent, or one who lost access).
+   * Every session ends; the person must choose a new password at the next sign-in. Only
+   * the fact is audited, never the password.
+   */
+  async setPassword(id: string, password: string): Promise<AdminUser> {
+    const target = await this.prisma.user.findFirst({
+      where: { id, role: { in: [...ADMIN_ROLES] }, deletedAt: null },
+      select: { email: true },
+    });
+    if (!target) {
+      throw notFound('Admin account not found');
+    }
+    this.passwordPolicy.assertStrong(password, [target.email]);
+    const passwordHash = await hashPassword(password);
+    return this.prisma.$transaction(async (tx) => {
+      await this.lockAdmin(tx, id);
+      await this.sessions.endAll(id, tx);
+      // A pending invitation link would let somebody else choose another password.
+      await tx.emailToken.deleteMany({ where: { userId: id, type: 'INVITATION' } });
+      return toAdminUser(
+        await tx.user.update({
+          where: { id },
+          data: {
+            passwordHash,
+            passwordChangeRequired: true,
+            tokenVersion: { increment: 1 },
+            failedLoginCount: 0,
+            lockedUntil: null,
+          },
+          select: ADMIN_SELECT,
+        }),
       );
     });
   }
