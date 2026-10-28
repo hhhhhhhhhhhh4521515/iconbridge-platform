@@ -14,6 +14,21 @@ const baseEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']),
   PORT: z.coerce.number().int().min(1).max(65535),
   WEB_ORIGIN: z.url(),
+  /**
+   * Other addresses of the same site, comma-separated: the default Azure address while a
+   * custom domain takes over (the web app redirects it). Allowed as the origin of
+   * state-changing requests and by CORS; emails always link to WEB_ORIGIN.
+   */
+  WEB_ORIGIN_ALIASES: z
+    .string()
+    .default('')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.url({ protocol: /^https?$/ }))),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   /**
    * smtp: Nodemailer (Mailpit locally). azure: Azure Communication Services Email with the
