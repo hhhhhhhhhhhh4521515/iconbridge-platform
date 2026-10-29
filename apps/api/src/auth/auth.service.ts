@@ -253,6 +253,8 @@ export class AuthService {
           lockedUntil: null,
           tokenVersion: { increment: 1 },
           emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+          // A password chosen through the email link is the person's own.
+          passwordChangeRequired: false,
         },
       });
       await this.sessions.endAll(record.userId, tx);
@@ -268,6 +270,8 @@ export class AuthService {
         role: true,
         locale: true,
         emailVerifiedAt: true,
+        assignedCountries: true,
+        passwordChangeRequired: true,
         candidateProfile: { select: { firstName: true, lastName: true } },
       },
     });
@@ -279,6 +283,8 @@ export class AuthService {
       locale: localeSchema.catch('en').parse(user.locale),
       firstName: user.candidateProfile?.firstName ?? null,
       lastName: user.candidateProfile?.lastName ?? null,
+      passwordChangeRequired: user.passwordChangeRequired,
+      assignedCountries: user.assignedCountries,
     };
   }
 

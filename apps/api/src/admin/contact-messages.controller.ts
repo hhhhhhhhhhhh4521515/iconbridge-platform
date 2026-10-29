@@ -63,7 +63,7 @@ export class ContactMessagesController {
   ) {}
 
   @Get()
-  @Roles(...PERMISSIONS.VIEW_CANDIDATES)
+  @Roles(...PERMISSIONS.VIEW_BACK_OFFICE)
   @ApiOperation({ summary: 'Messages of the contact form, newest first' })
   @ApiQuery({ name: 'handled', required: false, enum: ['true', 'false'] })
   @ApiQuery({ name: 'q', required: false, description: 'Part of the name, email or subject' })

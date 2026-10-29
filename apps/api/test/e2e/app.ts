@@ -234,8 +234,16 @@ export interface TestUser {
 
 let passwordHash: Promise<string> | undefined;
 
-/** Inserts a verified, active user with PASSWORD and signs in through the API. */
-export async function createUser(test: TestApp, role: UserRole, email?: string): Promise<TestUser> {
+/**
+ * Inserts a verified, active user with PASSWORD and signs in through the API. A
+ * COUNTRY_AGENT gets `countries` (Morocco by default).
+ */
+export async function createUser(
+  test: TestApp,
+  role: UserRole,
+  email?: string,
+  countries: string[] = ['MA'],
+): Promise<TestUser> {
   passwordHash ??= hashPassword(PASSWORD);
   const address =
     email ?? `${role.toLowerCase()}-${Math.random().toString(36).slice(2, 10)}@example.test`;
@@ -245,6 +253,7 @@ export async function createUser(test: TestApp, role: UserRole, email?: string):
       passwordHash: await passwordHash,
       role,
       emailVerifiedAt: new Date(),
+      assignedCountries: role === 'COUNTRY_AGENT' ? countries : [],
       ...(role === 'CANDIDATE'
         ? { candidateProfile: { create: { firstName: 'Test', lastName: 'Candidate' } } }
         : {}),

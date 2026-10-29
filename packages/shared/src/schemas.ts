@@ -35,6 +35,7 @@ export const API_ERROR_CODES = [
   'REAPPLY_COOLDOWN',
   'UNDO_NOT_ALLOWED',
   'COOLDOWN_WAIVER_NOT_ALLOWED',
+  'PASSWORD_CHANGE_REQUIRED',
   'INTERNAL_ERROR',
 ] as const;
 export const apiErrorCodeSchema = z.enum(API_ERROR_CODES);

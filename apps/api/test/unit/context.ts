@@ -10,6 +10,8 @@ export function user(role: UserRole, overrides: Partial<AuthUser> = {}): AuthUse
     role,
     emailVerified: true,
     locale: 'en',
+    assignedCountries: role === 'COUNTRY_AGENT' ? ['MA'] : [],
+    passwordChangeRequired: false,
     ...overrides,
   };
 }

@@ -9,7 +9,8 @@
     "VIEWER": "Lecteur",
     "RECRUITER": "Recruteur",
     "SUPER_ADMIN": "Super administrateur",
-    "CANDIDATE": "Candidat"
+    "CANDIDATE": "Candidat",
+    "COUNTRY_AGENT": "Agent pays"
   },
   "nav": {
     "label": "Back-office",
@@ -124,7 +125,8 @@
     "companiesTotal": "Entreprises partenaires",
     "countriesTotal": "Pays",
     "visasPerYear": "Visas approuvés par année",
-    "visasPerDestination": "Visas approuvés par destination"
+    "visasPerDestination": "Visas approuvés par destination",
+    "scope": "Chiffres des candidats de vos pays : {countries}."
   },
   "editor": {
     "toolbar": "Mise en forme",
@@ -443,6 +445,7 @@
     "destination": "Destination",
     "visaApprovedAt": "Visa approuvé le",
     "quote": "Ce que dit le candidat",
+    "quoteHint": "Facultatif. Laissez les trois vides si le candidat n’a rien dit : le site n’affiche alors pas de citation.",
     "created": "Le témoignage est créé en brouillon.",
     "noPhoto": "Pas de photo",
     "photo": "Photo",
@@ -537,7 +540,8 @@
     "roleHelp": {
       "VIEWER": "Lecteur : consulte les offres, les candidatures, les candidats et les messages. Ne peut rien modifier ni exporter, et ne voit jamais les numéros de passeport complets.",
       "RECRUITER": "Recruteur : gère les offres, les candidatures et le contenu du site, exporte, et peut afficher un numéro de passeport (action journalisée).",
-      "SUPER_ADMIN": "Super administrateur : tout, plus les utilisateurs, les paramètres et le journal d'audit."
+      "SUPER_ADMIN": "Super administrateur : tout, plus les utilisateurs, les paramètres et le journal d'audit.",
+      "COUNTRY_AGENT": "Agent pays : ne voit que les candidats dont la nationalité est l’un de ses pays, avec leurs documents et candidatures ; change le statut des candidatures, écrit au candidat et ajoute des notes. Ne peut pas modifier les profils, supprimer, exporter, ni toucher aux offres, au contenu ou aux réglages."
     },
     "empty": "Aucun compte.",
     "you": "vous",
@@ -563,7 +567,31 @@
     "forceLogout": "Déconnecter partout",
     "logoutTitle": "Déconnecter cet utilisateur ?",
     "logoutText": "Toutes les sessions de {email} prennent fin immédiatement. La personne peut se reconnecter.",
-    "loggedOut": "L'utilisateur est déconnecté."
+    "loggedOut": "L'utilisateur est déconnecté.",
+    "created": "Le compte {email} est créé. Donnez vous-même le mot de passe à la personne : il ne sera plus affiché.",
+    "createAccount": "Créer le compte",
+    "access": "Accès",
+    "accessMode": {
+      "invitation": "Envoyer une invitation par email",
+      "password": "Définir le mot de passe maintenant"
+    },
+    "accessHelp": {
+      "invitation": "La personne reçoit un lien pour choisir un mot de passe. Le lien est valable 72 heures.",
+      "password": "Aucun email n’est envoyé. La personne doit choisir un nouveau mot de passe à la première connexion. Le mot de passe n’est plus jamais affiché."
+    },
+    "countries": "Pays",
+    "countriesHint": "Nationalité des candidats suivis par cet agent. Tapez le nom d’un pays, puis choisissez-le.",
+    "removeCountry": "Retirer {country}",
+    "countriesTitle": "Pays de l’agent",
+    "countriesText": "{email} ne voit et ne fait avancer que les candidats dont la nationalité est l’un de ces pays.",
+    "saveCountries": "Enregistrer les pays",
+    "countriesSaved": "Les pays sont enregistrés.",
+    "editCountries": "Changer les pays de {email}",
+    "mustChangePassword": "Doit changer son mot de passe",
+    "setPassword": "Définir un mot de passe",
+    "setPasswordTitle": "Définir un mot de passe",
+    "setPasswordText": "{email} est déconnecté partout et doit choisir un nouveau mot de passe à la prochaine connexion. Un lien d’invitation en attente ne fonctionne plus. Le mot de passe n’est plus jamais affiché.",
+    "passwordSet": "Le mot de passe est défini. La personne devra le changer à la prochaine connexion."
   },
   "messages": {
     "title": "Messages de contact",
@@ -688,5 +716,16 @@
     "audited": "Chaque modification est inscrite au journal d'audit avec la valeur avant et après.",
     "save": "Enregistrer les chiffres",
     "saved": "{count, plural, one {# chiffre enregistré} other {# chiffres enregistrés}}. Les compteurs du site sont mis à jour."
+  },
+  "password": {
+    "menu": "Mon mot de passe",
+    "title": "Mon mot de passe",
+    "text": "Choisissez un mot de passe d’au moins 10 caractères que vous n’utilisez nulle part ailleurs. Toutes les autres sessions sont déconnectées.",
+    "forcedTitle": "Choisissez votre mot de passe",
+    "forcedText": "Votre mot de passe a été défini par un administrateur. Choisissez le vôtre avant d’utiliser le back-office.",
+    "current": "Mot de passe actuel",
+    "given": "Mot de passe reçu",
+    "save": "Changer mon mot de passe",
+    "saved": "Votre mot de passe est changé."
   }
 }

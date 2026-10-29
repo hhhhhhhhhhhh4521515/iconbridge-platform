@@ -10,7 +10,7 @@ import {
   type ApplicationStatus,
   type UserRole,
 } from './enums.js';
-import { localeSchema, localizedTextSchema } from './i18n.js';
+import { localeSchema, localizedTextSchema, optionalLocalizedTextSchema } from './i18n.js';
 import { candidateDocumentSchema, candidateProfileResponseSchema } from './candidate.js';
 import { jobQuestionSchema } from './questions.js';
 import { paginationQuerySchema } from './schemas.js';
@@ -41,7 +41,7 @@ export function allowedApplicationTransitions(
   from: ApplicationStatus,
   role: UserRole,
 ): ApplicationStatus[] {
-  if (role !== 'RECRUITER' && role !== 'SUPER_ADMIN') {
+  if (role !== 'RECRUITER' && role !== 'SUPER_ADMIN' && role !== 'COUNTRY_AGENT') {
     return [];
   }
   if (from === 'REJECTED' || from === 'WITHDRAWN') {
@@ -358,7 +358,8 @@ const storyFields = {
   jobTitle: z.string().trim().min(1).max(150),
   destinationId: z.uuid(),
   visaApprovedAt: calendarDate.nullable().optional(),
-  quote: localizedTextSchema,
+  /** "What the candidate says": optional, each language may be empty (ADR-024). */
+  quote: optionalLocalizedTextSchema.default({ en: '', fr: '', ar: '' }),
 };
 
 export const createSuccessStorySchema = z.object(storyFields);
@@ -372,7 +373,7 @@ export const updateSuccessStorySchema = z
     jobTitle: storyFields.jobTitle.optional(),
     destinationId: z.uuid().optional(),
     visaApprovedAt: calendarDate.nullable().optional(),
-    quote: localizedTextSchema.optional(),
+    quote: optionalLocalizedTextSchema.optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'Send at least one field' });
 export type UpdateSuccessStoryInput = z.infer<typeof updateSuccessStorySchema>;
@@ -409,7 +410,8 @@ export const publicSuccessStorySchema = z.object({
   jobTitle: z.string(),
   destination: z.object({ code: z.string(), name: localizedTextSchema }),
   visaApprovedAt: z.iso.date().nullable(),
-  quote: localizedTextSchema,
+  /** Empty texts when the story has no quote in that language. */
+  quote: optionalLocalizedTextSchema,
 });
 export type PublicSuccessStory = z.infer<typeof publicSuccessStorySchema>;
 
@@ -424,7 +426,7 @@ export const adminSuccessStorySchema = z.object({
   jobTitle: z.string(),
   destination: z.object({ id: z.uuid(), code: z.string(), name: localizedTextSchema }),
   visaApprovedAt: z.iso.date().nullable(),
-  quote: localizedTextSchema,
+  quote: optionalLocalizedTextSchema,
   hasConsentDocument: z.boolean(),
   isPublished: z.boolean(),
   sortOrder: z.number().int(),
@@ -616,6 +618,12 @@ const resultsSchema = z.object({
 export type ResultFigures = z.infer<typeof resultsSchema>;
 
 export const adminStatsSchema = z.object({
+  /**
+   * Null: the figures cover the whole platform. A list: a country agent's dashboard, where
+   * the application, visa and candidate figures cover these nationalities only and the
+   * historical figures (not recorded by nationality) are left at zero.
+   */
+  scopeCountries: z.array(z.string()).nullable(),
   /** Results computed from the applications and accounts of the platform. */
   platform: resultsSchema,
   /** Results from before the platform, entered by the super admin. Never mixed with the data above. */

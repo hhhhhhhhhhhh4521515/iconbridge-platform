@@ -135,6 +135,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -199,6 +200,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -301,6 +303,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -365,6 +368,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -481,6 +485,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -545,6 +550,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -629,6 +635,7 @@
                       "enum": [
                         "CANDIDATE",
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -651,6 +658,15 @@
                     "lastName": {
                       "nullable": true,
                       "type": "string"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -660,7 +676,9 @@
                     "emailVerified",
                     "locale",
                     "firstName",
-                    "lastName"
+                    "lastName",
+                    "passwordChangeRequired",
+                    "assignedCountries"
                   ],
                   "additionalProperties": false
                 }
@@ -709,6 +727,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -773,6 +792,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -837,6 +857,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -897,6 +918,7 @@
                       "enum": [
                         "CANDIDATE",
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -919,6 +941,15 @@
                     "lastName": {
                       "nullable": true,
                       "type": "string"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -928,7 +959,9 @@
                     "emailVerified",
                     "locale",
                     "firstName",
-                    "lastName"
+                    "lastName",
+                    "passwordChangeRequired",
+                    "assignedCountries"
                   ],
                   "additionalProperties": false
                 }
@@ -977,6 +1010,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1041,6 +1075,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1175,6 +1210,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1239,6 +1275,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1348,6 +1385,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1412,6 +1450,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1476,6 +1515,7 @@
                           "enum": [
                             "CANDIDATE",
                             "VIEWER",
+                            "COUNTRY_AGENT",
                             "RECRUITER",
                             "SUPER_ADMIN"
                           ]
@@ -1498,6 +1538,15 @@
                         "lastName": {
                           "nullable": true,
                           "type": "string"
+                        },
+                        "passwordChangeRequired": {
+                          "type": "boolean"
+                        },
+                        "assignedCountries": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
@@ -1507,7 +1556,9 @@
                         "emailVerified",
                         "locale",
                         "firstName",
-                        "lastName"
+                        "lastName",
+                        "passwordChangeRequired",
+                        "assignedCountries"
                       ],
                       "additionalProperties": false
                     }
@@ -1557,6 +1608,7 @@
                       "enum": [
                         "CANDIDATE",
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -1579,6 +1631,15 @@
                     "lastName": {
                       "nullable": true,
                       "type": "string"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -1588,7 +1649,9 @@
                     "emailVerified",
                     "locale",
                     "firstName",
-                    "lastName"
+                    "lastName",
+                    "passwordChangeRequired",
+                    "assignedCountries"
                   ],
                   "additionalProperties": false
                 }
@@ -1637,6 +1700,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1701,6 +1765,7 @@
             "schema": {
               "enum": [
                 "VIEWER",
+                "COUNTRY_AGENT",
                 "RECRUITER",
                 "SUPER_ADMIN"
               ],
@@ -1735,6 +1800,7 @@
                             "type": "string",
                             "enum": [
                               "VIEWER",
+                              "COUNTRY_AGENT",
                               "RECRUITER",
                               "SUPER_ADMIN"
                             ]
@@ -1744,6 +1810,15 @@
                           },
                           "hasPassword": {
                             "type": "boolean"
+                          },
+                          "passwordChangeRequired": {
+                            "type": "boolean"
+                          },
+                          "assignedCountries": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           },
                           "locale": {
                             "type": "string",
@@ -1771,6 +1846,8 @@
                           "role",
                           "isActive",
                           "hasPassword",
+                          "passwordChangeRequired",
+                          "assignedCountries",
                           "locale",
                           "lastLoginAt",
                           "createdAt"
@@ -1847,6 +1924,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1911,6 +1989,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -1950,7 +2029,7 @@
         "x-verified-email": false
       },
       "post": {
-        "description": "The account has no password; an invitation email with a set-password link is sent.",
+        "description": "Without `password`, the account has none and an invitation email with a set-password link is sent. With `password` (same strength rules as every password), no email is sent and the person must choose a new password at the first sign-in. A COUNTRY_AGENT needs `countries`. The password is never returned, logged or audited.",
         "operationId": "AdminUsersController_create",
         "parameters": [],
         "requestBody": {
@@ -1967,6 +2046,7 @@
                     "type": "string",
                     "enum": [
                       "VIEWER",
+                      "COUNTRY_AGENT",
                       "RECRUITER",
                       "SUPER_ADMIN"
                     ]
@@ -1979,6 +2059,18 @@
                       "fr",
                       "ar"
                     ]
+                  },
+                  "countries": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 128
                   }
                 },
                 "required": [
@@ -2011,6 +2103,7 @@
                       "type": "string",
                       "enum": [
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -2020,6 +2113,15 @@
                     },
                     "hasPassword": {
                       "type": "boolean"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "locale": {
                       "type": "string",
@@ -2047,6 +2149,8 @@
                     "role",
                     "isActive",
                     "hasPassword",
+                    "passwordChangeRequired",
+                    "assignedCountries",
                     "locale",
                     "lastLoginAt",
                     "createdAt"
@@ -2098,6 +2202,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2162,6 +2267,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2226,6 +2332,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2290,6 +2397,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2331,6 +2439,7 @@
     },
     "/api/v1/admin/users/{id}/role": {
       "patch": {
+        "description": "A COUNTRY_AGENT needs `countries` (ISO codes); other roles take none.",
         "operationId": "AdminUsersController_changeRole",
         "parameters": [
           {
@@ -2353,9 +2462,17 @@
                     "type": "string",
                     "enum": [
                       "VIEWER",
+                      "COUNTRY_AGENT",
                       "RECRUITER",
                       "SUPER_ADMIN"
                     ]
+                  },
+                  "countries": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 },
                 "required": [
@@ -2387,6 +2504,7 @@
                       "type": "string",
                       "enum": [
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -2396,6 +2514,15 @@
                     },
                     "hasPassword": {
                       "type": "boolean"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "locale": {
                       "type": "string",
@@ -2423,6 +2550,8 @@
                     "role",
                     "isActive",
                     "hasPassword",
+                    "passwordChangeRequired",
+                    "assignedCountries",
                     "locale",
                     "lastLoginAt",
                     "createdAt"
@@ -2474,6 +2603,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2538,6 +2668,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2602,6 +2733,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2666,6 +2798,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2730,6 +2863,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2759,6 +2893,396 @@
           }
         ],
         "summary": "Change the role of a back-office account",
+        "tags": [
+          "admin: users"
+        ],
+        "x-access": "roles",
+        "x-roles": [
+          "SUPER_ADMIN"
+        ],
+        "x-verified-email": false
+      }
+    },
+    "/api/v1/admin/users/{id}/password": {
+      "post": {
+        "description": "Same strength rules as every password. Every session of the account ends, a pending invitation link stops working, and the person must choose a new password at the next sign-in. The audit entry records the change, never the password.",
+        "operationId": "AdminUsersController_setPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "VIEWER",
+                        "COUNTRY_AGENT",
+                        "RECRUITER",
+                        "SUPER_ADMIN"
+                      ]
+                    },
+                    "isActive": {
+                      "type": "boolean"
+                    },
+                    "hasPassword": {
+                      "type": "boolean"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fr",
+                        "ar"
+                      ]
+                    },
+                    "lastLoginAt": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "isActive",
+                    "hasPassword",
+                    "passwordChangeRequired",
+                    "assignedCountries",
+                    "locale",
+                    "lastLoginAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Set the password of a back-office account",
         "tags": [
           "admin: users"
         ],
@@ -2804,6 +3328,7 @@
                       "type": "string",
                       "enum": [
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -2813,6 +3338,15 @@
                     },
                     "hasPassword": {
                       "type": "boolean"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "locale": {
                       "type": "string",
@@ -2840,6 +3374,8 @@
                     "role",
                     "isActive",
                     "hasPassword",
+                    "passwordChangeRequired",
+                    "assignedCountries",
                     "locale",
                     "lastLoginAt",
                     "createdAt"
@@ -2891,6 +3427,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -2955,6 +3492,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3019,6 +3557,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3083,6 +3622,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3157,6 +3697,7 @@
                       "type": "string",
                       "enum": [
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -3166,6 +3707,15 @@
                     },
                     "hasPassword": {
                       "type": "boolean"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "locale": {
                       "type": "string",
@@ -3193,6 +3743,8 @@
                     "role",
                     "isActive",
                     "hasPassword",
+                    "passwordChangeRequired",
+                    "assignedCountries",
                     "locale",
                     "lastLoginAt",
                     "createdAt"
@@ -3244,6 +3796,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3308,6 +3861,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3372,6 +3926,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3446,6 +4001,7 @@
                       "type": "string",
                       "enum": [
                         "VIEWER",
+                        "COUNTRY_AGENT",
                         "RECRUITER",
                         "SUPER_ADMIN"
                       ]
@@ -3455,6 +4011,15 @@
                     },
                     "hasPassword": {
                       "type": "boolean"
+                    },
+                    "passwordChangeRequired": {
+                      "type": "boolean"
+                    },
+                    "assignedCountries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "locale": {
                       "type": "string",
@@ -3482,6 +4047,8 @@
                     "role",
                     "isActive",
                     "hasPassword",
+                    "passwordChangeRequired",
+                    "assignedCountries",
                     "locale",
                     "lastLoginAt",
                     "createdAt"
@@ -3533,6 +4100,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3597,6 +4165,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3661,6 +4230,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3760,6 +4330,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3824,6 +4395,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3888,6 +4460,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -3952,6 +4525,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4180,6 +4754,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4244,6 +4819,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4308,6 +4884,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4647,6 +5224,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4711,6 +5289,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4775,6 +5354,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -4810,6 +5390,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -4973,6 +5554,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5037,6 +5619,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5101,6 +5684,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5135,6 +5719,7 @@
         ],
         "x-access": "roles",
         "x-roles": [
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -5275,6 +5860,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5339,6 +5925,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5403,6 +5990,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5630,6 +6218,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5689,6 +6278,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5753,6 +6343,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5812,6 +6403,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5876,6 +6468,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -5935,6 +6528,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6488,6 +7082,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6552,6 +7147,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6616,6 +7212,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6651,6 +7248,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -6735,6 +7333,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6799,6 +7398,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6863,6 +7463,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -6927,6 +7528,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -7524,6 +8126,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -7588,6 +8191,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -7652,6 +8256,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -7716,6 +8321,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -7780,6 +8386,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -7814,6 +8421,7 @@
         ],
         "x-access": "roles",
         "x-roles": [
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -8334,6 +8942,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -8398,6 +9007,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -8462,6 +9072,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -8526,6 +9137,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -8560,6 +9172,7 @@
         ],
         "x-access": "roles",
         "x-roles": [
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -9100,6 +9713,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9164,6 +9778,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9228,6 +9843,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9292,6 +9908,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9356,6 +9973,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9492,6 +10110,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9556,6 +10175,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9620,6 +10240,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9684,6 +10305,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9718,6 +10340,7 @@
         ],
         "x-access": "roles",
         "x-roles": [
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -9829,6 +10452,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9893,6 +10517,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -9957,6 +10582,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10021,6 +10647,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10055,6 +10682,7 @@
         ],
         "x-access": "roles",
         "x-roles": [
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -10126,6 +10754,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10190,6 +10819,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10254,6 +10884,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10288,6 +10919,7 @@
         ],
         "x-access": "roles",
         "x-roles": [
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -10296,6 +10928,7 @@
     },
     "/api/v1/admin/candidates": {
       "get": {
+        "description": "A country agent gets the candidates whose nationality is one of his countries only.",
         "operationId": "AdminCandidatesController_list",
         "parameters": [
           {
@@ -10504,6 +11137,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10568,6 +11202,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10632,6 +11267,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10667,6 +11303,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -10807,6 +11444,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10871,6 +11509,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -10935,6 +11574,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -11086,6 +11726,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -11150,6 +11791,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -11214,6 +11856,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -11278,6 +11921,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -11318,7 +11962,7 @@
         "x-verified-email": false
       },
       "get": {
-        "description": "The passport number is masked for every role. Recruiters and super admins get the clear number through `POST /admin/candidates/{id}/reveal-passport`.",
+        "description": "The passport number is masked for every role. Recruiters and super admins get the clear number through `POST /admin/candidates/{id}/reveal-passport`. A candidate outside the countries of a country agent answers 404.",
         "operationId": "AdminCandidatesController_get",
         "parameters": [
           {
@@ -11904,6 +12548,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -11968,6 +12613,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12032,6 +12678,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12067,6 +12714,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -12151,6 +12799,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12215,6 +12864,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12279,6 +12929,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12460,6 +13111,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12524,6 +13176,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12588,6 +13241,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12769,6 +13423,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12833,6 +13488,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12897,6 +13553,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -12939,7 +13596,7 @@
     },
     "/api/v1/admin/stats": {
       "get": {
-        "description": "Open jobs, applications per status, per destination and per month (last 12), visas approved this year, average days from Submitted to Visa approved.",
+        "description": "Open jobs, applications per status, per destination and per month (last 12), visas approved this year, average days from Submitted to Visa approved. A country agent gets the figures of his countries (by nationality) only, without the historical figures (`scopeCountries` lists them).",
         "operationId": "AdminSettingsController_getStats",
         "parameters": [],
         "responses": {
@@ -12950,6 +13607,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "scopeCountries": {
+                      "nullable": true,
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "platform": {
                       "type": "object",
                       "properties": {
@@ -13214,6 +13878,7 @@
                     }
                   },
                   "required": [
+                    "scopeCountries",
                     "platform",
                     "history",
                     "openJobs",
@@ -13271,6 +13936,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13335,6 +14001,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13370,6 +14037,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -13443,6 +14111,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13507,6 +14176,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13542,6 +14212,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -13688,6 +14359,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13752,6 +14424,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13878,6 +14551,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -13942,6 +14616,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14006,6 +14681,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14070,6 +14746,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14157,6 +14834,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14221,6 +14899,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14285,6 +14964,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14499,6 +15179,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14563,6 +15244,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14627,6 +15309,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14780,6 +15463,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14844,6 +15528,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -14908,6 +15593,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15060,6 +15746,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15124,6 +15811,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15188,6 +15876,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15288,6 +15977,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15352,6 +16042,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15416,6 +16107,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15573,6 +16265,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15637,6 +16330,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15840,6 +16534,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15904,6 +16599,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -15968,6 +16664,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16066,6 +16763,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16130,6 +16828,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16194,6 +16893,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16320,6 +17020,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16384,6 +17085,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16448,6 +17150,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16813,6 +17516,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -16877,6 +17581,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -17432,6 +18137,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -17496,6 +18202,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -17560,6 +18267,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -17705,6 +18413,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -17769,6 +18478,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -17944,6 +18654,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18008,6 +18719,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18072,6 +18784,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18136,6 +18849,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18200,6 +18914,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18264,6 +18979,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18363,6 +19079,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18427,6 +19144,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18491,6 +19209,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18555,6 +19274,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18667,6 +19387,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18731,6 +19452,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18795,6 +19517,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -18831,6 +19554,7 @@
         "x-roles": [
           "CANDIDATE",
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -18972,6 +19696,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19036,6 +19761,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19100,6 +19826,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19423,6 +20150,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19487,6 +20215,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19551,6 +20280,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19615,6 +20345,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19679,6 +20410,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -19951,6 +20683,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20015,6 +20748,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20292,6 +21026,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20356,6 +21091,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20420,6 +21156,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20484,6 +21221,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20617,6 +21355,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20681,6 +21420,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20717,6 +21457,7 @@
         "x-roles": [
           "CANDIDATE",
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -20800,6 +21541,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20864,6 +21606,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20928,6 +21671,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -20992,6 +21736,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21028,6 +21773,7 @@
         "x-roles": [
           "CANDIDATE",
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -21129,6 +21875,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21193,6 +21940,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21356,6 +22104,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21420,6 +22169,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21484,6 +22234,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21548,6 +22299,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21646,6 +22398,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21710,6 +22463,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21774,6 +22528,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21864,6 +22619,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21928,6 +22684,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -21992,6 +22749,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -22102,6 +22860,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -22166,6 +22925,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -22230,6 +22990,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -22294,6 +23055,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -22842,6 +23604,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -23253,6 +24016,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -24030,6 +24794,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -24094,6 +24859,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -24158,6 +24924,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -24861,6 +25628,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -24925,6 +25693,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -24989,6 +25758,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -25467,6 +26237,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -25531,6 +26302,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -25595,6 +26367,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26293,6 +27066,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26357,6 +27131,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26421,6 +27196,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26485,6 +27261,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26595,6 +27372,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26659,6 +27437,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26723,6 +27502,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -26787,6 +27567,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -27265,6 +28046,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -27329,6 +28111,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -27393,6 +28176,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -27457,6 +28241,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -27935,6 +28720,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -27999,6 +28785,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -28063,6 +28850,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -28127,6 +28915,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -28605,6 +29394,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -28669,6 +29459,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -28733,6 +29524,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -28797,6 +29589,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -29275,6 +30068,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -29339,6 +30133,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -29403,6 +30198,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -29467,6 +30263,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -29945,6 +30742,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -30009,6 +30807,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -30073,6 +30872,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -30551,6 +31351,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -30615,6 +31416,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -30679,6 +31481,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31157,6 +31960,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31221,6 +32025,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31285,6 +32090,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31783,6 +32589,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31847,6 +32654,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31911,6 +32719,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -31975,6 +32784,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32039,6 +32849,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32103,6 +32914,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32579,6 +33391,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32643,6 +33456,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32707,6 +33521,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32867,6 +33682,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32931,6 +33747,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -32966,6 +33783,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -33145,6 +33963,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33209,6 +34028,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33273,6 +34093,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33337,6 +34158,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33551,6 +34373,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33615,6 +34438,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33679,6 +34503,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33743,6 +34568,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33861,6 +34687,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33925,6 +34752,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -33989,6 +34817,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34143,6 +34972,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34207,6 +35037,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34242,6 +35073,7 @@
         "x-access": "roles",
         "x-roles": [
           "VIEWER",
+          "COUNTRY_AGENT",
           "RECRUITER",
           "SUPER_ADMIN"
         ],
@@ -34410,6 +35242,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34474,6 +35307,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34538,6 +35372,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34602,6 +35437,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34805,6 +35641,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34869,6 +35706,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34933,6 +35771,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -34997,6 +35836,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -35115,6 +35955,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -35179,6 +36020,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -35243,6 +36085,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -35360,15 +36203,15 @@
                         "properties": {
                           "en": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           },
                           "fr": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           },
                           "ar": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           }
                         },
                         "required": [
@@ -35697,15 +36540,15 @@
                         "properties": {
                           "en": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           },
                           "fr": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           },
                           "ar": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           }
                         },
                         "required": [
@@ -35797,6 +36640,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -35861,6 +36705,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -35941,19 +36786,24 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   },
                   "quote": {
+                    "default": {
+                      "en": "",
+                      "fr": "",
+                      "ar": ""
+                    },
                     "type": "object",
                     "properties": {
                       "en": {
                         "type": "string",
-                        "minLength": 1
+                        "maxLength": 2000
                       },
                       "fr": {
                         "type": "string",
-                        "minLength": 1
+                        "maxLength": 2000
                       },
                       "ar": {
                         "type": "string",
-                        "minLength": 1
+                        "maxLength": 2000
                       }
                     },
                     "required": [
@@ -35966,8 +36816,7 @@
                 "required": [
                   "firstName",
                   "jobTitle",
-                  "destinationId",
-                  "quote"
+                  "destinationId"
                 ]
               }
             }
@@ -36058,15 +36907,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -36157,6 +37006,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36221,6 +37071,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36285,6 +37136,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36425,15 +37277,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -36524,6 +37376,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36588,6 +37441,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36652,6 +37506,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36716,6 +37571,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -36872,15 +37728,15 @@
                         "properties": {
                           "en": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           },
                           "fr": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           },
                           "ar": {
                             "type": "string",
-                            "minLength": 1
+                            "maxLength": 2000
                           }
                         },
                         "required": [
@@ -36972,6 +37828,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37036,6 +37893,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37100,6 +37958,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37193,15 +38052,15 @@
                     "properties": {
                       "en": {
                         "type": "string",
-                        "minLength": 1
+                        "maxLength": 2000
                       },
                       "fr": {
                         "type": "string",
-                        "minLength": 1
+                        "maxLength": 2000
                       },
                       "ar": {
                         "type": "string",
-                        "minLength": 1
+                        "maxLength": 2000
                       }
                     },
                     "required": [
@@ -37300,15 +38159,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -37399,6 +38258,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37463,6 +38323,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37527,6 +38388,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37591,6 +38453,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37688,6 +38551,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37752,6 +38616,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37816,6 +38681,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -37973,15 +38839,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -38072,6 +38938,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38136,6 +39003,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38200,6 +39068,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38264,6 +39133,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38328,6 +39198,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38392,6 +39263,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38550,15 +39422,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -38649,6 +39521,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38713,6 +39586,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38777,6 +39651,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38841,6 +39716,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38905,6 +39781,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -38969,6 +39846,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39066,6 +39944,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39130,6 +40009,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39194,6 +40074,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39332,15 +40213,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -39431,6 +40312,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39495,6 +40377,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39559,6 +40442,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39623,6 +40507,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39761,15 +40646,15 @@
                       "properties": {
                         "en": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "fr": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         },
                         "ar": {
                           "type": "string",
-                          "minLength": 1
+                          "maxLength": 2000
                         }
                       },
                       "required": [
@@ -39860,6 +40745,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39924,6 +40810,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -39988,6 +40875,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -40205,6 +41093,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -40269,6 +41158,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -40576,6 +41466,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -40640,6 +41531,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -40704,6 +41596,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -40946,6 +41839,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41010,6 +41904,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41074,6 +41969,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41392,6 +42288,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41456,6 +42353,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41520,6 +42418,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41584,6 +42483,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41648,6 +42548,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41745,6 +42646,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41809,6 +42711,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -41873,6 +42776,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42115,6 +43019,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42179,6 +43084,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42243,6 +43149,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42307,6 +43214,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42371,6 +43279,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42435,6 +43344,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42593,6 +43503,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42657,6 +43568,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42759,6 +43671,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42823,6 +43736,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42925,6 +43839,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -42989,6 +43904,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -43135,6 +44051,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },
@@ -43199,6 +44116,7 @@
                         "REAPPLY_COOLDOWN",
                         "UNDO_NOT_ALLOWED",
                         "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
                         "INTERNAL_ERROR"
                       ]
                     },

@@ -38,6 +38,10 @@ Status: **OK** means the control exists and a test fails if it is removed. **Ris
 
 Roles are read from the database on each request, not from the token: a role change, a disabled account or a forced logout applies to the very next request.
 
+### Country agents
+
+A `COUNTRY_AGENT` reaches only the candidates whose nationality is one of his countries, their documents and their applications ([ADR-024](adr/ADR-024-country-agents.md)). The scope is applied in the API (`candidateScope`) on every list, search, detail, status change, note, document download and dashboard figure; anything else answers 404, never the data. Every back-office route whose roles leave him out answers 403: the test reads the list of routes from the running application, so a new route is covered the day it is added. Tests: `country-agent.e2e-spec.ts` (404 for every out-of-scope record, 403 for every forbidden route, nationality and not residence), `admin-country-agents.spec.ts` (Moroccan and Tunisian agents in the browser).
+
 ### Records of somebody else (IDOR)
 
 Documents, applications and profiles are always looked up together with their owner. A candidate who asks for a record of another candidate gets 404, the same answer as for a record that does not exist. Tests: `rbac.e2e-spec.ts` ("hides another candidate's profile, document and application behind a 404"), `applications.e2e-spec.ts` (cannot attach another candidate's document, cannot withdraw another candidate's application), `candidate-profile-documents.e2e-spec.ts` (cannot delete another candidate's document).
@@ -81,6 +85,7 @@ PDF files are stored as received (their metadata is not removed): rewriting a PD
 - Email tokens (verification, reset, invitation, job alert): random, single use, stored as hashes, with an expiry.
 - Register, login, forgot password and resend verification give the same answer whether the address has an account or not.
 - Changing the password, disabling or deleting an account ends its sessions at once.
+- A super admin may set the password of a back-office account (a new country agent, a lost access). It passes the same policy, is stored as an argon2id hash and never returned, logged (`password` is in `SENSITIVE_KEYS`) or written to the audit log (the entry records the change only). The account's sessions end and, until the person chooses a new password (different from the one given), every route but the password change answers 403 `PASSWORD_CHANGE_REQUIRED`. Tests: `country-agent.e2e-spec.ts` ("accounts"), `roles.guard.spec.ts`.
 
 ### Rate limits
 

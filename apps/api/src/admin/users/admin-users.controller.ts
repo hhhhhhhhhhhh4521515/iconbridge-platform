@@ -14,11 +14,13 @@ import {
   createAdminUserSchema,
   listAdminUsersQuerySchema,
   PERMISSIONS,
+  setAdminPasswordSchema,
   uuidParamSchema,
   type AdminUser,
   type ChangeAdminRoleInput,
   type CreateAdminUserInput,
   type ListAdminUsersQuery,
+  type SetAdminPasswordInput,
   type Paginated,
 } from '@iconbridge/shared';
 import { z } from 'zod';
@@ -64,7 +66,10 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Create a back-office account',
     description:
-      'The account has no password; an invitation email with a set-password link is sent.',
+      'Without `password`, the account has none and an invitation email with a set-password link is ' +
+      'sent. With `password` (same strength rules as every password), no email is sent and the person ' +
+      'must choose a new password at the first sign-in. A COUNTRY_AGENT needs `countries`. The password ' +
+      'is never returned, logged or audited.',
   })
   @ApiZodBody(createAdminUserSchema)
   @ApiZodResponse(201, adminUserSchema)
@@ -75,7 +80,10 @@ export class AdminUsersController {
 
   @Patch(':id/role')
   @Audit({ action: 'admin_user.change_role', entityType: 'user', idParam: 'id' })
-  @ApiOperation({ summary: 'Change the role of a back-office account' })
+  @ApiOperation({
+    summary: 'Change the role of a back-office account',
+    description: 'A COUNTRY_AGENT needs `countries` (ISO codes); other roles take none.',
+  })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiZodBody(changeAdminRoleSchema)
   @ApiZodResponse(200, adminUserSchema)
@@ -84,7 +92,28 @@ export class AdminUsersController {
     @ZodParams(uuidParamSchema) params: IdParam,
     @ZodBody(changeAdminRoleSchema) body: ChangeAdminRoleInput,
   ): Promise<AdminUser> {
-    return this.users.changeRole(params.id, body.role);
+    return this.users.changeRole(params.id, body);
+  }
+
+  @Post(':id/password')
+  @HttpCode(HttpStatus.OK)
+  @Audit({ action: 'admin_user.set_password', entityType: 'user', idParam: 'id' })
+  @ApiOperation({
+    summary: 'Set the password of a back-office account',
+    description:
+      'Same strength rules as every password. Every session of the account ends, a pending invitation ' +
+      'link stops working, and the person must choose a new password at the next sign-in. The audit ' +
+      'entry records the change, never the password.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiZodBody(setAdminPasswordSchema)
+  @ApiZodResponse(200, adminUserSchema)
+  @ApiErrors(400, 401, 403, 404)
+  setPassword(
+    @ZodParams(uuidParamSchema) params: IdParam,
+    @ZodBody(setAdminPasswordSchema) body: SetAdminPasswordInput,
+  ): Promise<AdminUser> {
+    return this.users.setPassword(params.id, body.password);
   }
 
   @Post(':id/disable')

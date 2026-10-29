@@ -12,6 +12,7 @@ description = "Passwords of test fixtures; names of Key Vault secrets"
 paths = [
   '''apps/api/test/.*''',
   '''apps/api/src/.*\.spec\.ts''',
+  '''packages/shared/src/.*\.spec\.ts''',
   '''apps/web/e2e/.*''',
 ]
 regexes = [

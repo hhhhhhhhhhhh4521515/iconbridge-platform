@@ -20,6 +20,7 @@ import {
 import type { AuthUser } from '../../auth/auth.types.js';
 import { Clock } from '../../common/clock/clock.js';
 import { AppException, forbidden, notFound } from '../../common/errors/app.exception.js';
+import { candidateScope } from '../../common/scope/candidate-scope.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { MailService } from '../../mail/mail.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -121,7 +122,9 @@ export class AdminApplicationsService {
     query: AdminApplicationListQuery,
     user: AuthUser,
   ): Promise<Paginated<AdminApplicationSummary>> {
-    const where = applicationWhere(query);
+    const where: Prisma.ApplicationWhereInput = {
+      AND: [applicationWhere(query), { candidate: candidateScope(user) }],
+    };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.application.findMany({
         where,
@@ -141,8 +144,8 @@ export class AdminApplicationsService {
   }
 
   async get(id: string, user: AuthUser): Promise<AdminApplicationDetail> {
-    const row = await this.prisma.application.findUnique({
-      where: { id },
+    const row = await this.prisma.application.findFirst({
+      where: { id, candidate: candidateScope(user) },
       include: DETAIL_INCLUDE,
     });
     if (!row) {
@@ -213,6 +216,7 @@ export class AdminApplicationsService {
   ): Promise<AdminApplicationDetail> {
     const now = this.clock.now();
     await this.prisma.$transaction(async (tx) => {
+      await this.assertInScope(id, user, tx);
       const locked = await tx.$queryRaw<
         { status: ApplicationStatus; applied_at: Date; waived: boolean; erased: boolean }[]
       >`
@@ -270,6 +274,7 @@ export class AdminApplicationsService {
   async undoStatus(id: string, user: AuthUser, ip: string | null): Promise<AdminApplicationDetail> {
     const now = this.clock.now();
     const undone = await this.prisma.$transaction(async (tx) => {
+      await this.assertInScope(id, user, tx);
       const locked = await tx.$queryRaw<{ status: ApplicationStatus; job_id: string }[]>`
         SELECT status::text AS status, job_id FROM applications WHERE id = ${id}::uuid FOR UPDATE`;
       const current = locked[0];
@@ -378,7 +383,7 @@ export class AdminApplicationsService {
       last.changedById !== user.id ||
       last.toStatus !== status ||
       now > until ||
-      (user.role !== 'RECRUITER' && user.role !== 'SUPER_ADMIN')
+      (user.role !== 'RECRUITER' && user.role !== 'SUPER_ADMIN' && user.role !== 'COUNTRY_AGENT')
     ) {
       return null;
     }
@@ -421,6 +426,7 @@ export class AdminApplicationsService {
   ): Promise<StatusChange> {
     const now = this.clock.now();
     return this.prisma.$transaction(async (tx) => {
+      await this.assertInScope(id, user, tx);
       // Row lock: two recruiters moving the same application are handled one after the other.
       const locked = await tx.$queryRaw<{ status: ApplicationStatus; job_id: string }[]>`
         SELECT status::text AS status, job_id FROM applications WHERE id = ${id}::uuid FOR UPDATE`;
@@ -534,14 +540,7 @@ export class AdminApplicationsService {
   // --- Internal notes -------------------------------------------------------
 
   async addNote(applicationId: string, body: string, user: AuthUser): Promise<{ id: string }> {
-    if (
-      !(await this.prisma.application.findUnique({
-        where: { id: applicationId },
-        select: { id: true },
-      }))
-    ) {
-      throw notFound('Application not found');
-    }
+    await this.assertInScope(applicationId, user);
     return this.prisma.applicationNote.create({
       data: { applicationId, authorId: user.id, body },
       select: { id: true },
@@ -569,6 +568,7 @@ export class AdminApplicationsService {
 
   /** A note is changed or removed by its author, or by a super admin. */
   private async ownNote(applicationId: string, noteId: string, user: AuthUser): Promise<void> {
+    await this.assertInScope(applicationId, user);
     const note = await this.prisma.applicationNote.findFirst({
       where: { id: noteId, applicationId },
       select: { authorId: true },
@@ -578,6 +578,21 @@ export class AdminApplicationsService {
     }
     if (note.authorId !== user.id && user.role !== 'SUPER_ADMIN') {
       throw forbidden('Only the author of a note can change it');
+    }
+  }
+
+  /**
+   * 404 for an application that does not exist or whose candidate is outside the user's
+   * countries (ADR-024): a country agent cannot tell the two apart.
+   */
+  private async assertInScope(
+    id: string,
+    user: AuthUser,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    const found = await tx.application.count({ where: { id, candidate: candidateScope(user) } });
+    if (found === 0) {
+      throw notFound('Application not found');
     }
   }
 

@@ -10,6 +10,7 @@ import type { AuthUser } from '../../auth/auth.types.js';
 import { SessionService } from '../../auth/session.service.js';
 import { PROFILE_INCLUDE, ProfileService } from '../../candidates/profile.service.js';
 import { notFound } from '../../common/errors/app.exception.js';
+import { candidateScope } from '../../common/scope/candidate-scope.js';
 import { toCandidateDocument } from '../../documents/documents.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -40,7 +41,10 @@ const toSummary = (row: SummaryRow): AdminCandidateSummary => ({
   registeredAt: row.user.createdAt.toISOString(),
 });
 
-/** Candidates as the back office sees them. Erased accounts are not listed. */
+/**
+ * Candidates as the back office sees them. Erased accounts are not listed. A country agent
+ * only reaches the candidates of his nationalities: the others answer 404 (ADR-024).
+ */
 @Injectable()
 export class AdminCandidatesService {
   constructor(
@@ -49,8 +53,11 @@ export class AdminCandidatesService {
     private readonly sessions: SessionService,
   ) {}
 
-  async list(query: AdminCandidateListQuery): Promise<Paginated<AdminCandidateSummary>> {
-    const where: Prisma.CandidateProfileWhereInput = {
+  async list(
+    query: AdminCandidateListQuery,
+    viewer: AuthUser,
+  ): Promise<Paginated<AdminCandidateSummary>> {
+    const filters: Prisma.CandidateProfileWhereInput = {
       user: {
         role: 'CANDIDATE',
         deletedAt: null,
@@ -68,6 +75,7 @@ export class AdminCandidatesService {
           }
         : {}),
     };
+    const where: Prisma.CandidateProfileWhereInput = { AND: [filters, candidateScope(viewer)] };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.candidateProfile.findMany({
         where,
@@ -83,7 +91,7 @@ export class AdminCandidatesService {
 
   async get(id: string, viewer: AuthUser): Promise<AdminCandidateDetail> {
     const row = await this.prisma.candidateProfile.findFirst({
-      where: { id, user: { role: 'CANDIDATE', deletedAt: null } },
+      where: { id, user: { role: 'CANDIDATE', deletedAt: null }, ...candidateScope(viewer) },
       include: {
         ...SUMMARY_INCLUDE,
         ...PROFILE_INCLUDE,

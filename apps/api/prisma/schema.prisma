@@ -23,6 +23,7 @@ datasource db {
 enum UserRole {
   CANDIDATE
   VIEWER
+  COUNTRY_AGENT
   RECRUITER
   SUPER_ADMIN
 
@@ -143,28 +144,33 @@ enum ApplicationStatus {
 // ---------------------------------------------------------------------------
 
 model User {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Always stored in lower case (CHECK constraint).
-  email             String    @unique
+  email                  String    @unique
   /// argon2id hash. Null until an invited admin has set a password.
-  passwordHash      String?   @map("password_hash")
-  role              UserRole  @default(CANDIDATE)
-  emailVerifiedAt   DateTime? @map("email_verified_at") @db.Timestamptz(3)
-  isActive          Boolean   @default(true) @map("is_active")
-  lastLoginAt       DateTime? @map("last_login_at") @db.Timestamptz(3)
+  passwordHash           String?   @map("password_hash")
+  role                   UserRole  @default(CANDIDATE)
+  emailVerifiedAt        DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  isActive               Boolean   @default(true) @map("is_active")
+  lastLoginAt            DateTime? @map("last_login_at") @db.Timestamptz(3)
   /// When the "your account will be erased" email was sent (data retention); cleared by any new activity.
-  retentionWarnedAt DateTime? @map("retention_warned_at") @db.Timestamptz(3)
+  retentionWarnedAt      DateTime? @map("retention_warned_at") @db.Timestamptz(3)
   /// Language of the emails sent to the user: en, fr or ar (CHECK constraint).
-  locale            String    @default("en") @db.VarChar(2)
+  locale                 String    @default("en") @db.VarChar(2)
   /// Consecutive failed logins; reset by a successful login or a password reset.
-  failedLoginCount  Int       @default(0) @map("failed_login_count")
+  failedLoginCount       Int       @default(0) @map("failed_login_count")
   /// Logins are refused until this time (set after too many failures).
-  lockedUntil       DateTime? @map("locked_until") @db.Timestamptz(3)
+  lockedUntil            DateTime? @map("locked_until") @db.Timestamptz(3)
   /// Copied into access tokens; incrementing it invalidates every token already issued.
-  tokenVersion      Int       @default(0) @map("token_version")
-  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  tokenVersion           Int       @default(0) @map("token_version")
+  /// COUNTRY_AGENT: ISO 3166-1 alpha-2 nationalities of the candidates he follows (ADR-024).
+  /// Non-empty for an agent, empty for every other role (CHECK constraint).
+  assignedCountries      String[]  @default([]) @map("assigned_countries")
+  /// Set when a super admin chose the password: only a password change is allowed until then.
+  passwordChangeRequired Boolean   @default(false) @map("password_change_required")
+  deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   refreshTokens    RefreshToken[]
   emailTokens      EmailToken[]
@@ -281,6 +287,8 @@ model CandidateProfile {
 
   @@index([lastName, firstName])
   @@index([passportExpiryDate])
+  /// Country agents see the candidates of their nationalities (ADR-024).
+  @@index([nationality])
   @@map("candidate_profiles")
 }
 

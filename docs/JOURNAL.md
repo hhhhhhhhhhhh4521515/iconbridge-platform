@@ -1101,3 +1101,15 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 | Warm pages                                             | 0.25–0.55 s                                                                       |
 
 **Remaining**: the bill of a full month with warm replicas (Cost Management); a support request if 100 emails an hour is not enough.
+
+## 2026-10-28 - Country agents, passwords set by the super admin, optional story quotes
+
+**What**: new back-office role `COUNTRY_AGENT` with assigned countries (ISO codes on the user, CHECK constraint). A candidate belongs to a country by nationality only. `candidateScope` limits the candidates, applications, documents and dashboard of an agent to his nationalities, with 404 for everything else; new permissions `MANAGE_CANDIDATES` and `VIEW_BACK_OFFICE` keep him away from candidate accounts, passports, deletions, jobs and messages (403). A super admin can set the first password of a back-office account, which must be changed at the first sign-in (`password_change_required`, 403 `PASSWORD_CHANGE_REQUIRED` elsewhere); new "My password" page. The quote of a success story is optional in the three languages. ADR-024; SPEC section 2 updated first; DEPLOYMENT explains Cloudflare Email Routing for `bihi@` and `majdi@iconbridgerecruitment.com`.
+
+**Why**: recruitment agents in Morocco and Tunisia follow the candidates of their country through the visa pipeline; many success stories have no quote.
+
+**Checks**: lint, typecheck; unit tests (shared 227, web 82, api 337); `test:e2e` 539, including `country-agent.e2e-spec.ts` (21: scope and 404 on every candidate route, 403 on every route the agent is not listed on, email with the message, forced password change) and the quote-less story; `test:browser` 159 passed (Moroccan and Tunisian agents, quote-less story, axe on `/admin/password`); `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/48>
+
+**After deployment (owner)**: set up Cloudflare Email Routing, then create the two agents in the back office.

@@ -25,7 +25,7 @@ import { RATE_LIMITS, REFRESH_COOKIE } from './auth.constants.js';
 import { clearAuthCookies, setAuthCookies } from './auth.cookies.js';
 import { AuthService } from './auth.service.js';
 import { requestMeta, type AuthUser, type RequestWithUser } from './auth.types.js';
-import { CurrentUser, OptionalAuth, Public } from './decorators/index.js';
+import { AllowPasswordChange, CurrentUser, OptionalAuth, Public } from './decorators/index.js';
 
 const SENSITIVE = { default: RATE_LIMITS.authSensitive };
 const sessionSchema = z.object({ user: currentUserSchema.nullable() });
@@ -187,6 +187,7 @@ export class AuthController {
   }
 
   @Throttle({ default: RATE_LIMITS.default })
+  @AllowPasswordChange()
   @Get('me')
   @ApiCookieAuth()
   @ApiOperation({ summary: 'The signed-in user' })

@@ -16,6 +16,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
   type ReactNode,
@@ -444,13 +445,17 @@ export function LocalizedInput({
   onChange,
   multiline,
   required,
+  hint,
 }: {
   label: string;
   value: { en: string; fr: string; ar: string };
   onChange: (value: { en: string; fr: string; ar: string }) => void;
   multiline?: boolean;
   required?: boolean;
+  /** Shown under the legend, e.g. that the text is optional. */
+  hint?: string;
 }) {
+  const hintId = useId();
   const languages = [
     ['en', 'English'],
     ['fr', 'Français'],
@@ -462,6 +467,11 @@ export function LocalizedInput({
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
       </legend>
+      {hint ? (
+        <p id={hintId} className="mb-2 text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
       <div className="grid gap-2 md:grid-cols-3">
         {languages.map(([code, name]) => {
           const props = {
@@ -472,6 +482,7 @@ export function LocalizedInput({
             className: input,
             value: value[code],
             required,
+            ...(hint ? { 'aria-describedby': hintId } : {}),
           };
           return multiline ? (
             <textarea

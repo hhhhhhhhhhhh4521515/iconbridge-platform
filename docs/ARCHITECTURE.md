@@ -370,16 +370,16 @@ erDiagram
 
 These are written by hand in the migration SQL, because Prisma cannot express them. Prisma leaves them in place and does not report them as drift.
 
-| Table                              | Rule                                                                                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `jobs`                             | `positions >= 1`; `0 <= hired_count <= positions`; `salary_min <= salary_max`, both non-negative; contract duration at least 1 month  |
-| `jobs`                             | `search_vector` is a generated column: title (weight A) and description (weight B), `simple` text-search configuration, GIN index     |
-| `candidate_profiles`               | Encrypted and masked passport number are set or cleared together; issue date before expiry date; years of experience between 0 and 70 |
-| `success_stories`                  | `is_published` requires `consent_document_path`                                                                                       |
-| `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                 |
-| `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`                                                                             |
-| `documents`                        | `size_bytes > 0`                                                                                                                      |
-| `email_outbox`                     | `priority` between 1 and 3                                                                                                            |
+| Table                              | Rule                                                                                                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jobs`                             | `positions >= 1`; `0 <= hired_count <= positions`; `salary_min <= salary_max`, both non-negative; contract duration at least 1 month                                                     |
+| `jobs`                             | `search_vector` is a generated column: title (weight A) and description (weight B), `simple` text-search configuration, GIN index                                                        |
+| `candidate_profiles`               | Encrypted and masked passport number are set or cleared together; issue date before expiry date; years of experience between 0 and 70                                                    |
+| `success_stories`                  | `is_published` requires `consent_document_path`                                                                                                                                          |
+| `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                                                                    |
+| `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`; `assigned_countries` holds two-letter upper-case codes, at least one for a `COUNTRY_AGENT` and none for other roles (ADR-024) |
+| `documents`                        | `size_bytes > 0`                                                                                                                                                                         |
+| `email_outbox`                     | `priority` between 1 and 3                                                                                                                                                               |
 
 Rules that need the current date or a setting (18 years or older, passport expiry, re-application cooldown, automatic closing of jobs) belong to the API and arrive with the features.
 
@@ -497,17 +497,20 @@ Four guards run globally, in this order:
 | `RolesGuard`         | `@Roles(...)` lists come from `PERMISSIONS` in `packages/shared`, which mirrors the privileges table of SPEC.md                              |
 | `VerifiedEmailGuard` | Routes marked `@RequireVerifiedEmail()` (applying to a job) refuse an unverified address                                                     |
 
-`RolesGuard` also applies three rules that do not depend on a decorator being remembered:
+`RolesGuard` also applies four rules that do not depend on a decorator being remembered:
 
-1. A candidate never reaches a route under `/api/v1/admin`.
-2. A route under `/api/v1/admin` without `@Roles()` is refused to everybody.
-3. `VIEWER` never performs a write (anything but GET, HEAD, OPTIONS), unless the route is `@SelfService()`.
+1. A user whose password was set by a super admin (`password_change_required`) reaches only the routes marked `@AllowPasswordChange()` (session, `GET /auth/me`, logout, `POST /me/password`); everything else answers 403 `PASSWORD_CHANGE_REQUIRED` ([ADR-024](adr/ADR-024-country-agents.md)).
+2. A candidate never reaches a route under `/api/v1/admin`.
+3. A route under `/api/v1/admin` without `@Roles()` is refused to everybody.
+4. `VIEWER` never performs a write (anything but GET, HEAD, OPTIONS), unless the route is `@SelfService()`.
 
-`OwnershipGuard` with `@Owned('candidateProfile' | 'document' | 'application', param)` restricts a candidate to their own records. Somebody else's record answers 404, like a missing one.
+`OwnershipGuard` with `@Owned('candidateProfile' | 'document' | 'application', param)` restricts a candidate to their own records, and a country agent to the records of candidates of his nationalities. Any other record answers 404, like a missing one.
+
+**Country scope** (ADR-024): `candidateScope(user)` (`apps/api/src/common/scope/candidate-scope.ts`) is the condition every query on candidates, their documents and applications adds: `nationality IN assigned_countries` for a `COUNTRY_AGENT`, nothing for other roles. The candidates, applications, statistics and results services and `OwnershipGuard` use it; out of scope answers 404, and the dashboard of an agent counts his nationalities only.
 
 ### Admin accounts and audit log
 
-- `/api/v1/admin/users` (super admin): list, create, change role, disable, enable, force logout. A new account has no password; the invitation email carries a set-password link handled by `POST /auth/reset-password`.
+- `/api/v1/admin/users` (super admin): list, create, change role (with the countries of a country agent), set a password, disable, enable, force logout. A new account either gets an invitation email with a set-password link (`POST /auth/reset-password`), or a first password set by the super admin, which the person must replace at the first sign-in (`password_change_required`, ADR-024).
 - The last active super admin cannot be demoted or disabled, and nobody can disable their own account. The check locks the super-admin rows, so two concurrent requests cannot both pass.
 - `AuditInterceptor` records every successful write by a back-office user in `audit_logs`: actor, action, record, state before and after, IP. `@Audit({ action, entityType, idParam })` names the entry; without it the write is still recorded under `<METHOD> <route>`. Snapshots come from `AuditSnapshotService`, which selects non-secret fields only. `GET /api/v1/admin/audit-logs` lists the entries.
 
@@ -606,10 +609,11 @@ Results are ordered by `ts_rank` plus title similarity when `q` is given, otherw
 
 ### Who can do what
 
-| Routes                                                        | Viewer | Recruiter | Super admin |
-| ------------------------------------------------------------- | ------ | --------- | ----------- |
-| `GET /admin/jobs`, `/admin/destinations`, `/admin/categories` | Yes    | Yes       | Yes         |
-| Every write on those routes                                   | No     | Yes       | Yes         |
+| Routes                                         | Viewer | Country agent | Recruiter | Super admin |
+| ---------------------------------------------- | ------ | ------------- | --------- | ----------- |
+| `GET /admin/jobs`                              | Yes    | No            | Yes       | Yes         |
+| `GET /admin/destinations`, `/admin/categories` | Yes    | Yes           | Yes       | Yes         |
+| Every write on those routes                    | No     | No            | Yes       | Yes         |
 
 ## Candidate side
 
@@ -726,16 +730,17 @@ stateDiagram-v2
 
 ### What each role can do
 
-| Area                                             | Viewer | Recruiter | Super admin                |
-| ------------------------------------------------ | ------ | --------- | -------------------------- |
-| Applications and candidates: list, detail        | Read   | Read      | Read                       |
-| Status changes, notes, bulk, disable a candidate | No     | Yes       | Yes                        |
-| Reopen a rejected or withdrawn application       | No     | No        | Yes                        |
-| Export applications (CSV, XLSX)                  | No     | Yes       | Yes                        |
-| Export with full passport numbers                | No     | No        | Yes, with an explicit flag |
-| Success stories, home slides                     | No     | Yes       | Yes                        |
-| Dashboard figures                                | Read   | Read      | Read                       |
-| Settings                                         | No     | No        | Yes                        |
+| Area                                                 | Viewer | Country agent       | Recruiter | Super admin                |
+| ---------------------------------------------------- | ------ | ------------------- | --------- | -------------------------- |
+| Applications and candidates: list, detail, documents | Read   | Own countries, read | Read      | Read                       |
+| Status changes, messages, notes, bulk, undo          | No     | Own countries       | Yes       | Yes                        |
+| Disable a candidate, reveal a passport number        | No     | No                  | Yes       | Yes                        |
+| Reopen a rejected or withdrawn application           | No     | No                  | No        | Yes                        |
+| Export applications (CSV, XLSX)                      | No     | No                  | Yes       | Yes                        |
+| Export with full passport numbers                    | No     | No                  | No        | Yes, with an explicit flag |
+| Success stories, home slides                         | No     | No                  | Yes       | Yes                        |
+| Dashboard figures                                    | Read   | Own countries       | Read      | Read                       |
+| Settings                                             | No     | No                  | No        | Yes                        |
 
 ### Passport numbers in the back office
 

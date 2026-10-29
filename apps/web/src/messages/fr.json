@@ -792,7 +792,8 @@
       "CONSENT_REQUIRED": "Votre consentement est nécessaire.",
       "RATE_LIMITED": "Trop de tentatives. Patientez une minute et réessayez.",
       "REAPPLY_COOLDOWN": "Vous avez déjà postulé à cette offre.",
-      "INTERNAL_ERROR": "Une erreur est survenue. Réessayez dans un instant."
+      "INTERNAL_ERROR": "Une erreur est survenue. Réessayez dans un instant.",
+      "PASSWORD_CHANGE_REQUIRED": "Choisissez d’abord un nouveau mot de passe."
     }
   },
   "auth": {

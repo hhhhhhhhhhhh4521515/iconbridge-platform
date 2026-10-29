@@ -1,8 +1,10 @@
 import {
   localizedTextSchema,
+  optionalLocalizedTextSchema,
   parseJobQuestions,
   type AdminJob,
   type LocalizedText,
+  type OptionalLocalizedText,
   type PublicJob,
 } from '@iconbridge/shared';
 import type { Prisma } from '../generated/prisma/client.js';
@@ -28,6 +30,11 @@ const EMPTY_NAME: LocalizedText = { en: '', fr: '', ar: '' };
 /** i18n JSON column as a typed object; a malformed value gives empty texts instead of an error. */
 export function localized(value: unknown): LocalizedText {
   return localizedTextSchema.catch(EMPTY_NAME).parse(value);
+}
+
+/** An optional translated text (a story quote): each language may be empty, and stays as written. */
+export function optionalLocalized(value: unknown): OptionalLocalizedText {
+  return optionalLocalizedTextSchema.catch(EMPTY_NAME).parse(value);
 }
 
 const money = (value: Prisma.Decimal | null) => (value === null ? null : value.toNumber());

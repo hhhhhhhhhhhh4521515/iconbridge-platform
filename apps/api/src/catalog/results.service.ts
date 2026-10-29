@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { ResultFigures } from '@iconbridge/shared';
+import { Prisma } from '../generated/prisma/client.js';
 import { Clock } from '../common/clock/clock.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -12,6 +13,20 @@ import { PrismaService } from '../prisma/prisma.service.js';
  *
  * The dashboard shows both with their sum; the public counters show the sum.
  */
+/** Figures that are all zero: the history of a dashboard limited to some nationalities. */
+export function emptyResults(): ResultFigures {
+  return {
+    visasApproved: 0,
+    visasApprovedThisYear: 0,
+    candidatesDeployed: 0,
+    registeredCandidates: 0,
+    partnerCompanies: 0,
+    countries: 0,
+    visasByYear: [],
+    visasByDestination: [],
+  };
+}
+
 @Injectable()
 export class ResultsService {
   constructor(
@@ -19,8 +34,19 @@ export class ResultsService {
     private readonly clock: Clock,
   ) {}
 
-  async platform(): Promise<ResultFigures> {
+  /**
+   * `countries`: only the applications and accounts of candidates of these nationalities
+   * (a country agent's dashboard, ADR-024). Partner companies and countries served stay
+   * those of the whole platform: they are not about candidates.
+   */
+  async platform(countries: string[] | null = null): Promise<ResultFigures> {
     const year = this.clock.now().getUTCFullYear();
+    const ofApplication = countries
+      ? Prisma.sql`AND a.candidate_id IN (SELECT id FROM candidate_profiles WHERE nationality = ANY(${countries}::text[]))`
+      : Prisma.empty;
+    const ofUser = countries
+      ? Prisma.sql`AND u.id IN (SELECT user_id FROM candidate_profiles WHERE nationality = ANY(${countries}::text[]))`
+      : Prisma.empty;
     const [totals, byYear, byDestination] = await this.prisma.$transaction([
       this.prisma.$queryRaw<
         {
@@ -32,11 +58,11 @@ export class ResultsService {
         }[]
       >`
         SELECT
-          (SELECT count(*)::int FROM applications
-            WHERE status IN ('VISA_APPROVED', 'DEPLOYED')) AS visas,
-          (SELECT count(*)::int FROM applications WHERE status = 'DEPLOYED') AS deployed,
+          (SELECT count(*)::int FROM applications a
+            WHERE a.status IN ('VISA_APPROVED', 'DEPLOYED') ${ofApplication}) AS visas,
+          (SELECT count(*)::int FROM applications a WHERE a.status = 'DEPLOYED' ${ofApplication}) AS deployed,
           (SELECT count(*)::int FROM users u
-            WHERE u.role = 'CANDIDATE' AND u.deleted_at IS NULL AND u.is_active) AS candidates,
+            WHERE u.role = 'CANDIDATE' AND u.deleted_at IS NULL AND u.is_active ${ofUser}) AS candidates,
           (SELECT count(DISTINCT lower(btrim(j.employer_name)))::int FROM jobs j
             WHERE j.published_at IS NOT NULL AND j.deleted_at IS NULL
               AND btrim(coalesce(j.employer_name, '')) <> '') AS companies,
@@ -52,14 +78,14 @@ export class ResultsService {
           WHERE to_status = 'VISA_APPROVED' AND reverted_at IS NULL
           GROUP BY application_id
         ) v ON v.application_id = a.id
-        WHERE a.status IN ('VISA_APPROVED', 'DEPLOYED')
+        WHERE a.status IN ('VISA_APPROVED', 'DEPLOYED') ${ofApplication}
         GROUP BY 1 ORDER BY 1`,
       this.prisma.$queryRaw<{ code: string; count: number }[]>`
         SELECT d.code, count(a.id)::int AS count
         FROM destinations d
         LEFT JOIN jobs j ON j.destination_id = d.id
         LEFT JOIN applications a
-          ON a.job_id = j.id AND a.status IN ('VISA_APPROVED', 'DEPLOYED')
+          ON a.job_id = j.id AND a.status IN ('VISA_APPROVED', 'DEPLOYED') ${ofApplication}
         GROUP BY d.code, d.sort_order ORDER BY d.sort_order, d.code`,
     ]);
     const total = totals[0];

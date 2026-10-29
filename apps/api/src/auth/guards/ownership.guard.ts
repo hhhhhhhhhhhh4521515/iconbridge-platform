@@ -2,15 +2,17 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { z } from 'zod';
 import { notFound, unauthenticated } from '../../common/errors/app.exception.js';
+import { candidateScope } from '../../common/scope/candidate-scope.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import type { RequestWithUser } from '../auth.types.js';
+import type { AuthUser, RequestWithUser } from '../auth.types.js';
 import { OWNERSHIP_KEY, type OwnedResource, type OwnershipRule } from '../decorators/index.js';
 
 /**
  * Use with @Owned(resource, param): a candidate reaches a profile, a document or
  * an application only if it is their own. Somebody else's resource answers 404,
- * like a missing one, so ids cannot be probed. Back-office roles pass: what they
- * may do is decided by @Roles().
+ * like a missing one, so ids cannot be probed. A country agent reaches it only if
+ * the candidate's nationality is one of his countries (ADR-024), with the same 404.
+ * Other back-office roles pass: what they may do is decided by @Roles().
  */
 @Injectable()
 export class OwnershipGuard implements CanActivate {
@@ -33,7 +35,7 @@ export class OwnershipGuard implements CanActivate {
     if (!user) {
       throw unauthenticated();
     }
-    if (user.role !== 'CANDIDATE') {
+    if (user.role !== 'CANDIDATE' && user.role !== 'COUNTRY_AGENT') {
       return true;
     }
 
@@ -41,11 +43,30 @@ export class OwnershipGuard implements CanActivate {
     if (!id.success) {
       throw notFound();
     }
+    if (user.role === 'COUNTRY_AGENT') {
+      if (!(await this.inCountries(rule.resource, id.data, user))) {
+        throw notFound();
+      }
+      return true;
+    }
     const ownerId = await this.ownerOf(rule.resource, id.data);
     if (ownerId !== user.id) {
       throw notFound();
     }
     return true;
+  }
+
+  /** Whether the resource exists and belongs to a candidate of the agent's nationalities. */
+  private async inCountries(resource: OwnedResource, id: string, user: AuthUser): Promise<boolean> {
+    const candidate = candidateScope(user);
+    switch (resource) {
+      case 'candidateProfile':
+        return (await this.prisma.candidateProfile.count({ where: { id, ...candidate } })) > 0;
+      case 'document':
+        return (await this.prisma.document.count({ where: { id, candidate } })) > 0;
+      case 'application':
+        return (await this.prisma.application.count({ where: { id, candidate } })) > 0;
+    }
   }
 
   /** User id of the candidate who owns the resource, or null when it does not exist. */

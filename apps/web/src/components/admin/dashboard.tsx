@@ -29,6 +29,7 @@ import { useLoaded } from '@/components/account/account-context';
 import { LoadFailed, Loading } from '@/components/forms/fields';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/client-api';
+import { countryName } from '@/lib/countries';
 import { card } from '@/lib/ui';
 import { ApplicationBadge } from './status';
 import { PageHeader, shortDate } from './ui';
@@ -189,7 +190,7 @@ export function Dashboard() {
   }, []);
   const { data, loading, failed, reload } = useLoaded(fetcher);
   // "Including history" adds the figures from before the platform; "Platform only" hides them.
-  const [withHistory, setWithHistory] = useState(true);
+  const [historyChosen, setWithHistory] = useState(true);
 
   if (loading && !data) {
     return <Loading lines={6} />;
@@ -198,6 +199,10 @@ export function Dashboard() {
     return <LoadFailed onRetry={reload} />;
   }
   const { stats, latest } = data;
+  // A country agent's dashboard covers his nationalities only, without the historical figures
+  // (not recorded by nationality) nor the figures that are not about candidates (ADR-024).
+  const scope = stats.scopeCountries;
+  const withHistory = historyChosen && scope === null;
   const month = (value: string) =>
     new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(
       new Date(`${value}-01T00:00:00Z`),
@@ -247,26 +252,37 @@ export function Dashboard() {
   );
   return (
     <>
-      <PageHeader title={t('dashboard.title')}>
-        <div
-          className="flex rounded-lg border border-border p-0.5"
-          role="group"
-          aria-label={t('dashboard.historyToggle')}
-        >
-          {([true, false] as const).map((value) => (
-            <button
-              key={String(value)}
-              type="button"
-              aria-pressed={withHistory === value}
-              className="inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium hover:bg-muted aria-pressed:bg-secondary aria-pressed:text-secondary-foreground"
-              onClick={() => {
-                setWithHistory(value);
-              }}
-            >
-              {value ? t('dashboard.includingHistory') : t('dashboard.platformOnly')}
-            </button>
-          ))}
-        </div>
+      <PageHeader
+        title={t('dashboard.title')}
+        {...(scope
+          ? {
+              intro: t('dashboard.scope', {
+                countries: scope.map((code) => countryName(code, locale)).join(', '),
+              }),
+            }
+          : {})}
+      >
+        {scope ? null : (
+          <div
+            className="flex rounded-lg border border-border p-0.5"
+            role="group"
+            aria-label={t('dashboard.historyToggle')}
+          >
+            {([true, false] as const).map((value) => (
+              <button
+                key={String(value)}
+                type="button"
+                aria-pressed={historyChosen === value}
+                className="inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium hover:bg-muted aria-pressed:bg-secondary aria-pressed:text-secondary-foreground"
+                onClick={() => {
+                  setWithHistory(value);
+                }}
+              >
+                {value ? t('dashboard.includingHistory') : t('dashboard.platformOnly')}
+              </button>
+            ))}
+          </div>
+        )}
       </PageHeader>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
@@ -318,20 +334,26 @@ export function Dashboard() {
           testId="kpi-candidates-total"
           split={split('registeredCandidates')}
         />
-        <Kpi
-          icon={Building2}
-          label={t('dashboard.companiesTotal')}
-          value={total('partnerCompanies')}
-          testId="kpi-companies-total"
-          split={split('partnerCompanies')}
-        />
-        <Kpi
-          icon={Globe}
-          label={t('dashboard.countriesTotal')}
-          // Not a sum: the historical figure is the total number of countries served.
-          value={withHistory ? Math.max(platform.countries, history.countries) : platform.countries}
-          testId="kpi-countries-total"
-        />
+        {scope ? null : (
+          <>
+            <Kpi
+              icon={Building2}
+              label={t('dashboard.companiesTotal')}
+              value={total('partnerCompanies')}
+              testId="kpi-companies-total"
+              split={split('partnerCompanies')}
+            />
+            <Kpi
+              icon={Globe}
+              label={t('dashboard.countriesTotal')}
+              // Not a sum: the historical figure is the total number of countries served.
+              value={
+                withHistory ? Math.max(platform.countries, history.countries) : platform.countries
+              }
+              testId="kpi-countries-total"
+            />
+          </>
+        )}
       </div>
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <SplitChart

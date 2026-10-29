@@ -44,7 +44,7 @@ const pageSchema = z.object({
 
 @ApiTags('admin: candidates')
 @ApiCookieAuth()
-@Roles(...PERMISSIONS.MANAGE_APPLICATIONS)
+@Roles(...PERMISSIONS.MANAGE_CANDIDATES)
 @Revalidates('stats')
 @Controller('admin/candidates')
 export class AdminCandidatesController {
@@ -55,7 +55,11 @@ export class AdminCandidatesController {
 
   @Get()
   @Roles(...PERMISSIONS.VIEW_CANDIDATES)
-  @ApiOperation({ summary: 'Search candidates (passport numbers masked)' })
+  @ApiOperation({
+    summary: 'Search candidates (passport numbers masked)',
+    description:
+      'A country agent gets the candidates whose nationality is one of his countries only.',
+  })
   @ApiQuery({ name: 'q', required: false, description: 'Part of the name or the email' })
   @ApiQuery({ name: 'nationality', required: false })
   @ApiQuery({ name: 'language', required: false })
@@ -66,8 +70,9 @@ export class AdminCandidatesController {
   @ApiErrors(400, 401, 403)
   list(
     @ZodQuery(adminCandidateListQuerySchema) query: AdminCandidateListQuery,
+    @CurrentUser() user: AuthUser,
   ): Promise<Paginated<AdminCandidateSummary>> {
-    return this.candidates.list(query);
+    return this.candidates.list(query, user);
   }
 
   @Post('bulk-delete')
@@ -123,7 +128,8 @@ export class AdminCandidatesController {
     summary: 'One candidate: profile, documents and all applications',
     description:
       'The passport number is masked for every role. Recruiters and super admins get the clear ' +
-      'number through `POST /admin/candidates/{id}/reveal-passport`.',
+      'number through `POST /admin/candidates/{id}/reveal-passport`. A candidate outside the ' +
+      'countries of a country agent answers 404.',
   })
   @ApiParam({ name: 'id', format: 'uuid', description: 'Candidate profile id' })
   @ApiZodResponse(200, adminCandidateDetailSchema)

@@ -1,14 +1,18 @@
 'use client';
 
+import { PASSWORD_MIN_LENGTH } from '@iconbridge/shared/auth';
 import { ADMIN_ROLES } from '@iconbridge/shared/enums';
 import type { ColumnDef } from '@tanstack/react-table';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { useLoaded } from '@/components/account/account-context';
+import { PasswordField } from '@/components/auth/password-field';
+import { CountrySelect } from '@/components/forms/country-select';
 import { LoadFailed } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
 import { api, type AdminUser } from '@/lib/client-api';
+import { countryName, flag } from '@/lib/countries';
 import { cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
 import {
@@ -26,22 +30,89 @@ import {
 
 type Role = AdminUser['role'];
 
-function Invite({ onClose, onInvited }: { onClose: () => void; onInvited: () => void }) {
+/** The countries of a country agent: chosen one by one, each removable (ISO codes). */
+function CountriesPicker({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (countries: string[]) => void;
+}) {
+  const t = useTranslations('admin.users');
+  const locale = useLocale();
+  return (
+    <div className="space-y-2" data-testid="agent-countries">
+      <CountrySelect
+        label={t('countries')}
+        hint={t('countriesHint')}
+        name="agent-country"
+        value={null}
+        onChange={(code) => {
+          if (code && !value.includes(code)) {
+            onChange([...value, code]);
+          }
+        }}
+      />
+      {value.length > 0 ? (
+        <ul className="flex flex-wrap gap-2">
+          {value.map((code) => (
+            <li key={code}>
+              <button
+                type="button"
+                className="inline-flex min-h-9 items-center gap-1 rounded-full bg-secondary px-3 text-sm text-secondary-foreground hover:bg-secondary/80"
+                aria-label={t('removeCountry', { country: countryName(code, locale) })}
+                onClick={() => {
+                  onChange(value.filter((item) => item !== code));
+                }}
+              >
+                <span aria-hidden>{flag(code)}</span>
+                {countryName(code, locale)}
+                <X className="size-3.5" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/** A new back-office account: by invitation email, or with a first password set now (ADR-024). */
+function AddAccount({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const t = useTranslations('admin');
+  const auth = useTranslations('auth');
   const call = useCall();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('RECRUITER');
   const [locale, setLocale] = useState<'en' | 'fr' | 'ar'>('en');
+  const [countries, setCountries] = useState<string[]>([]);
+  const [mode, setMode] = useState<'invitation' | 'password'>('invitation');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const invite = async () => {
+  const agent = role === 'COUNTRY_AGENT';
+  const ready =
+    email.includes('@') &&
+    (!agent || countries.length > 0) &&
+    (mode === 'invitation' || password.length >= PASSWORD_MIN_LENGTH);
+  const add = async () => {
     setBusy(true);
     const result = await call(
-      api.POST('/api/v1/admin/users', { body: { email, role, locale } }),
-      t('users.invited', { email }),
+      api.POST('/api/v1/admin/users', {
+        body: {
+          email,
+          role,
+          locale,
+          ...(agent ? { countries } : {}),
+          ...(mode === 'password' ? { password } : {}),
+        },
+      }),
+      mode === 'password' ? t('users.created', { email }) : t('users.invited', { email }),
     );
     setBusy(false);
     if (result.ok) {
-      onInvited();
+      // Never kept once sent: the password is not shown again.
+      setPassword('');
+      onAdded();
     }
   };
   return (
@@ -50,10 +121,9 @@ function Invite({ onClose, onInvited }: { onClose: () => void; onInvited: () => 
       data-testid="invite-form"
       onSubmit={(event) => {
         event.preventDefault();
-        void invite();
+        void add();
       }}
     >
-      <p className="text-sm text-muted-foreground">{t('users.inviteText')}</p>
       <Labelled label={t('users.email')}>
         <input
           type="email"
@@ -96,12 +166,165 @@ function Invite({ onClose, onInvited }: { onClose: () => void; onInvited: () => 
         </Labelled>
       </div>
       <p className="rounded-lg bg-muted p-3 text-sm">{t(`users.roleHelp.${role}`)}</p>
+      {agent ? <CountriesPicker value={countries} onChange={setCountries} /> : null}
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{t('users.access')}</legend>
+        {(['invitation', 'password'] as const).map((value) => (
+          <label key={value} className="flex min-h-11 items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name="access"
+              className="mt-1 size-4"
+              checked={mode === value}
+              onChange={() => {
+                setMode(value);
+              }}
+            />
+            <span>
+              <span className="font-medium">{t(`users.accessMode.${value}`)}</span>
+              <span className="block text-muted-foreground">{t(`users.accessHelp.${value}`)}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      {mode === 'password' ? (
+        <PasswordField
+          label={auth('newPassword')}
+          name="first-password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+          }}
+          meter={{ password, inputs: [email] }}
+        />
+      ) : null}
       <div className="flex justify-end gap-3">
         <button type="button" className={cta.outline} onClick={onClose}>
           {t('common.cancel')}
         </button>
-        <button type="submit" className={cta.primary} disabled={busy || !email.includes('@')}>
-          {t('users.sendInvitation')}
+        <button type="submit" className={cta.primary} disabled={busy || !ready}>
+          {mode === 'password' ? t('users.createAccount') : t('users.sendInvitation')}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Countries of an agent, when the role becomes COUNTRY_AGENT or to change them. */
+function AgentCountries({
+  user,
+  onDone,
+  onClose,
+}: {
+  user: AdminUser;
+  onDone: (user: AdminUser) => void;
+  onClose: () => void;
+}) {
+  const t = useTranslations('admin');
+  const call = useCall();
+  const [countries, setCountries] = useState<string[]>(user.assignedCountries);
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    setBusy(true);
+    const result = await call(
+      api.PATCH('/api/v1/admin/users/{id}/role', {
+        params: { path: { id: user.id } },
+        body: { role: 'COUNTRY_AGENT', countries },
+      }),
+      t('users.countriesSaved'),
+    );
+    setBusy(false);
+    if (result.ok) {
+      onDone(result.data);
+    }
+  };
+  return (
+    <form
+      className="space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
+      }}
+    >
+      <p className="text-sm text-muted-foreground">
+        {t('users.countriesText', { email: user.email })}
+      </p>
+      <CountriesPicker value={countries} onChange={setCountries} />
+      <div className="flex justify-end gap-3">
+        <button type="button" className={cta.outline} onClick={onClose}>
+          {t('common.cancel')}
+        </button>
+        <button type="submit" className={cta.primary} disabled={busy || countries.length === 0}>
+          {t('users.saveCountries')}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** A super admin sets the password of an account; the person must change it at the next sign-in. */
+function SetPassword({
+  user,
+  onDone,
+  onClose,
+}: {
+  user: AdminUser;
+  onDone: (user: AdminUser) => void;
+  onClose: () => void;
+}) {
+  const t = useTranslations('admin');
+  const auth = useTranslations('auth');
+  const call = useCall();
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    setBusy(true);
+    const result = await call(
+      api.POST('/api/v1/admin/users/{id}/password', {
+        params: { path: { id: user.id } },
+        body: { password },
+      }),
+      t('users.passwordSet'),
+    );
+    setBusy(false);
+    setPassword('');
+    if (result.ok) {
+      onDone(result.data);
+    }
+  };
+  return (
+    <form
+      className="space-y-4"
+      data-testid="set-password-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
+      }}
+    >
+      <p className="text-sm text-muted-foreground">
+        {t('users.setPasswordText', { email: user.email })}
+      </p>
+      <PasswordField
+        label={auth('newPassword')}
+        name="set-password"
+        autoComplete="new-password"
+        value={password}
+        onChange={(event) => {
+          setPassword(event.target.value);
+        }}
+        meter={{ password, inputs: [user.email] }}
+      />
+      <div className="flex justify-end gap-3">
+        <button type="button" className={cta.outline} onClick={onClose}>
+          {t('common.cancel')}
+        </button>
+        <button
+          type="submit"
+          className={cta.primary}
+          disabled={busy || password.length < PASSWORD_MIN_LENGTH}
+        >
+          {t('users.setPassword')}
         </button>
       </div>
     </form>
@@ -116,6 +339,9 @@ export function UsersManager() {
   const confirm = useConfirm();
   const { user: me } = useAdmin();
   const [inviting, setInviting] = useState(false);
+  /** Account whose countries are being chosen, or whose password is being set. */
+  const [countriesOf, setCountriesOf] = useState<AdminUser | null>(null);
+  const [passwordOf, setPasswordOf] = useState<AdminUser | null>(null);
   const fetcher = useCallback(
     async () =>
       (await api.GET('/api/v1/admin/users', { params: { query: { pageSize: 100 } } })).data,
@@ -131,6 +357,11 @@ export function UsersManager() {
     };
     const path = (id: string) => ({ params: { path: { id } } });
     const changeRole = async (user: AdminUser, role: Role) => {
+      if (role === 'COUNTRY_AGENT') {
+        // An agent needs his countries: they are chosen with the role.
+        setCountriesOf(user);
+        return;
+      }
       const yes = await confirm({
         title: t('users.roleTitle'),
         text: t('users.roleText', { email: user.email, role: t(`roles.${role}`) }),
@@ -235,12 +466,34 @@ export function UsersManager() {
         ),
       },
       {
+        id: 'countries',
+        enableSorting: false,
+        header: t('users.countries'),
+        cell: ({ row }) =>
+          row.original.role === 'COUNTRY_AGENT' ? (
+            <button
+              type="button"
+              className={`${smallButton} font-mono`}
+              aria-label={t('users.editCountries', { email: row.original.email })}
+              onClick={() => {
+                setCountriesOf(row.original);
+              }}
+            >
+              {row.original.assignedCountries.join(', ')}
+            </button>
+          ) : (
+            '—'
+          ),
+      },
+      {
         id: 'state',
         enableSorting: false,
         header: t('users.state'),
         cell: ({ row }) =>
           !row.original.isActive ? (
             <Badge tone="danger">{t('users.isDisabled')}</Badge>
+          ) : row.original.passwordChangeRequired ? (
+            <Badge tone="gold">{t('users.mustChangePassword')}</Badge>
           ) : row.original.hasPassword ? (
             <Badge tone="success">{t('users.isActive')}</Badge>
           ) : (
@@ -260,6 +513,16 @@ export function UsersManager() {
         cell: ({ row }) =>
           row.original.id === me.id ? null : (
             <div className="flex justify-end gap-1">
+              <button
+                type="button"
+                className={smallButton}
+                aria-label={`${t('users.setPassword')}: ${row.original.email}`}
+                onClick={() => {
+                  setPasswordOf(row.original);
+                }}
+              >
+                {t('users.setPassword')}
+              </button>
               <button
                 type="button"
                 className={smallButton}
@@ -315,6 +578,58 @@ export function UsersManager() {
         />
       )}
       <Modal
+        open={countriesOf !== null}
+        onClose={() => {
+          setCountriesOf(null);
+        }}
+        title={t('users.countriesTitle')}
+        closeLabel={common('close')}
+      >
+        {countriesOf ? (
+          <AgentCountries
+            user={countriesOf}
+            onClose={() => {
+              setCountriesOf(null);
+            }}
+            onDone={(user) => {
+              setCountriesOf(null);
+              if (data) {
+                setData({
+                  ...data,
+                  items: data.items.map((item) => (item.id === user.id ? user : item)),
+                });
+              }
+            }}
+          />
+        ) : null}
+      </Modal>
+      <Modal
+        open={passwordOf !== null}
+        onClose={() => {
+          setPasswordOf(null);
+        }}
+        title={t('users.setPasswordTitle')}
+        closeLabel={common('close')}
+      >
+        {passwordOf ? (
+          <SetPassword
+            user={passwordOf}
+            onClose={() => {
+              setPasswordOf(null);
+            }}
+            onDone={(user) => {
+              setPasswordOf(null);
+              if (data) {
+                setData({
+                  ...data,
+                  items: data.items.map((item) => (item.id === user.id ? user : item)),
+                });
+              }
+            }}
+          />
+        ) : null}
+      </Modal>
+      <Modal
         open={inviting}
         onClose={() => {
           setInviting(false);
@@ -323,11 +638,11 @@ export function UsersManager() {
         closeLabel={common('close')}
       >
         {inviting ? (
-          <Invite
+          <AddAccount
             onClose={() => {
               setInviting(false);
             }}
-            onInvited={() => {
+            onAdded={() => {
               setInviting(false);
               reload();
             }}

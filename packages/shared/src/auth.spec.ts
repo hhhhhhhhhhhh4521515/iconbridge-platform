@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createAdminUserSchema, loginSchema, registerSchema, resetPasswordSchema } from './auth.js';
+import {
+  changeAdminRoleSchema,
+  createAdminUserSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from './auth.js';
+import { createSuccessStorySchema } from './admin.js';
 
 const valid = {
   email: '  Amira.Test@Example.TEST ',
@@ -71,5 +78,63 @@ describe('other auth schemas', () => {
     expect(createAdminUserSchema.safeParse({ email: 'a@b.test', role: 'VIEWER' }).success).toBe(
       true,
     );
+  });
+});
+
+describe('country agents (ADR-024)', () => {
+  const agent = { email: 'bihi@example.test', role: 'COUNTRY_AGENT' } as const;
+
+  it('needs at least one country for an agent, none for the other roles', () => {
+    expect(
+      createAdminUserSchema.safeParse({ ...agent, countries: ['ma'] }).data?.countries,
+    ).toEqual(['MA']);
+    expect(createAdminUserSchema.safeParse(agent).success).toBe(false);
+    expect(createAdminUserSchema.safeParse({ ...agent, countries: [] }).success).toBe(false);
+    expect(
+      createAdminUserSchema.safeParse({
+        email: 'r@example.test',
+        role: 'RECRUITER',
+        countries: ['TN'],
+      }).success,
+    ).toBe(false);
+    expect(
+      changeAdminRoleSchema.safeParse({ role: 'COUNTRY_AGENT', countries: ['TN'] }).success,
+    ).toBe(true);
+    expect(changeAdminRoleSchema.safeParse({ role: 'COUNTRY_AGENT' }).success).toBe(false);
+  });
+
+  it('refuses unknown or repeated country codes', () => {
+    expect(createAdminUserSchema.safeParse({ ...agent, countries: ['XX'] }).success).toBe(false);
+    expect(createAdminUserSchema.safeParse({ ...agent, countries: ['MA', 'ma'] }).success).toBe(
+      false,
+    );
+  });
+
+  it('takes an optional first password of the usual length', () => {
+    expect(
+      createAdminUserSchema.safeParse({ ...agent, countries: ['MA'], password: 'short' }).success,
+    ).toBe(false);
+    expect(
+      createAdminUserSchema.safeParse({
+        ...agent,
+        countries: ['MA'],
+        password: 'river-lantern-quartz-42',
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe('success story quote', () => {
+  const story = {
+    firstName: 'Amira',
+    jobTitle: 'Waiter',
+    destinationId: '00000000-0000-4000-8000-000000000000',
+  };
+
+  it('is optional in the three languages', () => {
+    expect(createSuccessStorySchema.parse(story).quote).toEqual({ en: '', fr: '', ar: '' });
+    expect(
+      createSuccessStorySchema.parse({ ...story, quote: { en: ' Thanks ', fr: '', ar: '' } }).quote,
+    ).toEqual({ en: 'Thanks', fr: '', ar: '' });
   });
 });

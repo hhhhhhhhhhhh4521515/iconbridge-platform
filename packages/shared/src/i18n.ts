@@ -15,3 +15,11 @@ export const localizedTextSchema = z.object({
   ar: z.string().min(1),
 });
 export type LocalizedText = z.infer<typeof localizedTextSchema>;
+
+/** The same shape where every language may be empty (an optional translated text). */
+export const optionalLocalizedTextSchema = z.object({
+  en: z.string().trim().max(2000),
+  fr: z.string().trim().max(2000),
+  ar: z.string().trim().max(2000),
+});
+export type OptionalLocalizedText = z.infer<typeof optionalLocalizedTextSchema>;

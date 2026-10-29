@@ -25,6 +25,7 @@ import {
   myJobAlertResponseSchema,
   myJobAlertSchema,
   PERMISSIONS,
+  USER_ROLES,
   uuidParamSchema,
   type AccountSettingsInput,
   type ChangePasswordInput,
@@ -37,7 +38,13 @@ import type { Request, Response } from 'express';
 import { RATE_LIMITS } from '../auth/auth.constants.js';
 import { clearAuthCookies, setAuthCookies } from '../auth/auth.cookies.js';
 import { requestMeta, type AuthUser } from '../auth/auth.types.js';
-import { CurrentUser, RequireVerifiedEmail, Roles, SelfService } from '../auth/decorators/index.js';
+import {
+  AllowPasswordChange,
+  CurrentUser,
+  RequireVerifiedEmail,
+  Roles,
+  SelfService,
+} from '../auth/decorators/index.js';
 import { SessionService } from '../auth/session.service.js';
 import { TokenService } from '../auth/token.service.js';
 import { ZodBody, ZodParams } from '../common/pipes/zod-validation.pipe.js';
@@ -58,7 +65,7 @@ export class AccountController {
 
   @Patch('settings')
   @Throttle({ default: RATE_LIMITS.default })
-  @Roles('CANDIDATE', 'VIEWER', 'RECRUITER', 'SUPER_ADMIN')
+  @Roles(...USER_ROLES)
   @SelfService()
   @ApiOperation({ summary: 'Change my language (used for the emails)' })
   @ApiZodBody(accountSettingsSchema)
@@ -72,8 +79,9 @@ export class AccountController {
   }
 
   @Post('password')
-  @Roles('CANDIDATE', 'VIEWER', 'RECRUITER', 'SUPER_ADMIN')
+  @Roles(...USER_ROLES)
   @SelfService()
+  @AllowPasswordChange()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Change my password',

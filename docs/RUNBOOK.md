@@ -200,9 +200,11 @@ The `-replace` applies run from the owner's machine (`make tf-apply`), because t
 
 There is no public sign-up for back-office accounts (SPEC).
 
-1. Sign in as a super admin → **Back office** → **Users** → **New user**: email, name, role (`VIEWER`, `RECRUITER` or `SUPER_ADMIN`). Audited as `admin_user.create`.
-2. The account has no password: an invitation email with a set-password link is sent (outbox, counted in the 10 emails an hour).
-3. Change a role (**Role**), sign someone out everywhere (**Force logout**) or disable the account from the same page. Give `SUPER_ADMIN` sparingly: it alone sees clear passport numbers in exports and can change settings.
+1. Sign in as a super admin → **Back office** → **Users and roles** → **Invite a user**: email, role (`VIEWER`, `COUNTRY_AGENT`, `RECRUITER` or `SUPER_ADMIN`), and for a country agent his countries (nationalities). Audited as `admin_user.create`.
+2. Either **Send an invitation email** (set-password link, counted in the hourly email limit), or **Set the password now**: no email, give the password to the person by another channel; it is never shown again, and the person must choose a new one at the first sign-in (nothing else works before).
+3. Change a role and the countries (**Role**, or the countries column), set a new password for someone who lost access (**Set a password**: signs the account out everywhere, audited as `admin_user.set_password` without the password), sign someone out everywhere (**Log out everywhere**) or disable the account from the same page. Give `SUPER_ADMIN` sparingly: it alone sees clear passport numbers in exports and can change settings.
+
+**Country agents** (ADR-024): `bihi@iconbridgerecruitment.com` (Morocco, `MA`) and `majdi@iconbridgerecruitment.com` (Tunisia, `TN`). Their mail is forwarded by Cloudflare Email Routing (DEPLOYMENT.md, "Mail for agent addresses"): if an agent receives no reset email, check the routing rule and the destination in Cloudflare, then the outbox. An agent who sees too many or too few candidates: check his countries in **Users and roles** and the candidates' **nationality** (country of residence does not count).
 
 If no super admin can sign in any more, the migration job's seed creates the first super admin only when none exists: reset the password of the existing one with **Forgot password** on the sign-in page (the email goes to its address).
 

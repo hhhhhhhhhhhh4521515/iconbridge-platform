@@ -31,6 +31,13 @@ export const SELF_SERVICE_KEY = 'auth:self-service';
 /** Marks a write that every signed-in role may do on its own account, including VIEWER. */
 export const SelfService = () => SetMetadata(SELF_SERVICE_KEY, true);
 
+export const ALLOW_PASSWORD_CHANGE_KEY = 'auth:allow-password-change';
+/**
+ * Keeps a route open to a user who must replace a password chosen by a super admin
+ * (ADR-024). Every other authenticated route answers 403 PASSWORD_CHANGE_REQUIRED.
+ */
+export const AllowPasswordChange = () => SetMetadata(ALLOW_PASSWORD_CHANGE_KEY, true);
+
 export const OWNED_RESOURCES = ['candidateProfile', 'document', 'application'] as const;
 export type OwnedResource = (typeof OWNED_RESOURCES)[number];
 export interface OwnershipRule {

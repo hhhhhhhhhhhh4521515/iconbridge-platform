@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileText,
   Images,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -31,6 +32,7 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { api } from '@/lib/client-api';
 import { cta } from '@/lib/ui';
 import { AdminProvider, useAdmin } from './admin-context';
+import { AdminPassword } from './password';
 import { Badge, ConfirmProvider } from './ui';
 
 interface NavItem {
@@ -47,10 +49,10 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: 'work',
     items: [
       { key: 'dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
-      { key: 'jobs', href: '/admin/jobs', icon: Briefcase },
+      { key: 'jobs', href: '/admin/jobs', icon: Briefcase, needs: 'VIEW_BACK_OFFICE' },
       { key: 'applications', href: '/admin/applications', icon: FileText },
       { key: 'candidates', href: '/admin/candidates', icon: Users },
-      { key: 'messages', href: '/admin/messages', icon: Mail },
+      { key: 'messages', href: '/admin/messages', icon: Mail, needs: 'VIEW_BACK_OFFICE' },
     ],
   },
   {
@@ -58,7 +60,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { key: 'stories', href: '/admin/content/stories', icon: Award, needs: 'MANAGE_CONTENT' },
       { key: 'slides', href: '/admin/content/slides', icon: Images, needs: 'MANAGE_CONTENT' },
-      { key: 'catalog', href: '/admin/content/catalog', icon: Tags },
+      { key: 'catalog', href: '/admin/content/catalog', icon: Tags, needs: 'VIEW_BACK_OFFICE' },
     ],
   },
   {
@@ -75,11 +77,14 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
   const t = useTranslations('admin.nav');
   const pathname = usePathname();
   const { can } = useAdmin();
+  const readsMessages = can('VIEW_BACK_OFFICE');
   const unhandled = useCallback(
     async () =>
-      (await api.GET('/api/v1/admin/contact-messages', { params: { query: { pageSize: 1 } } })).data
-        ?.unhandled,
-    [],
+      readsMessages
+        ? (await api.GET('/api/v1/admin/contact-messages', { params: { query: { pageSize: 1 } } }))
+            .data?.unhandled
+        : 0,
+    [readsMessages],
   );
   const waiting = useLoaded(unhandled).data ?? 0;
   return (
@@ -155,7 +160,7 @@ function Frame({ children }: { children: ReactNode }) {
             <X className="size-5" aria-hidden />
           </button>
         </div>
-        <Sidebar onNavigate={close} />
+        {user.passwordChangeRequired ? null : <Sidebar onNavigate={close} />}
       </aside>
       {open ? (
         <button
@@ -184,6 +189,11 @@ function Frame({ children }: { children: ReactNode }) {
               {user.email}
             </span>
             <Badge tone="info">{t(`roles.${user.role}`)}</Badge>
+            {user.assignedCountries.length > 0 ? (
+              <span className="text-xs text-muted-foreground" data-testid="admin-countries">
+                {user.assignedCountries.join(', ')}
+              </span>
+            ) : null}
           </div>
           <div className="flex items-center gap-1">
             <Link href="/" className={`${cta.ghost} px-3 max-md:hidden`}>
@@ -203,6 +213,11 @@ function Frame({ children }: { children: ReactNode }) {
                 </Link>
               ))}
             </nav>
+            <Link href="/admin/password" className={`${cta.ghost} px-3`}>
+              <KeyRound className="size-4" aria-hidden />
+              <span className="hidden md:inline">{t('password.menu')}</span>
+              <span className="sr-only md:hidden">{t('password.menu')}</span>
+            </Link>
             <ThemeToggle lightLabel={common('themeLight')} darkLabel={common('themeDark')} />
             <button type="button" className={`${cta.ghost} px-3`} onClick={() => void logout()}>
               <LogOut className="size-4 rtl:-scale-x-100" aria-hidden />
@@ -212,7 +227,8 @@ function Frame({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main id="main" className="min-w-0 flex-1 p-4 md:p-6">
-          {children}
+          {/* A password chosen by a super admin is replaced before anything else (ADR-024). */}
+          {user.passwordChangeRequired ? <AdminPassword forced /> : children}
         </main>
       </div>
     </div>

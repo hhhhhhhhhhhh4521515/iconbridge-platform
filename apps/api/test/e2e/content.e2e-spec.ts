@@ -168,6 +168,30 @@ describe('success stories and home slides (e2e)', () => {
       expect(raw).not.toContain('lastName');
     });
 
+    it('saves, publishes and lists a story without a quote, and a quote in one language only', async () => {
+      const silent = await createStory({ firstName: 'Nour', lastName: '', quote: undefined });
+      expect(silent.quote).toEqual({ en: '', fr: '', ar: '' });
+      await as(test, recruiter)
+        .upload(`/admin/success-stories/${silent.id}/consent`, pdf(), 'c.pdf')
+        .expect(200);
+      await as(test, recruiter).post(`/admin/success-stories/${silent.id}/publish`).expect(200);
+      await published({
+        firstName: 'Sami',
+        lastName: '',
+        quote: { en: 'Thank you, IconBridge!', fr: '', ar: '' },
+      });
+      // Emptied later: the three texts may be cleared together.
+      const cleared = await published({ firstName: 'Rania', lastName: '' });
+      await as(test, recruiter)
+        .patch(`/admin/success-stories/${cleared.id}`, { quote: { en: '', fr: '', ar: '' } })
+        .expect(200);
+      const stories = await publicStories();
+      const byName = new Map(stories.map((item) => [item.name, item.quote]));
+      expect(byName.get('Nour')).toEqual({ en: '', fr: '', ar: '' });
+      expect(byName.get('Sami')).toEqual({ en: 'Thank you, IconBridge!', fr: '', ar: '' });
+      expect(byName.get('Rania')).toEqual({ en: '', fr: '', ar: '' });
+    });
+
     it('returns published stories only, in their order, with destination, date, quote and photo', async () => {
       const first = await published();
       await createStory({ firstName: 'Draft' });

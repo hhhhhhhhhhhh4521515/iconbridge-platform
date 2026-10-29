@@ -50,12 +50,13 @@ export class AdminSettingsController {
     summary: 'Dashboard figures',
     description:
       'Open jobs, applications per status, per destination and per month (last 12), visas approved this year, ' +
-      'average days from Submitted to Visa approved.',
+      'average days from Submitted to Visa approved. A country agent gets the figures of his countries ' +
+      '(by nationality) only, without the historical figures (`scopeCountries` lists them).',
   })
   @ApiZodResponse(200, adminStatsSchema)
   @ApiErrors(401, 403)
-  getStats(): Promise<AdminStats> {
-    return this.stats.get();
+  getStats(@CurrentUser() user: AuthUser): Promise<AdminStats> {
+    return this.stats.get(user);
   }
 
   @Get('capabilities')
