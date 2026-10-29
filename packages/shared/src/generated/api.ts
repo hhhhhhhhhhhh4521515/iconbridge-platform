@@ -428,7 +428,7 @@ export interface paths {
         post?: never;
         /**
          * Delete an application
-         * @description For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history and the internal notes go with it; the documents stay with the candidate. A position taken by a deployed candidate stays taken (hiredCount does not change), and the candidate may apply to the job again at once.
+         * @description For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history and the internal notes go with it; the documents stay with the candidate. A position it held (Contract signed or later) becomes free, and the job reopens if it had closed for that reason (ADR-025). The candidate may apply to the job again at once.
          */
         delete: operations["AdminApplicationsController_remove"];
         options?: never;
@@ -451,7 +451,7 @@ export interface paths {
         head?: never;
         /**
          * Change the status of an application
-         * @description Follows the state machine: one step forward, or Rejected; Rejected and Withdrawn are final unless a SUPER_ADMIN reopens them. Deployed takes one position of the job. `comment` stays internal; `messageToCandidate` appears in the candidate timeline and in the email sent at every change.
+         * @description Follows the state machine: one step forward, or Rejected; Rejected and Withdrawn are final unless a SUPER_ADMIN reopens them. Contract signed takes one position of the job (refused when none is left) and leaving the steps from Contract signed on frees it; the job closes or reopens with it. `comment` stays internal; `messageToCandidate` appears in the candidate timeline and in the email sent at every change.
          */
         patch: operations["AdminApplicationsController_changeStatus"];
         trace?: never;
@@ -1160,7 +1160,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Search open jobs
+         * Search the jobs of the site (open ones first, closed ones marked isOpen: false)
          * @description Only jobs that are published, not deleted, whose deadline has not passed and with positions left. `q` searches the title and the description and tolerates plurals and typos on the title ("welders" finds "Welder").
          */
         get: operations["PublicJobsController_list"];
@@ -1180,7 +1180,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * One open job, with its destination and category
+         * One job of the site, open or closed, with its destination and category
          * @description A draft, closed, archived, deleted, expired or full job answers 404.
          */
         get: operations["PublicJobsController_get"];
@@ -7885,6 +7885,8 @@ export interface operations {
                 page?: number;
                 /** @description Default: relevance with q, newest without */
                 sort?: "relevance" | "newest" | "deadline" | "salary";
+                /** @description true: open jobs only. Otherwise every listed job, open ones first, closed ones with `isOpen: false` */
+                open?: "true" | "false";
                 featured?: "true" | "false";
                 /** @description Required language (ISO 639 code) */
                 language?: unknown;
@@ -7979,6 +7981,7 @@ export interface operations {
                                     };
                                 }[];
                             }[];
+                            isOpen: boolean;
                         }[];
                         page: number;
                         pageSize: number;
@@ -8085,6 +8088,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                     };
                 };
             };
@@ -8264,6 +8268,7 @@ export interface operations {
                                     };
                                 }[];
                             }[];
+                            isOpen: boolean;
                             destination: {
                                 /** Format: uuid */
                                 id: string;
@@ -8293,6 +8298,8 @@ export interface operations {
                             createdById: string;
                             /** Format: date-time */
                             closedAt: string | null;
+                            /** @enum {string|null} */
+                            closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                             /** Format: date-time */
                             deletedAt: string | null;
                             /** Format: date-time */
@@ -8472,6 +8479,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -8501,6 +8509,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -8621,6 +8631,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -8650,6 +8661,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -8901,6 +8914,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -8930,6 +8944,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -9065,6 +9081,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -9094,6 +9111,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -9229,6 +9248,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -9258,6 +9278,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -9393,6 +9415,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -9422,6 +9445,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -9557,6 +9582,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -9586,6 +9612,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -9721,6 +9749,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -9750,6 +9779,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -9870,6 +9901,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -9899,6 +9931,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -10019,6 +10053,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -10048,6 +10083,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -10175,6 +10212,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -10204,6 +10242,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
@@ -10369,6 +10409,7 @@ export interface operations {
                                 };
                             }[];
                         }[];
+                        isOpen: boolean;
                         destination: {
                             /** Format: uuid */
                             id: string;
@@ -10398,6 +10439,8 @@ export interface operations {
                         createdById: string;
                         /** Format: date-time */
                         closedAt: string | null;
+                        /** @enum {string|null} */
+                        closeReason: "MANUAL" | "DEADLINE_PASSED" | "POSITIONS_FILLED" | null;
                         /** Format: date-time */
                         deletedAt: string | null;
                         /** Format: date-time */
