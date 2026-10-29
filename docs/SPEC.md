@@ -92,9 +92,11 @@ Title, slug, destination, category, employer name (optional, can be hidden), des
 
 ### 4.2 Availability rules
 
-1. Only Published jobs whose deadline has not passed are visible.
-2. A job closes automatically when its deadline passes or when the hired count reaches the number of positions.
-3. Delete is a soft delete: the job is kept for history and existing applications.
+1. **Listed**: a job appears on the public site and in the back office from its publication until it is archived or deleted: status Published or Closed. Drafts and archived jobs are not on the public site.
+2. **Open**: a listed job accepts applications only when it is Published, its deadline has not passed and positions remain. A listed job that is not open stays on the jobs page (after the open ones) with a "Closed" badge; its page still opens, and the Apply button is replaced by "This job is closed". The API refuses new applications to it (`JOB_NOT_OPEN`).
+3. **Filled positions**: a position is filled by an application that reaches **Contract signed**, not by applying. `hiredCount` is the number of applications of the job at Contract signed or a later step (Visa processing, Visa approved, Deployed); it goes down when such an application leaves these steps (rejected, status change undone) or is deleted. Moving an application to Contract signed is refused when every position is filled (`NO_POSITION_LEFT`).
+4. **Closing and reopening**: a job closes automatically when its deadline passes or when `hiredCount` reaches the number of positions. A job closed because its positions were filled reopens automatically when `hiredCount` drops below the number of positions and the deadline has not passed. A job closed by a recruiter stays closed until a recruiter reopens it.
+5. Delete is a soft delete: the job is kept for history and existing applications.
 
 ## 5. Application pipeline
 
