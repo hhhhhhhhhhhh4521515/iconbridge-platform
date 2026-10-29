@@ -41,6 +41,11 @@ export const JOB_STATUSES = ['DRAFT', 'PUBLISHED', 'CLOSED', 'ARCHIVED'] as cons
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 
+/** Why a job is Closed: by a recruiter, its deadline, or every position filled (ADR-025). */
+export const JOB_CLOSE_REASONS = ['MANUAL', 'DEADLINE_PASSED', 'POSITIONS_FILLED'] as const;
+export const jobCloseReasonSchema = z.enum(JOB_CLOSE_REASONS);
+export type JobCloseReason = z.infer<typeof jobCloseReasonSchema>;
+
 /** Pipeline statuses, in the order an application moves through them. */
 export const APPLICATION_PIPELINE = [
   'SUBMITTED',
@@ -63,6 +68,21 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export const applicationStatusSchema = z.enum(APPLICATION_STATUSES);
 export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;
+
+/**
+ * An application at one of these steps holds one position of its job: from Contract signed
+ * on (ADR-025). `hiredCount` is the number of such applications.
+ */
+export const POSITION_HOLDING_STATUSES = [
+  'CONTRACT_SIGNED',
+  'VISA_PROCESSING',
+  'VISA_APPROVED',
+  'DEPLOYED',
+] as const satisfies readonly ApplicationStatus[];
+
+export function holdsPosition(status: ApplicationStatus): boolean {
+  return (POSITION_HOLDING_STATUSES as readonly ApplicationStatus[]).includes(status);
+}
 
 /** No further change is possible once an application is deployed, rejected or withdrawn. */
 export function isFinalApplicationStatus(status: ApplicationStatus): boolean {

@@ -1,6 +1,12 @@
 import './zod-setup.js';
 import { z } from 'zod';
-import { JOB_STATUSES, jobStatusSchema, salaryPeriodSchema, type JobStatus } from './enums.js';
+import {
+  JOB_STATUSES,
+  jobCloseReasonSchema,
+  jobStatusSchema,
+  salaryPeriodSchema,
+  type JobStatus,
+} from './enums.js';
 import { localizedTextSchema } from './i18n.js';
 import { jobQuestionSchema, jobQuestionsSchema } from './questions.js';
 import { paginationQuerySchema } from './schemas.js';
@@ -22,6 +28,23 @@ export const JOB_TRANSITIONS: Record<JobAction, { from: readonly JobStatus[]; to
 
 export function canTransitionJob(action: JobAction, status: JobStatus): boolean {
   return JOB_TRANSITIONS[action].from.includes(status);
+}
+
+/**
+ * A job is listed (public site, its page opens) from its publication until it is archived
+ * or deleted: Published or Closed (ADR-025). Whether it accepts applications is `isJobOpen`.
+ * The API applies the same rule in SQL (`LISTED_JOB_SQL`).
+ */
+export function isJobListed(job: {
+  status: JobStatus;
+  publishedAt: Date | null;
+  deletedAt: Date | null;
+}): boolean {
+  return (
+    (job.status === 'PUBLISHED' || job.status === 'CLOSED') &&
+    job.publishedAt !== null &&
+    job.deletedAt === null
+  );
 }
 
 /**
@@ -113,6 +136,8 @@ export const jobListQuerySchema = paginationQuerySchema
     /** Jobs that require this language. */
     language: languageCode.optional(),
     featured: queryBoolean.optional(),
+    /** true: open jobs only. Otherwise every listed job, the open ones first (ADR-025). */
+    open: queryBoolean.optional(),
     /** Free text: full-text search on title and description, tolerant of plurals and typos on the title. */
     q: z.string().trim().min(2).max(100).optional(),
     /** Defaults to relevance when `q` is given, newest otherwise. */
@@ -368,6 +393,8 @@ export const publicJobSchema = z.object({
   featured: z.boolean(),
   publishedAt: z.iso.datetime().nullable(),
   questions: z.array(jobQuestionSchema),
+  /** False for a listed job that no longer accepts applications: shown with a "Closed" badge. */
+  isOpen: z.boolean(),
 });
 export type PublicJob = z.infer<typeof publicJobSchema>;
 
@@ -381,6 +408,8 @@ export const adminJobSchema = publicJobSchema.omit({ destination: true, category
   applicationCount: z.number().int(),
   createdById: z.uuid(),
   closedAt: z.iso.datetime().nullable(),
+  /** Why the job is Closed; null otherwise. */
+  closeReason: jobCloseReasonSchema.nullable(),
   deletedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
