@@ -20,10 +20,13 @@ export interface ApplyLabels {
   notOpen: string;
   maxActive: string;
   staff: string;
+  /** In place of the button on a closed job. */
+  closed: string;
 }
 
 type ApplyState =
   | { kind: 'checking' }
+  | { kind: 'closed' }
   | { kind: 'anonymous' }
   | { kind: 'staff' }
   | { kind: 'eligible' }
@@ -46,21 +49,27 @@ const REASONS = {
  * same rule the API applies when the candidate really applies:
  * not signed in -> "Login to apply"; waiting period -> "You can apply again on <date>"
  * with a link to the application; otherwise the reason that blocks, or "Apply now".
+ * A closed job (`open` false, ADR-025) shows "This job is closed" without asking anything.
  */
 export function ApplyButton({
   jobId,
   slug,
   locale,
+  open,
   labels,
 }: {
   jobId: string;
   slug: string;
   locale: string;
+  open: boolean;
   labels: ApplyLabels;
 }) {
-  const [state, setState] = useState<ApplyState>({ kind: 'checking' });
+  const [state, setState] = useState<ApplyState>(open ? { kind: 'checking' } : { kind: 'closed' });
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
     let cancelled = false;
     const date = (iso: string) =>
       new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date(iso));
@@ -107,7 +116,7 @@ export function ApplyButton({
     return () => {
       cancelled = true;
     };
-  }, [jobId, locale]);
+  }, [jobId, locale, open]);
 
   const note = 'rounded-lg bg-muted p-3 text-sm font-medium text-foreground';
   switch (state.kind) {
@@ -133,6 +142,12 @@ export function ApplyButton({
       );
     case 'staff':
       return <p className={note}>{labels.staff}</p>;
+    case 'closed':
+      return (
+        <p className={note} role="status" data-testid="apply-closed">
+          {labels.closed}
+        </p>
+      );
     case 'eligible':
       return (
         <Link href={`/account/apply/${slug}`} className={`${cta.primary} w-full`}>

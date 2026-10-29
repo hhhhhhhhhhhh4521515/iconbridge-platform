@@ -269,7 +269,8 @@
       "featured": "À la une",
       "deadline": "Postulez avant le {date}",
       "positions": "{count, plural, one {# poste} other {# postes}}",
-      "view": "Voir l'offre : {title}"
+      "view": "Voir l'offre : {title}",
+      "closed": "Fermée"
     },
     "period": {
       "HOUR": "par heure",
@@ -320,7 +321,8 @@
       "viewApplication": "Voir ma candidature",
       "notOpen": "Cette offre n'accepte plus de candidatures",
       "maxActive": "Vous avez atteint le nombre maximum de candidatures en cours",
-      "staff": "Les candidatures se font depuis un compte candidat"
+      "staff": "Les candidatures se font depuis un compte candidat",
+      "closed": "Cette offre est fermée"
     }
   },
   "about": {

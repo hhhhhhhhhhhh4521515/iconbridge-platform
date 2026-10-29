@@ -147,8 +147,31 @@ test.describe('jobs', () => {
     );
   });
 
-  test('a job that is not open, or does not exist, shows the 404 page', async ({ page }) => {
+  test('a closed job stays listed with a "Closed" badge, its page opens without the Apply button', async ({
+    page,
+  }) => {
+    // Closed in the development data, deadline passed (ADR-025).
     const response = await page.goto('/en/jobs/sample-fruit-picker-poland');
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole('heading', { name: 'Seasonal Fruit Picker' })).toBeVisible();
+    await expect(page.getByTestId('closed-badge')).toHaveText('Closed');
+    await expect(page.getByTestId('apply-closed')).toHaveText('This job is closed');
+    await expect(page.getByRole('link', { name: /Login to apply|Apply now/ })).toHaveCount(0);
+    await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+
+    await page.goto('/en/jobs?q=fruit');
+    const card = page.locator('article').filter({ hasText: 'Seasonal Fruit Picker' });
+    await expect(card.getByTestId('closed-badge')).toHaveText('Closed');
+
+    await page.goto('/fr/jobs/sample-fruit-picker-poland');
+    await expect(page.getByTestId('closed-badge')).toHaveText('Fermée');
+    await expect(page.getByTestId('apply-closed')).toHaveText('Cette offre est fermée');
+    await page.goto('/ar/jobs/sample-fruit-picker-poland');
+    await expect(page.getByTestId('apply-closed')).toHaveText('هذه الوظيفة مغلقة');
+  });
+
+  test('a job that does not exist shows the 404 page', async ({ page }) => {
+    const response = await page.goto('/en/jobs/no-such-job-here');
     expect(response?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
   });

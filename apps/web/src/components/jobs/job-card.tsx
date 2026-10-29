@@ -48,6 +48,15 @@ export async function JobCard({ job }: { job: PublicJob }) {
             {t('card.featured')}
           </span>
         ) : null}
+        {/* Closed jobs stay listed (ADR-025); red-800 on red-100 keeps about 7:1. */}
+        {job.isOpen ? null : (
+          <span
+            className="rounded-full bg-red-100 px-2.5 py-1 text-red-800"
+            data-testid="closed-badge"
+          >
+            {t('card.closed')}
+          </span>
+        )}
       </div>
       <h3 className="mt-3 text-lg leading-snug font-semibold">
         <Link

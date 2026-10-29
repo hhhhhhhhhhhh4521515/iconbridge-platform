@@ -1,5 +1,7 @@
 'use client';
 
+import { holdsPosition } from '@iconbridge/shared/enums';
+
 import { FINAL_APPLICATION_STATUSES } from '@iconbridge/shared/admin';
 import { answerText } from '@iconbridge/shared/questions';
 import { Award, Hourglass, Pencil, Trash2, Undo2 } from 'lucide-react';
@@ -668,7 +670,7 @@ function Detail({
             notes={[
               t('applications.keptDocuments'),
               t('applications.cooldownLifted'),
-              ...(detail.status === 'DEPLOYED' ? [t('applications.hiredKept')] : []),
+              ...(holdsPosition(detail.status) ? [t('applications.positionFreed')] : []),
             ]}
             confirmLabel={t('applications.delete')}
             onClose={() => {

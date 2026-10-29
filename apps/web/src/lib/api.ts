@@ -41,6 +41,8 @@ export interface JobQuery {
   salaryMin?: number;
   currency?: string;
   featured?: 'true' | 'false';
+  /** 'true': open jobs only; otherwise closed jobs are listed too, after the open ones (ADR-025). */
+  open?: 'true' | 'false';
   sort?: 'relevance' | 'newest' | 'deadline' | 'salary';
   page?: number;
   pageSize?: number;

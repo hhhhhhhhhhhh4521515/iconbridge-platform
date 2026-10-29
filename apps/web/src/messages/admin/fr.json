@@ -181,7 +181,7 @@
     "columns": {
       "title": "Offre",
       "status": "Statut",
-      "positions": "Recrutés / postes",
+      "positions": "Contrats signés / postes",
       "applications": "Candidatures",
       "deadline": "Date limite"
     },
@@ -218,8 +218,8 @@
       "cover": "Image de couverture"
     },
     "questionsIntro": "Posées dans le formulaire de candidature, dans la langue du candidat. Sans question, deux questions générales sont posées à la place.",
-    "autoClose": "L'offre quitte le site d'elle-même quand la date limite est passée ou quand tous les postes sont pourvus.",
-    "autoCloseNow": "Aujourd'hui : {hired} recrutés sur {positions}, date limite le {date}.",
+    "autoClose": "L’offre se ferme d’elle-même quand la date limite est passée ou quand tous les postes sont pourvus (un contrat signé par poste). Elle reste sur le site avec la mention « Fermée », et se rouvre d’elle-même si un poste se libère avant la date limite.",
+    "autoCloseNow": "Aujourd’hui : {hired} contrats signés sur {positions} postes, date limite le {date}.",
     "noCover": "Pas d'image : le site affiche l'image de la destination.",
     "addCover": "Ajouter une image",
     "changeCover": "Changer l'image",
@@ -329,7 +329,7 @@
     "removedHistory": "Son historique de statuts et ses notes internes",
     "keptDocuments": "Les documents restent dans le profil du candidat.",
     "cooldownLifted": "Le candidat pourra postuler de nouveau à cette offre immédiatement : le délai d'attente de 6 mois ne s'applique plus.",
-    "hiredKept": "Un candidat en poste garde son poste : le nombre de recrutés de l'offre ne diminue pas.",
+    "positionFreed": "Cette candidature occupe un poste (contrat signé ou plus loin) : la supprimer libère le poste, et l’offre se rouvre si elle était fermée parce que complète.",
     "deleted": "La candidature est supprimée.",
     "deletedMany": "{count, plural, one {# candidature supprimée} other {# candidatures supprimées}}.",
     "waiveCooldown": "Lever le délai d'attente",

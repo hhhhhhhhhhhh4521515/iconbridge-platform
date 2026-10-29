@@ -269,7 +269,8 @@
       "featured": "Featured",
       "deadline": "Apply before {date}",
       "positions": "{count, plural, one {# position} other {# positions}}",
-      "view": "View the job: {title}"
+      "view": "View the job: {title}",
+      "closed": "Closed"
     },
     "period": {
       "HOUR": "per hour",
@@ -320,7 +321,8 @@
       "viewApplication": "View my application",
       "notOpen": "This job no longer accepts applications",
       "maxActive": "You have reached the maximum number of applications in progress",
-      "staff": "Applications are made from a candidate account"
+      "staff": "Applications are made from a candidate account",
+      "closed": "This job is closed"
     }
   },
   "about": {
