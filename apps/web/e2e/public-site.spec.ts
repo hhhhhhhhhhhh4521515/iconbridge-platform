@@ -153,14 +153,15 @@ test.describe('jobs', () => {
     // Closed in the development data, deadline passed (ADR-025).
     const response = await page.goto('/en/jobs/sample-fruit-picker-poland');
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole('heading', { name: 'Seasonal Fruit Picker' })).toBeVisible();
+    // "Fruit Picker" in older development data, "Seasonal Fruit Picker" in a fresh seed.
+    await expect(page.getByRole('heading', { level: 1, name: /Fruit Picker/ })).toBeVisible();
     await expect(page.getByTestId('closed-badge')).toHaveText('Closed');
     await expect(page.getByTestId('apply-closed')).toHaveText('This job is closed');
     await expect(page.getByRole('link', { name: /Login to apply|Apply now/ })).toHaveCount(0);
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
 
     await page.goto('/en/jobs?q=fruit');
-    const card = page.locator('article').filter({ hasText: 'Seasonal Fruit Picker' });
+    const card = page.locator('article').filter({ hasText: 'Fruit Picker' });
     await expect(card.getByTestId('closed-badge')).toHaveText('Closed');
 
     await page.goto('/fr/jobs/sample-fruit-picker-poland');

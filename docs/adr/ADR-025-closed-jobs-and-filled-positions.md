@@ -26,7 +26,7 @@ One rule, `OPEN_JOB_SQL` / `isJobOpen` (Published, not deleted, deadline ahead, 
 
 ## Consequences
 
-- Candidates and search engines find closed jobs; the sitemap lists them too. The jobs page can grow long: open jobs come first, and archiving removes a job from the site.
+- Candidates find closed jobs on the jobs page and at their address; the sitemap and the home page offer open jobs only, and a closed page carries no `JobPosting` data. The jobs page can grow long: open jobs come first, and archiving removes a job from the site.
 - A job with one position closes as soon as one contract is signed, and comes back by itself if that candidate is rejected later.
 - Pages cached by the site follow at once: status changes, undo and deletions of applications now revalidate `jobs` as well as `stats`.
 - The positions of a job cannot be set below its contracts signed, as before.
