@@ -268,71 +268,149 @@ describe('admin applications (e2e)', () => {
     });
   });
 
-  describe('hired count', () => {
-    it('increments when an application becomes Deployed, and only then', async () => {
+  describe('hired count: a position is held from Contract signed on (ADR-025)', () => {
+    const job = async () => test.prisma.job.findUniqueOrThrow({ where: { id: jobId } });
+
+    it('counts an application from Contract signed to Deployed, not before', async () => {
       const { id } = await newApplication(test, jobId);
+      expect(await hiredCount()).toBe(0);
       for (const status of PIPELINE_AFTER_SUBMITTED) {
-        expect(await hiredCount()).toBe(0);
         await setStatus(id, status).expect(200);
+        const held = ['CONTRACT_SIGNED', 'VISA_PROCESSING', 'VISA_APPROVED', 'DEPLOYED'];
+        expect(await hiredCount(), status).toBe(held.includes(status) ? 1 : 0);
       }
-      expect(await hiredCount()).toBe(1);
     });
 
-    it('does not count rejected or withdrawn applications', async () => {
+    it('frees the position when a contract-signed application is rejected', async () => {
       const rejected = await newApplication(test, jobId);
       await advanceTo(test, recruiter, rejected.id, 'VISA_APPROVED');
+      expect(await hiredCount()).toBe(1);
       await setStatus(rejected.id, 'REJECTED').expect(200);
       expect(await hiredCount()).toBe(0);
     });
 
-    it('fills the job: the last position closes it to candidates, and one more hire is refused', async () => {
+    it('closes the job when the last position is signed, keeps it listed, and refuses one more contract', async () => {
       const [first, second, third] = [
         await newApplication(test, jobId),
         await newApplication(test, jobId),
         await newApplication(test, jobId),
       ];
       for (const application of [first, second, third]) {
-        await advanceTo(test, recruiter, application.id, 'VISA_APPROVED');
+        await advanceTo(test, recruiter, application.id, 'OFFER');
       }
-      await setStatus(first.id, 'DEPLOYED').expect(200);
-      await test.http().get('/api/v1/jobs/welder').expect(200);
-      await setStatus(second.id, 'DEPLOYED').expect(200);
-      expect(await hiredCount()).toBe(2);
-      // 2 positions, 2 hired: the job is no longer public.
-      await test.http().get('/api/v1/jobs/welder').expect(404);
+      await setStatus(first.id, 'CONTRACT_SIGNED').expect(200);
+      expect((await job()).status).toBe('PUBLISHED');
+      await setStatus(second.id, 'CONTRACT_SIGNED').expect(200);
+      // 2 positions, 2 contracts: closed, still listed, refusing applications.
+      expect(await job()).toMatchObject({
+        hiredCount: 2,
+        status: 'CLOSED',
+        closeReason: 'POSITIONS_FILLED',
+      });
+      const page = await test.http().get('/api/v1/jobs/welder').expect(200);
+      expect(page.body).toMatchObject({ isOpen: false });
+      const audit = await test.prisma.auditLog.findFirst({
+        where: { action: 'job.auto_close', entityId: jobId },
+      });
+      expect(audit?.after).toMatchObject({ reason: 'positions_filled', hiredCount: 2 });
 
-      const refused = await setStatus(third.id, 'DEPLOYED').expect(409);
+      const refused = await setStatus(third.id, 'CONTRACT_SIGNED').expect(409);
       expect(refused.body).toMatchObject({ code: 'NO_POSITION_LEFT' });
-      expect(await statusOf(third.id)).toBe('VISA_APPROVED');
+      expect(await statusOf(third.id)).toBe('OFFER');
+      expect(await hiredCount()).toBe(2);
+      // Moving on through the visa steps keeps the positions as they are.
+      for (const status of ['VISA_PROCESSING', 'VISA_APPROVED', 'DEPLOYED'] as const) {
+        await setStatus(first.id, status).expect(200);
+      }
       expect(await hiredCount()).toBe(2);
     });
 
-    it('two deployments at once for the last position: only one succeeds', async () => {
+    it('two contracts at once for the last position: only one succeeds', async () => {
       await test.prisma.job.update({ where: { id: jobId }, data: { positions: 1 } });
       const [first, second] = [
         await newApplication(test, jobId),
         await newApplication(test, jobId),
       ];
-      await advanceTo(test, recruiter, first.id, 'VISA_APPROVED');
-      await advanceTo(test, recruiter, second.id, 'VISA_APPROVED');
+      await advanceTo(test, recruiter, first.id, 'OFFER');
+      await advanceTo(test, recruiter, second.id, 'OFFER');
       const responses = await Promise.all([
-        setStatus(first.id, 'DEPLOYED'),
-        setStatus(second.id, 'DEPLOYED'),
+        setStatus(first.id, 'CONTRACT_SIGNED'),
+        setStatus(second.id, 'CONTRACT_SIGNED'),
       ]);
       expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
       expect(await hiredCount()).toBe(1);
-      expect(await test.prisma.application.count({ where: { status: 'DEPLOYED' } })).toBe(1);
+      expect(await test.prisma.application.count({ where: { status: 'CONTRACT_SIGNED' } })).toBe(1);
     });
 
-    it('lets the scheduled task close the full job', async () => {
+    it('reopens the job when a contract is undone, rejected or deleted, before the deadline', async () => {
       await test.prisma.job.update({ where: { id: jobId }, data: { positions: 1 } });
       const { id } = await newApplication(test, jobId);
-      await advanceTo(test, recruiter, id, 'DEPLOYED');
+      await advanceTo(test, recruiter, id, 'OFFER');
+
+      // Undone within 15 minutes: back to Offer, the position is free again.
+      await setStatus(id, 'CONTRACT_SIGNED').expect(200);
+      expect((await job()).status).toBe('CLOSED');
+      await as(test, recruiter).post(`/admin/applications/${id}/undo-status`).expect(200);
+      expect(await job()).toMatchObject({ status: 'PUBLISHED', hiredCount: 0, closeReason: null });
+      expect(
+        await test.prisma.auditLog.count({ where: { action: 'job.auto_reopen', entityId: jobId } }),
+      ).toBe(1);
+      const page = await test.http().get('/api/v1/jobs/welder').expect(200);
+      expect(page.body).toMatchObject({ isOpen: true });
+
+      // Rejected later on.
+      await setStatus(id, 'CONTRACT_SIGNED').expect(200);
+      await setStatus(id, 'VISA_PROCESSING').expect(200);
+      expect((await job()).status).toBe('CLOSED');
+      await setStatus(id, 'REJECTED').expect(200);
+      expect(await job()).toMatchObject({ status: 'PUBLISHED', hiredCount: 0 });
+
+      // Deleted.
+      const other = await newApplication(test, jobId);
+      await advanceTo(test, recruiter, other.id, 'CONTRACT_SIGNED');
+      expect((await job()).status).toBe('CLOSED');
+      await as(test, superAdmin)
+        .delete(`/admin/applications/${other.id}`)
+        .send({ reason: 'Created by mistake' })
+        .expect(204);
+      expect(await job()).toMatchObject({ status: 'PUBLISHED', hiredCount: 0 });
+    });
+
+    it('reopens when positions are added, but never a job past its deadline or closed by hand', async () => {
+      await test.prisma.job.update({ where: { id: jobId }, data: { positions: 1 } });
+      const first = await newApplication(test, jobId);
+      await advanceTo(test, recruiter, first.id, 'CONTRACT_SIGNED');
+      expect((await job()).status).toBe('CLOSED');
+      await as(test, recruiter).patch(`/admin/jobs/${jobId}`, { positions: 2 }).expect(200);
+      expect(await job()).toMatchObject({ status: 'PUBLISHED', hiredCount: 1 });
+
+      // Full again, then the deadline passes: freeing a position does not reopen it.
+      const second = await newApplication(test, jobId);
+      await advanceTo(test, recruiter, second.id, 'CONTRACT_SIGNED');
+      expect((await job()).status).toBe('CLOSED');
+      await test.prisma.job.update({ where: { id: jobId }, data: { deadline: daysFromNow(-1) } });
+      await setStatus(second.id, 'REJECTED').expect(200);
+      expect(await job()).toMatchObject({ status: 'CLOSED', hiredCount: 1 });
+
+      // Closed by a recruiter: stays closed when a position frees up.
+      await test.prisma.job.update({
+        where: { id: jobId },
+        data: { deadline: daysFromNow(30), status: 'PUBLISHED', closeReason: null },
+      });
+      await as(test, recruiter).post(`/admin/jobs/${jobId}/close`).expect(200);
+      expect((await job()).closeReason).toBe('MANUAL');
+      await setStatus(first.id, 'REJECTED').expect(200);
+      expect(await job()).toMatchObject({ status: 'CLOSED', closeReason: 'MANUAL', hiredCount: 0 });
+    });
+
+    it('closes the full job at once, before the scheduled task', async () => {
+      await test.prisma.job.update({ where: { id: jobId }, data: { positions: 1 } });
+      const { id } = await newApplication(test, jobId);
+      await advanceTo(test, recruiter, id, 'CONTRACT_SIGNED');
+      expect((await job()).status).toBe('CLOSED');
       const report = await test.app.get(TasksService).run('close-jobs');
       expect(report).toMatchObject({ ok: true, ran: true });
-      expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).status).toBe(
-        'CLOSED',
-      );
+      expect((await job()).closeReason).toBe('POSITIONS_FILLED');
     });
   });
 

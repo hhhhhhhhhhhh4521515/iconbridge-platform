@@ -4,6 +4,7 @@ import {
   allowedApplicationTransitions,
   canTransitionApplication,
   FINAL_APPLICATION_STATUSES,
+  holdsPosition,
   localeSchema,
   parseJobQuestions,
   UNDO_STATUS_MINUTES,
@@ -26,6 +27,7 @@ import { MailService } from '../../mail/mail.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { isInCooldown } from '../../applications/cooldown.js';
+import { JobPositionsService } from '../../jobs/job-positions.service.js';
 import { SettingsService } from '../../settings/settings.service.js';
 
 const SUMMARY_INCLUDE = {
@@ -116,6 +118,7 @@ export class AdminApplicationsService {
     private readonly mail: MailService,
     private readonly clock: Clock,
     private readonly settings: SettingsService,
+    private readonly positions: JobPositionsService,
   ) {}
 
   async list(
@@ -295,13 +298,6 @@ export class AdminApplicationsService {
         );
       }
 
-      if (last.toStatus === 'DEPLOYED') {
-        // The position the candidate had taken is free again.
-        await tx.job.updateMany({
-          where: { id: current.job_id, hiredCount: { gt: 0 } },
-          data: { hiredCount: { decrement: 1 } },
-        });
-      }
       // Back to Withdrawn (a super admin undoing a reopening): the date of the withdrawal returns too.
       const withdrawal =
         previous === 'WITHDRAWN'
@@ -316,6 +312,10 @@ export class AdminApplicationsService {
         where: { id: last.id },
         data: { revertedAt: now },
       });
+      if (holdsPosition(last.toStatus) !== holdsPosition(previous)) {
+        // Back before Contract signed frees the position; the job may reopen (ADR-025).
+        await this.positions.sync(tx, current.job_id, user.id);
+      }
       // The email about the undone change: withdrawn if it has not left yet. If it was
       // sent, the candidate read it and a short correction follows.
       const withdrawn = last.emailId ? await this.mail.cancel(last.emailId, tx) : false;
@@ -459,21 +459,6 @@ export class AdminApplicationsService {
         );
       }
 
-      if (input.status === 'DEPLOYED') {
-        // The candidate takes one of the positions; never more than the job has.
-        const filled = await tx.job.updateMany({
-          where: { id: current.job_id, hiredCount: { lt: tx.job.fields.positions } },
-          data: { hiredCount: { increment: 1 } },
-        });
-        if (filled.count === 0) {
-          throw new AppException(
-            'NO_POSITION_LEFT',
-            HttpStatus.CONFLICT,
-            'Every position of this job is already filled',
-          );
-        }
-      }
-
       const updated = await tx.application.update({
         where: { id },
         data: {
@@ -494,6 +479,11 @@ export class AdminApplicationsService {
         },
         select: { id: true },
       });
+      if (holdsPosition(current.status) !== holdsPosition(input.status)) {
+        // Contract signed takes one position, leaving it frees one; never more than the job
+        // has (NO_POSITION_LEFT), and the job closes or reopens with it (ADR-025).
+        await this.positions.sync(tx, current.job_id, user.id);
+      }
       await this.audit.record(
         {
           actorId: user.id,

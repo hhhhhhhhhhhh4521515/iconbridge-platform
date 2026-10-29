@@ -7,15 +7,25 @@ import { StorageService } from '../storage/storage.service.js';
 import { JOB_INCLUDE, toPublicJob } from './job.mapper.js';
 
 /**
- * The only definition of "open to candidates" in SQL (alias `j` = jobs). It does
- * not rely on the scheduled task having run: an expired or full job disappears
- * at once. Mirrors `isJobOpen` in packages/shared.
+ * The only definition of "open to candidates" in SQL (alias `j` = jobs): what accepts
+ * applications, alerts and counters. It does not rely on the scheduled task having run:
+ * an expired or full job stops being open at once. Mirrors `isJobOpen` in packages/shared.
  */
 export const OPEN_JOB_SQL = Prisma.sql`
   j.status = 'PUBLISHED'
   AND j.deleted_at IS NULL
   AND j.deadline > now()
   AND j.hired_count < j.positions`;
+
+/**
+ * What the public site lists and whose page opens (alias `j`): published once, Published or
+ * Closed, not deleted (ADR-025). A listed job that is not open shows a "Closed" badge.
+ * Mirrors `isJobListed` in packages/shared.
+ */
+export const LISTED_JOB_SQL = Prisma.sql`
+  j.status IN ('PUBLISHED', 'CLOSED')
+  AND j.published_at IS NOT NULL
+  AND j.deleted_at IS NULL`;
 
 const MAX_SEARCH_WORDS = 8;
 
@@ -44,14 +54,16 @@ export class PublicJobsService {
     const [counted, page] = await this.prisma.$transaction([
       this.prisma.$queryRaw<{ total: number }[]>`
         SELECT count(*)::int AS total FROM jobs j WHERE ${where}`,
-      this.prisma.$queryRaw<{ id: string }[]>`
-        SELECT j.id FROM jobs j
+      // Open jobs first, then the closed ones, each in the requested order.
+      this.prisma.$queryRaw<{ id: string; open: boolean }[]>`
+        SELECT j.id, (${OPEN_JOB_SQL}) AS open FROM jobs j
         WHERE ${where}
-        ORDER BY ${this.orderBy(sort, query.q)}
+        ORDER BY (${OPEN_JOB_SQL}) DESC, ${this.orderBy(sort, query.q)}
         LIMIT ${query.pageSize} OFFSET ${offset}`,
     ]);
 
     const ids = page.map((row) => row.id);
+    const open = new Map(page.map((row) => [row.id, row.open]));
     const rows = await this.prisma.job.findMany({
       where: { id: { in: ids } },
       include: JOB_INCLUDE,
@@ -61,7 +73,7 @@ export class PublicJobsService {
     return {
       items: ids.flatMap((id) => {
         const row = byId.get(id);
-        return row ? [toPublicJob(row, mediaUrl)] : [];
+        return row ? [toPublicJob(row, mediaUrl, open.get(id) ?? false)] : [];
       }),
       page: query.page,
       pageSize: query.pageSize,
@@ -69,22 +81,25 @@ export class PublicJobsService {
     };
   }
 
-  /** 404 for a job that is not open, exactly as for a slug that does not exist. */
+  /**
+   * A listed job, open or closed (ADR-025); 404 for a draft, an archived or deleted job,
+   * exactly as for a slug that does not exist.
+   */
   async getBySlug(slug: string): Promise<PublicJob> {
-    const open = await this.prisma.$queryRaw<{ id: string }[]>`
-      SELECT j.id FROM jobs j WHERE j.slug = ${slug} AND ${OPEN_JOB_SQL}`;
-    const id = open[0]?.id;
+    const listed = await this.prisma.$queryRaw<{ id: string; open: boolean }[]>`
+      SELECT j.id, (${OPEN_JOB_SQL}) AS open FROM jobs j WHERE j.slug = ${slug} AND ${LISTED_JOB_SQL}`;
+    const id = listed[0]?.id;
     const job = id
       ? await this.prisma.job.findUnique({ where: { id }, include: JOB_INCLUDE })
       : null;
     if (!job) {
       throw notFound('Job not found');
     }
-    return toPublicJob(job, (path) => this.storage.publicUrl(path));
+    return toPublicJob(job, (path) => this.storage.publicUrl(path), listed[0]?.open ?? false);
   }
 
   private conditions(query: JobListQuery): Prisma.Sql[] {
-    const conditions = [OPEN_JOB_SQL];
+    const conditions = [query.open ? OPEN_JOB_SQL : LISTED_JOB_SQL];
     if (query.destination) {
       conditions.push(
         Prisma.sql`j.destination_id IN (SELECT d.id FROM destinations d WHERE d.code = ${query.destination})`,

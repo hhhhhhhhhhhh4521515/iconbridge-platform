@@ -528,14 +528,14 @@ describe('historical results and deletions (e2e)', () => {
       expect(await applyTo(test, candidate, jobId)).not.toBe(id);
     });
 
-    it('does not give back the position of a deployed candidate', async () => {
+    it('gives back the position it held (ADR-025)', async () => {
       await advanceTo(test, recruiter, id, 'DEPLOYED');
       expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).hiredCount).toBe(
         1,
       );
       await remove().expect(204);
       expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).hiredCount).toBe(
-        1,
+        0,
       );
     });
 

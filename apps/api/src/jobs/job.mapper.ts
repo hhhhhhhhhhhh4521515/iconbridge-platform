@@ -1,6 +1,7 @@
 import {
   localizedTextSchema,
   optionalLocalizedTextSchema,
+  isJobOpen,
   parseJobQuestions,
   type AdminJob,
   type LocalizedText,
@@ -67,10 +68,15 @@ function commonFields(job: JobRow, mediaUrl: MediaUrl) {
   };
 }
 
-/** What the public site may see. The employer name is dropped unless the employer agreed to show it. */
-export function toPublicJob(job: JobRow, mediaUrl: MediaUrl): PublicJob {
+/**
+ * What the public site may see. The employer name is dropped unless the employer agreed to
+ * show it. `isOpen` comes from the query (`OPEN_JOB_SQL`, the database clock), so a listed
+ * job and its badge never disagree with the apply rule.
+ */
+export function toPublicJob(job: JobRow, mediaUrl: MediaUrl, isOpen: boolean): PublicJob {
   return {
     ...commonFields(job, mediaUrl),
+    isOpen,
     employerName: job.showEmployerName ? job.employerName : null,
     destination: {
       code: job.destination.code,
@@ -88,6 +94,7 @@ export function toPublicJob(job: JobRow, mediaUrl: MediaUrl): PublicJob {
 export function toAdminJob(job: AdminJobRow, mediaUrl: MediaUrl): AdminJob {
   return {
     ...commonFields(job, mediaUrl),
+    isOpen: isJobOpen(job),
     employerName: job.employerName,
     showEmployerName: job.showEmployerName,
     destination: {
@@ -105,6 +112,7 @@ export function toAdminJob(job: AdminJobRow, mediaUrl: MediaUrl): AdminJob {
     applicationCount: job._count.applications,
     createdById: job.createdById,
     closedAt: job.closedAt?.toISOString() ?? null,
+    closeReason: job.closeReason,
     deletedAt: job.deletedAt?.toISOString() ?? null,
     createdAt: job.createdAt.toISOString(),
     updatedAt: job.updatedAt.toISOString(),

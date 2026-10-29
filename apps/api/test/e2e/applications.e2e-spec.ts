@@ -390,6 +390,14 @@ describe('applications (e2e)', () => {
       const job = await insertJob(test, catalog, { slug: 'unavailable', ...seed });
       await expectRefused(409, 'JOB_NOT_OPEN', job.id);
       expect((await eligibility(job.id)).reasons).toEqual(['JOB_NOT_OPEN']);
+      // Closed, expired and full jobs stay listed, marked closed; archived ones leave the site (ADR-025).
+      const page = await test.http().get(`${API}/jobs/unavailable`);
+      if ('status' in seed && seed.status === 'ARCHIVED') {
+        expect(page.status).toBe(404);
+      } else {
+        expect(page.status).toBe(200);
+        expect(page.body).toMatchObject({ isOpen: false });
+      }
     });
 
     it.each([

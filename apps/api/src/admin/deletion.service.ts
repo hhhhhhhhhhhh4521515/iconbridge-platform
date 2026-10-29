@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   canDeleteRecords,
+  holdsPosition,
   type BulkDeleteInput,
   type BulkResult,
   type CandidateDeletion,
@@ -8,6 +9,7 @@ import {
 import { AccountService } from '../account/account.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { CatalogService } from '../catalog/catalog.service.js';
+import { JobPositionsService } from '../jobs/job-positions.service.js';
 import { AppException, forbidden, notFound } from '../common/errors/app.exception.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SettingsService } from '../settings/settings.service.js';
@@ -27,6 +29,7 @@ export class DeletionService {
     private readonly account: AccountService,
     private readonly audit: AuditService,
     private readonly catalog: CatalogService,
+    private readonly positions: JobPositionsService,
   ) {}
 
   async mayDelete(user: AuthUser): Promise<boolean> {
@@ -99,6 +102,10 @@ export class DeletionService {
         throw notFound('Application not found');
       }
       await tx.application.delete({ where: { id } });
+      if (holdsPosition(application.status)) {
+        // The position it held is free again; the job may reopen (ADR-025).
+        await this.positions.sync(tx, application.jobId, user.id);
+      }
       await this.audit.record(
         {
           actorId: user.id,

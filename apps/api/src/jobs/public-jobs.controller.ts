@@ -32,7 +32,7 @@ export class PublicJobsController {
   @Get()
   @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({
-    summary: 'Search open jobs',
+    summary: 'Search the jobs of the site (open ones first, closed ones marked isOpen: false)',
     description:
       'Only jobs that are published, not deleted, whose deadline has not passed and with positions left. ' +
       '`q` searches the title and the description and tolerates plurals and typos on the title ' +
@@ -82,6 +82,13 @@ export class PublicJobsController {
   })
   @ApiQuery({ name: 'featured', required: false, enum: ['true', 'false'] })
   @ApiQuery({
+    name: 'open',
+    required: false,
+    enum: ['true', 'false'],
+    description:
+      'true: open jobs only. Otherwise every listed job, open ones first, closed ones with `isOpen: false`',
+  })
+  @ApiQuery({
     name: 'sort',
     required: false,
     enum: JOB_SORTS,
@@ -103,7 +110,7 @@ export class PublicJobsController {
   @Get(':slug')
   @Header('Cache-Control', PUBLIC_CACHE)
   @ApiOperation({
-    summary: 'One open job, with its destination and category',
+    summary: 'One job of the site, open or closed, with its destination and category',
     description: 'A draft, closed, archived, deleted, expired or full job answers 404.',
   })
   @ApiParam({ name: 'slug', example: 'sample-welder-poland' })
