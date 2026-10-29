@@ -550,16 +550,18 @@ A status change keeps the id of its email: undoing the change cancels an email t
 
 Decisions are in [ADR-004](adr/ADR-004-job-search-and-media.md). Code: `apps/api/src/jobs`, `apps/api/src/catalog`, `apps/api/src/storage`.
 
-### When a job is public
+### When a job is public, and when it is open
 
-A job is open to candidates when all four conditions hold:
+Two rules ([ADR-025](adr/ADR-025-closed-jobs-and-filled-positions.md)), each written once in SQL (`public-jobs.service.ts`) and once in TypeScript (`packages/shared`):
 
-1. its status is `PUBLISHED`;
-2. it is not soft-deleted;
-3. its deadline is in the future;
-4. `hired_count < positions`.
+- **Listed** (`LISTED_JOB_SQL`, `isJobListed`): status `PUBLISHED` or `CLOSED`, published once, not soft-deleted. The public list and `GET /jobs/:slug` show these; a draft, an archived or a deleted job answers 404, exactly like an unknown slug.
+- **Open** (`OPEN_JOB_SQL`, `isJobOpen`): status `PUBLISHED`, not soft-deleted, deadline in the future, `hired_count < positions`. Only an open job accepts applications (`JOB_NOT_OPEN` otherwise); job alerts, the "open jobs" counters and the filter counts use this rule.
 
-The rule exists once in SQL (`OPEN_JOB_SQL` in `public-jobs.service.ts`) and once in TypeScript (`isJobOpen` in `packages/shared`). Every public query uses it, so an expired or full job disappears immediately, without waiting for the scheduled task. A job that is not open answers 404 on `GET /jobs/:slug`, exactly like an unknown slug.
+The public list returns listed jobs, open ones first, then the requested order (`open=true` keeps the open ones only, as the home page does). Every public job has `isOpen`, computed by the same query, so an expired or full job shows "Closed" at once, without waiting for the scheduled task, and its page replaces the Apply button with "This job is closed".
+
+### Positions
+
+An application holds one position of its job from **Contract signed** on (`POSITION_HOLDING_STATUSES`: Contract signed, Visa processing, Visa approved, Deployed). `JobPositionsService.sync` recounts them inside the transaction of every change that can alter the count (status change and bulk change, undo, deletion of an application, positions of the job edited), after locking the job row, and writes `hired_count`. A move to Contract signed that would exceed `positions` is refused (`409 NO_POSITION_LEFT`). The same call closes a published job whose positions are all filled (`close_reason = POSITIONS_FILLED`, audit `job.auto_close`) and reopens a job closed for that reason when a position becomes free before the deadline (audit `job.auto_reopen`). A job closed by a recruiter (`MANUAL`) or past its deadline (`DEADLINE_PASSED`) is never reopened by it.
 
 ### Status changes
 
@@ -723,7 +725,7 @@ stateDiagram-v2
 - One step forward at a time, or Rejected. No jump (Submitted to Visa approved answers `409 INVALID_APPLICATION_TRANSITION`), no step back.
 - Rejected and Withdrawn are final for recruiters; a super admin can reopen them to Under review. Deployed is final for everybody. Only the candidate sets Withdrawn.
 - A change runs in one transaction with the application row locked: check, update, history row, hired count, audit entry. The email is sent after the commit.
-- **Deployed** increments `jobs.hired_count`, never beyond `positions` (`409 NO_POSITION_LEFT`). A job whose positions are all filled disappears from the site at once and is closed by the scheduled task.
+- **Contract signed** takes one position of the job (`jobs.hired_count`, never beyond `positions`: `409 NO_POSITION_LEFT`); leaving the steps from Contract signed on (Rejected, undo) frees it. The job closes when its positions are all filled, stays listed as "Closed", and reopens by itself when a position becomes free before the deadline (see Positions).
 - Each change takes an optional internal `comment` and an optional `messageToCandidate`. The candidate sees the message in their timeline and in the email; the comment, the notes and the name of the recruiter never leave the back office.
 - The candidate gets one email per change, in their language.
 - Bulk change: each application is its own transaction; the answer lists what changed and why the rest did not.
@@ -931,10 +933,10 @@ Decisions and reasons: [ADR-010](adr/ADR-010-historical-results-and-deletions.md
 
 ### Deleting candidates and applications
 
-| Action                | Endpoint                                                                 | Effect                                                                                                                                                             |
-| --------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Delete a candidate    | `DELETE /admin/candidates/:id`, `POST /admin/candidates/bulk-delete`     | Files removed from storage, then the GDPR erasure of the account; applications stay anonymous; `candidate.delete` audit entry with the reason and the counts       |
-| Delete an application | `DELETE /admin/applications/:id`, `POST /admin/applications/bulk-delete` | Row, status history and notes removed; documents stay; `hiredCount` unchanged; the waiting period for that job no longer applies; `application.delete` audit entry |
+| Action                | Endpoint                                                                 | Effect                                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Delete a candidate    | `DELETE /admin/candidates/:id`, `POST /admin/candidates/bulk-delete`     | Files removed from storage, then the GDPR erasure of the account; applications stay anonymous; `candidate.delete` audit entry with the reason and the counts                                 |
+| Delete an application | `DELETE /admin/applications/:id`, `POST /admin/applications/bulk-delete` | Row, status history and notes removed; documents stay; a position it held is freed (the job may reopen); the waiting period for that job no longer applies; `application.delete` audit entry |
 
 A super admin always may; a recruiter when `ALLOW_RECRUITER_DELETE` is on; a viewer never (403). `GET /admin/capabilities` gives `canDeleteRecords` to the screens.
 
