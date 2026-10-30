@@ -4,7 +4,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.81"
+      version = "~> 5.11"
     }
   }
   # Local state on purpose: this configuration creates the storage that holds the state
