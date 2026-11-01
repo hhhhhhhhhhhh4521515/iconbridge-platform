@@ -246,7 +246,7 @@ describe('admin jobs (e2e)', () => {
   });
 
   describe('status actions', () => {
-    it('publish -> close -> reopen -> archive, with the public site following each step', async () => {
+    it('publish -> close -> reopen -> archive, with the public site following each step (closed: listed, not open)', async () => {
       const job = await create();
       const slug = job.slug;
       const act = async (action: string) =>
@@ -254,7 +254,11 @@ describe('admin jobs (e2e)', () => {
           status: string;
           publishedAt: string | null;
           closedAt: string | null;
+          closeReason: string | null;
         };
+      const publicOpen = async () =>
+        ((await test.http().get(`/api/v1/jobs/${slug}`).expect(200)).body as { isOpen: boolean })
+          .isOpen;
 
       const published = await act('publish');
       expect(published).toMatchObject({ status: 'PUBLISHED', closedAt: null });
@@ -262,17 +266,20 @@ describe('admin jobs (e2e)', () => {
       expect(await publicStatus(slug)).toBe(200);
 
       const closed = await act('close');
-      expect(closed.status).toBe('CLOSED');
+      expect(closed).toMatchObject({ status: 'CLOSED', closeReason: 'MANUAL' });
       expect(closed.closedAt).not.toBeNull();
-      expect(await publicStatus(slug)).toBe(404);
+      // Closed jobs stay listed, marked closed (ADR-025).
+      expect(await publicStatus(slug)).toBe(200);
+      expect(await publicOpen()).toBe(false);
 
       const reopened = await act('reopen');
       expect(reopened).toMatchObject({
         status: 'PUBLISHED',
         closedAt: null,
+        closeReason: null,
         publishedAt: published.publishedAt,
       });
-      expect(await publicStatus(slug)).toBe(200);
+      expect(await publicOpen()).toBe(true);
 
       const archived = await act('archive');
       expect(archived.status).toBe('ARCHIVED');

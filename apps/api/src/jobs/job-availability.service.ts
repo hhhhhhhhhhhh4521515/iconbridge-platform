@@ -14,8 +14,9 @@ export type AvailabilityRun = { ran: true; closed: ClosedJob[] } | { ran: false;
 
 /**
  * Closes published jobs whose deadline has passed or whose positions are all
- * filled (SPEC, availability rules). Public queries already hide such jobs; this
- * task makes the status say so. Started by TasksService (scheduler or command line).
+ * filled (SPEC, availability rules), with the reason. Such jobs stay listed with a
+ * "Closed" badge and refuse applications whether this task has run or not; it makes the
+ * status say so. Started by TasksService (scheduler or command line).
  */
 @Injectable()
 export class JobAvailabilityService {
@@ -37,7 +38,9 @@ export class JobAvailabilityService {
       }
       const closed = await tx.$queryRaw<ClosedJob[]>`
         UPDATE jobs
-        SET status = 'CLOSED', closed_at = now(), updated_at = now()
+        SET status = 'CLOSED', closed_at = now(), updated_at = now(),
+            close_reason = CASE WHEN deadline <= now() THEN 'DEADLINE_PASSED'::job_close_reason
+                                ELSE 'POSITIONS_FILLED'::job_close_reason END
         WHERE status = 'PUBLISHED'
           AND deleted_at IS NULL
           AND (deadline <= now() OR hired_count >= positions)

@@ -7255,7 +7255,7 @@
         "x-verified-email": false
       },
       "delete": {
-        "description": "For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history and the internal notes go with it; the documents stay with the candidate. A position taken by a deployed candidate stays taken (hiredCount does not change), and the candidate may apply to the job again at once.",
+        "description": "For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history and the internal notes go with it; the documents stay with the candidate. A position it held (Contract signed or later) becomes free, and the job reopens if it had closed for that reason (ADR-025). The candidate may apply to the job again at once.",
         "operationId": "AdminApplicationsController_remove",
         "parameters": [
           {
@@ -7571,7 +7571,7 @@
     },
     "/api/v1/admin/applications/{id}/status": {
       "patch": {
-        "description": "Follows the state machine: one step forward, or Rejected; Rejected and Withdrawn are final unless a SUPER_ADMIN reopens them. Deployed takes one position of the job. `comment` stays internal; `messageToCandidate` appears in the candidate timeline and in the email sent at every change.",
+        "description": "Follows the state machine: one step forward, or Rejected; Rejected and Withdrawn are final unless a SUPER_ADMIN reopens them. Contract signed takes one position of the job (refused when none is left) and leaving the steps from Contract signed on frees it; the job closes or reopens with it. `comment` stays internal; `messageToCandidate` appears in the candidate timeline and in the email sent at every change.",
         "operationId": "AdminApplicationsController_changeStatus",
         "parameters": [
           {
@@ -23134,6 +23134,19 @@
             }
           },
           {
+            "name": "open",
+            "required": false,
+            "in": "query",
+            "description": "true: open jobs only. Otherwise every listed job, open ones first, closed ones with `isOpen: false`",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "name": "featured",
             "required": false,
             "in": "query",
@@ -23503,6 +23516,9 @@
                               ],
                               "additionalProperties": false
                             }
+                          },
+                          "isOpen": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -23530,7 +23546,8 @@
                           "coverImageUrl",
                           "featured",
                           "publishedAt",
-                          "questions"
+                          "questions",
+                          "isOpen"
                         ],
                         "additionalProperties": false
                       }
@@ -23628,7 +23645,7 @@
             }
           }
         },
-        "summary": "Search open jobs",
+        "summary": "Search the jobs of the site (open ones first, closed ones marked isOpen: false)",
         "tags": [
           "public"
         ],
@@ -23940,6 +23957,9 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "isOpen": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -23967,7 +23987,8 @@
                     "coverImageUrl",
                     "featured",
                     "publishedAt",
-                    "questions"
+                    "questions",
+                    "isOpen"
                   ],
                   "additionalProperties": false
                 }
@@ -24040,7 +24061,7 @@
             }
           }
         },
-        "summary": "One open job, with its destination and category",
+        "summary": "One job of the site, open or closed, with its destination and category",
         "tags": [
           "public"
         ],
@@ -24552,6 +24573,9 @@
                               "additionalProperties": false
                             }
                           },
+                          "isOpen": {
+                            "type": "boolean"
+                          },
                           "destination": {
                             "type": "object",
                             "properties": {
@@ -24669,6 +24693,15 @@
                             "format": "date-time",
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                           },
+                          "closeReason": {
+                            "nullable": true,
+                            "type": "string",
+                            "enum": [
+                              "MANUAL",
+                              "DEADLINE_PASSED",
+                              "POSITIONS_FILLED"
+                            ]
+                          },
                           "deletedAt": {
                             "nullable": true,
                             "type": "string",
@@ -24710,6 +24743,7 @@
                           "featured",
                           "publishedAt",
                           "questions",
+                          "isOpen",
                           "destination",
                           "category",
                           "showEmployerName",
@@ -24718,6 +24752,7 @@
                           "applicationCount",
                           "createdById",
                           "closedAt",
+                          "closeReason",
                           "deletedAt",
                           "createdAt",
                           "updatedAt"
@@ -25411,6 +25446,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -25528,6 +25566,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -25569,6 +25616,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -25577,6 +25625,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -26020,6 +26069,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -26137,6 +26189,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -26178,6 +26239,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -26186,6 +26248,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -26849,6 +26912,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -26966,6 +27032,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -27007,6 +27082,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -27015,6 +27091,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -27829,6 +27906,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -27946,6 +28026,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -27987,6 +28076,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -27995,6 +28085,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -28503,6 +28594,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -28620,6 +28714,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -28661,6 +28764,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -28669,6 +28773,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -29177,6 +29282,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -29294,6 +29402,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -29335,6 +29452,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -29343,6 +29461,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -29851,6 +29970,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -29968,6 +30090,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -30009,6 +30140,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -30017,6 +30149,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -30525,6 +30658,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -30642,6 +30778,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -30683,6 +30828,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -30691,6 +30837,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -31134,6 +31281,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -31251,6 +31401,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -31292,6 +31451,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -31300,6 +31460,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -31743,6 +31904,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -31860,6 +32024,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -31901,6 +32074,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -31909,6 +32083,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -32372,6 +32547,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -32489,6 +32667,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -32530,6 +32717,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -32538,6 +32726,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"
@@ -33174,6 +33363,9 @@
                         "additionalProperties": false
                       }
                     },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
                     "destination": {
                       "type": "object",
                       "properties": {
@@ -33291,6 +33483,15 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                     },
+                    "closeReason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "MANUAL",
+                        "DEADLINE_PASSED",
+                        "POSITIONS_FILLED"
+                      ]
+                    },
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
@@ -33332,6 +33533,7 @@
                     "featured",
                     "publishedAt",
                     "questions",
+                    "isOpen",
                     "destination",
                     "category",
                     "showEmployerName",
@@ -33340,6 +33542,7 @@
                     "applicationCount",
                     "createdById",
                     "closedAt",
+                    "closeReason",
                     "deletedAt",
                     "createdAt",
                     "updatedAt"

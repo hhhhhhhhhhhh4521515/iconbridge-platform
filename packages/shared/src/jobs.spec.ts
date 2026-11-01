@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { JOB_STATUSES } from './enums.js';
+import { APPLICATION_STATUSES, holdsPosition, JOB_STATUSES } from './enums.js';
 import {
   canTransitionJob,
   createDestinationSchema,
   createJobSchema,
+  isJobListed,
   isJobOpen,
   jobListQuerySchema,
   jobSlugBase,
@@ -35,6 +36,29 @@ describe('job status transitions', () => {
   });
   it('archives anything that is not archived yet', () => {
     expect(allowed('archive')).toEqual(['DRAFT', 'PUBLISHED', 'CLOSED']);
+  });
+});
+
+describe('isJobListed (ADR-025)', () => {
+  const at = new Date('2026-10-01T00:00:00Z');
+  it('lists published and closed jobs that were published once, never drafts, archived or deleted', () => {
+    expect(isJobListed({ status: 'PUBLISHED', publishedAt: at, deletedAt: null })).toBe(true);
+    expect(isJobListed({ status: 'CLOSED', publishedAt: at, deletedAt: null })).toBe(true);
+    expect(isJobListed({ status: 'DRAFT', publishedAt: null, deletedAt: null })).toBe(false);
+    expect(isJobListed({ status: 'ARCHIVED', publishedAt: at, deletedAt: null })).toBe(false);
+    expect(isJobListed({ status: 'CLOSED', publishedAt: null, deletedAt: null })).toBe(false);
+    expect(isJobListed({ status: 'PUBLISHED', publishedAt: at, deletedAt: at })).toBe(false);
+  });
+});
+
+describe('positions held (ADR-025)', () => {
+  it('from Contract signed on, never before it nor after leaving the pipeline', () => {
+    expect(APPLICATION_STATUSES.filter(holdsPosition)).toEqual([
+      'CONTRACT_SIGNED',
+      'VISA_PROCESSING',
+      'VISA_APPROVED',
+      'DEPLOYED',
+    ]);
   });
 });
 

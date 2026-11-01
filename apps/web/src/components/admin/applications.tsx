@@ -15,7 +15,11 @@ import {
   EXPORT_COLUMNS,
   type ExportColumn,
 } from '@iconbridge/shared/admin';
-import { APPLICATION_PIPELINE, APPLICATION_STATUSES } from '@iconbridge/shared/enums';
+import {
+  APPLICATION_PIPELINE,
+  APPLICATION_STATUSES,
+  holdsPosition,
+} from '@iconbridge/shared/enums';
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 import { Columns3, Download, Table2, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -896,8 +900,8 @@ export function Applications() {
         notes={[
           t('applications.keptDocuments'),
           t('applications.cooldownLifted'),
-          ...((deleting ?? []).some((application) => application.status === 'DEPLOYED')
-            ? [t('applications.hiredKept')]
+          ...((deleting ?? []).some((application) => holdsPosition(application.status))
+            ? [t('applications.positionFreed')]
             : []),
         ]}
         confirmLabel={t('deletion.delete')}

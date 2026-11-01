@@ -59,7 +59,7 @@ One workspace: `pnpm --filter @iconbridge/api test`. Local URLs: web <http://loc
 - Validate input with `ZodBody` / `ZodQuery` / `ZodParams` and a schema from `packages/shared`; document it with `ApiZodBody`. Throw `AppException` with a code from `API_ERROR_CODES`.
 - Admin writes: add `@Audit({ action, entityType, idParam })` and a loader in `AuditSnapshotService` for new entity types.
 - Emails: add the template in English, French and Arabic in `apps/api/src/mail/mail.templates.ts`. `MailService.send` writes to the outbox and returns; never call the SMTP transport directly, and never make a request wait for a delivery.
-- Public job queries must use `OPEN_JOB_SQL` (`apps/api/src/jobs/public-jobs.service.ts`) or `isJobOpen` from `packages/shared`; never re-implement the visibility rule. Job status changes go through `JOB_TRANSITIONS`.
+- Public job queries must use `LISTED_JOB_SQL` (what the site shows) and `OPEN_JOB_SQL` (what accepts applications) from `apps/api/src/jobs/public-jobs.service.ts`, or `isJobListed` / `isJobOpen` from `packages/shared`; never re-implement these rules. Job status changes go through `JOB_TRANSITIONS`. `hiredCount` is only written by `JobPositionsService.sync`, called in the transaction of any change that can alter it (ADR-025).
 - Raw SQL only with `Prisma.sql` and bound parameters; never build SQL or `tsquery` text from user input by concatenation.
 - Rules that depend on the date read `Clock` (`apps/api/src/common/clock/clock.ts`), never `new Date()` directly, so tests can move time. Settings are read through `SettingsService`.
 - Who may apply is decided by `ApplicationsService.evaluate` only; the eligibility endpoint and `apply` both use it. Changes to the re-application rule need tests at the exact boundary.

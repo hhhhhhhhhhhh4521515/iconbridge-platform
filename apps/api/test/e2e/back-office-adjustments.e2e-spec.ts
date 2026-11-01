@@ -218,7 +218,21 @@ describe('back-office adjustments (e2e)', () => {
       expect((await detail(recruiter)).status).toBe('WITHDRAWN');
     });
 
-    it('frees the position again when a deployment is undone', async () => {
+    it('frees the position again when a signed contract is undone (ADR-025)', async () => {
+      for (const status of ['SHORTLISTED', 'INTERVIEW', 'OFFER', 'CONTRACT_SIGNED']) {
+        await as(test, recruiter).patch(`/admin/applications/${id}/status`, { status }).expect(200);
+      }
+      expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).hiredCount).toBe(
+        1,
+      );
+      const body = (await undo(recruiter).expect(200)).body as Detail;
+      expect(body.status).toBe('OFFER');
+      expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).hiredCount).toBe(
+        0,
+      );
+    });
+
+    it('keeps the position when an undo stays within the steps that hold it', async () => {
       for (const status of [
         'SHORTLISTED',
         'INTERVIEW',
@@ -230,13 +244,10 @@ describe('back-office adjustments (e2e)', () => {
       ]) {
         await as(test, recruiter).patch(`/admin/applications/${id}/status`, { status }).expect(200);
       }
-      expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).hiredCount).toBe(
-        1,
-      );
       const body = (await undo(recruiter).expect(200)).body as Detail;
       expect(body.status).toBe('VISA_APPROVED');
       expect((await test.prisma.job.findUniqueOrThrow({ where: { id: jobId } })).hiredCount).toBe(
-        0,
+        1,
       );
     });
 

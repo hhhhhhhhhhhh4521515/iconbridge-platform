@@ -24,20 +24,20 @@ Error codes: `VALIDATION_ERROR`, `UNAUTHENTICATED`, `INVALID_CREDENTIALS`, `FORB
 
 ## Public
 
-| Method | Path                             | What                                                                          | Access |
-| ------ | -------------------------------- | ----------------------------------------------------------------------------- | ------ |
-| GET    | `/api/v1/jobs`                   | Search open jobs                                                              | Public |
-| GET    | `/api/v1/jobs/{slug}`            | One open job, with its destination and category                               | Public |
-| GET    | `/api/v1/destinations`           | Active destinations with their number of open jobs                            | Public |
-| GET    | `/api/v1/categories`             | Active job categories with their number of open jobs                          | Public |
-| GET    | `/api/v1/stats`                  | Counters of the home page                                                     | Public |
-| GET    | `/api/v1/success-stories`        | Published success stories                                                     | Public |
-| GET    | `/api/v1/home-slides`            | Active slides of the home page, in order                                      | Public |
-| GET    | `/api/v1/site-info`              | Contact details and social links shown on the site, and the upload size limit | Public |
-| POST   | `/api/v1/job-alerts`             | Subscribe to job alerts                                                       | Public |
-| POST   | `/api/v1/job-alerts/confirm`     | Confirm a job alert with the token of the email link (valid 72 hours)         | Public |
-| POST   | `/api/v1/job-alerts/unsubscribe` | Stop a job alert with the token of the unsubscribe link                       | Public |
-| POST   | `/api/v1/contact`                | Contact form                                                                  | Public |
+| Method | Path                             | What                                                                            | Access |
+| ------ | -------------------------------- | ------------------------------------------------------------------------------- | ------ |
+| GET    | `/api/v1/jobs`                   | Search the jobs of the site (open ones first, closed ones marked isOpen: false) | Public |
+| GET    | `/api/v1/jobs/{slug}`            | One job of the site, open or closed, with its destination and category          | Public |
+| GET    | `/api/v1/destinations`           | Active destinations with their number of open jobs                              | Public |
+| GET    | `/api/v1/categories`             | Active job categories with their number of open jobs                            | Public |
+| GET    | `/api/v1/stats`                  | Counters of the home page                                                       | Public |
+| GET    | `/api/v1/success-stories`        | Published success stories                                                       | Public |
+| GET    | `/api/v1/home-slides`            | Active slides of the home page, in order                                        | Public |
+| GET    | `/api/v1/site-info`              | Contact details and social links shown on the site, and the upload size limit   | Public |
+| POST   | `/api/v1/job-alerts`             | Subscribe to job alerts                                                         | Public |
+| POST   | `/api/v1/job-alerts/confirm`     | Confirm a job alert with the token of the email link (valid 72 hours)           | Public |
+| POST   | `/api/v1/job-alerts/unsubscribe` | Stop a job alert with the token of the unsubscribe link                         | Public |
+| POST   | `/api/v1/contact`                | Contact form                                                                    | Public |
 
 ## Auth
 

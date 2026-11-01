@@ -78,7 +78,7 @@ const idSchema = z.object({ id: z.uuid() });
 @ApiTags('admin: applications')
 @ApiCookieAuth()
 @Roles(...PERMISSIONS.MANAGE_APPLICATIONS)
-@Revalidates('stats')
+@Revalidates('stats', 'jobs')
 @Controller('admin/applications')
 export class AdminApplicationsController {
   constructor(
@@ -209,8 +209,9 @@ export class AdminApplicationsController {
     summary: 'Delete an application',
     description:
       'For a super admin, and for a recruiter when the setting ALLOW_RECRUITER_DELETE is on. The status history ' +
-      'and the internal notes go with it; the documents stay with the candidate. A position taken by a deployed ' +
-      'candidate stays taken (hiredCount does not change), and the candidate may apply to the job again at once.',
+      'and the internal notes go with it; the documents stay with the candidate. A position it held (Contract ' +
+      'signed or later) becomes free, and the job reopens if it had closed for that reason (ADR-025). The ' +
+      'candidate may apply to the job again at once.',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiZodBody(deleteRecordSchema)
@@ -231,7 +232,8 @@ export class AdminApplicationsController {
     summary: 'Change the status of an application',
     description:
       'Follows the state machine: one step forward, or Rejected; Rejected and Withdrawn are final unless a ' +
-      'SUPER_ADMIN reopens them. Deployed takes one position of the job. `comment` stays internal; ' +
+      'SUPER_ADMIN reopens them. Contract signed takes one position of the job (refused when none is left) and ' +
+      'leaving the steps from Contract signed on frees it; the job closes or reopens with it. `comment` stays internal; ' +
       '`messageToCandidate` appears in the candidate timeline and in the email sent at every change.',
   })
   @ApiParam({ name: 'id', format: 'uuid' })

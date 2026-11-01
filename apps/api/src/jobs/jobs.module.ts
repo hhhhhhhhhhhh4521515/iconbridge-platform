@@ -12,6 +12,7 @@ import { SiteCacheService } from '../site-cache/site-cache.service.js';
 import { AdminJobsController } from './admin-jobs.controller.js';
 import { AdminJobsService } from './admin-jobs.service.js';
 import { JobAvailabilityService } from './job-availability.service.js';
+import { JobPositionsService } from './job-positions.service.js';
 import { JobCoverService } from './job-cover.service.js';
 import { PublicJobsController } from './public-jobs.controller.js';
 import { PublicJobsService } from './public-jobs.service.js';
@@ -35,9 +36,11 @@ import { PublicJobsService } from './public-jobs.service.js';
     AdminCatalogService,
     JobCoverService,
     JobAvailabilityService,
+    JobPositionsService,
   ],
   exports: [
     JobAvailabilityService,
+    JobPositionsService,
     CatalogService,
     ResultsService,
     JobCoverService,

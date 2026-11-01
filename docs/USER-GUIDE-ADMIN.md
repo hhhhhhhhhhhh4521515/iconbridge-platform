@@ -25,13 +25,13 @@ Open jobs, new applications of the week, applications in visa processing, visas 
 
 ![Jobs](screenshots/admin-02-jobs.png)
 
-The list filters by status, destination and category and shows hired / positions, the number of applications and the deadline. Per job: **Publish** / **Close** / **Reopen**, edit, duplicate, feature (star, shown first on the site), delete (refused once it has applications: close it instead).
+The list filters by status, destination and category and shows contracts signed / positions, the number of applications and the deadline. Per job: **Publish** / **Close** / **Reopen**, edit, duplicate, feature (star, shown first on the site), delete (refused once it has applications: close it instead).
 
 ![Job form](screenshots/admin-03-job-form.png)
 
 **New job**: title, destination, category, employer (shown or not), description, requirements and benefits (rich text editor: bold, italic, lists, headings; anything else is removed), positions and deadline, salary range, currency and period, contract length, working hours, required languages, accommodation and transport, a cover image (checked and re-encoded), and optional **questions** for the candidates (text, yes/no, choice). **Preview** shows the public page before publishing.
 
-A published job leaves the site by itself when its deadline passes or every position is filled. Publishing a job sends it to the people whose job alerts match it.
+A published job closes by itself when its deadline passes or when every position is filled. A position is filled when an application reaches **Contract signed** (not when someone applies), and freed if that application is rejected later, its status change undone, or deleted. A closed job stays on the site with a **Closed** badge and refuses applications; a job closed because it was full reopens by itself when a position becomes free before the deadline. A job you close by hand stays closed until you reopen it; **Archive** removes it from the site. Publishing a job sends it to the people whose job alerts match it.
 
 ## Applications
 

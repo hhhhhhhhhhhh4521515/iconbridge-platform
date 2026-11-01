@@ -16,7 +16,7 @@ The home page searches by keyword and destination, shows the counters (open jobs
 
 ![Job list](screenshots/candidate-02-jobs.png)
 
-A job page gives the description, the requirements, the benefits (accommodation, transport, …), the salary, the contract, the deadline and the number of positions. A visitor sees **Login to apply** and **Create a free profile**.
+A job page gives the description, the requirements, the benefits (accommodation, transport, …), the salary, the contract, the deadline and the number of positions. A visitor sees **Login to apply** and **Create a free profile**. A job whose deadline has passed or whose positions are all filled stays on the site with a **Closed** badge, after the open ones; its page says **This job is closed** instead of the Apply button.
 
 ![Job page](screenshots/candidate-03-job.png)
 

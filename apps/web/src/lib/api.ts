@@ -41,6 +41,8 @@ export interface JobQuery {
   salaryMin?: number;
   currency?: string;
   featured?: 'true' | 'false';
+  /** 'true': open jobs only; otherwise closed jobs are listed too, after the open ones (ADR-025). */
+  open?: 'true' | 'false';
   sort?: 'relevance' | 'newest' | 'deadline' | 'salary';
   page?: number;
   pageSize?: number;
@@ -103,11 +105,11 @@ export const api = {
       async () => (await cached.GET('/api/v1/site-info')).data ?? null,
     ),
 
-  /** Every open job, page after page, for the sitemap. */
+  /** Every open job, page after page, for the sitemap: closed pages stay reachable but are not offered (ADR-025). */
   allJobs: async (): Promise<PublicJob[]> => {
     const all: PublicJob[] = [];
     for (let page = 1; page <= 50; page++) {
-      const result = await api.jobs({ page, pageSize: 100, sort: 'newest' });
+      const result = await api.jobs({ page, pageSize: 100, sort: 'newest', open: 'true' });
       all.push(...result.items);
       if (all.length >= result.total || result.items.length === 0) {
         break;

@@ -90,16 +90,11 @@ describe('public jobs (e2e)', () => {
       deadline: daysFromNow(5),
     });
 
-    // Never public
+    // Never public. Closed jobs are listed: see "closed jobs stay listed" at the end (ADR-025).
     await insertJob(test, catalog, {
       slug: 'hidden-draft',
       title: 'Welder Draft',
       status: 'DRAFT',
-    });
-    await insertJob(test, catalog, {
-      slug: 'hidden-closed',
-      title: 'Welder Closed',
-      status: 'CLOSED',
     });
     await insertJob(test, catalog, {
       slug: 'hidden-archived',
@@ -110,17 +105,6 @@ describe('public jobs (e2e)', () => {
       slug: 'hidden-deleted',
       title: 'Welder Deleted',
       deletedAt: new Date(),
-    });
-    await insertJob(test, catalog, {
-      slug: 'hidden-expired',
-      title: 'Welder Expired',
-      deadline: daysFromNow(-1),
-    });
-    await insertJob(test, catalog, {
-      slug: 'hidden-full',
-      title: 'Welder Full',
-      positions: 2,
-      hiredCount: 2,
     });
   });
   afterAll(async () => {
@@ -136,38 +120,42 @@ describe('public jobs (e2e)', () => {
   ];
 
   describe('visibility', () => {
-    it('lists only published, live, unexpired jobs with positions left, without a session', async () => {
+    it('lists the published jobs, never drafts, archived or deleted ones, without a session', async () => {
       const page = await list();
       expect(page.total).toBe(5);
       expect(page.items.map((job) => job.slug).sort()).toEqual(OPEN);
+      expect((page.items as unknown as { isOpen: boolean }[]).every((job) => job.isOpen)).toBe(
+        true,
+      );
     });
 
-    it.each([
-      'hidden-draft',
-      'hidden-closed',
-      'hidden-archived',
-      'hidden-deleted',
-      'hidden-expired',
-      'hidden-full',
-    ])('answers 404 for %s, like for an unknown slug', async (slug) => {
-      const hidden = await test.http().get(`${API}/jobs/${slug}`).expect(404);
-      const unknown = await test.http().get(`${API}/jobs/no-such-job`).expect(404);
-      expect(hidden.body).toEqual(unknown.body);
-      expect(hidden.body).toMatchObject({ code: 'NOT_FOUND' });
-    });
+    it.each(['hidden-draft', 'hidden-archived', 'hidden-deleted'])(
+      'answers 404 for %s, like for an unknown slug',
+      async (slug) => {
+        const hidden = await test.http().get(`${API}/jobs/${slug}`).expect(404);
+        const unknown = await test.http().get(`${API}/jobs/no-such-job`).expect(404);
+        expect(hidden.body).toEqual(unknown.body);
+        expect(hidden.body).toMatchObject({ code: 'NOT_FOUND' });
+      },
+    );
 
     it('never returns a hidden job from a search that matches its title', async () => {
       expect((await slugs('?q=welder')).filter((slug) => slug.startsWith('hidden'))).toEqual([]);
       expect(await slugs('?q=Welder%20Draft')).not.toContain('hidden-draft');
     });
 
-    it('hides a job the moment its deadline passes, before any scheduled task runs', async () => {
+    it('marks a job closed the moment its deadline passes, before any scheduled task runs', async () => {
       await test.prisma.job.update({
         where: { slug: 'driver-poland' },
         data: { deadline: new Date(Date.now() - 1000) },
       });
-      expect(await slugs()).not.toContain('driver-poland');
-      await test.http().get(`${API}/jobs/driver-poland`).expect(404);
+      const listed = (await list()).items as unknown as { slug: string; isOpen: boolean }[];
+      expect(listed.find((job) => job.slug === 'driver-poland')?.isOpen).toBe(false);
+      // Closed jobs come after the open ones.
+      expect(listed.at(-1)?.slug).toBe('driver-poland');
+      const detail = await test.http().get(`${API}/jobs/driver-poland`).expect(200);
+      expect(detail.body).toMatchObject({ isOpen: false });
+      expect(await slugs('?open=true')).not.toContain('driver-poland');
       expect(
         (await test.prisma.job.findUniqueOrThrow({ where: { slug: 'driver-poland' } })).status,
       ).toBe('PUBLISHED');
@@ -324,7 +312,7 @@ describe('public jobs (e2e)', () => {
         const response = await test.http().get(`${API}/jobs`).query({ q: text });
         expect(response.status).toBe(200);
       }
-      expect(await test.prisma.job.count()).toBe(11);
+      expect(await test.prisma.job.count()).toBe(8);
     });
   });
 
@@ -482,6 +470,63 @@ describe('public jobs (e2e)', () => {
       }
       service.clearStatsCache();
       expect((await service.publicStats()).visasApproved).toBe(2);
+    });
+  });
+
+  describe('closed jobs stay listed (ADR-025)', () => {
+    const CLOSED = ['closed-by-recruiter', 'closed-expired', 'closed-full'];
+    beforeAll(async () => {
+      await insertJob(test, catalog, {
+        slug: 'closed-by-recruiter',
+        title: 'Welder Closed',
+        status: 'CLOSED',
+      });
+      await insertJob(test, catalog, {
+        slug: 'closed-expired',
+        title: 'Welder Expired',
+        deadline: daysFromNow(-1),
+      });
+      await insertJob(test, catalog, {
+        slug: 'closed-full',
+        title: 'Welder Full',
+        positions: 2,
+        hiredCount: 2,
+      });
+    });
+    afterAll(async () => {
+      await test.prisma.job.deleteMany({ where: { slug: { in: CLOSED } } });
+    });
+
+    it('lists them after the open jobs, marked not open', async () => {
+      const page = (await list()).items as unknown as { slug: string; isOpen: boolean }[];
+      expect(page).toHaveLength(8);
+      expect(page.slice(0, 5).every((job) => job.isOpen)).toBe(true);
+      expect(
+        page
+          .slice(5)
+          .map((job) => job.slug)
+          .sort(),
+      ).toEqual(CLOSED);
+      expect(page.slice(5).every((job) => !job.isOpen)).toBe(true);
+    });
+
+    it.each(CLOSED)('opens the page of %s, marked not open', async (slug) => {
+      const response = await test.http().get(`${API}/jobs/${slug}`).expect(200);
+      expect(publicJobSchema.parse(response.body)).toMatchObject({ slug, isOpen: false });
+    });
+
+    it('finds them in a search, and leaves them out with open=true', async () => {
+      expect((await slugs('?q=welder')).sort()).toEqual([...CLOSED, 'welder-poland'].sort());
+      expect(await slugs('?q=welder&open=true')).toEqual(['welder-poland']);
+      expect((await slugs('?open=true')).sort()).toEqual(OPEN);
+    });
+
+    it('counts only open jobs in the destinations, categories and home counters', async () => {
+      const destinations = (await test.http().get(`${API}/destinations`).expect(200)).body as {
+        code: string;
+        openJobs: number;
+      }[];
+      expect(destinations.find((entry) => entry.code === 'MALTA')?.openJobs).toBe(2);
     });
   });
 });

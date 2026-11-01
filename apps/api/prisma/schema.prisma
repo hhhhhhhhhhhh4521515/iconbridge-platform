@@ -85,6 +85,15 @@ enum DocumentType {
   @@map("document_type")
 }
 
+/// Why a job is Closed (ADR-025): a recruiter, its deadline, or every position filled.
+enum JobCloseReason {
+  MANUAL
+  DEADLINE_PASSED
+  POSITIONS_FILLED
+
+  @@map("job_close_reason")
+}
+
 enum JobStatus {
   DRAFT
   PUBLISHED
@@ -398,25 +407,27 @@ model Job {
   contractDurationMonths Int?          @map("contract_duration_months") @db.SmallInt
   workingHours           String?       @map("working_hours")
   positions              Int           @default(1)
-  /// Applications that reached DEPLOYED; the job closes when it equals `positions`.
+  /// Applications at Contract signed or later (ADR-025); the job closes when it equals `positions`.
   hiredCount             Int           @default(0) @map("hired_count")
   /// ISO 639-1 codes.
   requiredLanguages      String[]      @default([]) @map("required_languages")
-  /// Application deadline; the job is no longer visible once it has passed.
+  /// Application deadline; the job no longer accepts applications once it has passed.
   deadline               DateTime      @db.Timestamptz(3)
   coverImagePath         String?       @map("cover_image_path")
   /// Questions asked when applying: [{ id, type, required, label, options }] (see packages/shared).
   questions              Json          @default("[]")
 
-  status      JobStatus @default(DRAFT)
-  featured    Boolean   @default(false)
-  createdById String    @map("created_by_id") @db.Uuid
-  publishedAt DateTime? @map("published_at") @db.Timestamptz(3)
-  closedAt    DateTime? @map("closed_at") @db.Timestamptz(3)
+  status      JobStatus       @default(DRAFT)
+  featured    Boolean         @default(false)
+  createdById String          @map("created_by_id") @db.Uuid
+  publishedAt DateTime?       @map("published_at") @db.Timestamptz(3)
+  closedAt    DateTime?       @map("closed_at") @db.Timestamptz(3)
+  /// Why the job is Closed; a job closed for POSITIONS_FILLED reopens by itself (ADR-025).
+  closeReason JobCloseReason? @map("close_reason")
   /// Soft delete: the row is kept for history and existing applications.
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?       @map("deleted_at") @db.Timestamptz(3)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   /// Full-text search column, maintained by PostgreSQL: the migration declares it
   /// GENERATED ALWAYS AS (...) STORED. The expression is repeated here as a default, in the

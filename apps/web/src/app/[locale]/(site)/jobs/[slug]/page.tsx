@@ -138,14 +138,17 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
 
   return (
     <article className="container-page py-8">
-      <script
-        type="application/ld+json"
-        nonce={nonce}
-        // JSON-LD must be inline; "<" is escaped so the text cannot close the script element.
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jobPostingJsonLd(job, locale)).replace(/</g, '\\u003c'),
-        }}
-      />
+      {/* A closed job is no longer a job posting for search engines (ADR-025). */}
+      {job.isOpen ? (
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          // JSON-LD must be inline; "<" is escaped so the text cannot close the script element.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jobPostingJsonLd(job, locale)).replace(/</g, '\\u003c'),
+          }}
+        />
+      ) : null}
       <Link
         href="/jobs"
         className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -179,6 +182,14 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
                 {t('card.featured')}
               </span>
             ) : null}
+            {job.isOpen ? null : (
+              <span
+                className="rounded-full bg-white px-3 py-1 text-brand-navy"
+                data-testid="closed-badge"
+              >
+                {t('card.closed')}
+              </span>
+            )}
           </p>
           <h1 className="mt-4 text-3xl leading-tight font-bold text-balance sm:text-4xl">
             {job.title}
@@ -244,6 +255,7 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
               jobId={job.id}
               slug={job.slug}
               locale={locale}
+              open={job.isOpen}
               labels={{
                 apply: t('apply.apply'),
                 checking: t('apply.checking'),
@@ -257,6 +269,7 @@ export default async function JobPage({ params }: PageProps<'/[locale]/jobs/[slu
                 notOpen: t('apply.notOpen'),
                 maxActive: t('apply.maxActive'),
                 staff: t('apply.staff'),
+                closed: t('apply.closed'),
               }}
             />
           </div>

@@ -28,3 +28,4 @@ Each record gives the context, the decision and its consequences. All are accept
 | [022](ADR-022-warm-replicas.md)                        | One warm replica for the web app and the API (40 USD budget)             | Infrastructure |
 | [023](ADR-023-custom-domain-and-email-domain.md)       | The site and its emails on iconbridgerecruitment.com                     | Infrastructure |
 | [024](ADR-024-country-agents.md)                       | Country agents, passwords set by the super admin, optional story quotes  | Security       |
+| [025](ADR-025-closed-jobs-and-filled-positions.md)     | Closed jobs stay visible; a position is filled at Contract signed        | Product        |

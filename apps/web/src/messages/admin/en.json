@@ -181,7 +181,7 @@
     "columns": {
       "title": "Job",
       "status": "Status",
-      "positions": "Hired / positions",
+      "positions": "Contracts signed / positions",
       "applications": "Applications",
       "deadline": "Deadline"
     },
@@ -218,8 +218,8 @@
       "cover": "Cover picture"
     },
     "questionsIntro": "Asked in the application form, in the candidate's language. Without questions, two general questions are asked instead.",
-    "autoClose": "The job leaves the site by itself when the deadline passes or when every position is filled.",
-    "autoCloseNow": "Today: {hired} hired out of {positions}, deadline on {date}.",
+    "autoClose": "The job closes by itself when the deadline passes or when every position is filled (one contract signed per position). It stays on the site marked \"Closed\", and reopens by itself if a position becomes free before the deadline.",
+    "autoCloseNow": "Today: {hired} contracts signed out of {positions} positions, deadline on {date}.",
     "noCover": "No picture: the site shows the picture of the destination.",
     "addCover": "Add a picture",
     "changeCover": "Change the picture",
@@ -329,7 +329,7 @@
     "removedHistory": "Its status history and its internal notes",
     "keptDocuments": "The documents stay in the candidate's profile.",
     "cooldownLifted": "The candidate will be able to apply to this job again at once: the 6-month waiting period no longer applies.",
-    "hiredKept": "A deployed candidate keeps the position: the number of hired candidates of the job does not decrease.",
+    "positionFreed": "This application holds a position (contract signed or later): deleting it frees the position, and the job reopens if it had closed because it was full.",
     "deleted": "The application is deleted.",
     "deletedMany": "{count, plural, one {# application deleted} other {# applications deleted}}.",
     "waiveCooldown": "Lift the waiting period",

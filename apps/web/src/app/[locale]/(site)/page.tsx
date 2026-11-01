@@ -81,8 +81,9 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       api.stats(),
       api.destinations(),
       api.categories(),
-      api.jobs({ featured: 'true', pageSize: 6, sort: 'newest' }),
-      api.jobs({ pageSize: 8, sort: 'newest' }),
+      // The home page offers open jobs only; the jobs page lists the closed ones too (ADR-025).
+      api.jobs({ featured: 'true', open: 'true', pageSize: 6, sort: 'newest' }),
+      api.jobs({ open: 'true', pageSize: 8, sort: 'newest' }),
       api.successStories(),
     ],
   );

@@ -19,6 +19,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { JobCoverService } from './job-cover.service.js';
+import { JobPositionsService } from './job-positions.service.js';
 import { cleanRichText } from './rich-text.js';
 import { ADMIN_JOB_INCLUDE, localized, toAdminJob, type AdminJobRow } from './job.mapper.js';
 
@@ -47,6 +48,7 @@ export class AdminJobsService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly covers: JobCoverService,
+    private readonly positions: JobPositionsService,
   ) {}
 
   private readonly mediaUrl = (path: string | null) => this.storage.publicUrl(path);
@@ -162,6 +164,17 @@ export class AdminJobsService {
       );
       return toAdminJob(job, this.mediaUrl);
     }
+    if (input.positions !== undefined && input.positions !== current.positions) {
+      // More positions may reopen a job closed because they were filled (ADR-025).
+      await this.prisma.$transaction(async (tx) => {
+        await tx.job.update({ where: { id }, data });
+        await this.positions.sync(tx, id, null);
+      });
+      return toAdminJob(
+        await this.prisma.job.findUniqueOrThrow({ where: { id }, include: ADMIN_JOB_INCLUDE }),
+        this.mediaUrl,
+      );
+    }
     const job = await this.prisma.job.update({ where: { id }, data, include: ADMIN_JOB_INCLUDE });
     return toAdminJob(job, this.mediaUrl);
   }
@@ -186,8 +199,9 @@ export class AdminJobsService {
       data: {
         status: JOB_TRANSITIONS[action].to,
         ...(action === 'publish' ? { publishedAt: current.publishedAt ?? now } : {}),
-        ...(action === 'close' ? { closedAt: now } : {}),
-        ...(action === 'reopen' ? { closedAt: null } : {}),
+        // Closed by hand: never reopened by itself (ADR-025).
+        ...(action === 'close' ? { closedAt: now, closeReason: 'MANUAL' as const } : {}),
+        ...(action === 'reopen' ? { closedAt: null, closeReason: null } : {}),
         ...(action === 'archive' ? { closedAt: current.closedAt ?? now, featured: false } : {}),
       },
       include: ADMIN_JOB_INCLUDE,

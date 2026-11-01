@@ -149,16 +149,24 @@ describe('automatic closing of jobs (e2e)', () => {
     expect((await service.closeUnavailableJobs()).closed).toHaveLength(1);
   });
 
-  it('a job closed automatically answers 404 publicly and can be reopened after fixing the deadline', async () => {
+  it('a job closed automatically stays listed as closed, with its reason, and opens again after fixing the deadline (ADR-025)', async () => {
     const job = await insertJob(test, catalog, { slug: 'expired', deadline: daysFromNow(-1) });
-    await test.http().get(`${API}/jobs/expired`).expect(404);
+    expect((await test.http().get(`${API}/jobs/expired`).expect(200)).body).toMatchObject({
+      isOpen: false,
+    });
     await service.closeUnavailableJobs();
-    await test.http().get(`${API}/jobs/expired`).expect(404);
+    const closed = await test.prisma.job.findUniqueOrThrow({ where: { id: job.id } });
+    expect(closed).toMatchObject({ status: 'CLOSED', closeReason: 'DEADLINE_PASSED' });
+    expect((await test.http().get(`${API}/jobs/expired`).expect(200)).body).toMatchObject({
+      isOpen: false,
+    });
     await test.prisma.job.update({
       where: { id: job.id },
-      data: { deadline: daysFromNow(10), status: 'PUBLISHED', closedAt: null },
+      data: { deadline: daysFromNow(10), status: 'PUBLISHED', closedAt: null, closeReason: null },
     });
-    await test.http().get(`${API}/jobs/expired`).expect(200);
+    expect((await test.http().get(`${API}/jobs/expired`).expect(200)).body).toMatchObject({
+      isOpen: true,
+    });
   });
 
   it('is part of the scheduled tasks, which run every 15 minutes', () => {
