@@ -120,7 +120,7 @@ test.describe('back office', () => {
       await expect(preview.locator('strong')).toHaveText('Accommodation is provided.');
       await recruiter.getByRole('button', { name: 'Close the preview' }).click();
 
-      await expect(recruiter.getByTestId('auto-close')).toContainText('leaves the site by itself');
+      await expect(recruiter.getByTestId('auto-close')).toContainText('closes by itself');
       await recruiter.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(toast(recruiter, 'created as a draft')).toBeVisible();
       await expect(recruiter).toHaveURL(/\/admin\/jobs\/[0-9a-f-]{36}$/);
