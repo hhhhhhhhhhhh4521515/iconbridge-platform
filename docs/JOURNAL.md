@@ -1113,3 +1113,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/48>
 
 **After deployment (owner)**: set up Cloudflare Email Routing, then create the two agents in the back office.
+
+## 2026-11-02 - Closed jobs stay visible; positions filled at Contract signed
+
+**What**: two rules for jobs (ADR-025): listed (Published or Closed, shown on the site, page opens) and open (accepts applications). Closed jobs stay on the jobs page after the open ones with a "Closed" badge (EN/FR/AR), their page shows "This job is closed" instead of Apply, and the API refuses applications (`JOB_NOT_OPEN`); the home page and the sitemap offer open jobs only. A position is held from Contract signed to Deployed: `JobPositionsService.sync` recounts `hiredCount` in the transaction of every change that can alter it, refuses a contract beyond the positions, closes a full job and reopens it when a position frees up before the deadline (`close_reason`, audit `job.auto_close` / `job.auto_reopen`). SPEC section 4.2, ARCHITECTURE, CLAUDE.md and both guides updated.
+
+**Why**: candidates lost track of jobs that disappeared once closed; for the agency a position is taken when the contract is signed, not at deployment.
+
+**Checks**: lint, typecheck; unit tests (shared 229, web 82, api 338); `test:e2e` 545 (listed closed jobs, refused applications, hired count up and down, close and reopen, concurrency); `test:browser` 162 passed; `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/53>
