@@ -61,7 +61,12 @@ export class AdminCandidatesController {
       'A country agent gets the candidates whose nationality is one of his countries only.',
   })
   @ApiQuery({ name: 'q', required: false, description: 'Part of the name or the email' })
-  @ApiQuery({ name: 'nationality', required: false })
+  @ApiQuery({
+    name: 'nationality',
+    required: false,
+    description:
+      'Nationality (never residence): ISO 3166 code, or OTHER for neither Morocco nor Tunisia (or not given). A country agent gets his countries only.',
+  })
   @ApiQuery({ name: 'language', required: false })
   @ApiQuery({ name: 'active', required: false, enum: ['true', 'false'] })
   @ApiQuery({ name: 'page', required: false, type: Number })

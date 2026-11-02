@@ -500,7 +500,7 @@
     "previewSlideOf": "Diapositive {current} sur {total}",
     "previewPause": "Pause",
     "previewPlay": "Lecture",
-    "previewSecondary": "Créer un profil gratuit"
+    "previewSecondary": "Créer un profil"
   },
   "catalog": {
     "title": "Destinations et catégories",
@@ -727,5 +727,11 @@
     "given": "Mot de passe reçu",
     "save": "Changer mon mot de passe",
     "saved": "Votre mot de passe est changé."
+  },
+  "nationality": {
+    "label": "Nationalité",
+    "all": "Toutes les nationalités",
+    "other": "Autre (ni Maroc ni Tunisie)",
+    "allCountries": "Autres pays, de A à Z"
   }
 }

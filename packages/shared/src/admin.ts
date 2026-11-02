@@ -75,6 +75,22 @@ const languageCode = z
   .regex(/^[a-z]{2}$/);
 const calendarDate = z.iso.date();
 
+/** Offered first in the nationality filter of the back office, before every other country A-Z. */
+export const MAIN_NATIONALITIES = ['MA', 'TN'] as const;
+/** Nationality filter value: any nationality other than Morocco and Tunisia, or none given. */
+export const OTHER_NATIONALITY = 'OTHER';
+
+/**
+ * Nationality filter of the candidate and application lists: an ISO code, or OTHER. A country
+ * agent only ever gets candidates of his countries, whatever is asked (API scope, ADR-024).
+ */
+export const nationalityFilterSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .pipe(z.union([z.literal(OTHER_NATIONALITY), countryCodeSchema]));
+export type NationalityFilter = z.infer<typeof nationalityFilterSchema>;
+
 const applicationFilters = {
   jobId: z.uuid().optional(),
   /** Destination code, e.g. MALTA. */
@@ -84,7 +100,8 @@ const applicationFilters = {
   appliedFrom: calendarDate.optional(),
   /** Applied on or before this day (UTC). */
   appliedTo: calendarDate.optional(),
-  nationality: countryCodeSchema.optional(),
+  /** Nationality of the candidate (never the country of residence): an ISO code or OTHER. */
+  nationality: nationalityFilterSchema.optional(),
   /** Candidates who speak this language (ISO 639-1). */
   language: languageCode.optional(),
   /** Part of the first name, last name or email. */
@@ -285,7 +302,8 @@ export type ExportApplicationsInput = z.infer<typeof exportApplicationsSchema>;
 
 export const adminCandidateListQuerySchema = paginationQuerySchema.extend({
   q: searchText.optional(),
-  nationality: countryCodeSchema.optional(),
+  /** Nationality (never the country of residence): an ISO code or OTHER. */
+  nationality: nationalityFilterSchema.optional(),
   language: languageCode.optional(),
   /** "false" lists disabled accounts. */
   active: queryBoolean.optional(),

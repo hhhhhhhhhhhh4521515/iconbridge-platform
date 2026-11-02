@@ -2,7 +2,7 @@
 
 How a person looking for work in Malta, Poland or on a cruise ship uses IconBridge Jobs. The site is in English, French and Arabic (right to left); the language switch is at the top of every page and the emails follow the language chosen in the settings.
 
-Screenshots come from a test environment with sample jobs and a test account; no real candidate appears in them. IconBridge never asks candidates for money.
+Screenshots come from a test environment with sample jobs and a test account; no real candidate appears in them.
 
 ## 1. Find a job
 

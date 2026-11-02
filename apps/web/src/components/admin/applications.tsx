@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
 import { LoadFailed } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
-import { usePathname, useRouter } from '@/i18n/navigation';
+
 import {
   api,
   attempt,
@@ -42,6 +42,8 @@ import { cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
 import { ApplicationDrawer } from './application-drawer';
 import { DeleteDialog } from './delete-dialog';
+import { NationalityCell, NationalityFilter, useNationalityValue } from './nationality';
+import { useUrlParams } from './url-params';
 import { ApplicationBadge } from './status';
 import {
   DataTable,
@@ -63,14 +65,20 @@ interface Filters {
   q: string;
   status: string;
   destination: string;
+  /** ISO code or OTHER: the candidate's nationality, never the country of residence. */
+  nationality: string;
   jobId: string;
 }
+
+/** Filters kept in the address of the page, so a filtered list can be reloaded or shared. */
+const URL_FILTERS = ['q', 'status', 'destination', 'nationality', 'jobId'] as const;
 
 function query(filters: Filters, withStatus: boolean) {
   return {
     ...(filters.q.trim().length >= 2 ? { q: filters.q.trim() } : {}),
     ...(withStatus && filters.status ? { status: filters.status as ApplicationStatus } : {}),
     ...(filters.destination ? { destination: filters.destination } : {}),
+    ...(filters.nationality ? { nationality: filters.nationality } : {}),
     ...(filters.jobId ? { jobId: filters.jobId } : {}),
   };
 }
@@ -369,8 +377,6 @@ function Board({
 export function Applications() {
   const t = useTranslations('admin');
   const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
   const search = useSearchParams();
   const call = useCall();
   const { can, canDelete } = useAdmin();
@@ -379,29 +385,27 @@ export function Applications() {
   const [deleting, setDeleting] = useState<AdminApplication[] | null>(null);
   const view = search.get('view') === 'board' ? 'board' : 'table';
   const opened = search.get('open');
-  const [filters, setFilters] = useState<Filters>({
-    q: '',
-    status: '',
-    destination: '',
+  const allowedNationality = useNationalityValue();
+  const [filters, setFilters] = useState<Filters>(() => ({
+    q: search.get('q') ?? '',
+    status: (APPLICATION_STATUSES as readonly string[]).includes(search.get('status') ?? '')
+      ? (search.get('status') ?? '')
+      : '',
+    destination: search.get('destination') ?? '',
+    nationality: allowedNationality(search.get('nationality')),
     jobId: search.get('jobId') ?? '',
-  });
+  }));
   const [page, setPage] = useState(1);
   const [selection, setSelection] = useState<RowSelectionState>({});
   const [bulkStatus, setBulkStatus] = useState('');
   const [exporting, setExporting] = useState(false);
 
+  const updateUrl = useUrlParams();
   const setParam = useCallback(
     (name: string, value: string | null) => {
-      const params = new URLSearchParams(search.toString());
-      if (value === null) {
-        params.delete(name);
-      } else {
-        params.set(name, value);
-      }
-      const text = params.toString();
-      router.replace(text ? `${pathname}?${text}` : pathname, { scroll: false });
+      updateUrl({ [name]: value });
     },
-    [pathname, router, search],
+    [updateUrl],
   );
   const open = useCallback(
     (id: string) => {
@@ -436,6 +440,11 @@ export function Applications() {
     setFilters((before) => ({ ...before, ...patch }));
     setPage(1);
     setSelection({});
+    updateUrl(
+      Object.fromEntries(
+        URL_FILTERS.flatMap((name) => (patch[name] === undefined ? [] : [[name, patch[name]]])),
+      ),
+    );
   };
 
   const move = async (application: AdminApplication, to: ApplicationStatus) => {
@@ -539,6 +548,12 @@ export function Applications() {
             <p className="text-xs text-muted-foreground">{row.original.candidate.email}</p>
           </div>
         ),
+      },
+      {
+        id: 'nationality',
+        accessorFn: (row) => row.candidate.nationality ?? '',
+        header: t('nationality.label'),
+        cell: ({ row }) => <NationalityCell code={row.original.candidate.nationality} />,
       },
       {
         id: 'job',
@@ -691,6 +706,12 @@ export function Applications() {
             </option>
           ))}
         </select>
+        <NationalityFilter
+          value={filters.nationality}
+          onChange={(nationality) => {
+            change({ nationality });
+          }}
+        />
         {filters.jobId ? (
           <button
             type="button"

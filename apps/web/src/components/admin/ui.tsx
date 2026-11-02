@@ -270,6 +270,13 @@ export function SearchBox({
         onChange={(event) => {
           setText(event.target.value);
         }}
+        // Leaving the field reports the text at once: a click on a row or a link that follows
+        // must not be overtaken by the delayed report (it would rewrite the address after).
+        onBlur={() => {
+          if (text !== value) {
+            onChange(text);
+          }
+        }}
         placeholder={placeholder}
         aria-label={placeholder}
         aria-keyshortcuts="/ Control+K"

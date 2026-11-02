@@ -21,7 +21,7 @@ import {
 import type { AuthUser } from '../../auth/auth.types.js';
 import { Clock } from '../../common/clock/clock.js';
 import { AppException, forbidden, notFound } from '../../common/errors/app.exception.js';
-import { candidateScope } from '../../common/scope/candidate-scope.js';
+import { candidateScope, nationalityWhere } from '../../common/scope/candidate-scope.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { MailService } from '../../mail/mail.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -57,19 +57,23 @@ type SummaryRow = Prisma.ApplicationGetPayload<{ include: typeof SUMMARY_INCLUDE
 
 /** Turns the filters shared by the list and the export into a Prisma condition. */
 export function applicationWhere(filters: ApplicationFilters): Prisma.ApplicationWhereInput {
-  const candidate: Prisma.CandidateProfileWhereInput = {
-    ...(filters.nationality ? { nationality: filters.nationality } : {}),
-    ...(filters.language ? { languages: { some: { language: filters.language } } } : {}),
+  // Each condition on its own in AND: the nationality filter OTHER and the search both use OR.
+  const parts: Prisma.CandidateProfileWhereInput[] = [
+    ...(filters.nationality ? [nationalityWhere(filters.nationality)] : []),
+    ...(filters.language ? [{ languages: { some: { language: filters.language } } }] : []),
     ...(filters.q
-      ? {
-          OR: [
-            { firstName: { contains: filters.q, mode: 'insensitive' } },
-            { lastName: { contains: filters.q, mode: 'insensitive' } },
-            { user: { email: { contains: filters.q.toLowerCase() } } },
-          ],
-        }
-      : {}),
-  };
+      ? [
+          {
+            OR: [
+              { firstName: { contains: filters.q, mode: 'insensitive' as const } },
+              { lastName: { contains: filters.q, mode: 'insensitive' as const } },
+              { user: { email: { contains: filters.q.toLowerCase() } } },
+            ],
+          },
+        ]
+      : []),
+  ];
+  const candidate: Prisma.CandidateProfileWhereInput = parts.length > 0 ? { AND: parts } : {};
   return {
     ...(filters.jobId ? { jobId: filters.jobId } : {}),
     ...(filters.destination ? { job: { destination: { code: filters.destination } } } : {}),

@@ -500,7 +500,7 @@
     "previewSlideOf": "Slide {current} of {total}",
     "previewPause": "Pause",
     "previewPlay": "Play",
-    "previewSecondary": "Create a free profile"
+    "previewSecondary": "Create a profile"
   },
   "catalog": {
     "title": "Destinations and categories",
@@ -727,5 +727,11 @@
     "given": "Password you were given",
     "save": "Change my password",
     "saved": "Your password is changed."
+  },
+  "nationality": {
+    "label": "Nationality",
+    "all": "All nationalities",
+    "other": "Other (not Morocco/Tunisia)",
+    "allCountries": "Other countries, A–Z"
   }
 }

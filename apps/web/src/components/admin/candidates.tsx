@@ -3,6 +3,7 @@
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 import { Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
@@ -15,6 +16,8 @@ import { card, cta } from '@/lib/ui';
 import { useAdmin } from './admin-context';
 import { DeleteDialog } from './delete-dialog';
 import { DocumentsList } from './documents-list';
+import { NationalityCell, NationalityFilter, useNationalityValue } from './nationality';
+import { useUrlParams } from './url-params';
 import { ApplicationBadge } from './status';
 import {
   Badge,
@@ -33,9 +36,21 @@ const PAGE_SIZE = 25;
 export function CandidatesList() {
   const t = useTranslations('admin');
   const locale = useLocale();
-  const [q, setQ] = useState('');
-  const [active, setActive] = useState('');
+  const search = useSearchParams();
+  const allowedNationality = useNationalityValue();
+  // Kept in the address of the page, so a filtered list can be reloaded or shared.
+  const [q, setQ] = useState(() => search.get('q') ?? '');
+  const [active, setActive] = useState(() =>
+    ['true', 'false'].includes(search.get('active') ?? '') ? (search.get('active') ?? '') : '',
+  );
+  const [nationality, setNationality] = useState(() =>
+    allowedNationality(search.get('nationality')),
+  );
   const [page, setPage] = useState(1);
+  const updateUrl = useUrlParams();
+  const setParam = (name: string, value: string) => {
+    updateUrl({ [name]: value });
+  };
   const call = useCall();
   const { canDelete } = useAdmin();
   const [selection, setSelection] = useState<RowSelectionState>({});
@@ -50,11 +65,12 @@ export function CandidatesList() {
               pageSize: PAGE_SIZE,
               ...(q.trim().length >= 2 ? { q: q.trim() } : {}),
               ...(active ? { active: active as 'true' | 'false' } : {}),
+              ...(nationality ? { nationality } : {}),
             },
           },
         })
       ).data,
-    [active, page, q],
+    [active, nationality, page, q],
   );
   const { data, loading, failed, reload } = useLoaded(fetcher);
   const columns = useMemo<ColumnDef<AdminCandidate>[]>(
@@ -106,10 +122,7 @@ export function CandidatesList() {
       {
         accessorKey: 'nationality',
         header: t('candidates.nationality'),
-        cell: ({ row }) =>
-          row.original.nationality
-            ? `${flag(row.original.nationality)} ${countryName(row.original.nationality, locale)}`
-            : '—',
+        cell: ({ row }) => <NationalityCell code={row.original.nationality} />,
       },
       {
         accessorKey: 'currentProfession',
@@ -175,8 +188,17 @@ export function CandidatesList() {
           onChange={(value) => {
             setQ(value);
             setPage(1);
+            setParam('q', value);
           }}
           placeholder={t('candidates.search')}
+        />
+        <NationalityFilter
+          value={nationality}
+          onChange={(value) => {
+            setNationality(value);
+            setPage(1);
+            setParam('nationality', value);
+          }}
         />
         <select
           className={filterControl}
@@ -185,6 +207,7 @@ export function CandidatesList() {
           onChange={(event) => {
             setActive(event.target.value);
             setPage(1);
+            setParam('active', event.target.value);
           }}
         >
           <option value="">{t('candidates.allAccounts')}</option>

@@ -43,7 +43,7 @@ export interface EmailContent {
   heading: string;
   paragraphs: string[];
   buttonLabel: string;
-  /** Shown under the button; anti-phishing and anti-scam reminders. */
+  /** Shown under the button: how long a link works, what to do if the email was not expected. */
   footnotes: string[];
   /** A quoted block (message written by a person), shown as is. */
   quote?: string | null;
@@ -54,12 +54,6 @@ export interface EmailContent {
 type Builder = (variables: EmailVariables) => EmailContent;
 
 const BRAND = 'IconBridge Jobs';
-
-const NEVER_PAY: Record<Locale, string> = {
-  en: `${BRAND} never asks candidates for money to apply.`,
-  fr: `${BRAND} ne demande jamais d'argent aux candidats pour postuler.`,
-  ar: `${BRAND} لا تطلب أبدًا أي مبلغ مالي من المترشحين للتقديم.`,
-};
 
 /** Names of the application statuses, as candidates read them. */
 export const STATUS_LABELS: Record<Locale, Record<ApplicationStatus, string>> = {
@@ -116,7 +110,6 @@ const en: Record<EmailTemplate, Builder> = {
     footnotes: [
       `This link works for ${expiresInHours} hours.`,
       'If you did not create an account, ignore this email.',
-      NEVER_PAY.en,
     ],
   }),
   'reset-password': ({ expiresInHours = 0 }) => ({
@@ -157,7 +150,7 @@ const en: Record<EmailTemplate, Builder> = {
       'We will email you each time its status changes. You can follow it in your account.',
     ],
     buttonLabel: 'View my applications',
-    footnotes: [NEVER_PAY.en],
+    footnotes: [],
   }),
   'new-application': ({ jobTitle = '' }) => ({
     subject: `New application: ${jobTitle} - ${BRAND}`,
@@ -174,7 +167,7 @@ const en: Record<EmailTemplate, Builder> = {
     ],
     quote: message ?? null,
     buttonLabel: 'View my applications',
-    footnotes: [NEVER_PAY.en],
+    footnotes: [],
   }),
   'application-status-correction': ({ jobTitle = '', status = 'UNDER_REVIEW' }) => ({
     subject: `Correction about your application - ${BRAND}`,
@@ -183,7 +176,7 @@ const en: Record<EmailTemplate, Builder> = {
       `Our last message about your application for "${jobTitle}" was sent by mistake. Please ignore it. The status of your application is: ${STATUS_LABELS.en[status]}.`,
     ],
     buttonLabel: 'View my applications',
-    footnotes: [NEVER_PAY.en],
+    footnotes: [],
   }),
   'retention-warning': ({ date = '' }) => ({
     subject: `Your account will be deleted soon - ${BRAND}`,
@@ -193,7 +186,7 @@ const en: Record<EmailTemplate, Builder> = {
       'To keep your account, sign in before that date. If you no longer need it, you have nothing to do.',
     ],
     buttonLabel: 'Sign in to keep my account',
-    footnotes: [NEVER_PAY.en],
+    footnotes: [],
   }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `Confirm your job alert - ${BRAND}`,
@@ -211,7 +204,7 @@ const en: Record<EmailTemplate, Builder> = {
     paragraphs: ['These offers were published recently:'],
     links,
     buttonLabel: 'See all jobs',
-    footnotes: [NEVER_PAY.en, `To stop these emails: ${unsubscribeUrl}`],
+    footnotes: [`To stop these emails: ${unsubscribeUrl}`],
   }),
   'contact-message': ({ sender, message }) => ({
     subject: `Contact form: ${sender?.subject ?? 'new message'} - ${BRAND}`,
@@ -238,7 +231,6 @@ const fr: Record<EmailTemplate, Builder> = {
     footnotes: [
       `Ce lien est valable ${expiresInHours} heures.`,
       "Si vous n'avez pas créé de compte, ignorez cet e-mail.",
-      NEVER_PAY.fr,
     ],
   }),
   'reset-password': ({ expiresInHours = 0 }) => ({
@@ -281,7 +273,7 @@ const fr: Record<EmailTemplate, Builder> = {
       'Vous recevrez un e-mail à chaque changement de statut. Vous pouvez la suivre dans votre compte.',
     ],
     buttonLabel: 'Voir mes candidatures',
-    footnotes: [NEVER_PAY.fr],
+    footnotes: [],
   }),
   'new-application': ({ jobTitle = '' }) => ({
     subject: `Nouvelle candidature : ${jobTitle} - ${BRAND}`,
@@ -298,7 +290,7 @@ const fr: Record<EmailTemplate, Builder> = {
     ],
     quote: message ?? null,
     buttonLabel: 'Voir mes candidatures',
-    footnotes: [NEVER_PAY.fr],
+    footnotes: [],
   }),
   'application-status-correction': ({ jobTitle = '', status = 'UNDER_REVIEW' }) => ({
     subject: `Rectification concernant votre candidature - ${BRAND}`,
@@ -307,7 +299,7 @@ const fr: Record<EmailTemplate, Builder> = {
       `Notre dernier message concernant votre candidature pour « ${jobTitle} » a été envoyé par erreur. Merci de ne pas en tenir compte. Le statut de votre candidature est : ${STATUS_LABELS.fr[status]}.`,
     ],
     buttonLabel: 'Voir mes candidatures',
-    footnotes: [NEVER_PAY.fr],
+    footnotes: [],
   }),
   'retention-warning': ({ date = '' }) => ({
     subject: `Votre compte sera bientôt supprimé - ${BRAND}`,
@@ -317,7 +309,7 @@ const fr: Record<EmailTemplate, Builder> = {
       "Pour conserver votre compte, connectez-vous avant cette date. Si vous n'en avez plus besoin, vous n'avez rien à faire.",
     ],
     buttonLabel: 'Me connecter pour garder mon compte',
-    footnotes: [NEVER_PAY.fr],
+    footnotes: [],
   }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `Confirmez votre alerte emploi - ${BRAND}`,
@@ -337,7 +329,7 @@ const fr: Record<EmailTemplate, Builder> = {
     paragraphs: ['Ces offres ont été publiées récemment :'],
     links,
     buttonLabel: 'Voir toutes les offres',
-    footnotes: [NEVER_PAY.fr, `Pour ne plus recevoir ces e-mails : ${unsubscribeUrl}`],
+    footnotes: [`Pour ne plus recevoir ces e-mails : ${unsubscribeUrl}`],
   }),
   'contact-message': ({ sender, message }) => ({
     subject: `Formulaire de contact : ${sender?.subject ?? 'nouveau message'} - ${BRAND}`,
@@ -364,7 +356,6 @@ const ar: Record<EmailTemplate, Builder> = {
     footnotes: [
       `هذا الرابط صالح لمدة ${expiresInHours} ساعة.`,
       'إذا لم تقم بإنشاء حساب، تجاهل هذه الرسالة.',
-      NEVER_PAY.ar,
     ],
   }),
   'reset-password': ({ expiresInHours = 0 }) => ({
@@ -402,7 +393,7 @@ const ar: Record<EmailTemplate, Builder> = {
       'سنرسل إليك بريدًا إلكترونيًا عند كل تغيير في حالة الطلب. يمكنك متابعته من حسابك.',
     ],
     buttonLabel: 'عرض طلباتي',
-    footnotes: [NEVER_PAY.ar],
+    footnotes: [],
   }),
   'new-application': ({ jobTitle = '' }) => ({
     subject: `طلب جديد: ${jobTitle} - ${BRAND}`,
@@ -417,7 +408,7 @@ const ar: Record<EmailTemplate, Builder> = {
     paragraphs: [`أصبحت حالة طلبك لوظيفة «${jobTitle}»: ${STATUS_LABELS.ar[status]}.`],
     quote: message ?? null,
     buttonLabel: 'عرض طلباتي',
-    footnotes: [NEVER_PAY.ar],
+    footnotes: [],
   }),
   'application-status-correction': ({ jobTitle = '', status = 'UNDER_REVIEW' }) => ({
     subject: `تصحيح بخصوص طلبك - ${BRAND}`,
@@ -426,7 +417,7 @@ const ar: Record<EmailTemplate, Builder> = {
       `أُرسلت رسالتنا الأخيرة بخصوص طلبك لوظيفة «${jobTitle}» عن طريق الخطأ. نرجو تجاهلها. حالة طلبك هي: ${STATUS_LABELS.ar[status]}.`,
     ],
     buttonLabel: 'عرض طلباتي',
-    footnotes: [NEVER_PAY.ar],
+    footnotes: [],
   }),
   'retention-warning': ({ date = '' }) => ({
     subject: `سيُحذف حسابك قريبًا - ${BRAND}`,
@@ -436,7 +427,7 @@ const ar: Record<EmailTemplate, Builder> = {
       'للاحتفاظ بحسابك، سجّل الدخول قبل هذا التاريخ. إذا لم تعد بحاجة إليه، فلا يلزمك فعل أي شيء.',
     ],
     buttonLabel: 'تسجيل الدخول للاحتفاظ بحسابي',
-    footnotes: [NEVER_PAY.ar],
+    footnotes: [],
   }),
   'job-alert-confirm': ({ expiresInHours = 0 }) => ({
     subject: `أكّد تنبيه الوظائف - ${BRAND}`,
@@ -454,7 +445,7 @@ const ar: Record<EmailTemplate, Builder> = {
     paragraphs: ['تم نشر هذه العروض مؤخرًا:'],
     links,
     buttonLabel: 'عرض كل الوظائف',
-    footnotes: [NEVER_PAY.ar, `لإيقاف هذه الرسائل: ${unsubscribeUrl}`],
+    footnotes: [`لإيقاف هذه الرسائل: ${unsubscribeUrl}`],
   }),
   'contact-message': ({ sender, message }) => ({
     subject: `نموذج الاتصال: ${sender?.subject ?? 'رسالة جديدة'} - ${BRAND}`,

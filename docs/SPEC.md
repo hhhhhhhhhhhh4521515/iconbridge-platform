@@ -79,7 +79,7 @@ A candidate belongs to a country by **nationality** only, never by country of re
 | Cruise-ship extras | STCW basic safety training, seaman's book, medical certificate (PEME/ENG1), previous sea experience                                                              | Shown only for cruise jobs                                                              |
 | Consent            | GDPR / data-processing checkbox                                                                                                                                  | Date of consent stored                                                                  |
 
-The application form shows an anti-scam notice: "we never ask candidates for money to apply".
+The site, the candidate area and the emails carry no message about money, fees or applying for free (removed on 2 November 2026 at the owner's request).
 
 ## 4. Job offers
 
@@ -161,6 +161,8 @@ Email on registration, verification, application received, every status change, 
 ### 7.4 Admin dashboard
 
 KPIs (open jobs, applications this month, visas approved, by destination), a Kanban/table view of applications, candidate search, document preview, CSV export, audit log. A country agent sees the figures of his countries only.
+
+The applications and candidates lists filter by **nationality** (never country of residence): all nationalities, Morocco, Tunisia, "Other (not Morocco/Tunisia)" (any other nationality, or none given), then every country A–Z. Both lists show a Nationality column with the flag. The filters (status, destination, nationality, search) combine, stay in the address of the page, and decide the totals and the CSV export. A country agent can only choose his own countries; the API returns nothing for any other.
 
 ### 7.5 Security and legal
 

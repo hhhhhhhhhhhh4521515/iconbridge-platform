@@ -1,3 +1,4 @@
+import { MAIN_NATIONALITIES, OTHER_NATIONALITY, type NationalityFilter } from '@iconbridge/shared';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { AuthUser } from '../../auth/auth.types.js';
 
@@ -19,4 +20,15 @@ export function scopedNationalities(user: ScopedUser): string[] | null {
 export function candidateScope(user: ScopedUser): Prisma.CandidateProfileWhereInput {
   const countries = scopedNationalities(user);
   return countries ? { nationality: { in: countries } } : {};
+}
+
+/**
+ * The nationality filter of the back-office lists and of the export: one country, or OTHER
+ * (neither Morocco nor Tunisia, or not given). Always combined with `candidateScope`, so a
+ * country agent who asks for another country gets nothing.
+ */
+export function nationalityWhere(filter: NationalityFilter): Prisma.CandidateProfileWhereInput {
+  return filter === OTHER_NATIONALITY
+    ? { OR: [{ nationality: null }, { nationality: { notIn: [...MAIN_NATIONALITIES] } }] }
+    : { nationality: filter };
 }

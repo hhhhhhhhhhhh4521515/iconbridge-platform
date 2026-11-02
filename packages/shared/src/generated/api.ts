@@ -3297,7 +3297,7 @@ export interface operations {
                 q?: unknown;
                 /** @description ISO 639-1 code spoken by the candidate */
                 language?: unknown;
-                /** @description ISO 3166 code */
+                /** @description Nationality (never residence): ISO 3166 code, or OTHER for neither Morocco nor Tunisia (or not given). A country agent gets his countries only. */
                 nationality?: unknown;
                 /** @description YYYY-MM-DD */
                 appliedTo?: unknown;
@@ -4776,6 +4776,7 @@ export interface operations {
                 page?: number;
                 active?: "true" | "false";
                 language?: unknown;
+                /** @description Nationality (never residence): ISO 3166 code, or OTHER for neither Morocco nor Tunisia (or not given). A country agent gets his countries only. */
                 nationality?: unknown;
                 /** @description Part of the name or the email */
                 q?: unknown;

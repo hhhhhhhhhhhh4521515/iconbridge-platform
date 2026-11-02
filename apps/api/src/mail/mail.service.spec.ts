@@ -67,11 +67,16 @@ describe('MailService', () => {
     expect(new Set(subjects).size).toBe(LOCALES.length);
   });
 
-  it('tells candidates they never pay, in the verification email', async () => {
+  it('says nothing about money or fees in any email, in any language', async () => {
     const { service } = createService();
-    expect((await service.render('verify-email', 'en', variables)).text).toContain(
-      'never asks candidates for money',
-    );
+    for (const locale of LOCALES) {
+      for (const template of EMAIL_TEMPLATES) {
+        const { text, html, subject } = await service.render(template, locale, variables);
+        expect(`${subject}${text}${html}`, `${template} (${locale})`).not.toMatch(
+          /money|never ask|free of charge|argent|gratuit|aucun frais|مبلغ مالي|مجان|رسوم/i,
+        );
+      }
+    }
   });
 
   it('escapes HTML in the link', async () => {

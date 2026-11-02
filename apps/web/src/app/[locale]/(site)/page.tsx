@@ -9,7 +9,6 @@ import {
   MessagesSquare,
   Plane,
   Search,
-  ShieldAlert,
   Stamp,
   UserRoundPlus,
 } from 'lucide-react';
@@ -44,7 +43,7 @@ const STEPS = [
   { key: 'travel', icon: Plane },
 ] as const;
 
-const FAQ_KEYS = ['cost', 'documents', 'time', 'status', 'reapply', 'data'] as const;
+const FAQ_KEYS = ['documents', 'time', 'status', 'reapply', 'data'] as const;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const { locale } = await params;
@@ -427,19 +426,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               </li>
             ))}
           </ul>
-          <div
-            role="note"
-            className="mt-6 flex gap-4 rounded-2xl border-2 border-brand-gold bg-brand-gold-soft p-5 text-brand-navy dark:text-foreground"
-          >
-            <ShieldAlert
-              className="size-8 shrink-0 text-brand-navy dark:text-brand-gold"
-              aria-hidden
-            />
-            <div>
-              <h3 className="text-lg font-bold">{t('trust.antiScam.title')}</h3>
-              <p className="mt-1 text-sm">{t('trust.antiScam.text')}</p>
-            </div>
-          </div>
         </div>
       </section>
 

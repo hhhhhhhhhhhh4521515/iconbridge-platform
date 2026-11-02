@@ -14,8 +14,7 @@
     "themeDark": "Sombre",
     "retry": "Réessayer",
     "backHome": "Retour à l'accueil",
-    "required": "obligatoire",
-    "neverPay": "IconBridge ne demande jamais d'argent aux candidats pour postuler."
+    "required": "obligatoire"
   },
   "meta": {
     "siteName": "IconBridge Jobs",
@@ -120,7 +119,7 @@
     "steps": {
       "profile": {
         "title": "Créez votre profil",
-        "text": "Inscrivez-vous gratuitement, renseignez vos informations et déposez votre CV et votre passeport."
+        "text": "Inscrivez-vous, renseignez vos informations et déposez votre CV et votre passeport."
       },
       "apply": {
         "title": "Postulez",
@@ -164,19 +163,11 @@
     "support": {
       "title": "Un accompagnement à chaque étape",
       "text": "De votre première question à votre arrivée : documents, entretien, visa et voyage."
-    },
-    "antiScam": {
-      "title": "Nous ne demandons jamais d'argent aux candidats pour postuler",
-      "text": "Postuler sur IconBridge est gratuit. Si quelqu'un vous demande de payer en notre nom, ne payez pas et contactez-nous."
     }
   },
   "faq": {
     "title": "Questions fréquentes",
     "items": {
-      "cost": {
-        "q": "Postuler est-il payant ?",
-        "a": "Non. Créer un profil et postuler sont gratuits. Nous ne demandons jamais d'argent aux candidats pour postuler."
-      },
       "documents": {
         "q": "De quels documents ai-je besoin ?",
         "a": "Un CV et une copie d'un passeport valide. Les diplômes et certificats sont un plus. Les postes en croisière demandent aussi la formation STCW, un livret maritime et un certificat médical."
@@ -313,7 +304,7 @@
       "apply": "Postuler",
       "checking": "Vérification...",
       "login": "Connectez-vous pour postuler",
-      "register": "Créer un profil gratuit",
+      "register": "Créer un profil",
       "verifyEmail": "Confirmez votre adresse e-mail pour postuler",
       "completeProfile": "Complétez votre profil pour postuler",
       "passportExpired": "Mettez à jour votre passeport pour postuler",
@@ -335,10 +326,6 @@
       "honesty": {
         "title": "Honnêteté",
         "text": "Nous publions de vraies offres d'employeurs identifiés et disons ce qu'un poste implique réellement."
-      },
-      "free": {
-        "title": "Gratuit pour les candidats",
-        "text": "Postuler ne coûte rien. Nous ne demandons jamais d'argent aux candidats pour postuler."
       },
       "support": {
         "title": "Un accompagnement durable",
@@ -408,10 +395,6 @@
         "service": {
           "title": "Le service",
           "text": "Le site permet aux candidats de consulter des offres d'emploi et de postuler. IconBridge agit comme intermédiaire entre les candidats et les employeurs."
-        },
-        "free": {
-          "title": "Gratuit pour les candidats",
-          "text": "Créer un compte et postuler sont gratuits. IconBridge ne demande jamais d'argent aux candidats pour postuler."
         },
         "account": {
           "title": "Votre compte",
@@ -802,7 +785,7 @@
     "loginTitle": "Connexion",
     "loginIntro": "Suivez vos candidatures et gardez votre profil à jour.",
     "registerTitle": "Créez votre profil",
-    "registerIntro": "Gratuit, en deux minutes. IconBridge ne demande jamais d'argent aux candidats.",
+    "registerIntro": "En deux minutes.",
     "verifyTitle": "Confirmation de l'e-mail",
     "forgotTitle": "Mot de passe oublié",
     "forgotIntro": "Saisissez votre adresse e-mail : nous vous envoyons un lien pour choisir un nouveau mot de passe.",

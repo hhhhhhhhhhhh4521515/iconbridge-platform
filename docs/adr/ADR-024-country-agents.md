@@ -32,6 +32,10 @@ Separately, many success stories have no quote from the candidate, and the form 
 
 8. **Optional story quote.** The three texts of "What the candidate says" may be empty (`optionalLocalizedTextSchema`, same JSON column, no migration). The public cards and the success-stories page show the quote like the other translated texts (the page's language, else English, else French) and no quote block when all three are empty; a story is saved and published without one.
 
+## Later changes
+
+- 2 November 2026: nationality filter in the applications and candidates lists (`nationality`: an ISO code, or `OTHER` for neither Morocco nor Tunisia, none given included; `nationalityWhere`). It is combined in AND with `candidateScope`, so a country agent who asks for another country, by the address or the API, gets an empty list; the web filter offers him his own countries only.
+
 ## Consequences
 
 - Every new endpoint that returns candidate data must apply `candidateScope`; the e2e suite `country-agent.e2e-spec.ts` calls every candidate route as a Moroccan agent with a Tunisian record and expects 404, and every forbidden action and expects 403.

@@ -1,4 +1,4 @@
-import { HandCoins, HeartHandshake, Scale } from 'lucide-react';
+import { HeartHandshake, Scale } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -26,7 +26,6 @@ export default async function AboutPage({ params }: PageProps<'/[locale]/about'>
   const t = await getTranslations('about');
   const values = [
     ['honesty', Scale],
-    ['free', HandCoins],
     ['support', HeartHandshake],
   ] as const;
   return (
