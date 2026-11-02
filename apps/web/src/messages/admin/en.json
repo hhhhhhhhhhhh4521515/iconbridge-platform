@@ -727,5 +727,11 @@
     "given": "Password you were given",
     "save": "Change my password",
     "saved": "Your password is changed."
+  },
+  "nationality": {
+    "label": "Nationality",
+    "all": "All nationalities",
+    "other": "Other (not Morocco/Tunisia)",
+    "allCountries": "Other countries, A–Z"
   }
 }
