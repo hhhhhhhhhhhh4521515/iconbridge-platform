@@ -35,7 +35,7 @@ A published job closes by itself when its deadline passes or when every position
 
 ## Applications
 
-The table lists every application with its candidate, job, date and status; filters by status and destination, and a search on name or email. The **Board** shows one column per status; dragging a card moves the application.
+The table lists every application with its candidate, nationality (flag), job, date and status; filters by status, destination and **nationality** (Morocco, Tunisia, "Other (not Morocco/Tunisia)", or any country; never the country of residence), and a search on name or email. The filters combine, stay in the address of the page (a filtered list can be bookmarked or shared) and decide the CSV export. A country agent only finds his own countries in the nationality filter. The **Board** shows one column per status; dragging a card moves the application.
 
 ![Applications board](screenshots/admin-04-applications-board.png)
 
@@ -56,6 +56,8 @@ Several applications can be selected for a common status change or deletion; eac
 **Export** writes the selected or filtered applications to CSV or Excel with the chosen columns. Passport numbers are masked unless a super admin ticks **Full passport number**; every export is logged, and spreadsheet formulas are neutralised.
 
 ## Candidates
+
+The list shows the nationality of each candidate (flag and name), with the same nationality filter as the applications, a search and the account state, all kept in the address.
 
 ![Candidate page](screenshots/admin-06-candidate.png)
 

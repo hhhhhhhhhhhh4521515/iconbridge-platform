@@ -162,6 +162,8 @@ Email on registration, verification, application received, every status change, 
 
 KPIs (open jobs, applications this month, visas approved, by destination), a Kanban/table view of applications, candidate search, document preview, CSV export, audit log. A country agent sees the figures of his countries only.
 
+The applications and candidates lists filter by **nationality** (never country of residence): all nationalities, Morocco, Tunisia, "Other (not Morocco/Tunisia)" (any other nationality, or none given), then every country A–Z. Both lists show a Nationality column with the flag. The filters (status, destination, nationality, search) combine, stay in the address of the page, and decide the totals and the CSV export. A country agent can only choose his own countries; the API returns nothing for any other.
+
 ### 7.5 Security and legal
 
 Rate limiting, CAPTCHA (Cloudflare Turnstile) on register/apply/contact, private files, GDPR data export and account deletion, privacy policy and terms pages.
