@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  adminApplicationListQuerySchema,
+  adminCandidateListQuerySchema,
   allowedApplicationTransitions,
   canTransitionApplication,
   createHomeSlideSchema,
   DEFAULT_EXPORT_COLUMNS,
   exportApplicationsSchema,
+  MAIN_NATIONALITIES,
   publicStoryName,
 } from './admin.js';
 import { APPLICATION_PIPELINE, APPLICATION_STATUSES, USER_ROLES } from './enums.js';
@@ -148,5 +151,15 @@ describe('home slide links', () => {
     for (const ctaUrl of ['javascript:alert(1)', 'http://example.test', '//evil.test', 'jobs']) {
       expect(createHomeSlideSchema.safeParse({ title, ctaUrl }).success).toBe(false);
     }
+  });
+});
+
+describe('nationality filter of the back office', () => {
+  it('takes an ISO code or OTHER, in any letter case, and nothing else', () => {
+    expect(adminApplicationListQuerySchema.parse({ nationality: 'ma' }).nationality).toBe('MA');
+    expect(adminCandidateListQuerySchema.parse({ nationality: 'other' }).nationality).toBe('OTHER');
+    expect(adminCandidateListQuerySchema.safeParse({ nationality: 'XX' }).success).toBe(false);
+    expect(adminCandidateListQuerySchema.safeParse({ nationality: 'Morocco' }).success).toBe(false);
+    expect(MAIN_NATIONALITIES).toEqual(['MA', 'TN']);
   });
 });
