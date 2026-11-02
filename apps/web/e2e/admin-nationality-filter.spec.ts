@@ -74,20 +74,20 @@ test.describe('back office: nationality filter', () => {
         await filter.selectOption('MA');
         await page.getByRole('searchbox').fill(`e2e-candidate-${STAMP}`);
         await expect(page).toHaveURL(/nationality=MA/);
-        await expect(page.getByRole('button', { name: moroccan.name })).toBeVisible();
-        await expect(page.getByRole('button', { name: tunisian.name })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: moroccan.name, exact: true })).toBeVisible();
+        await expect(page.getByRole('button', { name: tunisian.name, exact: true })).toHaveCount(0);
         await expect(
           page.getByRole('row').filter({ hasText: moroccan.email }).getByText('Morocco'),
         ).toBeVisible();
 
         await page.reload();
         await expect(page.getByTestId('nationality-filter')).toHaveValue('MA');
-        await expect(page.getByRole('button', { name: moroccan.name })).toBeVisible();
-        await expect(page.getByRole('button', { name: tunisian.name })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: moroccan.name, exact: true })).toBeVisible();
+        await expect(page.getByRole('button', { name: tunisian.name, exact: true })).toHaveCount(0);
 
         await page.getByTestId('nationality-filter').selectOption('OTHER');
-        await expect(page.getByRole('button', { name: moroccan.name })).toHaveCount(0);
-        await expect(page.getByRole('button', { name: tunisian.name })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: moroccan.name, exact: true })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: tunisian.name, exact: true })).toHaveCount(0);
       });
 
       await test.step('candidates: Tunisia', async () => {
@@ -117,8 +117,12 @@ test.describe('back office: nationality filter', () => {
         await expect(filter).toHaveValue('');
         await expect(filter.locator('option')).toHaveText(['All nationalities', 'Morocco']);
         await agentPage.getByRole('searchbox').fill(`e2e-candidate-${STAMP}`);
-        await expect(agentPage.getByRole('button', { name: moroccan.name })).toBeVisible();
-        await expect(agentPage.getByRole('button', { name: tunisian.name })).toHaveCount(0);
+        await expect(
+          agentPage.getByRole('button', { name: moroccan.name, exact: true }),
+        ).toBeVisible();
+        await expect(
+          agentPage.getByRole('button', { name: tunisian.name, exact: true }),
+        ).toHaveCount(0);
         // Through the API: another country gives nothing.
         const asked = (await (
           await agent.request.get('/api/v1/admin/candidates?nationality=TN&pageSize=100')

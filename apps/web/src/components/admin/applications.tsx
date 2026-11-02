@@ -403,7 +403,7 @@ export function Applications() {
 
   const setParam = useCallback(
     (name: string, value: string | null) => {
-      const params = new URLSearchParams(search.toString());
+      const params = new URLSearchParams(window.location.search);
       if (value === null) {
         params.delete(name);
       } else {
@@ -412,7 +412,7 @@ export function Applications() {
       const text = params.toString();
       router.replace(text ? `${pathname}?${text}` : pathname, { scroll: false });
     },
-    [pathname, router, search],
+    [pathname, router],
   );
   const open = useCallback(
     (id: string) => {
@@ -447,7 +447,9 @@ export function Applications() {
     setFilters((before) => ({ ...before, ...patch }));
     setPage(1);
     setSelection({});
-    const params = new URLSearchParams(search.toString());
+    // The address as it is now: the search box reports its text a moment later, after a
+    // click may have opened an application (`open`), which `search` does not show yet.
+    const params = new URLSearchParams(window.location.search);
     for (const name of URL_FILTERS) {
       const value = patch[name];
       if (value !== undefined) {

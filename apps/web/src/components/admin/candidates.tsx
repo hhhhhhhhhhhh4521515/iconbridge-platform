@@ -49,7 +49,8 @@ export function CandidatesList() {
   );
   const [page, setPage] = useState(1);
   const setParam = (name: string, value: string) => {
-    const params = new URLSearchParams(search.toString());
+    // The address as it is now: the search box reports its text a moment later.
+    const params = new URLSearchParams(window.location.search);
     if (value) {
       params.set(name, value);
     } else {
