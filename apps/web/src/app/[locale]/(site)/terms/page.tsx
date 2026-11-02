@@ -3,15 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { LegalPage } from '@/components/layout/legal-page';
 import { pageMetadata } from '@/lib/seo';
 
-const SECTIONS = [
-  'service',
-  'free',
-  'account',
-  'applications',
-  'content',
-  'liability',
-  'law',
-] as const;
+const SECTIONS = ['service', 'account', 'applications', 'content', 'liability', 'law'] as const;
 
 export async function generateMetadata({
   params,

@@ -49,10 +49,21 @@ describe('message files', () => {
     }
   });
 
-  it('tell candidates they never pay, in the three languages', () => {
-    expect(en.common.neverPay).toMatch(/never asks candidates for money/);
-    expect(fr.common.neverPay).toMatch(/jamais d'argent/);
-    expect(ar.common.neverPay).toContain('لا تطلب');
+  it('say nothing about money or fees to candidates, in the three languages', () => {
+    const banned =
+      /never ask|money|free of charge|\bfree\b|pay to apply|argent|gratuit|aucun frais|payant|مبلغ مالي|مجان|رسوم|لا نطلب/i;
+    for (const [name, tree] of [
+      ['en', en],
+      ['fr', fr],
+      ['ar', ar],
+    ] as const) {
+      const found = keys(tree).filter((key) =>
+        banned.test(
+          String(key.split('.').reduce<unknown>((node, part) => (node as Tree)[part], tree)),
+        ),
+      );
+      expect(found, name).toEqual([]);
+    }
   });
 
   it('has the same keys and placeholders in the English and French texts of the back office', () => {

@@ -26,10 +26,9 @@ export async function generateMetadata({
 export default async function ContactPage({ params }: PageProps<'/[locale]/contact'>) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [t, top, common, info] = await Promise.all([
+  const [t, top, info] = await Promise.all([
     getTranslations('contact'),
     getTranslations('topbar'),
-    getTranslations('common'),
     api.siteInfo(),
   ]);
   const details = [
@@ -107,9 +106,6 @@ export default async function ContactPage({ params }: PageProps<'/[locale]/conta
               ))}
             </dl>
           </div>
-          <p className="rounded-2xl border-2 border-brand-gold bg-brand-gold-soft p-4 text-sm font-medium text-brand-navy dark:text-foreground">
-            {common('neverPay')}
-          </p>
         </aside>
       </div>
     </div>

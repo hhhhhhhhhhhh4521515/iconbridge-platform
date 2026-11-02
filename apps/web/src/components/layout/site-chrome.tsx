@@ -167,9 +167,6 @@ export async function Footer() {
             <span className="text-lg font-bold">{common('brand')}</span>
           </div>
           <p className="mt-3 text-sm text-white/80">{t('tagline')}</p>
-          <p className="mt-4 rounded-lg border border-brand-gold/60 bg-white/5 p-3 text-sm font-medium text-white">
-            {common('neverPay')}
-          </p>
         </div>
         <div>
           <h2 className={heading}>{t('categories')}</h2>

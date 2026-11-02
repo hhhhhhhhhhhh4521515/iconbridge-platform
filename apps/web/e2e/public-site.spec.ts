@@ -56,16 +56,39 @@ test.describe('home page', () => {
     await expect(hero.getByRole('heading', { level: 2 }).first()).toHaveText(title);
   });
 
-  test('shows the counters, the destinations and the anti-scam notice', async ({ page }) => {
+  test('shows the counters and the destinations', async ({ page }) => {
     await page.goto('/en');
     await expect(page.getByText('Open jobs').first()).toBeVisible();
     // Named by its visible text (WCAG 2.5.3): "Malta", then the number of open jobs.
     const malta = page.getByRole('link', { name: /^Malta\b/ });
     await expect(malta).toBeVisible();
     await expect(malta).toHaveAttribute('href', /destination=MALTA/);
-    await expect(
-      page.getByRole('heading', { name: 'We never ask candidates for money to apply' }),
-    ).toBeVisible();
+  });
+
+  test('no page says anything about money or fees to candidates, in the three languages', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const banned =
+      /never ask|money to apply|free of charge|pay to apply|jamais d.argent|aucun frais|gratuit|payant|مبلغ مالي|مجان|رسوم|لا نطلب/i;
+    for (const locale of ['en', 'fr', 'ar']) {
+      for (const path of [
+        '',
+        '/jobs',
+        '/jobs/sample-welder-poland',
+        '/about',
+        '/contact',
+        '/terms',
+        '/privacy',
+        '/register',
+        '/login',
+        '/success-stories',
+      ]) {
+        await page.goto(`/${locale}${path}`);
+        const text = await page.locator('body').innerText();
+        expect(banned.test(text), `${locale}${path}`).toBe(false);
+      }
+    }
   });
 
   test('the hero search opens the jobs page with the keyword', async ({ page }) => {

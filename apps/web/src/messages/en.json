@@ -14,8 +14,7 @@
     "themeDark": "Dark",
     "retry": "Try again",
     "backHome": "Back to home",
-    "required": "required",
-    "neverPay": "IconBridge never asks candidates for money to apply."
+    "required": "required"
   },
   "meta": {
     "siteName": "IconBridge Jobs",
@@ -120,7 +119,7 @@
     "steps": {
       "profile": {
         "title": "Create your profile",
-        "text": "Register for free, fill in your details and upload your CV and passport."
+        "text": "Register, fill in your details and upload your CV and passport."
       },
       "apply": {
         "title": "Apply",
@@ -164,19 +163,11 @@
     "support": {
       "title": "Support at every step",
       "text": "From your first question to your arrival: documents, interview, visa and travel."
-    },
-    "antiScam": {
-      "title": "We never ask candidates for money to apply",
-      "text": "Applying on IconBridge is free. If someone asks you to pay in our name, do not pay and contact us."
     }
   },
   "faq": {
     "title": "Frequently asked questions",
     "items": {
-      "cost": {
-        "q": "Does it cost anything to apply?",
-        "a": "No. Creating a profile and applying are free. We never ask candidates for money to apply."
-      },
       "documents": {
         "q": "Which documents do I need?",
         "a": "A CV and a scan of a valid passport. Diplomas and certificates help. Cruise jobs also need STCW training, a seaman's book and a medical certificate."
@@ -313,7 +304,7 @@
       "apply": "Apply now",
       "checking": "Checking...",
       "login": "Login to apply",
-      "register": "Create a free profile",
+      "register": "Create a profile",
       "verifyEmail": "Confirm your email address to apply",
       "completeProfile": "Complete your profile to apply",
       "passportExpired": "Update your passport to apply",
@@ -335,10 +326,6 @@
       "honesty": {
         "title": "Honesty",
         "text": "We publish real offers from identified employers and say what a job really involves."
-      },
-      "free": {
-        "title": "Free for candidates",
-        "text": "Applying costs nothing. We never ask candidates for money to apply."
       },
       "support": {
         "title": "Continued support",
@@ -408,10 +395,6 @@
         "service": {
           "title": "The service",
           "text": "The site lets candidates see job offers and apply. IconBridge acts as an intermediary between candidates and employers."
-        },
-        "free": {
-          "title": "Free for candidates",
-          "text": "Creating an account and applying are free. IconBridge never asks candidates for money to apply."
         },
         "account": {
           "title": "Your account",
@@ -802,7 +785,7 @@
     "loginTitle": "Log in",
     "loginIntro": "Follow your applications and keep your profile up to date.",
     "registerTitle": "Create your profile",
-    "registerIntro": "Free, and it takes two minutes. IconBridge never asks candidates for money.",
+    "registerIntro": "It takes two minutes.",
     "verifyTitle": "Email confirmation",
     "forgotTitle": "Forgotten password",
     "forgotIntro": "Enter your email address: we send you a link to choose a new password.",
