@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
 import { LoadFailed } from '@/components/forms/fields';
 import { Modal } from '@/components/ui/modal';
-import { usePathname, useRouter } from '@/i18n/navigation';
+
 import {
   api,
   attempt,
@@ -43,6 +43,7 @@ import { useAdmin } from './admin-context';
 import { ApplicationDrawer } from './application-drawer';
 import { DeleteDialog } from './delete-dialog';
 import { NationalityCell, NationalityFilter, useNationalityValue } from './nationality';
+import { useUrlParams } from './url-params';
 import { ApplicationBadge } from './status';
 import {
   DataTable,
@@ -376,8 +377,6 @@ function Board({
 export function Applications() {
   const t = useTranslations('admin');
   const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
   const search = useSearchParams();
   const call = useCall();
   const { can, canDelete } = useAdmin();
@@ -401,18 +400,12 @@ export function Applications() {
   const [bulkStatus, setBulkStatus] = useState('');
   const [exporting, setExporting] = useState(false);
 
+  const updateUrl = useUrlParams();
   const setParam = useCallback(
     (name: string, value: string | null) => {
-      const params = new URLSearchParams(window.location.search);
-      if (value === null) {
-        params.delete(name);
-      } else {
-        params.set(name, value);
-      }
-      const text = params.toString();
-      router.replace(text ? `${pathname}?${text}` : pathname, { scroll: false });
+      updateUrl({ [name]: value });
     },
-    [pathname, router],
+    [updateUrl],
   );
   const open = useCallback(
     (id: string) => {
@@ -447,21 +440,11 @@ export function Applications() {
     setFilters((before) => ({ ...before, ...patch }));
     setPage(1);
     setSelection({});
-    // The address as it is now: the search box reports its text a moment later, after a
-    // click may have opened an application (`open`), which `search` does not show yet.
-    const params = new URLSearchParams(window.location.search);
-    for (const name of URL_FILTERS) {
-      const value = patch[name];
-      if (value !== undefined) {
-        if (value) {
-          params.set(name, value);
-        } else {
-          params.delete(name);
-        }
-      }
-    }
-    const text = params.toString();
-    router.replace(text ? `${pathname}?${text}` : pathname, { scroll: false });
+    updateUrl(
+      Object.fromEntries(
+        URL_FILTERS.flatMap((name) => (patch[name] === undefined ? [] : [[name, patch[name]]])),
+      ),
+    );
   };
 
   const move = async (application: AdminApplication, to: ApplicationStatus) => {

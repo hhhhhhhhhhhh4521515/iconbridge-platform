@@ -8,7 +8,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useLoaded } from '@/components/account/account-context';
 import { LoadFailed, Loading } from '@/components/forms/fields';
-import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { api, type AdminCandidate } from '@/lib/client-api';
 import { countryName, flag } from '@/lib/countries';
 import { languageName } from '@/lib/format';
@@ -17,6 +17,7 @@ import { useAdmin } from './admin-context';
 import { DeleteDialog } from './delete-dialog';
 import { DocumentsList } from './documents-list';
 import { NationalityCell, NationalityFilter, useNationalityValue } from './nationality';
+import { useUrlParams } from './url-params';
 import { ApplicationBadge } from './status';
 import {
   Badge,
@@ -35,8 +36,6 @@ const PAGE_SIZE = 25;
 export function CandidatesList() {
   const t = useTranslations('admin');
   const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
   const search = useSearchParams();
   const allowedNationality = useNationalityValue();
   // Kept in the address of the page, so a filtered list can be reloaded or shared.
@@ -48,16 +47,9 @@ export function CandidatesList() {
     allowedNationality(search.get('nationality')),
   );
   const [page, setPage] = useState(1);
+  const updateUrl = useUrlParams();
   const setParam = (name: string, value: string) => {
-    // The address as it is now: the search box reports its text a moment later.
-    const params = new URLSearchParams(window.location.search);
-    if (value) {
-      params.set(name, value);
-    } else {
-      params.delete(name);
-    }
-    const text = params.toString();
-    router.replace(text ? `${pathname}?${text}` : pathname, { scroll: false });
+    updateUrl({ [name]: value });
   };
   const call = useCall();
   const { canDelete } = useAdmin();

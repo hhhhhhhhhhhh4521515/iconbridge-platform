@@ -471,15 +471,19 @@ export function UsersManager() {
         header: t('users.countries'),
         cell: ({ row }) =>
           row.original.role === 'COUNTRY_AGENT' ? (
+            // The visible codes start the name (WCAG 2.5.3), the rest is for screen readers.
             <button
               type="button"
               className={`${smallButton} font-mono`}
-              aria-label={t('users.editCountries', { email: row.original.email })}
               onClick={() => {
                 setCountriesOf(row.original);
               }}
             >
               {row.original.assignedCountries.join(', ')}
+              <span className="sr-only">
+                {' '}
+                {t('users.editCountries', { email: row.original.email })}
+              </span>
             </button>
           ) : (
             '—'
