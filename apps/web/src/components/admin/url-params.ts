@@ -46,10 +46,7 @@ export function useUrlParams(): (patch: Record<string, string | null>) => void {
     wanted.current = params;
     const text = params.toString();
     written.current.add(text);
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `${window.location.pathname}${text ? `?${text}` : ''}`,
-    );
+    // `null` state, as Next.js documents it: then the router follows the new address.
+    window.history.replaceState(null, '', `${window.location.pathname}${text ? `?${text}` : ''}`);
   }, []);
 }

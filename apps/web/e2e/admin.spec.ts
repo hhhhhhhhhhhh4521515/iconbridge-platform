@@ -204,7 +204,7 @@ test.describe('back office', () => {
     await test.step('the detail shows the snapshot, the answer and a document preview; a change can be undone', async () => {
       await recruiter.goto('/en/admin/applications');
       await recruiter.getByRole('searchbox').fill(candidate.email);
-      await recruiter.getByRole('button', { name: `${firstName} Khelifi` }).click();
+      await recruiter.getByRole('button', { name: `${firstName} Khelifi`, exact: true }).click();
       const detail = recruiter.getByTestId('application-detail');
       await expect(detail.getByTestId('snapshot')).toContainText('Welder');
       // Masked in the snapshot, whatever the role.
