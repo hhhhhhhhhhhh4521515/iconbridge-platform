@@ -1123,3 +1123,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: lint, typecheck; unit tests (shared 229, web 82, api 338); `test:e2e` 545 (listed closed jobs, refused applications, hired count up and down, close and reopen, concurrency); `test:browser` 162 passed; `pnpm build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/53>
+
+## 2026-11-02 - Money notice removed; nationality filter in the back office
+
+**What**: the "IconBridge never asks candidates for money" message is removed everywhere: footer, contact page, home page block and FAQ item, About value, Terms section, register intro, "for free" in the How it works step and the profile button, and the footnote of every email in the three languages. Nothing of it was stored as editable content (local database and production checked), so no data migration. The applications and candidates lists gain a Nationality filter (Morocco, Tunisia, Other, every country A–Z) and column; filters combine, stay in the address and decide the totals and the export; a country agent only gets his countries.
+
+**Why**: requested by the owner (urgent); agents and recruiters work by nationality.
+
+**Checks**: lint, typecheck; unit tests (shared 230, web 82, api 338), including "no money text in any translation or email"; `test:e2e` 568 (new `nationality-filter.e2e-spec.ts`, 23); `test:browser` 167 passed (no message on any page in EN/FR/AR, filter, URL, agent); `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/54>
