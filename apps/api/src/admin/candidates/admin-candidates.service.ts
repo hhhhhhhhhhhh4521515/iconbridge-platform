@@ -10,7 +10,7 @@ import type { AuthUser } from '../../auth/auth.types.js';
 import { SessionService } from '../../auth/session.service.js';
 import { PROFILE_INCLUDE, ProfileService } from '../../candidates/profile.service.js';
 import { notFound } from '../../common/errors/app.exception.js';
-import { candidateScope } from '../../common/scope/candidate-scope.js';
+import { candidateScope, nationalityWhere } from '../../common/scope/candidate-scope.js';
 import { toCandidateDocument } from '../../documents/documents.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -63,7 +63,6 @@ export class AdminCandidatesService {
         deletedAt: null,
         ...(query.active === undefined ? {} : { isActive: query.active }),
       },
-      ...(query.nationality ? { nationality: query.nationality } : {}),
       ...(query.language ? { languages: { some: { language: query.language } } } : {}),
       ...(query.q
         ? {
@@ -75,7 +74,14 @@ export class AdminCandidatesService {
           }
         : {}),
     };
-    const where: Prisma.CandidateProfileWhereInput = { AND: [filters, candidateScope(viewer)] };
+    // In AND, never spread: the nationality filter OTHER and the search both use OR.
+    const where: Prisma.CandidateProfileWhereInput = {
+      AND: [
+        filters,
+        ...(query.nationality ? [nationalityWhere(query.nationality)] : []),
+        candidateScope(viewer),
+      ],
+    };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.candidateProfile.findMany({
         where,

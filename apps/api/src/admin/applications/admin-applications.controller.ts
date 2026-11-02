@@ -95,7 +95,12 @@ export class AdminApplicationsController {
   @ApiQuery({ name: 'status', required: false, enum: APPLICATION_STATUSES })
   @ApiQuery({ name: 'appliedFrom', required: false, description: 'YYYY-MM-DD' })
   @ApiQuery({ name: 'appliedTo', required: false, description: 'YYYY-MM-DD' })
-  @ApiQuery({ name: 'nationality', required: false, description: 'ISO 3166 code' })
+  @ApiQuery({
+    name: 'nationality',
+    required: false,
+    description:
+      'Nationality (never residence): ISO 3166 code, or OTHER for neither Morocco nor Tunisia (or not given). A country agent gets his countries only.',
+  })
   @ApiQuery({
     name: 'language',
     required: false,
