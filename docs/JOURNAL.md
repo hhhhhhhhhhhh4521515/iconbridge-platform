@@ -1145,3 +1145,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/61>
 
 **After deployment**: the forms need the Turnstile site key already used by registration; nothing to configure.
+
+## 2026-11-06 - Refused request bodies answer 413 or 400, never 500
+
+**What**: a body over the parser's limit answers 413 `FILE_TOO_LARGE` and malformed JSON 400 `VALIDATION_ERROR`, both with a fixed message. Before, the first answered 500 (counted by the severity-1 alert on failed requests) and the second quoted the parser's text, which includes part of the body. `ApiExpressAdapter` keeps the parser's errors as they are instead of Nest's `BadRequestException(message)`, and `AllExceptionsFilter` maps any parser error to its own 4xx status. SECURITY.md updated.
+
+**Why**: audit finding M1. Anyone could raise the 5xx alert with a few large requests.
+
+**Checks**: lint, typecheck; api unit tests 345 (filter: parser errors, a lookalike 503 stays 500); `test:e2e` all 32 files passed, new `request-body.e2e-spec.ts` (413 on login and contact, 400 without the body's text); `pnpm build`. No web change.
+
+**PR**: PR_TBD
