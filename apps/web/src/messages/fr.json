@@ -361,31 +361,43 @@
       "sections": {
         "who": {
           "title": "Qui est responsable de vos données",
-          "text": "IconBridge Recruitment Ltd exploite ce site et décide de l'utilisation des données personnelles qui y sont collectées."
+          "text": "[RAISON SOCIALE DE LA SOCIÉTÉ] (« IconBridge », « nous ») exploite ce site et décide de l'utilisation des données personnelles qui y sont collectées : elle est responsable du traitement.\nPour toute question ou demande sur vos données, écrivez à [ADRESSE E-MAIL DE CONTACT]."
         },
         "what": {
           "title": "Ce que nous collectons",
-          "text": "Identité et coordonnées, informations de passeport, profil professionnel, documents que vous déposez et candidatures. Les numéros de passeport sont stockés chiffrés."
+          "text": "Votre compte : adresse e-mail, mot de passe (conservé uniquement sous forme d'empreinte irréversible), langue.\nVotre profil : nom, genre, date de naissance, nationalité, pays et ville de résidence, numéros de téléphone et WhatsApp, données du passeport (numéro, pays de délivrance, dates ; le numéro est chiffré), métier, expérience, formation, langues, permis de conduire et, pour les croisières, expérience en mer et certificats maritimes.\nLes documents que vous déposez (CV, scan du passeport, diplômes, certificats…) et vos candidatures : lettre de motivation, réponses aux questions de l'offre, copie de votre profil au moment de postuler, et l'avancement de chaque candidature avec les messages que nous vous adressons.\nAlertes emploi : l'adresse e-mail, les destinations et les types de postes choisis. Formulaire de contact : votre nom, adresse e-mail, téléphone, message et l'adresse IP d'envoi.\nSécurité : l'adresse IP et le navigateur de vos sessions connectées, et la trace des actions sensibles du back-office."
         },
         "why": {
-          "title": "Pourquoi nous les utilisons",
-          "text": "Pour traiter vos candidatures, présenter votre profil aux employeurs des offres auxquelles vous postulez, et préparer les dossiers de permis de travail et de visa. Nous ne vendons pas vos données."
+          "title": "Pourquoi nous les utilisons, et sur quelle base légale",
+          "text": "Pour créer et gérer votre compte, traiter vos candidatures, présenter votre profil à l'employeur de chaque offre à laquelle vous postulez et préparer vos dossiers de permis de travail et de visa : c'est nécessaire pour fournir le service que vous demandez (contrat).\nPour envoyer les alertes emploi, que vous confirmez par e-mail et arrêtez en un clic, et pour publier une histoire de réussite, uniquement avec un document de consentement signé : votre consentement, que vous pouvez retirer à tout moment.\nPour conserver les dossiers et documents exigés par les règles d'immigration et d'emploi : obligation légale.\nPour protéger le site et votre compte (vérification anti-robot, limitation des tentatives, journaux de sécurité) : notre intérêt légitime à assurer la sécurité du service.\nNous ne vendons pas vos données et ne les utilisons pas à des fins publicitaires."
         },
         "share": {
           "title": "Qui les reçoit",
-          "text": "Nos recruteurs, les employeurs des offres auxquelles vous postulez et les autorités qui instruisent les permis et les visas. Des prestataires techniques hébergent le site pour notre compte."
+          "text": "Nos recruteurs, et notre agent dans le pays de votre nationalité, qui ne voit que les candidats de cette nationalité.\nL'employeur de chaque offre à laquelle vous postulez, et les autorités qui traitent les permis de travail et les visas.\nDes prestataires techniques agissant sur nos instructions : Microsoft Azure (hébergement, base de données, stockage des fichiers, envoi des e-mails et supervision technique) et Cloudflare (nom de domaine, vérification anti-robot des formulaires et transfert des e-mails envoyés à nos adresses)."
+        },
+        "transfers": {
+          "title": "Où vos données sont stockées",
+          "text": "Le site, sa base de données et vos documents sont hébergés par Microsoft Azure dans l'Union européenne (Italie) ; les e-mails partent de la zone de données européenne d'Azure.\nCloudflare peut traiter des données techniques (adresse IP, caractéristiques du navigateur) hors de l'Union européenne, sous les clauses contractuelles types de la Commission européenne. Lorsque vous postulez auprès d'un employeur situé hors de l'Union européenne, par exemple une compagnie de croisière, votre candidature est communiquée à cet employeur dans ce but."
         },
         "keep": {
-          "title": "Durée de conservation",
-          "text": "Tant que votre compte existe, puis pendant la durée exigée par la loi. Vous pouvez supprimer votre compte à tout moment."
+          "title": "Combien de temps nous les conservons",
+          "text": "Un compte candidat sans activité pendant 24 mois (aucune connexion, aucune candidature envoyée ou avancée) et sans candidature en cours est supprimé avec tous ses documents. Nous vous prévenons par e-mail 30 jours avant ; il suffit de vous connecter pour garder le compte.\nVous pouvez supprimer votre compte vous-même à tout moment dans les paramètres de votre compte : vos fichiers puis vos données sont effacés immédiatement.\nLes messages du formulaire de contact sont supprimés 24 mois après leur réception. La trace des e-mails envoyés est gardée 30 jours, les journaux techniques 30 jours, et une session connectée dure au plus 7 jours.\nLes données supprimées disparaissent de nos sauvegardes en cinq semaines environ (sauvegardes de la base 7 jours, copies hebdomadaires 30 jours plus 7 jours dans la corbeille). Une histoire de réussite publiée reste en ligne jusqu'au retrait de votre consentement."
         },
         "rights": {
           "title": "Vos droits",
-          "text": "Vous pouvez consulter, corriger, télécharger et supprimer vos données depuis votre compte ou en nous écrivant. Vous pouvez aussi saisir votre autorité de protection des données."
+          "text": "Vous pouvez consulter, corriger et télécharger vos données, et supprimer votre compte, depuis votre compte. Vous pouvez aussi demander la limitation ou l'arrêt d'une utilisation de vos données, vous y opposer, ou retirer un consentement donné, en écrivant à [ADRESSE E-MAIL DE CONTACT]. Nous répondons sous un mois.\nVous pouvez également saisir une autorité de protection des données, notamment celle du pays où vous vivez ou travaillez."
+        },
+        "security": {
+          "title": "Comment nous les protégeons",
+          "text": "Les mots de passe sont stockés sous forme d'empreinte et les numéros de passeport chiffrés ; les listes affichent un numéro masqué, et le numéro complet n'est montré qu'aux personnes qui traitent votre dossier. Vos documents sont conservés dans un espace de stockage privé et ne s'ouvrent que par des liens valables 5 minutes. Chaque membre de notre équipe ne voit que ce que son rôle permet, et les actions sensibles sont tracées."
         },
         "cookies": {
           "title": "Cookies",
-          "text": "Le site utilise uniquement les cookies nécessaires pour vous connecter et mémoriser votre langue et votre thème. Aucun traceur publicitaire n'est utilisé."
+          "text": "Le site n'utilise que les cookies nécessaires à votre connexion, et retient votre langue et votre thème de couleur. La vérification anti-robot des formulaires (Cloudflare Turnstile) lit des caractéristiques techniques de votre navigateur dans ce seul but. Aucun cookie publicitaire ou de mesure d'audience n'est utilisé."
+        },
+        "changes": {
+          "title": "Modifications",
+          "text": "Nous pouvons mettre à jour cette politique ; la date en haut de page indique la version en vigueur. Questions : [ADRESSE E-MAIL DE CONTACT]."
         }
       }
     },
