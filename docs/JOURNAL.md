@@ -1165,3 +1165,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: lint, typecheck; web unit tests 83 (internal spans dropped at the end, request and fetch kept); `test:browser` 167 passed; `pnpm build`. Ingestion is checked in Azure after the deployment.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/63>
+
+## 2026-11-07 - Faster first hero picture on phones
+
+**What**: the image optimiser serves WebP only (`next.config.ts`), and the first slide's picture carries `preload`, `fetchPriority="high"` and `loading="eager"`, as do the static hero and slide 0 of the carousel (`priority` is deprecated in Next.js 16 and no longer adds the hint). The header logo is no longer preloaded. A browser test checks the hint in the HTML.
+
+**Why**: audit finding M6. Lighthouse on a phone varied from 1.8 s to 12.5 s of LCP in production. In the slow runs the 17 KB hero waited 2.3 s for `/_next/image`, because the replica (0.5 vCPU) encoded it as AVIF on the first request of that width, and each replica's image cache starts empty after a deployment or a restart. Locally a cold AVIF encode took 0.23 to 0.31 s, against 0.04 to 0.05 s for WebP, which is about 13 KB larger for the hero.
+
+**Checks**: lint, typecheck; web unit tests 83; `test:browser` 170 passed (new: hero picture hint); `pnpm build`; Lighthouse mobile locally: `fetchpriority=high` now applied. Production LCP is measured again after the deployment, on a cold image cache.
+
+**PR**: PR_TBD
