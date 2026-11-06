@@ -370,16 +370,16 @@ erDiagram
 
 These are written by hand in the migration SQL, because Prisma cannot express them. Prisma leaves them in place and does not report them as drift.
 
-| Table                              | Rule                                                                                                                                                                                     |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `jobs`                             | `positions >= 1`; `0 <= hired_count <= positions`; `salary_min <= salary_max`, both non-negative; contract duration at least 1 month                                                     |
-| `jobs`                             | `search_vector` is a generated column: title (weight A) and description (weight B), `simple` text-search configuration, GIN index                                                        |
-| `candidate_profiles`               | Encrypted and masked passport number are set or cleared together; issue date before expiry date; years of experience between 0 and 70                                                    |
-| `success_stories`                  | `is_published` requires `consent_document_path`                                                                                                                                          |
-| `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                                                                    |
-| `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`; `assigned_countries` holds two-letter upper-case codes, at least one for a `COUNTRY_AGENT` and none for other roles (ADR-024) |
-| `documents`                        | `size_bytes > 0`                                                                                                                                                                         |
-| `email_outbox`                     | `priority` between 1 and 3                                                                                                                                                               |
+| Table                              | Rule                                                                                                                                                                                                              |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jobs`                             | `positions >= 1`; `0 <= hired_count <= positions`; `salary_min <= salary_max`, both non-negative; contract duration at least 1 month                                                                              |
+| `jobs`                             | `search_vector` is a generated column: title (weight A) and description (weight B), `simple` text-search configuration, GIN index                                                                                 |
+| `candidate_profiles`               | Encrypted and masked passport number are set or cleared together; issue date before expiry date; years of experience between 0 and 70                                                                             |
+| `success_stories`                  | `is_published` requires `consent_document_path`                                                                                                                                                                   |
+| `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                                                                                             |
+| `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`; `email_link_count >= 0`; `assigned_countries` holds two-letter upper-case codes, at least one for a `COUNTRY_AGENT` and none for other roles (ADR-024) |
+| `documents`                        | `size_bytes > 0`                                                                                                                                                                                                  |
+| `email_outbox`                     | `priority` between 1 and 3                                                                                                                                                                                        |
 
 Rules that need the current date or a setting (18 years or older, passport expiry, re-application cooldown, automatic closing of jobs) belong to the API and arrive with the features.
 

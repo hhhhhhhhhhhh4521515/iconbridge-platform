@@ -98,7 +98,9 @@ Per client address, per minute (`apps/api/src/auth/auth.constants.ts`):
 | Other authentication routes (refresh, session, logout)                          | 20    |
 | Everything else                                                                 | 120   |
 
-Register, the contact form, the job alert form and applying also need a Cloudflare Turnstile token.
+Register, forgot password, resend verification, the contact form, the job alert form and applying also need a Cloudflare Turnstile token. A signed-in candidate asks for their own verification link with `POST /auth/verification-email` (session instead of Turnstile).
+
+Per email address, whatever the client address: at most one email with a link (password reset or verification) every 2 minutes and 5 in 24 hours (`EMAIL_LINK_*` in `auth.constants.ts`, columns `users.email_link_*`, row locked while counting). Over the limit nothing is sent and the answer is the same `202`, so the limit tells nothing about the account. The registration email of a new account is outside the count (one per account by construction). Tests: `auth.service.spec.ts` ("email link limits"), `auth-flow.e2e-spec.ts` ("emails with a link").
 
 `RATE_LIMITS_ENABLED=false` turns the limits off for load tests and browser tests, where every user shares one address. The API refuses to start with it when `NODE_ENV=production` (`env.spec.ts`).
 
