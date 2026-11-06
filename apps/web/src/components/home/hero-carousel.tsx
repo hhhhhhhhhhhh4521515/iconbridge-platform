@@ -116,8 +116,8 @@ export function HeroCarousel({
                 src={slide.image}
                 alt=""
                 fill
-                priority={index === 0}
-                loading={index === 0 ? undefined : 'lazy'}
+                fetchPriority={index === 0 ? 'high' : 'low'}
+                loading={index === 0 ? 'eager' : 'lazy'}
                 sizes="100vw"
                 className={`object-cover ${index === active ? 'hero-zoom' : ''}`}
               />
