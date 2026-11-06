@@ -1175,3 +1175,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: lint, typecheck; web unit tests 83; `test:browser` 170 passed (new: hero picture hint); `pnpm build`; Lighthouse mobile locally: `fetchpriority=high` now applied. Production LCP is measured again after the deployment, on a cold image cache.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/64>
+
+## 2026-11-07 - All 11 CI checks required before merging
+
+**What**: branch protection of `main` now requires the 11 checks (it required 4): lint and unit tests, API e2e, the three browser engines, gitleaks, trivy fs and its code-scanning result, CodeQL and its result, dependency review, on an up-to-date branch. Set through the GitHub API; CICD.md updated.
+
+**Why**: audit finding M10. A pull request could be merged with a failing security scan or a failing Firefox or WebKit run.
+
+**Checks**: no workflow has path filters, and every one of the 11 checks reported on the last four pull requests (#61 to #64), docs-only changes included, because jobs with nothing to do skip their steps and report success. `gh api …/branches/main/protection` lists the 11 contexts; this pull request itself had to pass them all.
+
+**PR**: PR_TBD
