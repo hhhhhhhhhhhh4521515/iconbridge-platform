@@ -16,6 +16,7 @@ import { protectPassportNumber } from '../../src/common/crypto/passport.js';
 import { hashPassword } from '../../src/common/crypto/password.js';
 import { MailThrottledError } from '../../src/mail/mail-transport.js';
 import { MAIL_TRANSPORT } from '../../src/mail/mail.service.js';
+import { ApiExpressAdapter } from '../../src/common/http/api-express-adapter.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
 import { StorageService } from '../../src/storage/storage.service.js';
 import { databaseName } from './test-database.js';
@@ -147,7 +148,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   }
 
   const moduleRef = await builder.compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>();
+  const app = moduleRef.createNestApplication<NestExpressApplication>(new ApiExpressAdapter());
   setupApp(app);
   await app.init();
   return {

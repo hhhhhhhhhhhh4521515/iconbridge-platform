@@ -50,6 +50,30 @@ function prismaErrorCode(exception: unknown): string | undefined {
 }
 
 /**
+ * Errors of the body parser (`http-errors` objects, not HttpExceptions): a body over the
+ * limit, malformed JSON, an unsupported charset. They are the client's: their own 4xx status
+ * with a fixed message, never the parser's text (it can quote the body), and never a 500,
+ * which would count towards the 5xx alert.
+ */
+function bodyParserError(exception: unknown): { status: number; body: ApiError } | undefined {
+  if (!(exception instanceof Error) || !('type' in exception) || !('status' in exception)) {
+    return undefined;
+  }
+  const { status } = exception;
+  if (typeof status !== 'number' || status < 400 || status >= 500) {
+    return undefined;
+  }
+  return {
+    status,
+    body: {
+      code: CODE_BY_STATUS[status] ?? 'VALIDATION_ERROR',
+      message:
+        status === 413 ? 'The request body is too large' : 'The request body could not be read',
+    },
+  };
+}
+
+/**
  * Every error leaves the API as `{ code, message, details? }`.
  * Unexpected errors are logged with their stack and answered with a generic
  * message; the stack is added to the response in development only.
@@ -94,6 +118,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
           },
         };
       }
+    }
+
+    const bodyError = bodyParserError(exception);
+    if (bodyError) {
+      return bodyError;
     }
 
     const prismaError = PRISMA_ERRORS[prismaErrorCode(exception) ?? ''];
