@@ -4,14 +4,14 @@ import { Throttle } from '@nestjs/throttler';
 import {
   acknowledgementSchema,
   currentUserSchema,
-  emailOnlySchema,
+  emailLinkRequestSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
   type Acknowledgement,
   type CurrentUser as CurrentUserDto,
-  type EmailOnlyInput,
+  type EmailLinkRequestInput,
   type LoginInput,
   type RegisterInput,
   type ResetPasswordInput,
@@ -25,7 +25,13 @@ import { RATE_LIMITS, REFRESH_COOKIE } from './auth.constants.js';
 import { clearAuthCookies, setAuthCookies } from './auth.cookies.js';
 import { AuthService } from './auth.service.js';
 import { requestMeta, type AuthUser, type RequestWithUser } from './auth.types.js';
-import { AllowPasswordChange, CurrentUser, OptionalAuth, Public } from './decorators/index.js';
+import {
+  AllowPasswordChange,
+  CurrentUser,
+  OptionalAuth,
+  Public,
+  Roles,
+} from './decorators/index.js';
 
 const SENSITIVE = { default: RATE_LIMITS.authSensitive };
 const sessionSchema = z.object({ user: currentUserSchema.nullable() });
@@ -74,12 +80,34 @@ export class AuthController {
   @Throttle(SENSITIVE)
   @Post('resend-verification')
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Send the verification email again' })
-  @ApiZodBody(emailOnlySchema)
+  @ApiOperation({
+    summary: 'Send the verification email again',
+    description:
+      'Same answer whether the address has an account or not. Needs a Turnstile token. At most one such email to an address every 2 minutes and 5 a day; over it nothing is sent.',
+  })
+  @ApiZodBody(emailLinkRequestSchema)
   @ApiZodResponse(202, acknowledgementSchema)
   @ApiErrors(400, 429)
-  resendVerification(@ZodBody(emailOnlySchema) body: EmailOnlyInput): Promise<Acknowledgement> {
-    return this.auth.resendVerification(body);
+  resendVerification(
+    @ZodBody(emailLinkRequestSchema) body: EmailLinkRequestInput,
+    @Req() request: Request,
+  ): Promise<Acknowledgement> {
+    return this.auth.resendVerification(body, requestMeta(request).ip);
+  }
+
+  @Throttle(SENSITIVE)
+  @Post('verification-email')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Roles('CANDIDATE')
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Send the verification email again to my own address (signed in)',
+    description: 'No CAPTCHA (the session proves it); the same limits as the public form.',
+  })
+  @ApiZodResponse(202, acknowledgementSchema)
+  @ApiErrors(401, 403, 429)
+  resendOwnVerification(@CurrentUser() user: AuthUser): Promise<Acknowledgement> {
+    return this.auth.resendOwnVerification(user.id);
   }
 
   @Public()
@@ -146,12 +174,19 @@ export class AuthController {
   @Throttle(SENSITIVE)
   @Post('forgot-password')
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Send a password-reset link (valid 1 hour, usable once)' })
-  @ApiZodBody(emailOnlySchema)
+  @ApiOperation({
+    summary: 'Send a password-reset link (valid 1 hour, usable once)',
+    description:
+      'Same answer whether the address has an account or not. Needs a Turnstile token. At most one such email to an address every 2 minutes and 5 a day; over it nothing is sent.',
+  })
+  @ApiZodBody(emailLinkRequestSchema)
   @ApiZodResponse(202, acknowledgementSchema)
   @ApiErrors(400, 429)
-  forgotPassword(@ZodBody(emailOnlySchema) body: EmailOnlyInput): Promise<Acknowledgement> {
-    return this.auth.forgotPassword(body);
+  forgotPassword(
+    @ZodBody(emailLinkRequestSchema) body: EmailLinkRequestInput,
+    @Req() request: Request,
+  ): Promise<Acknowledgement> {
+    return this.auth.forgotPassword(body, requestMeta(request).ip);
   }
 
   @Public()

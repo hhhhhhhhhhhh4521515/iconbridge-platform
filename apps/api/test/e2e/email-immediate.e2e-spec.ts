@@ -73,10 +73,12 @@ describe('emails leave at once without the scheduler (e2e)', () => {
   it('sends the password-reset email right after the request, with no task run', async () => {
     await register('amira@example.test').expect(201);
     await delivered(1);
+    // One email with a link per address every 2 minutes (audit H2).
+    test.clock.set(new Date(start.getTime() + 3 * MINUTE));
     await test
       .http()
       .post(`${API}/auth/forgot-password`)
-      .send({ email: 'amira@example.test' })
+      .send({ email: 'amira@example.test', turnstileToken: 'ok' })
       .expect(202);
     await delivered(2);
     expect(test.outbox[1]?.text).toContain('/en/reset-password?token=');
