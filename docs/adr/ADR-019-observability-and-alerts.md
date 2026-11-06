@@ -34,6 +34,7 @@ Prompt 14 asks for traces and business events in Application Insights, a workboo
 
 - 23 October 2026: the web app recorded its health probes (111 rows of `GET /api/health/live` in 20 minutes): Next.js creates the span of each request itself, so the HTTP instrumentation's ignore hook never applies. The distro takes no sampler object (environment variables only), so a span processor placed before the exporting one clears the "sampled" flag of probe and static-file spans and of their children (`probeFilterProcessor`, `telemetry-redact.ts`).
 - 23 October 2026: `/api/health/ready` of the web app waits up to 70 s for the API instead of 5 s: an API starting from zero needs about 58 s, and the first check after a quiet period answered "unavailable" although nothing was wrong.
+- 6 November 2026: the web app's internal rendering spans (component tree, metadata, layout modules, start of the response) were most of `AppDependencies` (227 MB in 5 days) and brought Log Analytics close to its daily cap. The same processor now clears their "sampled" flag when they end, keeping only `BaseServer.handleRequest` (the request) and `AppRender.fetch` (the calls to the API); clearing it at the end, not the start, keeps the fetch spans started under them. The distro's processor, which computes the request and dependency metrics, runs before it, so metric alerts are unchanged.
 
 ## Consequences
 
