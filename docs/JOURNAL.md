@@ -1133,3 +1133,15 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: lint, typecheck; unit tests (shared 230, web 82, api 338), including "no money text in any translation or email"; `test:e2e` 568 (new `nationality-filter.e2e-spec.ts`, 23); `test:browser` 167 passed (no message on any page in EN/FR/AR, filter, URL, agent); `pnpm build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/54>
+
+## 2026-11-06 - Limits per address on emails with a link; Turnstile on the reset and resend forms
+
+**What**: at most one password-reset or verification email per address every 2 minutes and 5 in 24 hours (`users.email_link_*`, row locked while counting, `Clock` for the time); over the limit nothing is sent and the answer stays the same `202`. Forgot password and resend verification need a Turnstile token (`emailLinkRequestSchema`), with the widget on both forms; a signed-in candidate asks for their own link with `POST /auth/verification-email` (no CAPTCHA, same limits). The registration email of a new account is outside the count. SECURITY.md and ARCHITECTURE (constraint) updated.
+
+**Why**: audit finding H2. The per-client limit alone let anyone fill an inbox from many addresses.
+
+**Checks**: lint, typecheck; unit tests (shared 230, web 82, api 343); `test:e2e` 572 (limits over time with the test clock, per address, CAPTCHA refused with 400, roles of `/auth/verification-email`); `test:browser` 166 passed, 1 timing failure in Firefox under load (country agent dashboard, untouched; passed 3 of 3 alone); `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/61>
+
+**After deployment**: the forms need the Turnstile site key already used by registration; nothing to configure.
