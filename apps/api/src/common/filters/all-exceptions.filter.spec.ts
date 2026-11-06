@@ -75,6 +75,39 @@ describe('AllExceptionsFilter', () => {
     expect(body).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
   });
 
+  it('answers body parser errors with their 4xx status and a fixed message (audit M1)', () => {
+    const logged = vi.spyOn(filter['logger'], 'error');
+    logged.mockClear();
+    const parserError = (message: string, status: number, type: string) =>
+      Object.assign(new Error(message), { status, statusCode: status, expose: true, type });
+    expect(
+      filter.toResponse(parserError('request entity too large', 413, 'entity.too.large')),
+    ).toEqual({
+      status: 413,
+      body: { code: 'FILE_TOO_LARGE', message: 'The request body is too large' },
+    });
+    const malformed = filter.toResponse(
+      parserError(
+        'Unexpected token \'h\', "hunter2" is not valid JSON',
+        400,
+        'entity.parse.failed',
+      ),
+    );
+    expect(malformed).toEqual({
+      status: 400,
+      body: { code: 'VALIDATION_ERROR', message: 'The request body could not be read' },
+    });
+    expect(
+      filter.toResponse(parserError('unsupported charset', 415, 'charset.unsupported')).status,
+    ).toBe(415);
+    expect(logged).not.toHaveBeenCalled();
+  });
+
+  it('keeps a 500 for an error that only looks like one of the parser', () => {
+    const odd = Object.assign(new Error('x'), { status: 503, type: 'upstream' });
+    expect(filter.toResponse(odd).status).toBe(500);
+  });
+
   it('handles values that are not errors', () => {
     expect(filter.toResponse('boom').body.code).toBe('INTERNAL_ERROR');
   });

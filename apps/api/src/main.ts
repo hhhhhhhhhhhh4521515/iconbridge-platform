@@ -5,11 +5,14 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
 import { DOCS_PATH, setupApp } from './app.setup.js';
+import { ApiExpressAdapter } from './common/http/api-express-adapter.js';
 import type { Env } from './config/env.js';
 import { PrismaService } from './prisma/prisma.service.js';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, new ApiExpressAdapter(), {
+    bufferLogs: true,
+  });
   setupApp(app);
 
   const port = app.get<ConfigService<Env, true>>(ConfigService).get('PORT', { infer: true });
