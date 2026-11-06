@@ -1174,4 +1174,4 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 
 **Checks**: lint, typecheck; web unit tests 83; `test:browser` 170 passed (new: hero picture hint); `pnpm build`; Lighthouse mobile locally: `fetchpriority=high` now applied. Production LCP is measured again after the deployment, on a cold image cache.
 
-**PR**: PR_TBD
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/64>
