@@ -123,7 +123,11 @@ test.describe('back office: country agents', () => {
         await page.getByLabel(/^Password you were given/).fill(FIRST);
         await page.getByLabel(/^New password/).fill(OWN);
         await page.getByRole('button', { name: 'Change my password' }).click();
-        await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+        // An argon2 hash, then a full reload of the back office: more than the default 5 s
+        // when the whole suite runs.
+        await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
+          timeout: 15_000,
+        });
         await expect(page.getByText(/candidates of your countries: Morocco/)).toBeVisible();
       });
 

@@ -1155,3 +1155,13 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: lint, typecheck; api unit tests 345 (filter: parser errors, a lookalike 503 stays 500); `test:e2e` all 32 files passed, new `request-body.e2e-spec.ts` (413 on login and contact, 400 without the body's text); `pnpm build`. No web change.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/62>
+
+## 2026-11-07 - Web telemetry: internal rendering spans left out
+
+**What**: the web app's span processor now drops the internal spans of Next.js (component tree, metadata, layout modules, start of the response) when they end. It keeps the request (`BaseServer.handleRequest`) and its calls to the API (`AppRender.fetch`). Dropping them at the end keeps the fetch spans started under them, and the metrics behind the alerts are computed before this processor. ADR-019 updated. Also: the country-agent browser test gives the dashboard 15 s after the forced password change (argon2 and a full reload took just over 5 s in Firefox when the whole suite ran).
+
+**Why**: audit finding M5. These spans were most of `AppDependencies` (227 MB in 5 days), close to the 0.15 GB daily cap of Log Analytics, past which log alerts go blind.
+
+**Checks**: lint, typecheck; web unit tests 83 (internal spans dropped at the end, request and fetch kept); `test:browser` 167 passed; `pnpm build`. Ingestion is checked in Azure after the deployment.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/63>

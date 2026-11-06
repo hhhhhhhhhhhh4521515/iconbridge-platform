@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isIgnoredPath, probeFilterProcessor, withoutQuery } from './telemetry-redact';
+import {
+  isIgnoredPath,
+  isInternalNextSpan,
+  probeFilterProcessor,
+  withoutQuery,
+} from './telemetry-redact';
 
 describe('web telemetry', () => {
   it('drops the query string of a URL, where email links carry their token', () => {
@@ -55,5 +60,40 @@ describe('web telemetry', () => {
     const childOfPage = span({ 'http.target': '/api/health/live' });
     processor.onStart(childOfPage, 'sampled parent');
     expect(sampled(childOfPage)).toBe(true);
+  });
+
+  it('drops the internal rendering spans of Next.js when they end, and keeps the request and its calls (audit M5)', () => {
+    expect(isInternalNextSpan({ 'next.span_type': 'BaseServer.handleRequest' })).toBe(false);
+    expect(isInternalNextSpan({ 'next.span_type': 'AppRender.fetch' })).toBe(false);
+    expect(isInternalNextSpan({ 'http.target': '/en/jobs' })).toBe(false);
+    for (const type of [
+      'NextNodeServer.createComponentTree',
+      'ResolveMetadata.generateMetadata',
+      'NextNodeServer.getLayoutOrPageModule',
+      'AppRender.getBodyResult',
+      'NextNodeServer.startResponse',
+    ]) {
+      expect(isInternalNextSpan({ 'next.span_type': type })).toBe(true);
+    }
+
+    const processor = probeFilterProcessor(() => 1);
+    const span = (attributes: Record<string, unknown>) => {
+      const context = { traceFlags: 1 };
+      return { attributes, spanContext: () => context };
+    };
+    const render = span({ 'next.span_type': 'NextNodeServer.createComponentTree' });
+    processor.onStart(render, 'sampled parent');
+    // Still sampled while it runs: what starts under it (the fetch to the API) is kept.
+    expect(render.spanContext().traceFlags & 1).toBe(1);
+    const fetchSpan = span({ 'next.span_type': 'AppRender.fetch' });
+    processor.onStart(fetchSpan, 'render');
+    processor.onEnd(fetchSpan);
+    processor.onEnd(render);
+    expect(fetchSpan.spanContext().traceFlags & 1).toBe(1);
+    expect(render.spanContext().traceFlags & 1).toBe(0);
+
+    const request = span({ 'next.span_type': 'BaseServer.handleRequest', 'http.target': '/en' });
+    processor.onEnd(request);
+    expect(request.spanContext().traceFlags & 1).toBe(1);
   });
 });
