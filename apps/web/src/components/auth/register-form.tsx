@@ -35,14 +35,21 @@ interface Values {
   gdprConsent: boolean;
 }
 
-/** "Check your inbox", with a button to send the email again. */
-export function CheckInbox({ email }: { email: string }) {
+/** "Check your inbox", with a button to send the email again (behind Turnstile, audit H2). */
+export function CheckInbox({ email, siteKey }: { email: string; siteKey: string }) {
   const t = useTranslations('auth');
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [token, setToken] = useState<string | null>(null);
+  const onToken = useCallback((value: string | null) => {
+    setToken(value);
+  }, []);
   const resend = async () => {
+    if (!token) {
+      return;
+    }
     setState('sending');
     const { response } = await attempt(
-      api.POST('/api/v1/auth/resend-verification', { body: { email } }),
+      api.POST('/api/v1/auth/resend-verification', { body: { email, turnstileToken: token } }),
     );
     setState(response?.ok ? 'sent' : 'failed');
   };
@@ -53,14 +60,21 @@ export function CheckInbox({ email }: { email: string }) {
       <p className="text-muted-foreground">{t('checkInboxText', { email })}</p>
       {state === 'sent' ? <Notice tone="success">{t('resent')}</Notice> : null}
       {state === 'failed' ? <FormError>{t('resendFailed')}</FormError> : null}
-      <button
-        type="button"
-        className={cta.outline}
-        disabled={state === 'sending'}
-        onClick={() => void resend()}
-      >
-        {t('resend')}
-      </button>
+      {state === 'sent' ? null : (
+        <>
+          <div className="flex justify-center">
+            <Turnstile siteKey={siteKey} onToken={onToken} label={t('captcha')} />
+          </div>
+          <button
+            type="button"
+            className={cta.outline}
+            disabled={state === 'sending' || !token}
+            onClick={() => void resend()}
+          >
+            {t('resend')}
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -113,7 +127,7 @@ export function RegisterForm({ siteKey }: { siteKey: string }) {
   });
 
   if (sentTo) {
-    return <CheckInbox email={sentTo} />;
+    return <CheckInbox email={sentTo} siteKey={siteKey} />;
   }
   return (
     <form onSubmit={(event) => void submit(event)} noValidate>

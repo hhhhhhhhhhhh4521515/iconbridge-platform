@@ -72,7 +72,8 @@ function VerifyBanner() {
   const resend = async () => {
     setState('sending');
     const { response } = await attempt(
-      api.POST('/api/v1/auth/resend-verification', { body: { email: user.email } }),
+      // Signed in: the session proves it, no CAPTCHA (same limits per address, audit H2).
+      api.POST('/api/v1/auth/verification-email'),
     );
     setState(response?.ok ? 'sent' : 'failed');
   };

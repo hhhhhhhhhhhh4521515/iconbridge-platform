@@ -3,7 +3,7 @@
 import { emailOnlySchema, resetPasswordSchema } from '@iconbridge/shared/auth';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Fields,
   FormError,
@@ -12,24 +12,34 @@ import {
   TextField,
   useApiErrorText,
 } from '@/components/forms/fields';
+import { Turnstile } from '@/components/forms/turnstile';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api, attempt, failure } from '@/lib/client-api';
 import { cta } from '@/lib/ui';
 import { useZodForm } from '@/lib/use-zod-form';
 import { PasswordField } from './password-field';
 
-/** Asks for the reset email. The answer is the same whether the address has an account or not. */
-export function ForgotPasswordForm() {
+/**
+ * Asks for the reset email, behind Turnstile (audit H2). The answer is the same whether the
+ * address has an account or not.
+ */
+export function ForgotPasswordForm({ siteKey }: { siteKey: string }) {
   const t = useTranslations('auth');
   const apiError = useApiErrorText();
   const [state, setState] = useState<{ sent: boolean; problem: string | null }>({
     sent: false,
     problem: null,
   });
+  const [token, setToken] = useState<string | null>(null);
+  const onToken = useCallback((value: string | null) => {
+    setToken(value);
+  }, []);
   const form = useZodForm(emailOnlySchema, { email: '' });
 
   const submit = form.handleSubmit(async (body) => {
-    const { error, response } = await attempt(api.POST('/api/v1/auth/forgot-password', { body }));
+    const { error, response } = await attempt(
+      api.POST('/api/v1/auth/forgot-password', { body: { ...body, turnstileToken: token ?? '' } }),
+    );
     setState(
       response?.ok
         ? { sent: true, problem: null }
@@ -59,8 +69,13 @@ export function ForgotPasswordForm() {
           error={form.formState.errors.email}
           {...form.register('email')}
         />
+        <Turnstile siteKey={siteKey} onToken={onToken} label={t('captcha')} />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <SubmitButton busy={form.formState.isSubmitting} busyLabel={t('sending')}>
+          <SubmitButton
+            busy={form.formState.isSubmitting}
+            busyLabel={t('sending')}
+            disabled={!token}
+          >
             {t('sendResetLink')}
           </SubmitButton>
           <Link href="/login" className="text-sm font-medium underline">
