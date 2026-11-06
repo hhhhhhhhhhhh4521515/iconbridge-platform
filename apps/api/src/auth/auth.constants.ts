@@ -22,6 +22,15 @@ export const SESSION_MARKER_COOKIE = 'ib_session';
 export const JWT_ISSUER = 'iconbridge-api';
 
 /** Requests per minute and per client IP. Auth routes are stricter than the rest. */
+/**
+ * Emails with a verification or reset link to one address (audit H2): at most one every
+ * 2 minutes and 5 a day, whoever asks and from wherever. Over it nothing is sent and the
+ * answer stays the same, so nothing tells whether the address has an account.
+ */
+export const EMAIL_LINK_MIN_INTERVAL_MS = 2 * MINUTE;
+export const EMAIL_LINK_MAX_PER_DAY = 5;
+export const EMAIL_LINK_WINDOW_MS = DAY;
+
 export const RATE_LIMITS = {
   default: { ttl: MINUTE, limit: 120 },
   auth: { ttl: MINUTE, limit: 20 },

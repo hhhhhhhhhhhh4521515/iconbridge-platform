@@ -55,6 +55,15 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export const emailOnlySchema = z.object({ email: emailSchema });
 export type EmailOnlyInput = z.infer<typeof emailOnlySchema>;
 
+/**
+ * Forgot password and resend verification, from the public pages: the address and a
+ * Cloudflare Turnstile token (audit H2). The answer never tells whether the address exists.
+ */
+export const emailLinkRequestSchema = emailOnlySchema.extend({
+  turnstileToken: z.string().min(1).max(2048),
+});
+export type EmailLinkRequestInput = z.infer<typeof emailLinkRequestSchema>;
+
 /** Used with a reset-password token and with an invitation (set-password) token. */
 export const resetPasswordSchema = z.object({
   token: emailTokenSchema,

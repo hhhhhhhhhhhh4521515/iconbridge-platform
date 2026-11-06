@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { AuthCard } from '@/components/auth/auth-card';
 import { ForgotPasswordForm } from '@/components/auth/password-forms';
 import { ClientMessages } from '@/components/layout/client-messages';
+import { env } from '@/lib/env';
 
 export async function generateMetadata({
   params,
@@ -24,7 +25,7 @@ export default async function ForgotPasswordPage({
       <ClientMessages groups={['auth']}>
         {/* The form reads the address bar (token, next), which only exists in the browser. */}
         <Suspense>
-          <ForgotPasswordForm />
+          <ForgotPasswordForm siteKey={env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />
         </Suspense>
       </ClientMessages>
     </AuthCard>

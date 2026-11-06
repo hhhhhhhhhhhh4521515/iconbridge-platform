@@ -3,11 +3,12 @@ import {
   localeSchema,
   type Acknowledgement,
   type CurrentUser,
-  type EmailOnlyInput,
+  type EmailLinkRequestInput,
   type LoginInput,
   type RegisterInput,
   type ResetPasswordInput,
 } from '@iconbridge/shared';
+import { Clock } from '../common/clock/clock.js';
 import { AppException, unauthenticated } from '../common/errors/app.exception.js';
 import { hashPassword, verifyPassword } from '../common/crypto/password.js';
 import { MailService } from '../mail/mail.service.js';
@@ -15,6 +16,9 @@ import type { EmailTemplate } from '../mail/mail.templates.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   ACCOUNT_LOCK_MS,
+  EMAIL_LINK_MAX_PER_DAY,
+  EMAIL_LINK_MIN_INTERVAL_MS,
+  EMAIL_LINK_WINDOW_MS,
   MAX_FAILED_LOGINS,
   msToHours,
   RESET_PASSWORD_TTL_MS,
@@ -65,6 +69,7 @@ export class AuthService {
     private readonly passwordPolicy: PasswordPolicyService,
     private readonly turnstile: TurnstileService,
     private readonly mail: MailService,
+    private readonly clock: Clock,
   ) {}
 
   /** Creates a CANDIDATE account. The role cannot be chosen by the caller. */
@@ -115,7 +120,8 @@ export class AuthService {
           });
 
     if (created) {
-      await this.sendTokenEmail(created.id, input.email, input.locale, 'verify-email');
+      // The first email of a new account: one per account by construction, outside the limits.
+      await this.sendTokenEmail(created.id, input.email, input.locale, 'verify-email', false);
     } else {
       // The owner of the address is told; the caller learns nothing.
       await this.mail.send(input.email, 'account-exists', input.locale, {
@@ -142,10 +148,32 @@ export class AuthService {
     });
   }
 
-  async resendVerification(input: EmailOnlyInput): Promise<Acknowledgement> {
+  /** From the public pages: Turnstile first, then the same answer whether the address exists or not. */
+  async resendVerification(
+    input: EmailLinkRequestInput,
+    ip: string | null,
+  ): Promise<Acknowledgement> {
+    await this.assertHuman(input.turnstileToken, ip);
     const user = await this.findUsableUser(input.email);
     if (user && !user.emailVerifiedAt) {
       await this.sendTokenEmail(user.id, user.email, user.locale, 'verify-email');
+    }
+    return EMAIL_ACK;
+  }
+
+  /** A signed-in candidate asks again for the link to their own address (no CAPTCHA, same limits). */
+  async resendOwnVerification(userId: string): Promise<Acknowledgement> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, locale: true, emailVerifiedAt: true },
+    });
+    if (user && !user.emailVerifiedAt) {
+      await this.sendTokenEmail(
+        user.id,
+        user.email,
+        localeSchema.catch('en').parse(user.locale),
+        'verify-email',
+      );
     }
     return EMAIL_ACK;
   }
@@ -212,7 +240,8 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(input: EmailOnlyInput): Promise<Acknowledgement> {
+  async forgotPassword(input: EmailLinkRequestInput, ip: string | null): Promise<Acknowledgement> {
+    await this.assertHuman(input.turnstileToken, ip);
     const user = await this.findUsableUser(input.email);
     if (user) {
       await this.sendTokenEmail(user.id, user.email, user.locale, 'reset-password');
@@ -327,16 +356,61 @@ export class AuthService {
     email: string,
     locale: CurrentUser['locale'],
     template: Extract<EmailTemplate, 'verify-email' | 'reset-password'>,
+    limited = true,
   ): Promise<void> {
     const [type, ttl] =
       template === 'verify-email'
         ? (['VERIFY_EMAIL', VERIFY_EMAIL_TTL_MS] as const)
         : (['RESET_PASSWORD', RESET_PASSWORD_TTL_MS] as const);
+    if (limited && !(await this.reserveEmailLink(userId))) {
+      // Over the limit: nothing is sent, and the caller gets the usual answer.
+      this.logger.warn(`Email link limit reached, ${template} not sent (user ${userId})`);
+      return;
+    }
     const token = await this.emailTokens.issue(userId, type, ttl);
     await this.mail.send(email, template, locale, {
       actionUrl: this.mail.linkFor(template, locale, token),
       expiresInHours: msToHours(ttl),
     });
+  }
+
+  /**
+   * Takes one email with a link for this address if the limits allow it (audit H2): at most
+   * one every EMAIL_LINK_MIN_INTERVAL_MS and EMAIL_LINK_MAX_PER_DAY per 24 hours. The row
+   * is locked, so two requests at the same moment cannot both pass.
+   */
+  private async reserveEmailLink(userId: string): Promise<boolean> {
+    const now = this.clock.now();
+    return this.prisma.$transaction(async (tx) => {
+      const [row] = await tx.$queryRaw<{ last: Date | null; count: number; start: Date | null }[]>`
+        SELECT email_link_last_at AS last, email_link_count AS count, email_link_window_start AS start
+        FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      if (!row) {
+        return false;
+      }
+      if (row.last && now.getTime() - row.last.getTime() < EMAIL_LINK_MIN_INTERVAL_MS) {
+        return false;
+      }
+      const newWindow = !row.start || now.getTime() - row.start.getTime() >= EMAIL_LINK_WINDOW_MS;
+      if (!newWindow && row.count >= EMAIL_LINK_MAX_PER_DAY) {
+        return false;
+      }
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          emailLinkLastAt: now,
+          emailLinkCount: newWindow ? 1 : row.count + 1,
+          ...(newWindow ? { emailLinkWindowStart: now } : {}),
+        },
+      });
+      return true;
+    });
+  }
+
+  private async assertHuman(token: string, ip: string | null): Promise<void> {
+    if (!(await this.turnstile.verify(token, ip))) {
+      throw new AppException('CAPTCHA_FAILED', HttpStatus.BAD_REQUEST, 'The CAPTCHA check failed');
+    }
   }
 
   private getDummyHash(): Promise<string> {

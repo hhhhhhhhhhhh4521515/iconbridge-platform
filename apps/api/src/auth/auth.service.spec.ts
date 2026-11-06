@@ -11,6 +11,9 @@ import type { SessionService } from './session.service.js';
 import { TokenService } from './token.service.js';
 import type { TurnstileService } from './turnstile.service.js';
 
+const NOW = new Date('2026-11-06T10:00:00Z');
+const LINK = { turnstileToken: 'ok' };
+
 const META = { ip: '203.0.113.7', userAgent: 'vitest' };
 const PASSWORD = 'river-lantern-quartz-42';
 const USER_ID = '33333333-3333-4333-8333-333333333333';
@@ -58,7 +61,12 @@ function setup(existing: ReturnType<typeof userRow> | null = null) {
     update: vi.fn().mockResolvedValue({ failedLoginCount: 1, tokenVersion: 0 }),
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
   };
-  const tx = { user };
+  // Counters of the email link limit (audit H2), as the locked row returns them.
+  const linkRow = { last: null as Date | null, count: 0, start: null as Date | null };
+  const tx = {
+    user,
+    $queryRaw: vi.fn(() => Promise.resolve([{ ...linkRow }])),
+  };
   const prisma = {
     user,
     $transaction: vi.fn((run: (client: typeof tx) => Promise<unknown>) => run(tx)),
@@ -82,6 +90,7 @@ function setup(existing: ReturnType<typeof userRow> | null = null) {
         `link:${template}:${locale}:${token ?? ''}`,
     ),
   };
+  const clock = { now: vi.fn(() => NOW) };
   const service = new AuthService(
     prisma,
     new TokenService(new JwtService({ secret: 'unit-test-secret-0123456789abcdef' })),
@@ -90,8 +99,9 @@ function setup(existing: ReturnType<typeof userRow> | null = null) {
     new PasswordPolicyService(),
     turnstile as unknown as TurnstileService,
     mail as unknown as MailService,
+    clock,
   );
-  return { service, user, sessions, emailTokens, turnstile, mail };
+  return { service, user, sessions, emailTokens, turnstile, mail, linkRow, clock };
 }
 
 async function errorOf(promise: Promise<unknown>): Promise<AppException> {
@@ -264,13 +274,15 @@ describe('AuthService.login', () => {
 describe('AuthService email flows', () => {
   it('forgot-password answers the same with or without an account, and only emails a real one', async () => {
     const unknown = setup(null);
-    expect(await unknown.service.forgotPassword({ email: 'nobody@example.test' })).toEqual(
-      EMAIL_ACK,
-    );
+    expect(
+      await unknown.service.forgotPassword({ email: 'nobody@example.test', ...LINK }, null),
+    ).toEqual(EMAIL_ACK);
     expect(unknown.mail.send).not.toHaveBeenCalled();
 
     const known = setup(userRow());
-    expect(await known.service.forgotPassword({ email: 'known@example.test' })).toEqual(EMAIL_ACK);
+    expect(
+      await known.service.forgotPassword({ email: 'known@example.test', ...LINK }, null),
+    ).toEqual(EMAIL_ACK);
     expect(known.emailTokens.issue).toHaveBeenCalledWith(USER_ID, 'RESET_PASSWORD', 60 * 60 * 1000);
     expect(known.mail.send).toHaveBeenCalledWith('known@example.test', 'reset-password', 'en', {
       actionUrl: 'link:reset-password:en:email-token',
@@ -280,17 +292,19 @@ describe('AuthService email flows', () => {
 
   it('does not send a reset link to a disabled account', async () => {
     const { service, mail } = setup(userRow({ isActive: false }));
-    expect(await service.forgotPassword({ email: 'known@example.test' })).toEqual(EMAIL_ACK);
+    expect(await service.forgotPassword({ email: 'known@example.test', ...LINK }, null)).toEqual(
+      EMAIL_ACK,
+    );
     expect(mail.send).not.toHaveBeenCalled();
   });
 
   it('resend-verification only emails an unverified account', async () => {
     const verified = setup(userRow());
-    await verified.service.resendVerification({ email: 'known@example.test' });
+    await verified.service.resendVerification({ email: 'known@example.test', ...LINK }, null);
     expect(verified.mail.send).not.toHaveBeenCalled();
 
     const unverified = setup(userRow({ emailVerifiedAt: null }));
-    await unverified.service.resendVerification({ email: 'known@example.test' });
+    await unverified.service.resendVerification({ email: 'known@example.test', ...LINK }, null);
     expect(unverified.mail.send).toHaveBeenCalledWith(
       'known@example.test',
       'verify-email',
@@ -415,5 +429,67 @@ describe('AuthService.refresh and logout', () => {
     expect(sessions.end).not.toHaveBeenCalled();
     await service.logout('token');
     expect(sessions.end).toHaveBeenCalledWith('token');
+  });
+});
+
+describe('AuthService email link limits (audit H2)', () => {
+  const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000);
+
+  it('refuses a request whose Turnstile token Cloudflare rejects, before looking at the address', async () => {
+    const { service, turnstile, user } = setup(userRow());
+    turnstile.verify.mockResolvedValueOnce(false);
+    const error = await errorOf(
+      service.forgotPassword({ email: 'known@example.test', ...LINK }, null),
+    );
+    expect(error.code).toBe('CAPTCHA_FAILED');
+    expect(user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing to the same address within 2 minutes, with the same answer', async () => {
+    const { service, mail, linkRow } = setup(userRow());
+    Object.assign(linkRow, { last: minutesAgo(1.5), count: 1, start: minutesAgo(1.5) });
+    expect(await service.forgotPassword({ email: 'known@example.test', ...LINK }, null)).toEqual(
+      EMAIL_ACK,
+    );
+    expect(mail.send).not.toHaveBeenCalled();
+  });
+
+  it('sends again after 2 minutes, counting it in the window', async () => {
+    const { service, mail, linkRow, user } = setup(userRow());
+    Object.assign(linkRow, { last: minutesAgo(2), count: 2, start: minutesAgo(30) });
+    await service.forgotPassword({ email: 'known@example.test', ...LINK }, null);
+    expect(mail.send).toHaveBeenCalledTimes(1);
+    expect(user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { emailLinkLastAt: NOW, emailLinkCount: 3 } }),
+    );
+  });
+
+  it('stops at 5 emails in 24 hours, and starts a new window after them', async () => {
+    const full = setup(userRow({ emailVerifiedAt: null }));
+    Object.assign(full.linkRow, { last: minutesAgo(10), count: 5, start: minutesAgo(23 * 60) });
+    await full.service.resendVerification({ email: 'known@example.test', ...LINK }, null);
+    expect(full.mail.send).not.toHaveBeenCalled();
+
+    const next = setup(userRow({ emailVerifiedAt: null }));
+    Object.assign(next.linkRow, { last: minutesAgo(10), count: 5, start: minutesAgo(24 * 60) });
+    await next.service.resendVerification({ email: 'known@example.test', ...LINK }, null);
+    expect(next.mail.send).toHaveBeenCalledTimes(1);
+    expect(next.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { emailLinkLastAt: NOW, emailLinkCount: 1, emailLinkWindowStart: NOW },
+      }),
+    );
+  });
+
+  it('leaves the registration email of a new account out of the limits', async () => {
+    const { service, mail, user } = setup();
+    expect(await service.register(registerInput, META)).toEqual(REGISTER_ACK);
+    expect(mail.send).toHaveBeenCalledWith(
+      'new@example.test',
+      'verify-email',
+      'fr',
+      expect.anything(),
+    );
+    expect(user.update).not.toHaveBeenCalled();
   });
 });

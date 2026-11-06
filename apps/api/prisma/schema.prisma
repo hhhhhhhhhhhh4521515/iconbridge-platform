@@ -177,6 +177,11 @@ model User {
   assignedCountries      String[]  @default([]) @map("assigned_countries")
   /// Set when a super admin chose the password: only a password change is allowed until then.
   passwordChangeRequired Boolean   @default(false) @map("password_change_required")
+  /// Emails with a verification or reset link sent to this address (abuse limit, audit H2):
+  /// the last one, and how many since the start of the current 24-hour window.
+  emailLinkLastAt        DateTime? @map("email_link_last_at") @db.Timestamptz(3)
+  emailLinkCount         Int       @default(0) @map("email_link_count")
+  emailLinkWindowStart   DateTime? @map("email_link_window_start") @db.Timestamptz(3)
   deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(3)
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)

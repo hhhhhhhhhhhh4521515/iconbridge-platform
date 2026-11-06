@@ -54,6 +54,13 @@ describe('authentication (e2e)', () => {
     await resetDatabase(test.prisma);
     test.outbox.length = 0;
   });
+  afterEach(() => {
+    test.clock.reset();
+  });
+  /** One email with a link per address every 2 minutes (audit H2): the next request comes later. */
+  const minutesLater = (minutes: number) => {
+    test.clock.set(new Date(Date.now() + minutes * 60_000));
+  };
 
   const register = (overrides: Record<string, unknown> = {}) =>
     test
@@ -328,14 +335,106 @@ describe('authentication (e2e)', () => {
     });
   });
 
+  describe('emails with a link: limits and CAPTCHA (audit H2)', () => {
+    const forgot = (email: string, turnstileToken = 'ok') =>
+      test.http().post(`${API}/auth/forgot-password`).send({ email, turnstileToken });
+    const ACK = { message: 'If this address can receive it, an email has been sent.' };
+
+    it('sends at most one email every 2 minutes and 5 a day to an address, always with the same answer', async () => {
+      const user = await createUser(test, 'CANDIDATE');
+      const start = Date.now();
+      const at = (minutes: number) => {
+        test.clock.set(new Date(start + minutes * 60_000));
+      };
+      at(0);
+      expect((await forgot(user.email).expect(202)).body).toEqual(ACK);
+      expect((await forgot(user.email).expect(202)).body).toEqual(ACK);
+      expect(test.outbox).toHaveLength(1);
+      at(1.9);
+      await forgot(user.email).expect(202);
+      expect(test.outbox).toHaveLength(1);
+      for (const minutes of [2, 5, 8, 11]) {
+        at(minutes);
+        await forgot(user.email).expect(202);
+      }
+      expect(test.outbox).toHaveLength(5);
+      at(14);
+      expect((await forgot(user.email).expect(202)).body).toEqual(ACK);
+      expect(test.outbox).toHaveLength(5);
+      // 24 hours after the first one, a new window.
+      at(24 * 60);
+      await forgot(user.email).expect(202);
+      expect(test.outbox).toHaveLength(6);
+    });
+
+    it('leaves the registration email out of the limits, which are per address', async () => {
+      // A new account gets one registration email by construction: asking again at once works.
+      await register().expect(201);
+      const resend = () =>
+        test
+          .http()
+          .post(`${API}/auth/resend-verification`)
+          .send({ email: EMAIL, turnstileToken: 'ok' })
+          .expect(202);
+      await resend();
+      expect(test.outbox).toHaveLength(2);
+      await resend();
+      expect(test.outbox).toHaveLength(2);
+      const other = await createUser(test, 'CANDIDATE');
+      await forgot(other.email).expect(202);
+      expect(test.outbox).toHaveLength(3);
+    });
+
+    it('refuses a request without a valid Turnstile token, for an existing or unknown address alike', async () => {
+      const user = await createUser(test, 'CANDIDATE');
+      for (const email of [user.email, 'nobody@example.test']) {
+        const refused = await forgot(email, BAD_CAPTCHA).expect(400);
+        expect(refused.body).toMatchObject({ code: 'CAPTCHA_FAILED' });
+        await test
+          .http()
+          .post(`${API}/auth/resend-verification`)
+          .send({ email, turnstileToken: BAD_CAPTCHA })
+          .expect(400);
+        await test.http().post(`${API}/auth/forgot-password`).send({ email }).expect(400);
+      }
+      expect(test.outbox).toHaveLength(0);
+    });
+
+    it('lets a signed-in candidate ask for their own link, with the same limits, and nobody else', async () => {
+      await test.http().post(`${API}/auth/verification-email`).expect(401);
+      const viewer = await createUser(test, 'VIEWER');
+      await test
+        .http()
+        .post(`${API}/auth/verification-email`)
+        .set('Cookie', cookieHeader(viewer.cookies))
+        .expect(403);
+      const candidate = await createUser(test, 'CANDIDATE');
+      await test.prisma.user.update({
+        where: { id: candidate.id },
+        data: { emailVerifiedAt: null },
+      });
+      const own = () =>
+        test
+          .http()
+          .post(`${API}/auth/verification-email`)
+          .set('Cookie', cookieHeader(candidate.cookies));
+      expect((await own().expect(202)).body).toEqual(ACK);
+      await own().expect(202);
+      expect(test.outbox).toHaveLength(1);
+      expect(test.outbox[0]?.to).toBe(candidate.email);
+      expect(test.outbox[0]?.text).toContain('/verify-email?token=');
+    });
+  });
+
   describe('email verification', () => {
     it('resend-verification sends a new link and the previous one stops working', async () => {
       await register().expect(201);
       const firstToken = tokenFrom(test.outbox[0]);
+      minutesLater(3);
       const resent = await test
         .http()
         .post(`${API}/auth/resend-verification`)
-        .send({ email: EMAIL })
+        .send({ email: EMAIL, turnstileToken: 'ok' })
         .expect(202);
       expect(resent.body).toEqual({
         message: 'If this address can receive it, an email has been sent.',
@@ -352,7 +451,7 @@ describe('authentication (e2e)', () => {
         const response = await test
           .http()
           .post(`${API}/auth/resend-verification`)
-          .send({ email })
+          .send({ email, turnstileToken: 'ok' })
           .expect(202);
         expect(response.body).toEqual({
           message: 'If this address can receive it, an email has been sent.',
@@ -373,7 +472,12 @@ describe('authentication (e2e)', () => {
 
     it('does not accept a password-reset token to verify an email', async () => {
       await register().expect(201);
-      await test.http().post(`${API}/auth/forgot-password`).send({ email: EMAIL }).expect(202);
+      minutesLater(3);
+      await test
+        .http()
+        .post(`${API}/auth/forgot-password`)
+        .send({ email: EMAIL, turnstileToken: 'ok' })
+        .expect(202);
       const resetToken = tokenFrom(test.outbox[1]);
       await test.http().post(`${API}/auth/verify-email`).send({ token: resetToken }).expect(400);
     });
@@ -447,7 +551,11 @@ describe('authentication (e2e)', () => {
       const user = await createUser(test, 'CANDIDATE');
       const otherDevice = await login(test, user.email);
 
-      await test.http().post(`${API}/auth/forgot-password`).send({ email: user.email }).expect(202);
+      await test
+        .http()
+        .post(`${API}/auth/forgot-password`)
+        .send({ email: user.email, turnstileToken: 'ok' })
+        .expect(202);
       expect(test.outbox).toHaveLength(1);
       expect(test.outbox[0]?.subject).toContain('Reset your password');
       const token = tokenFrom(test.outbox[0]);
@@ -499,7 +607,7 @@ describe('authentication (e2e)', () => {
       const response = await test
         .http()
         .post(`${API}/auth/forgot-password`)
-        .send({ email: 'nobody@example.test' })
+        .send({ email: 'nobody@example.test', turnstileToken: 'ok' })
         .expect(202);
       expect(response.body).toEqual({
         message: 'If this address can receive it, an email has been sent.',
@@ -509,7 +617,11 @@ describe('authentication (e2e)', () => {
 
     it('refuses an expired reset link', async () => {
       const user = await createUser(test, 'CANDIDATE');
-      await test.http().post(`${API}/auth/forgot-password`).send({ email: user.email }).expect(202);
+      await test
+        .http()
+        .post(`${API}/auth/forgot-password`)
+        .send({ email: user.email, turnstileToken: 'ok' })
+        .expect(202);
       await test.prisma.emailToken.updateMany({ data: { expiresAt: new Date(Date.now() - 1000) } });
       await test
         .http()
@@ -524,7 +636,11 @@ describe('authentication (e2e)', () => {
         where: { id: user.id },
         data: { lockedUntil: new Date(Date.now() + 600_000) },
       });
-      await test.http().post(`${API}/auth/forgot-password`).send({ email: user.email }).expect(202);
+      await test
+        .http()
+        .post(`${API}/auth/forgot-password`)
+        .send({ email: user.email, turnstileToken: 'ok' })
+        .expect(202);
       await test
         .http()
         .post(`${API}/auth/reset-password`)
