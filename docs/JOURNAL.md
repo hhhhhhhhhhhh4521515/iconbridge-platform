@@ -1185,3 +1185,25 @@ Prompt 14, "Done when": alerts fire on a forced error (23 October), a restore wa
 **Checks**: no workflow has path filters, and every one of the 11 checks reported on the last four pull requests (#61 to #64), docs-only changes included, because jobs with nothing to do skip their steps and report success. `gh api …/branches/main/protection` lists the 11 contexts; this pull request itself had to pass them all.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/65>
+
+## 2026-11-07 - Privacy policy rewritten from what the code does
+
+**What**: the privacy policy (EN, FR, AR) now states:
+
+- the controller, as a placeholder;
+- the data collected, field by field, from the data model;
+- the legal basis of each use: contract, consent (job alerts, success stories), legal obligation, legitimate interest (security);
+- who receives the data, including the country agent limited to their nationality;
+- the providers: Microsoft Azure in the EU (Italy; email from Azure's European data location) and Cloudflare (DNS, Turnstile, email forwarding, standard contractual clauses);
+- the retention: inactive accounts erased after 24 months with an email 30 days before, self-deletion at once, contact messages 24 months, sent-email records and logs 30 days, sessions 7 days, backups about five weeks;
+- the rights, with a reply within one month; protection; cookies; changes; the last-updated date (7 November 2026).
+
+The terms keep their own date. The text is split into paragraphs. A unit test checks that the policy states the retention constants of the code in the three languages.
+
+**To fill by the owner**: `[COMPANY LEGAL NAME]` / `[RAISON SOCIALE DE LA SOCIÉTÉ]` / `[الاسم القانوني للشركة]` and `[CONTACT EMAIL]` / `[ADRESSE E-MAIL DE CONTACT]` / `[البريد الإلكتروني للتواصل]` in `apps/web/src/messages/{en,fr,ar}.json` (`legal.privacy.sections`: `who`, `rights`, `changes`). Then have the text reviewed (the page keeps its "have it reviewed" notice).
+
+**Why**: audit finding M4. The previous text named a company and left out the 24-month deletion, the legal bases, the providers and a contact for requests.
+
+**Checks**: lint, typecheck; web unit tests 84; `test:browser` 170 passed (legal pages, axe on `/en/privacy`); `pnpm build`; Arabic page checked at phone width.
+
+**PR**: PR_TBD
