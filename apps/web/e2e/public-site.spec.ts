@@ -32,6 +32,17 @@ test.describe('home page', () => {
     await expect(stories.first().getByRole('img')).toBeVisible();
   });
 
+  test('sends the first hero picture fetched first and never lazy (mobile LCP)', async ({
+    request,
+  }) => {
+    // The HTML as sent: the carousel replaces this hero a few seconds after load.
+    const html = await (await request.get('/en')).text();
+    const hero = html.slice(html.indexOf('data-hero="static"'));
+    const image = /<img [^>]*>/.exec(hero)?.[0] ?? '';
+    expect(image).toMatch(/fetchPriority="high"/i);
+    expect(image).toMatch(/loading="eager"/);
+  });
+
   test('the slider moves on by itself and can be paused', async ({ page }) => {
     await page.goto('/en');
     const hero = page.getByRole('region', { name: 'Featured destinations' });

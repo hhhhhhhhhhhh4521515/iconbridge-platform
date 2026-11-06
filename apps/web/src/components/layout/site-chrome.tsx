@@ -67,7 +67,14 @@ export async function TopBar() {
 function Logo({ name }: { name: string }) {
   return (
     <Link href="/" className="flex items-center gap-2.5 rounded-lg" aria-label={name}>
-      <Image src="/brand/logo.webp" alt="" width={44} height={44} className="rounded-lg" priority />
+      <Image
+        src="/brand/logo.webp"
+        alt=""
+        width={44}
+        height={44}
+        className="rounded-lg"
+        loading="eager"
+      />
       <span className="text-lg leading-tight font-bold tracking-tight text-foreground">
         IconBridge <span className="font-medium text-muted-foreground">Jobs</span>
       </span>

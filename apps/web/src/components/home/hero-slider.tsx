@@ -103,7 +103,11 @@ export function HeroSlider({ slides, labels, children }: HeroProps) {
             src={first.image}
             alt=""
             fill
-            priority
+            // The largest element of the page on a phone: preloaded from the <head> and
+            // fetched before the scripts (Lighthouse LCP, audit M6).
+            preload
+            fetchPriority="high"
+            loading="eager"
             sizes="100vw"
             className="object-cover"
           />

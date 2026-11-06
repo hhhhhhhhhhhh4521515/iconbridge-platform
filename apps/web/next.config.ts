@@ -17,7 +17,11 @@ const nextConfig: NextConfig = {
   // Public images uploaded through the back office live in blob storage. Local
   // emulator URLs are not optimised (see components/ui/media-image.tsx).
   images: {
-    formats: ['image/avif', 'image/webp'],
+    // WebP only: the first request of each width is encoded on the replica (0.5 vCPU), and
+    // AVIF took about 2.3 s there for the hero image against a few hundred ms for WebP, which
+    // is ~13 KB larger. Each replica's image cache starts empty after a deployment or a
+    // restart, so that first request is the one a phone often waits for (audit M6).
+    formats: ['image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: '*.blob.core.windows.net' }],
   },
   poweredByHeader: false,
