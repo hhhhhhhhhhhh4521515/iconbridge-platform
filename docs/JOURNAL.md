@@ -1216,4 +1216,4 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **Checks**: actionlint without remark; the decision replayed on tonight's history: production #62 with `main` at #65 → deploy (the old rule skipped it); production #64 with `main` at #65 → docs only, skip; unknown version → deploy.
 
-**PR**: PR_TBD
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/68>
