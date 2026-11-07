@@ -27,6 +27,7 @@ describe('content security policy', () => {
     expect(policy).toContain("frame-ancestors 'none'");
     expect(policy).toContain('upgrade-insecure-requests');
     expect(policy).toContain("img-src 'self' data: blob: https://media.blob.core.windows.net");
+    expect(policy).toContain("connect-src 'self' data: https://challenges.cloudflare.com");
     expect(policy).not.toContain('localhost');
   });
 
