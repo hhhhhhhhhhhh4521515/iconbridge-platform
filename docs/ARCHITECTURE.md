@@ -778,10 +778,10 @@ Every export is logged with its format, columns, filters and row count. Cells th
 
 Two ways to start them, running the same code:
 
-| Where             | How                                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Local development | Inside the API, every 15 minutes (emails every minute), when `SCHEDULER_ENABLED=true`                                                                        |
-| Azure             | `SCHEDULER_ENABLED=false`; a scheduled Container Apps Job runs `node dist/cli.js all`, because the API scales to zero and its timers stop when nobody visits |
+| Where             | How                                                                                                                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Local development | Inside the API, every 15 minutes (emails every minute), when `SCHEDULER_ENABLED=true`                                                                                                                                                            |
+| Azure             | `SCHEDULER_ENABLED=false`; a scheduled Container Apps Job runs `node dist/cli.js all`, because the API runs up to 2 replicas (each would fire its own timers) and could scale to zero again; the job runs each task once, under an advisory lock |
 
 Locally: `pnpm --filter @iconbridge/api task <send-emails|close-jobs|job-alerts|retention|all>`. The command prints one JSON report per task and exits with 1 if a task failed. Each task takes a PostgreSQL advisory lock, so the scheduler, the command and several replicas can overlap: one runs, the others skip. A new task is added to `TASK_NAMES` in `tasks/tasks.service.ts`.
 
@@ -1034,7 +1034,7 @@ flowchart LR
 
 | Resource                    | Name                                | Size and rules                                                                                                                                                                              |
 | --------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Resource group              | `rg-iconbridge-prod`                | Budget 15 USD/month, alerts at 50, 80, 100 %                                                                                                                                                |
+| Resource group              | `rg-iconbridge-prod`                | Budget 40 USD/month (a warm replica per app, ADR-022), alerts at 50, 80, 100 %                                                                                                              |
 | Log Analytics, App Insights | `log-…`, `appi-iconbridge-prod-itn` | 30 days, 0.15 GB/day cap, sampling 100 %; OpenTelemetry in the API and the web app, workbook and alerts ([ADR-019](adr/ADR-019-observability-and-alerts.md))                                |
 | Container registry          | `acriconbridgeproditn`              | Standard, admin user off, pull by identity (`registry_type = "ghcr"`: GitHub instead)                                                                                                       |
 | Managed identity            | `id-iconbridge-prod-itn`            | AcrPull, Key Vault Secrets User, Storage Blob Data Contributor and Delegator, Communication and Email Service Owner (on `acs-…` only)                                                       |

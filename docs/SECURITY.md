@@ -63,7 +63,7 @@ The browser only ever talks to the web origin; the web app forwards `/api/v1/*` 
 - **Rich text** (job descriptions written with the Tiptap editor): cleaned by `cleanRichText` with DOMPurify on the server, when written and again when read. Allowed: paragraphs, line breaks, bold, italic, underline, strike, lists, `h3`, `h4`, links, quotes. Links keep `http(s)`, `mailto` and `tel` only and get `rel="noopener noreferrer nofollow"`. `rich-text.spec.ts` feeds it script tags, event handlers, `javascript:` links, SVG and data URLs.
 - **Everything else** is rendered by React as text. The site has one `dangerouslySetInnerHTML` for job rich text (cleaned as above) and one for structured data (JSON, escaped).
 - **Exports**: cells starting with `=`, `+`, `-`, `@`, tab or carriage return are prefixed so a spreadsheet does not run them as formulas.
-- **Content-Security-Policy** on every page of the web app: scripts need the nonce of the page (`'strict-dynamic'`), no `unsafe-eval`, `frame-ancestors 'none'`, images and connections limited to the site, the storage and Cloudflare Turnstile. Styles allow `'unsafe-inline'` (Tailwind and Next.js inject style attributes). The browser tests listen for CSP violations on every page they check and fail on any.
+- **Content-Security-Policy** on every page of the web app: scripts need the nonce of the page (`'strict-dynamic'`), no `unsafe-eval`, `frame-ancestors 'none'`, images and connections limited to the site, the storage and Cloudflare Turnstile (plus `data:` in `connect-src`, which Turnstile's script fetches; reading inline data sends nothing out). Styles allow `'unsafe-inline'` (Tailwind and Next.js inject style attributes). The browser tests listen for CSP violations on every page they check and fail on any.
 
 ## File uploads
 
@@ -198,6 +198,8 @@ Run during the audit, and to run again before each release:
 24 October 2026: the image scan blocked a deployment on `@azure/msal-node` 6.0.1 (CVE-2026-109461, HIGH, fixed in 7.1.0), which `@azure/identity` 4.14 still requires; `pnpm audit --prod` also listed new denial-of-service advisories in `zod`, `body-parser`, `multer`, `undici` and `nodemailer`. Fixed with overrides (`@azure/msal-node` ^7.1.0, `body-parser@2` ^2.4.0, `multer@2` ^2.5.0, `undici@6` ^6.29.1, `undici@7` ^7.30.1) and direct updates (`zod` 4.6.7, `nodemailer` 10.2.1). The only breaking change of msal-node 7 is the interactive browser sign-in, which managed identity does not use; checked in Azure after the deployment (storage and email calls).
 
 Fixed during the audit: `uuid` (through exceljs), `mysql2` and `deepmerge-ts` were raised with `pnpm.overrides`; the `shadcn` package, which was only needed for one CSS file, was removed and the file vendored.
+
+Fixed on 7 November 2026: `glob` (GHSA-3g3m-2fjr-6pw4) and `minimatch` (GHSA-g3hv-75wg-m249), moderate, through mjml (js-beautify, mjml-cli) and archiver (readdir-glob), raised to the fixed majors with range overrides in `pnpm-workspace.yaml`; `pnpm audit --prod` finds nothing.
 
 **Accepted: `braces` ≤ 3.0.3** (GHSA-vfj7-8cjw-p6xm, stack exhaustion with deeply nested brace patterns; no fixed version exists). It comes only through `eslint-config-next → fast-glob → micromatch`, a lint tool. It is not installed in production, and the only patterns it ever receives are the ones written in our own ESLint configuration. To revisit when `braces` or `@next/eslint-plugin-next` publishes a fix.
 
