@@ -42,3 +42,11 @@ overrides:
   undici@7: ^7.30.1
   mysql2: ^3.23.1
   deepmerge-ts: ^8.0.0
+  # GHSA-3g3m-2fjr-6pw4 (glob) and GHSA-g3hv-75wg-m249 (minimatch), moderate: through mjml
+  # (js-beautify, mjml-cli) and archiver (readdir-glob), none of which globs user input. Every
+  # vulnerable copy is raised to the fixed major, which keeps the same API.
+  'glob@>=9.0.0 <14.0.2': ^14.0.4
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.5
+
+minimumReleaseAgeExclude:
+  - glob@14.0.4
