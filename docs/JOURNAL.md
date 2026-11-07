@@ -1222,4 +1222,4 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **Checks**: lint, typecheck; unit tests (shared 230, web 83, api 345); `test:e2e` 575 (email rendering through mjml, exports through archiver); hadolint without remark; API image built and scanned by trivy (0 high or critical); `test:browser` 170 passed against `docker-compose.prod.yml` (production images); `pnpm build`.
 
-**PR**: PR_TBD
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/67>
