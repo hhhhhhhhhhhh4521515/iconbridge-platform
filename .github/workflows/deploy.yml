@@ -33,7 +33,9 @@ env:
   SHA: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
-  # A merge that only changes documentation deploys nothing (squash merges: one commit).
+  # Nothing to deploy when every file changed since the version in production is
+  # documentation. Compared with what runs, not with the previous commit: when a newer merge
+  # cancels the CI of an older one, the older code would otherwise never be deployed.
   changes:
     name: Anything to deploy?
     if: >-
@@ -46,13 +48,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.SHA }}
-          fetch-depth: 2
+          fetch-depth: 0
       - id: files
         run: |
           if [ "${{ github.event_name }}" = workflow_dispatch ]; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          files=$(git diff --name-only HEAD^ HEAD)
+          # The commit the site reports; unknown or not in the history: deploy.
+          deployed=$(curl -fsS --retry 3 --max-time 20 "${{ vars.SITE_URL }}/api/health/live" | jq -r '.version // empty' || true)
+          if [ -z "$deployed" ] || ! git cat-file -e "${deployed}^{commit}" 2>/dev/null; then
+            echo "Version in production unknown (${deployed:-none}): deploying."
+            echo "deploy=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "In production: $deployed"
+          files=$(git diff --name-only "$deployed" HEAD)
           printf '%s\n' "$files"
           if grep -qvE '^docs/|\.md$' <<<"$files"; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
