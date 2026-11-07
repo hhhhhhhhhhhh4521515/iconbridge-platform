@@ -1208,6 +1208,16 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/66>
 
+## 2026-11-07 - Deploy: compare with the version in production
+
+**What**: the "Anything to deploy?" job compared the merged commit only with its parent. When a newer merge cancels the CI of an older one, the older code got no deployment, and if the newer merge changed documentation only, nothing was deployed at all. That happened tonight: #63 and #64 had their CI on `main` cancelled by the next merges, and #65 (docs) was skipped, so production stayed on #62. The job now diffs against the commit the site reports at `/api/health/live` (full history fetched), and deploys when that version is unknown. CICD.md updated.
+
+**Why**: found while following the audit fixes to production.
+
+**Checks**: actionlint without remark; the decision replayed on tonight's history: production #62 with `main` at #65 → deploy (the old rule skipped it); production #64 with `main` at #65 → docs only, skip; unknown version → deploy.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/68>
+
 ## 2026-11-07 - Low findings: favicon, Turnstile, advisories, docs
 
 **What**:
