@@ -79,7 +79,7 @@ make tf-init ENV=github && make tf-plan ENV=github && make tf-apply ENV=github
 
 ## Deploying
 
-1. Merge a pull request whose checks are green. CI runs on main; when it succeeds, `deploy.yml` builds, scans and pushes the images. A merge that only changes documentation (`docs/**`, `*.md`) deploys nothing.
+1. Merge a pull request whose checks are green. CI runs on main; when it succeeds, `deploy.yml` builds, scans and pushes the images. Nothing is deployed when every file changed since the version in production (the commit `/api/health/live` reports) is documentation (`docs/**`, `*.md`); when that version cannot be read, it deploys. Comparing with production rather than with the previous commit matters when a merge cancels the CI of the one before it: the earlier code still goes out with the next deployment.
 2. GitHub asks the reviewer of `production` to approve (Actions → the run → Review deployments).
 3. The deploy job runs the migration job and waits for it, updates the API, the web app and the tasks job, waits until the new revisions are the apps' latest ready revisions (`.github/scripts/wait-revisions.sh`, 6 minutes at most: until then the old revisions keep the traffic), then runs the smoke test (`.github/scripts/smoke-test.sh`: within 5 minutes, the time of a cold start, `/api/health/ready` answers `ok` with the deployed commit for both the web app and the API, and `/en` renders).
 4. If any of this fails, the previous images are put back (single revision mode: a new revision with the previous images), waited for and checked again. Migrations are not undone: they must work with the previous version (CLAUDE.md).
