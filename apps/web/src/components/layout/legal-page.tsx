@@ -1,7 +1,10 @@
 import { getFormatter, getTranslations } from 'next-intl/server';
 
-/** Date of the last change of the legal texts; update it together with the messages. */
-const LAST_UPDATED = new Date('2026-10-11T00:00:00Z');
+/** Date of the last change of each legal text; update it together with the messages. */
+const LAST_UPDATED = {
+  privacy: new Date('2026-11-07T00:00:00Z'),
+  terms: new Date('2026-10-11T00:00:00Z'),
+};
 
 export async function LegalPage({
   document,
@@ -15,7 +18,7 @@ export async function LegalPage({
     <article className="container-page max-w-3xl py-10">
       <h1 className="text-3xl font-bold tracking-tight">{t(`${document}.title`)}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {t('updated', { date: format.dateTime(LAST_UPDATED, { dateStyle: 'long' }) })}
+        {t('updated', { date: format.dateTime(LAST_UPDATED[document], { dateStyle: 'long' }) })}
       </p>
       <p
         role="note"
@@ -26,7 +29,14 @@ export async function LegalPage({
       {sections.map((key) => (
         <section key={key} className="mt-8">
           <h2 className="text-xl font-semibold">{t(`${document}.sections.${key}.title`)}</h2>
-          <p className="mt-2 text-base leading-relaxed">{t(`${document}.sections.${key}.text`)}</p>
+          {/* One paragraph per line of the message. */}
+          {t(`${document}.sections.${key}.text`)
+            .split('\n')
+            .map((paragraph) => (
+              <p key={paragraph} className="mt-2 text-base leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
         </section>
       ))}
     </article>

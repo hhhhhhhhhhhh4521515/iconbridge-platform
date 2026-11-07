@@ -1,3 +1,4 @@
+import { RETENTION_MONTHS, RETENTION_NOTICE_DAYS } from '@iconbridge/shared/candidate';
 import { describe, expect, it } from 'vitest';
 import adminEn from './admin/en.json';
 import adminFr from './admin/fr.json';
@@ -63,6 +64,18 @@ describe('message files', () => {
         ),
       );
       expect(found, name).toEqual([]);
+    }
+  });
+
+  it('state in the privacy policy the retention the code applies, in the three languages', () => {
+    for (const [name, tree] of [
+      ['en', en],
+      ['fr', fr],
+      ['ar', ar],
+    ] as const) {
+      const keep = tree.legal.privacy.sections.keep.text;
+      expect(keep, name).toContain(`${RETENTION_MONTHS} `);
+      expect(keep, name).toContain(`${RETENTION_NOTICE_DAYS} `);
     }
   });
 

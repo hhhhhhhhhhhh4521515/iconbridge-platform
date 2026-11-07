@@ -361,31 +361,43 @@
       "sections": {
         "who": {
           "title": "Who is responsible for your data",
-          "text": "IconBridge Recruitment Ltd operates this site and decides how the personal data collected here is used."
+          "text": "[COMPANY LEGAL NAME] (\"IconBridge\", \"we\") runs this site and decides how the personal data collected here is used: it is the data controller.\nFor any question or request about your data, write to [CONTACT EMAIL]."
         },
         "what": {
           "title": "What we collect",
-          "text": "Identity and contact details, passport details, professional profile, the documents you upload and your applications. Passport numbers are stored encrypted."
+          "text": "Your account: email address, password (stored only as an irreversible hash), language.\nYour profile: name, gender, date of birth, nationality, country and city of residence, phone and WhatsApp numbers, passport details (number, issuing country, dates; the number is stored encrypted), profession, experience, education, languages, driving licence and, for cruise ships, sea experience and maritime certificates.\nThe documents you upload (CV, passport scan, diplomas, certificates…) and your applications: cover letter, answers to the job's questions, a copy of your profile at the time of applying, and the progress of each application with the messages we send you.\nJob alerts: the email address and the destinations and job types you chose. Contact form: your name, email address, phone number, message and the IP address it came from.\nSecurity: the IP address and browser of your signed-in sessions, and a record of sensitive actions in the back office."
         },
         "why": {
-          "title": "Why we use it",
-          "text": "To handle your applications, present your profile to employers for the jobs you applied to, and prepare work permit and visa files. We do not sell your data."
+          "title": "Why we use it, and on what legal basis",
+          "text": "To create and run your account, handle your applications, present your profile to the employer of each job you apply to and prepare your work permit and visa files: this is needed to provide the service you ask for (contract).\nTo send job alerts, which you confirm by email and can stop with one click, and to publish a success story, only with a signed consent document: your consent, which you can withdraw at any time.\nTo keep the records and documents that immigration and employment rules require: legal obligation.\nTo protect the site and your account (anti-robot check, limits on attempts, security records): our legitimate interest in keeping the service safe.\nWe do not sell your data and do not use it for advertising."
         },
         "share": {
           "title": "Who receives it",
-          "text": "Our recruiters, the employers of the jobs you apply to, and the authorities that process permits and visas. Technical providers host the site on our behalf."
+          "text": "Our recruiters, and our agent in your country of nationality, who only sees the candidates of that nationality.\nThe employer of each job you apply to, and the authorities that process work permits and visas.\nTechnical providers acting on our instructions: Microsoft Azure (hosting, database, file storage, sending of emails and technical monitoring) and Cloudflare (domain name, the anti-robot check of the forms, and forwarding of emails sent to our addresses)."
+        },
+        "transfers": {
+          "title": "Where your data is stored",
+          "text": "The site, its database and your documents are hosted by Microsoft Azure in the European Union (Italy); emails are sent from Azure's European data location.\nCloudflare may process technical data (IP address, browser details) outside the European Union, under the European Commission's standard contractual clauses. When you apply to a job with an employer outside the European Union, for example a cruise line, your application is shared with that employer for that purpose."
         },
         "keep": {
           "title": "How long we keep it",
-          "text": "As long as your account exists, then for the period required by law. You can delete your account at any time."
+          "text": "A candidate account with no activity for 24 months (no sign-in, no application sent or moved forward) and no application in progress is deleted with all its documents. We email you 30 days before; signing in is enough to keep the account.\nYou can delete your account yourself at any time from your account settings: your files, then your data, are erased at once.\nContact form messages are deleted 24 months after they were received. Records of sent emails are kept 30 days, technical logs 30 days, and a signed-in session lasts at most 7 days.\nDeleted data disappears from our backups within about five weeks (database backups 7 days, weekly copies 30 days plus 7 days in the recycle bin). A published success story stays online until you withdraw your consent."
         },
         "rights": {
           "title": "Your rights",
-          "text": "You can access, correct, download and delete your data from your account, or by writing to us. You can also complain to your data protection authority."
+          "text": "You can access, correct and download your data, and delete your account, from your account. You can also ask us to restrict or stop a use of your data, object to it, or withdraw a consent you gave, by writing to [CONTACT EMAIL]. We answer within one month.\nYou can also complain to a data protection authority, in particular the one of the country where you live or work."
+        },
+        "security": {
+          "title": "How we protect it",
+          "text": "Passwords are hashed and passport numbers encrypted; lists show a masked number, and the full number is shown only to the people handling your file. Your documents are stored in a private storage space and opened only through links valid for 5 minutes. Each member of our team only sees what their role allows, and sensitive actions are recorded."
         },
         "cookies": {
           "title": "Cookies",
-          "text": "The site only uses the cookies needed to sign you in and remember your language and colour theme. No advertising tracker is used."
+          "text": "The site only uses the cookies needed to sign you in, and remembers your language and colour theme. The anti-robot check of the forms (Cloudflare Turnstile) reads technical details of your browser for that purpose only. No advertising or audience-tracking cookie is used."
+        },
+        "changes": {
+          "title": "Changes",
+          "text": "We may update this policy; the date at the top shows the current version. Questions: [CONTACT EMAIL]."
         }
       }
     },

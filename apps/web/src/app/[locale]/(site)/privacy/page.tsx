@@ -3,7 +3,18 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { LegalPage } from '@/components/layout/legal-page';
 import { pageMetadata } from '@/lib/seo';
 
-const SECTIONS = ['who', 'what', 'why', 'share', 'keep', 'rights', 'cookies'] as const;
+const SECTIONS = [
+  'who',
+  'what',
+  'why',
+  'share',
+  'transfers',
+  'keep',
+  'rights',
+  'security',
+  'cookies',
+  'changes',
+] as const;
 
 export async function generateMetadata({
   params,
