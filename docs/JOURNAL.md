@@ -1207,3 +1207,19 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 **Checks**: lint, typecheck; web unit tests 84; `test:browser` 170 passed (legal pages, axe on `/en/privacy`); `pnpm build`; Arabic page checked at phone width.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/66>
+
+## 2026-11-07 - Low findings: favicon, Turnstile, advisories, docs
+
+**What**:
+
+- L1: `favicon.ico` (16, 32 and 48 px, 3.5 KB) and a 180 px `apple-icon.png`, generated from the logo, replace the 108 KB PNG; `/favicon.ico` no longer answers 404.
+- L2: the Turnstile wrapper has `role="group"` with its label (axe `aria-prohibited-attr`).
+- L3: `connect-src` allows `data:`, which Turnstile's script fetches on every page with a form (console errors).
+- L7: `glob` and `minimatch` raised to the fixed majors with range overrides. The parents are mjml (js-beautify, mjml-cli) and archiver, not exceljs as the audit first said. `pnpm audit --prod` finds nothing.
+- L11: RUNBOOK (email quota 100 an hour), ARCHITECTURE (budget 40 USD, why the tasks job exists with warm replicas), DEPLOYMENT (sender `noreply@iconbridgerecruitment.com`). SECURITY.md updated for the CSP and the advisories.
+
+**Why**: audit Low findings. L4–L6, L8–L10 and L12 stay listed in the audit report.
+
+**Checks**: lint, typecheck; unit tests (shared 230, web 83, api 345); `test:e2e` 575 (email rendering through mjml, exports through archiver); hadolint without remark; API image built and scanned by trivy (0 high or critical); `test:browser` 170 passed against `docker-compose.prod.yml` (production images); `pnpm build`.
+
+**PR**: PR_TBD
