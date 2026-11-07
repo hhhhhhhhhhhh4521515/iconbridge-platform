@@ -1208,6 +1208,32 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/66>
 
+## 2026-11-07 - Deploy: compare with the version in production
+
+**What**: the "Anything to deploy?" job compared the merged commit only with its parent. When a newer merge cancels the CI of an older one, the older code got no deployment, and if the newer merge changed documentation only, nothing was deployed at all. That happened tonight: #63 and #64 had their CI on `main` cancelled by the next merges, and #65 (docs) was skipped, so production stayed on #62. The job now diffs against the commit the site reports at `/api/health/live` (full history fetched), and deploys when that version is unknown. CICD.md updated.
+
+**Why**: found while following the audit fixes to production.
+
+**Checks**: actionlint without remark; the decision replayed on tonight's history: production #62 with `main` at #65 → deploy (the old rule skipped it); production #64 with `main` at #65 → docs only, skip; unknown version → deploy.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/68>
+
+## 2026-11-07 - Low findings: favicon, Turnstile, advisories, docs
+
+**What**:
+
+- L1: `favicon.ico` (16, 32 and 48 px, 3.5 KB) and a 180 px `apple-icon.png`, generated from the logo, replace the 108 KB PNG; `/favicon.ico` no longer answers 404.
+- L2: the Turnstile wrapper has `role="group"` with its label (axe `aria-prohibited-attr`).
+- L3: `connect-src` allows `data:`, which Turnstile's script fetches on every page with a form (console errors).
+- L7: `glob` and `minimatch` raised to the fixed majors with range overrides. The parents are mjml (js-beautify, mjml-cli) and archiver, not exceljs as the audit first said. `pnpm audit --prod` finds nothing.
+- L11: RUNBOOK (email quota 100 an hour), ARCHITECTURE (budget 40 USD, why the tasks job exists with warm replicas), DEPLOYMENT (sender `noreply@iconbridgerecruitment.com`). SECURITY.md updated for the CSP and the advisories.
+
+**Why**: audit Low findings. L4–L6, L8–L10 and L12 stay listed in the audit report.
+
+**Checks**: lint, typecheck; unit tests (shared 230, web 83, api 345); `test:e2e` 575 (email rendering through mjml, exports through archiver); hadolint without remark; API image built and scanned by trivy (0 high or critical); `test:browser` 170 passed against `docker-compose.prod.yml` (production images); `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/67>
+
 ## 2026-11-07 - Database sign-in with the managed identity (code)
 
 **What**: `DATABASE_AUTH` (`password` by default, `entra`):

@@ -85,5 +85,8 @@ export function Turnstile({
     };
   }, [isTest, onToken, siteKey]);
 
-  return isTest ? null : <div ref={container} aria-label={label} className="min-h-16" />;
+  // role="group": aria-label is not allowed on a div without a role (axe aria-prohibited-attr).
+  return isTest ? null : (
+    <div ref={container} role="group" aria-label={label} className="min-h-16" />
+  );
 }

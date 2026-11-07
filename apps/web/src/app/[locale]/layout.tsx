@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Pr
     title: { default: `${t('homeTitle')} | ${t('siteName')}`, template: `%s | ${t('siteName')}` },
     description: t('homeDescription'),
     applicationName: t('siteName'),
-    icons: { icon: '/brand/logo.png', apple: '/brand/logo.png' },
+    // Icons: app/favicon.ico and app/apple-icon.png (file conventions, small files).
   };
 }
 
