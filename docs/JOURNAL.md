@@ -1229,4 +1229,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
   - the backup image dumped and uploaded with both tokens, while password mode without a password was refused.
 - Both API images built, trivy 0 high or critical; `test:browser` 170 passed against `docker-compose.prod.yml`.
 
-**PR**: PR_TBD
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/71>
