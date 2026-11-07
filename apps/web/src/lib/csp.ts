@@ -46,7 +46,9 @@ export function contentSecurityPolicy(nonce: string, options: CspOptions): strin
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", 'data:', 'blob:', ...storage],
     'font-src': ["'self'", 'data:'],
-    'connect-src': ["'self'", TURNSTILE, ...(options.development ? ['ws:', 'wss:'] : [])],
+    // data: — Turnstile's script fetches a data: URL on every page with a form; refused, it
+    // filled the console with errors. Reading inline data cannot send anything out.
+    'connect-src': ["'self'", 'data:', TURNSTILE, ...(options.development ? ['ws:', 'wss:'] : [])],
     // Previews of candidate documents come from the private storage through short-lived links.
     'frame-src': ["'self'", TURNSTILE, ...storage],
     'worker-src': ["'self'", 'blob:'],

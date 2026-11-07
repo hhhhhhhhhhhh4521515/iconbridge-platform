@@ -78,15 +78,15 @@ Test notifications (`az monitor action-group test-notifications create`, the por
 
 ### When an alert fires
 
-| Alert                    | First look                                                                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert-api-5xx`          | Application Insights → Failures (operation and exception type); logs by `traceId`: workbook "IconBridge Jobs – operations"                         |
-| `alert-postgres-cpu`     | Database → Monitoring → Query Performance Insight; a slow query after a deployment means rolling back                                              |
-| `alert-storage-failures` | Storage account → Insights → Failures; Azure status page for Italy North                                                                           |
-| `alert-tasks`            | `az containerapp job execution list -g rg-iconbridge-prod -n caj-iconbridge-tasks-prod-itn -o table`, then the execution's logs; database stopped? |
-| `alert-emails-abandoned` | `email_outbox` rows with status `FAILED`; the Azure Communication Services quota (10 an hour) and the domain                                       |
-| `alert-backup`           | [Backups](#backups): run the job again and read its logs                                                                                           |
-| Budget 50 / 80 / 100 %   | Cost Management → Cost analysis by resource; availability tests left on? A minimum replica above 0?                                                |
+| Alert                    | First look                                                                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `alert-api-5xx`          | Application Insights → Failures (operation and exception type); logs by `traceId`: workbook "IconBridge Jobs – operations"                                                                 |
+| `alert-postgres-cpu`     | Database → Monitoring → Query Performance Insight; a slow query after a deployment means rolling back                                                                                      |
+| `alert-storage-failures` | Storage account → Insights → Failures; Azure status page for Italy North                                                                                                                   |
+| `alert-tasks`            | `az containerapp job execution list -g rg-iconbridge-prod -n caj-iconbridge-tasks-prod-itn -o table`, then the execution's logs; database stopped?                                         |
+| `alert-emails-abandoned` | `email_outbox` rows with status `FAILED`; the Azure Communication Services quota (100 an hour on the site's domain, `EMAIL_HOURLY_QUOTA`; 10 on the Azure-managed fallback) and the domain |
+| `alert-backup`           | [Backups](#backups): run the job again and read its logs                                                                                                                                   |
+| Budget 50 / 80 / 100 %   | Cost Management → Cost analysis by resource; availability tests left on? A minimum replica above 0?                                                                                        |
 
 ## Backups
 
