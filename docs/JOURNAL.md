@@ -1233,3 +1233,22 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 **Checks**: lint, typecheck; unit tests (shared 230, web 83, api 345); `test:e2e` 575 (email rendering through mjml, exports through archiver); hadolint without remark; API image built and scanned by trivy (0 high or critical); `test:browser` 170 passed against `docker-compose.prod.yml` (production images); `pnpm build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/67>
+
+## 2026-11-08 - Privacy policy filled in; contact@ forwarded
+
+**What**:
+
+- The privacy policy names IconBridge Recruitment Ltd and contact@iconbridgerecruitment.com in EN, FR and AR (four places per language).
+- The legal pages no longer show the notice "This text is a general model. Have it reviewed by a legal adviser before the site opens", a note for the owner that visitors saw.
+- A unit test refuses any text in square brackets left in the site's messages.
+- DEPLOYMENT.md: Cloudflare Email Routing now includes `contact@` next to `bihi@` and `majdi@`.
+
+**Why**: the owner rejected the deployments of 7 November because of the placeholders.
+
+**Checks**:
+
+- Placeholder sweep: every site message (EN, FR, AR, back office), the web code and the email templates. Nothing found except real "draft" statuses.
+- The contact page shows the back-office setting `CONTACT_EMAIL`, currently an address on another domain of the company (iconbridgerecruitmentltd.com, with its own mail servers). Left as it is, for the owner to decide.
+- lint, typecheck; web unit tests 85; `test:browser` 170 passed; `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/74>
