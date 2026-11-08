@@ -1318,4 +1318,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **Checks**: `terraform fmt`, `terraform validate`; local read-only plan; the plan is posted on the pull request by CI.
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/76>
