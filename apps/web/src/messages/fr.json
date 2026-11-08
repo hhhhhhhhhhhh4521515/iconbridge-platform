@@ -355,13 +355,12 @@
   },
   "legal": {
     "updated": "Dernière mise à jour : {date}",
-    "draftNotice": "Ce texte est un modèle général. Faites-le relire par un conseiller juridique avant l'ouverture du site.",
     "privacy": {
       "title": "Politique de confidentialité",
       "sections": {
         "who": {
           "title": "Qui est responsable de vos données",
-          "text": "[RAISON SOCIALE DE LA SOCIÉTÉ] (« IconBridge », « nous ») exploite ce site et décide de l'utilisation des données personnelles qui y sont collectées : elle est responsable du traitement.\nPour toute question ou demande sur vos données, écrivez à [ADRESSE E-MAIL DE CONTACT]."
+          "text": "IconBridge Recruitment Ltd (« IconBridge », « nous ») exploite ce site et décide de l'utilisation des données personnelles qui y sont collectées : elle est responsable du traitement.\nPour toute question ou demande sur vos données, écrivez à contact@iconbridgerecruitment.com."
         },
         "what": {
           "title": "Ce que nous collectons",
@@ -385,7 +384,7 @@
         },
         "rights": {
           "title": "Vos droits",
-          "text": "Vous pouvez consulter, corriger et télécharger vos données, et supprimer votre compte, depuis votre compte. Vous pouvez aussi demander la limitation ou l'arrêt d'une utilisation de vos données, vous y opposer, ou retirer un consentement donné, en écrivant à [ADRESSE E-MAIL DE CONTACT]. Nous répondons sous un mois.\nVous pouvez également saisir une autorité de protection des données, notamment celle du pays où vous vivez ou travaillez."
+          "text": "Vous pouvez consulter, corriger et télécharger vos données, et supprimer votre compte, depuis votre compte. Vous pouvez aussi demander la limitation ou l'arrêt d'une utilisation de vos données, vous y opposer, ou retirer un consentement donné, en écrivant à contact@iconbridgerecruitment.com. Nous répondons sous un mois.\nVous pouvez également saisir une autorité de protection des données, notamment celle du pays où vous vivez ou travaillez."
         },
         "security": {
           "title": "Comment nous les protégeons",
@@ -397,7 +396,7 @@
         },
         "changes": {
           "title": "Modifications",
-          "text": "Nous pouvons mettre à jour cette politique ; la date en haut de page indique la version en vigueur. Questions : [ADRESSE E-MAIL DE CONTACT]."
+          "text": "Nous pouvons mettre à jour cette politique ; la date en haut de page indique la version en vigueur. Questions : contact@iconbridgerecruitment.com."
         }
       }
     },
