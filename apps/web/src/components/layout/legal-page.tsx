@@ -20,12 +20,6 @@ export async function LegalPage({
       <p className="mt-2 text-sm text-muted-foreground">
         {t('updated', { date: format.dateTime(LAST_UPDATED[document], { dateStyle: 'long' }) })}
       </p>
-      <p
-        role="note"
-        className="mt-4 rounded-lg border border-border bg-muted p-3 text-sm text-muted-foreground"
-      >
-        {t('draftNotice')}
-      </p>
       {sections.map((key) => (
         <section key={key} className="mt-8">
           <h2 className="text-xl font-semibold">{t(`${document}.sections.${key}.title`)}</h2>

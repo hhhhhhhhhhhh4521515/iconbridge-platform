@@ -370,11 +370,11 @@ Sessions are cookies of one host: people signed in on the old address sign in ag
 
 ### Mail for agent addresses (Cloudflare Email Routing)
 
-Country agents sign in with an address on the domain (`bihi@iconbridgerecruitment.com` for Morocco, `majdi@iconbridgerecruitment.com` for Tunisia, ADR-024). The domain has no mailbox: Cloudflare Email Routing (free) forwards what is sent to these addresses, password-reset emails included, to a personal inbox. It only receives; the platform keeps sending through Azure.
+Country agents sign in with an address on the domain (`bihi@iconbridgerecruitment.com` for Morocco, `majdi@iconbridgerecruitment.com` for Tunisia, ADR-024), and the privacy policy gives `contact@iconbridgerecruitment.com` for questions and data requests. The domain has no mailbox: Cloudflare Email Routing (free) forwards what is sent to these addresses, password-reset emails included, to a personal inbox. It only receives; the platform keeps sending through Azure.
 
 1. Cloudflare dashboard → `iconbridgerecruitment.com` → **Email** → **Email Routing** → **Get started** (or **Enable Email Routing**).
 2. **Destination addresses** → **Add destination address**: the personal inbox. Cloudflare emails it a link; open it, and the address shows **Verified**. Nothing is forwarded to an unverified destination.
-3. **Routing rules** → **Custom addresses** → **Create address**: custom address `bihi`, action **Send to an email**, destination the verified inbox → **Save**. The same for `majdi` (another destination can be used for each).
+3. **Routing rules** → **Custom addresses** → **Create address**: custom address `bihi`, action **Send to an email**, destination the verified inbox → **Save**. The same for `majdi` and for `contact` (another destination can be used for each; `contact` goes to whoever answers data-protection requests, within a month).
 4. Cloudflare then asks to add its DNS records (**Add records and enable**). It adds, on the domain itself:
    - three `MX` records: `route1.mx.cloudflare.net`, `route2.mx.cloudflare.net`, `route3.mx.cloudflare.net` (priorities chosen by Cloudflare);
    - an SPF `TXT` record `v=spf1 include:_spf.mx.cloudflare.net ~all`;
@@ -382,7 +382,7 @@ Country agents sign in with an address on the domain (`bihi@iconbridgerecruitmen
 
    **One SPF record only.** The domain already has Azure's `v=spf1 include:spf.protection.outlook.com -all`. Do not keep two: edit the existing record to `v=spf1 include:spf.protection.outlook.com include:_spf.mx.cloudflare.net -all` and delete the one Cloudflare proposes (or let Cloudflare's dialog merge them, then check the result). Two SPF records make both fail, and emails from `noreply@` land in spam. MX records change nothing for the site (A and CNAME records).
 
-5. Check: send an email to `bihi@iconbridgerecruitment.com` from another account; it arrives in the personal inbox. Then, once the agent exists, "Forgot password" on the site with his address delivers the reset link there.
+5. Check: send an email to `bihi@iconbridgerecruitment.com`, then to `contact@iconbridgerecruitment.com`, from another account; each arrives in its inbox. Then, once the agent exists, "Forgot password" on the site with his address delivers the reset link there.
 
 The agents' accounts are created in the back office (**Users and roles** → **Invite a user**, role **Country agent**, the country, and **Set the password now** or an invitation). The agent must choose his own password at the first sign-in.
 
