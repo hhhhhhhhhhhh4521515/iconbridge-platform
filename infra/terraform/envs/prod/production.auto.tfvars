@@ -15,7 +15,8 @@ enable_custom_domain  = true
 email_domain     = "iconbridgerecruitment.com"
 use_email_domain = true
 
-# Audit H1 part 1 (ADR-026): the apps sign in to PostgreSQL with the managed identity, and
-# no workstation address is allowed through the firewall any more (overrides TF_VARS_PROD).
-database_auth      = "entra"
+# Audit H1 part 1 (ADR-026): no workstation address is allowed through the firewall any more
+# (overrides TF_VARS_PROD). The apps keep the password until the identity owns the tables:
+# every object belongs to the password administrator, so the identity would be refused on them.
+database_auth      = "password"
 admin_ip_addresses = []

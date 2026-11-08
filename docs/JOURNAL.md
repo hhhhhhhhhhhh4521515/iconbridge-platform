@@ -1309,3 +1309,13 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: `terraform fmt`, `terraform validate`; the plan is posted on the pull request by CI.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/75>
+
+## 2026-11-08 - Terraform: the apps keep the database password until the identity owns the tables
+
+**What**: `database_auth = "password"` in `production.auto.tfvars`. The rest of #75 is unchanged: Entra authentication on, the identity as Entra administrator, no workstation rule, Event Grid delivery reports. ADR-026 gains decision 3 (table ownership before the switch); DEPLOYMENT.md says the apps still use the password.
+
+**Why**: while preparing the apply of #75, a read-only plan of `main` and a look at the database showed that every table, sequence and type is owned by the password administrator, and no migration grants anything to another role. Signed in as the identity, the apps would have been refused on every table and the migrations could not alter them. The readiness probe (`SELECT 1`) needs no table right, so the broken revision would have replaced the working one. The owner rejected that apply (run 42491565813).
+
+**Checks**: `terraform fmt`, `terraform validate`; local read-only plan; the plan is posted on the pull request by CI.
+
+**PR**: _(this pull request)_
