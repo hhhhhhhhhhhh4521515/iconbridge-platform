@@ -69,6 +69,12 @@ resource "random_password" "revalidate" {
   special = false
 }
 
+# EMAIL_EVENTS_KEY: Event Grid sends it with each email delivery report (audit M2).
+resource "random_password" "email_events" {
+  length  = 48
+  special = false
+}
+
 # PASSPORT_ENCRYPTION_KEY: AES-256, 32 random bytes, base64. Losing it makes every
 # stored passport number unreadable: the vault keeps old versions and has purge protection.
 resource "random_bytes" "passport_key" {
@@ -119,6 +125,12 @@ module "database" {
   administrator_password = random_password.db_admin.result
   databases              = ["iconbridge"]
   admin_ip_addresses     = var.admin_ip_addresses
+  tenant_id              = data.azurerm_client_config.current.tenant_id
+  password_auth_enabled  = var.database_password_auth
+  entra_admin = {
+    object_id      = module.identity.principal_id
+    principal_name = module.identity.name
+  }
 }
 
 module "storage" {
@@ -157,12 +169,18 @@ module "keyvault" {
 
   generated_secrets = {
     "db-admin-password" = random_password.db_admin.result
-    "database-url" = format(
+    # entra: the identity's name as user and no password; the apps ask for tokens (ADR-026).
+    "database-url" = var.database_auth == "entra" ? format(
+      "postgresql://%s@%s:5432/iconbridge?sslmode=require&schema=public",
+      urlencode(module.identity.name),
+      module.database.fqdn,
+      ) : format(
       "postgresql://%s:%s@%s:5432/iconbridge?sslmode=require&schema=public",
       module.database.administrator_login,
       urlencode(random_password.db_admin.result),
       module.database.fqdn,
     )
+    "email-events-key"        = random_password.email_events.result
     "jwt-access-secret"       = random_password.jwt_access.result
     "passport-encryption-key" = random_bytes.passport_key.base64
     "revalidate-secret"       = random_password.revalidate.result
@@ -258,6 +276,7 @@ module "container_apps" {
 
   identity_client_id   = module.identity.client_id
   backup_container_url = module.storage.backups_container_url
+  database_auth        = var.database_auth
 
   api_env = {
     NODE_ENV           = "production"
@@ -280,6 +299,8 @@ module "container_apps" {
     MAIL_DELIVERY      = "background"
     TRUST_PROXY_HOPS   = tostring(var.trust_proxy_hops)
     SCHEDULER_ENABLED  = "false"
+    # Sign-in to PostgreSQL with tokens of the identity (ADR-026); the tasks job too.
+    DATABASE_AUTH = var.database_auth
   }
 
   api_secret_env = {
@@ -289,6 +310,7 @@ module "container_apps" {
     REVALIDATE_SECRET                     = "revalidate-secret"
     TURNSTILE_SECRET_KEY                  = "turnstile-secret-key"
     APPLICATIONINSIGHTS_CONNECTION_STRING = "appinsights-connection"
+    EMAIL_EVENTS_KEY                      = "email-events-key"
   }
 
   web_env = {
@@ -311,6 +333,48 @@ module "container_apps" {
   # The Container Apps read Key Vault, pull images and send emails with the identity: its
   # roles must exist first.
   depends_on = [module.keyvault, module.registry, module.email]
+}
+
+# ---------------------------------------------------------------------------
+# Email delivery reports (audit M2): Event Grid posts them to the API through the site,
+# with the key in a header; a hard bounce stops every email to the address. Free up to
+# 100 000 operations a month. The subscription is validated when created: the API must
+# already answer POST /api/v1/email-events (it does with or without its key).
+
+resource "azurerm_eventgrid_system_topic" "email" {
+  name                   = "egst-iconbridge-email-${local.name_suffix}"
+  resource_group_name    = azurerm_resource_group.this.name
+  location               = "global"
+  source_arm_resource_id = module.email.communication_service_id
+  topic_type             = "Microsoft.Communication.CommunicationServices"
+  tags                   = local.tags
+}
+
+resource "azurerm_eventgrid_system_topic_event_subscription" "email_delivery" {
+  name                 = "email-delivery-reports"
+  system_topic         = azurerm_eventgrid_system_topic.email.name
+  resource_group_name  = azurerm_resource_group.this.name
+  included_event_types = ["Microsoft.Communication.EmailDeliveryReportReceived"]
+
+  webhook_endpoint {
+    url                  = "${local.web_origin}/api/v1/email-events"
+    max_events_per_batch = 10
+  }
+
+  delivery_property {
+    header_name = "x-email-events-key"
+    type        = "Static"
+    value       = random_password.email_events.result
+    secret      = true
+  }
+
+  retry_policy {
+    max_delivery_attempts = 30
+    event_time_to_live    = 1440
+  }
+
+  # The API must run with EMAIL_EVENTS_KEY before reports arrive.
+  depends_on = [module.container_apps]
 }
 
 # ---------------------------------------------------------------------------

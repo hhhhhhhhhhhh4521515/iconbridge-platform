@@ -207,3 +207,20 @@ variable "enable_availability_tests" {
   type        = bool
   default     = false
 }
+
+variable "database_auth" {
+  description = "How the apps sign in to PostgreSQL: password (DATABASE_URL with the administrator password) or entra (tokens of the managed identity, ADR-026). Switch to entra only once the deployed images support it."
+  type        = string
+  default     = "password"
+
+  validation {
+    condition     = contains(["password", "entra"], var.database_auth)
+    error_message = "password or entra."
+  }
+}
+
+variable "database_password_auth" {
+  description = "Password sign-in on PostgreSQL. Set to false once the apps run on Entra tokens (ADR-026, step 3)."
+  type        = bool
+  default     = true
+}

@@ -298,6 +298,17 @@ resource "azurerm_container_app_job" "migrate" {
           secret_name = env.value
         }
       }
+
+      # entra: scripts/database-url.mjs asks the identity endpoint for a database token.
+      env {
+        name  = "DATABASE_AUTH"
+        value = var.database_auth
+      }
+
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = var.identity_client_id
+      }
     }
   }
 
@@ -434,6 +445,12 @@ resource "azurerm_container_app_job" "backup" {
       env {
         name  = "AZURE_CLIENT_ID"
         value = var.identity_client_id
+      }
+
+      # entra: pg_dump signs in with a token of the identity (infra/backup/backup.sh).
+      env {
+        name  = "DATABASE_AUTH"
+        value = var.database_auth
       }
     }
   }

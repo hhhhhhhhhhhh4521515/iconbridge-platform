@@ -46,3 +46,22 @@ variable "admin_ip_addresses" {
     error_message = "Each entry is one IPv4 address, without a mask."
   }
 }
+
+variable "tenant_id" {
+  description = "Microsoft Entra tenant of the administrators."
+  type        = string
+}
+
+variable "entra_admin" {
+  description = "Managed identity made Entra administrator of the server (ADR-026)."
+  type = object({
+    object_id      = string
+    principal_name = string
+  })
+}
+
+variable "password_auth_enabled" {
+  description = "Password sign-in. Turned off once the apps sign in with Entra tokens (ADR-026, step 3)."
+  type        = bool
+  default     = true
+}

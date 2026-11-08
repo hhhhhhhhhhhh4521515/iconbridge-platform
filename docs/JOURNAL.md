@@ -1290,3 +1290,22 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: lint, typecheck; unit tests (shared 230, web 84, api 347, plus the controller with no key → 404); `test:e2e` 580 (new `email-events.e2e-spec.ts`: validation, key, statuses that change nothing, case ignored, only the fingerprint stored, emails cancelled, 24-month retention); `test:browser` 170 passed; `pnpm build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/73>
+
+## 2026-11-08 - Terraform: database sign-in with the identity, email delivery reports
+
+**What**:
+
+- Audit H1 part 1:
+  - Entra authentication on the PostgreSQL server, with the apps' managed identity as Entra administrator; password sign-in stays on for now (`database_password_auth`, ADR-026 step 3).
+  - The administrator's workstation rule is removed (`admin_ip_addresses = []` in `production.auto.tfvars`).
+  - `database_auth = "entra"`: the Key Vault secret `database-url` names the identity without a password, and the API, the tasks, migration and backup jobs get `DATABASE_AUTH=entra` (the migration job also gets `AZURE_CLIENT_ID`).
+- Audit M2: an Event Grid system topic on the Communication Service, and a subscription that posts `EmailDeliveryReportReceived` to `/api/v1/email-events` with the key `email-events-key` as a secret header. The API gets `EMAIL_EVENTS_KEY`.
+- DEPLOYMENT.md: how a person reaches the database for the occasion, and how to check the subscription.
+
+**Why**: audit findings H1 (part 1) and M2.
+
+**Order**: applied only after the images of #71 (token sign-in) and #73 (`/email-events`) are deployed. Passwords are turned off in a later pull request.
+
+**Checks**: `terraform fmt`, `terraform validate`; the plan is posted on the pull request by CI.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/75>

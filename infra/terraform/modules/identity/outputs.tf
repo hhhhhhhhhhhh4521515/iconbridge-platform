@@ -12,3 +12,8 @@ output "client_id" {
   description = "Given to the apps as AZURE_CLIENT_ID, so the Azure SDK picks this identity."
   value       = azurerm_user_assigned_identity.apps.client_id
 }
+
+output "name" {
+  description = "Name of the user-assigned identity: the user it signs in with on PostgreSQL (ADR-026)."
+  value       = azurerm_user_assigned_identity.apps.name
+}
