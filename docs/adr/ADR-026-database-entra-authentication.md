@@ -18,13 +18,14 @@ The owner asked for part 1 now: remove the stale address rule, sign in with Micr
    - turn on Entra authentication on the server, keeping passwords for now;
    - make the managed identity the Entra administrator;
    - remove the administrator address rule (`admin_ip_addresses = []`);
-   - give the four apps `DATABASE_AUTH=entra` and a passwordless address in Key Vault.
-3. **Then password authentication off**, in a last Terraform change, once production has run on tokens. Nothing else signs in with the password: local development uses its own database, and a person who needs the production database signs in with their own Entra account added as administrator for the occasion.
-4. **What stays public for now**: public network access, and the rule "allow public access from any Azure service" (`0.0.0.0`). The apps run in a Consumption environment without a VNet, whose outgoing addresses are shared and change, so no narrower rule can name them. Without a password login, reaching the port is not enough: a connection needs a token issued by our tenant to our identity. Private access (VNet integration and a private endpoint) is part 2.
+   - give the four apps `DATABASE_AUTH=entra` and a passwordless address in Key Vault, only after the identity can use the tables (below).
+3. **Table ownership before the switch.** Every table, sequence and type was created by the migrations under the password administrator, which owns them. Being the Entra administrator gives the identity no right on objects another role owns, and only an owner can run the migrations' `ALTER TABLE`. The readiness probe (`SELECT 1`) needs no table right, so a revision signed in as the identity would pass it and then fail every query. Ownership is moved to the identity, and tested on a copy of production, before `database_auth = "entra"` is set. Found while reviewing the first apply (8 November), which the owner rejected.
+4. **Then password authentication off**, in a last Terraform change, once production has run on tokens. Nothing else signs in with the password: local development uses its own database, and a person who needs the production database signs in with their own Entra account added as administrator for the occasion.
+5. **What stays public for now**: public network access, and the rule "allow public access from any Azure service" (`0.0.0.0`). The apps run in a Consumption environment without a VNet, whose outgoing addresses are shared and change, so no narrower rule can name them. Without a password login, reaching the port is not enough: a connection needs a token issued by our tenant to our identity. Private access (VNet integration and a private endpoint) is part 2.
 
 ## Consequences
 
-- No database password is used by the apps or stored in Key Vault once password authentication is off (decision 3).
+- No database password is used by the apps or stored in Key Vault once password authentication is off (decision 4).
 - The identity is the server's Entra administrator, as the password user was its administrator; a role with fewer rights for the API is a possible later step.
 - Local development, CI and `docker-compose.prod.yml` keep `DATABASE_AUTH=password`.
 - Rollback before passwords are turned off: set `DATABASE_AUTH=password` and the old address back (Terraform). After: turn password authentication on again first.
