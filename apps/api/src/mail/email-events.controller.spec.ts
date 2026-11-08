@@ -27,6 +27,15 @@ describe('EmailEventsController', () => {
     expect(events.record).not.toHaveBeenCalled();
   });
 
+  it('answers the subscription validation even while EMAIL_EVENTS_KEY is empty', async () => {
+    const { events, controller: off } = controller('');
+    events.validationResponse.mockReturnValueOnce('code-1' as never);
+    await expect(off.receive(BODY, undefined)).resolves.toEqual({
+      validationResponse: 'code-1',
+      suppressed: 0,
+    });
+  });
+
   it('records the reports with the right key only', async () => {
     const key = 'k'.repeat(32);
     const { events, controller: on } = controller(key);

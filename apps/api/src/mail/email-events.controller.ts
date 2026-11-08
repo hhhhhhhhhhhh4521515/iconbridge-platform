@@ -42,7 +42,7 @@ export class EmailEventsController {
     description:
       'Called by Event Grid only. Answers the subscription validation; a hard bounce or an ' +
       'address suppressed by Azure stops all email to that address. The reports need the key ' +
-      'in `x-email-events-key`; without EMAIL_EVENTS_KEY the route answers 404.',
+      'in `x-email-events-key`; without EMAIL_EVENTS_KEY they answer 404.',
   })
   @ApiZodBody(emailEventsSchema)
   @ApiZodResponse(200, emailEventsResultSchema)
@@ -51,13 +51,15 @@ export class EmailEventsController {
     @ZodBody(emailEventsSchema) body: EmailEventsInput,
     @Headers('x-email-events-key') key: string | undefined,
   ): Promise<EmailEventsResult> {
-    if (this.key === '') {
-      throw new AppException('NOT_FOUND', HttpStatus.NOT_FOUND, 'Not found');
-    }
-    // The validation only echoes a code Event Grid sent: answered with or without the key.
+    // The validation only echoes a code Event Grid sent: answered with or without the key,
+    // even before EMAIL_EVENTS_KEY reaches the running revision (Terraform creates the
+    // subscription and the key in the same apply).
     const validationResponse = this.events.validationResponse(body);
     if (validationResponse !== undefined) {
       return { validationResponse, suppressed: 0 };
+    }
+    if (this.key === '') {
+      throw new AppException('NOT_FOUND', HttpStatus.NOT_FOUND, 'Not found');
     }
     if (!sameKey(key, this.key)) {
       throw new AppException('UNAUTHENTICATED', HttpStatus.UNAUTHORIZED, 'Invalid key');
