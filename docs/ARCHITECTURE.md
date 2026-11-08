@@ -364,7 +364,7 @@ erDiagram
   }
 ```
 
-`job_alert_subscriptions`, `contact_messages` and `settings` have no foreign key. `email_outbox` (not drawn) holds the emails to send: template, language, encrypted content, status (`PENDING`, `SENT`, `FAILED`, `CANCELLED`), attempts and the time of the next one; `application_status_history.email_id` points to the email that announced a status change. `users.retention_warned_at` (not drawn) is the date of the warning sent before an inactive account is erased. A job alert stores destination and category ids in arrays (empty means any).
+`job_alert_subscriptions`, `contact_messages` and `settings` have no foreign key. `email_outbox` (not drawn) holds the emails to send: template, language, encrypted content, status (`PENDING`, `SENT`, `FAILED`, `CANCELLED`), attempts and the time of the next one; `application_status_history.email_id` points to the email that announced a status change. `email_suppressions` (not drawn) holds the SHA-256 of the addresses Azure reported undeliverable (hard bounce or suppressed), to which `MailService` sends nothing (audit M2). `users.retention_warned_at` (not drawn) is the date of the warning sent before an inactive account is erased. A job alert stores destination and category ids in arrays (empty means any).
 
 ### Rules enforced by the database
 
@@ -378,6 +378,7 @@ These are written by hand in the migration SQL, because Prisma cannot express th
 | `success_stories`                  | `is_published` requires `consent_document_path`                                                                                                                                                                   |
 | `users`, `job_alert_subscriptions` | `email` is lower case                                                                                                                                                                                             |
 | `users`                            | `locale` is `en`, `fr` or `ar`; `failed_login_count >= 0`; `email_link_count >= 0`; `assigned_countries` holds two-letter upper-case codes, at least one for a `COUNTRY_AGENT` and none for other roles (ADR-024) |
+| `email_suppressions`               | `email_hash` is 64 lower-case hexadecimal characters; `reason` is `BOUNCED` or `SUPPRESSED`                                                                                                                       |
 | `documents`                        | `size_bytes > 0`                                                                                                                                                                                                  |
 | `email_outbox`                     | `priority` between 1 and 3                                                                                                                                                                                        |
 

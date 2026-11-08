@@ -84,6 +84,7 @@ PDF files are stored as received (their metadata is not removed): rewriting a PD
 - Access token: 15 minutes, in an `HttpOnly` cookie. Refresh token: 7 days, rotated at each use, stored as a SHA-256 hash, revocable. A reused refresh token ends the session.
 - Email tokens (verification, reset, invitation, job alert): random, single use, stored as hashes, with an expiry.
 - Register, login, forgot password and resend verification give the same answer whether the address has an account or not.
+- `POST /email-events` (Azure Event Grid, delivery reports) is public but reads reports only with the key of `EMAIL_EVENTS_KEY` in `x-email-events-key` (compared in constant time; 404 when unset); the subscription validation, which only echoes Event Grid's code, needs none. A hard bounce stores the SHA-256 of the address, never the address, and stops every email to it (`email-events.e2e-spec.ts`).
 - Changing the password, disabling or deleting an account ends its sessions at once.
 - A super admin may set the password of a back-office account (a new country agent, a lost access). It passes the same policy, is stored as an argon2id hash and never returned, logged (`password` is in `SENSITIVE_KEYS`) or written to the audit log (the entry records the change only). The account's sessions end and, until the person chooses a new password (different from the one given), every route but the password change answers 403 `PASSWORD_CHANGE_REQUIRED`. Tests: `country-agent.e2e-spec.ts` ("accounts"), `roles.guard.spec.ts`.
 
