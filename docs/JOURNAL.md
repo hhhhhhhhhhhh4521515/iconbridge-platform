@@ -1253,6 +1253,44 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/74>
 
+## 2026-11-07 - Database sign-in with the managed identity (code)
+
+**What**: `DATABASE_AUTH` (`password` by default, `entra`):
+
+- With `entra`, the API and the tasks job give the `pg` pool behind Prisma a password function that returns a Microsoft Entra token of the managed identity for each new connection, and `DATABASE_URL` must carry no password.
+- The migration job puts a token from the Container Apps identity endpoint in the address it gives the Prisma CLI and the seed (`scripts/database-url.mjs`).
+- The backup job gives `pg_dump` the token as `PGPASSWORD`.
+
+ADR-026 sets out the order: this code, then Terraform (Entra on the server, the identity as administrator, the old administrator address rule removed, passwordless addresses), then passwords off. SECURITY.md updated.
+
+**Why**: audit finding H1, part 1.
+
+**Checks**:
+
+- lint, typecheck; API unit tests 350 (pool settings, token for each connection, no token refused, env rule); `test:e2e` 575; `pnpm build`.
+- Rehearsed locally in Entra mode against the real database, with a fake identity endpoint whose token was the local password:
+  - Prisma connected (a wrong token was refused);
+  - `prisma migrate deploy` ran through `database-url.mjs`, and a wrong identity header failed cleanly;
+  - the backup image dumped and uploaded with both tokens, while password mode without a password was refused.
+- Both API images built, trivy 0 high or critical; `test:browser` 170 passed against `docker-compose.prod.yml`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/71>
+
+## 2026-11-08 - No more emails to addresses that bounce (code)
+
+**What**:
+
+- `POST /email-events` receives the delivery reports of Azure Communication Services through Event Grid. It answers the subscription validation, and reads reports only with `EMAIL_EVENTS_KEY` in `x-email-events-key` (404 while unset).
+- A `Bounced` or `Suppressed` report stores the SHA-256 of the address in `email_suppressions` (CHECK constraints). From then on, `MailService` records every email to it as `CANCELLED` (`SUPPRESSED`) without sending it.
+- The retention task forgets a fingerprint 24 months after the last report.
+- Privacy policy (EN/FR/AR), SECURITY.md and ARCHITECTURE updated. The Event Grid subscription and the key are Terraform, in a separate pull request approved by the owner.
+
+**Why**: audit finding M2, with the cheapest option (Event Grid: the first 100,000 operations a month are free).
+
+**Checks**: lint, typecheck; unit tests (shared 230, web 84, api 347, plus the controller with no key → 404); `test:e2e` 580 (new `email-events.e2e-spec.ts`: validation, key, statuses that change nothing, case ignored, only the fingerprint stored, emails cancelled, 24-month retention); `test:browser` 170 passed; `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/73>
+
 ## 2026-11-08 - Terraform: database sign-in with the identity, email delivery reports
 
 **What**:

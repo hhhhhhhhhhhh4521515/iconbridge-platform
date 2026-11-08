@@ -70,6 +70,22 @@ export class RetentionService {
     return removed.count;
   }
 
+  /**
+   * Fingerprints of addresses that bounced (`email_suppressions`): removed RETENTION_MONTHS
+   * after Azure last reported them; an email may then be tried again.
+   */
+  async purgeEmailSuppressions(): Promise<number> {
+    const before = this.clock.now();
+    before.setUTCMonth(before.getUTCMonth() - RETENTION_MONTHS);
+    const removed = await this.prisma.emailSuppression.deleteMany({
+      where: { lastEventAt: { lt: before } },
+    });
+    if (removed.count > 0) {
+      this.logger.log(`Retention: ${removed.count} bounced addresses forgotten`);
+    }
+    return removed.count;
+  }
+
   private async apply(): Promise<{ warned: number; erased: number }> {
     const now = this.clock.now();
     const eraseBefore = new Date(now);

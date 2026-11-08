@@ -89,3 +89,22 @@ export const paginationQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+
+/**
+ * Events Azure Event Grid posts to `POST /email-events` (Event Grid schema): the
+ * subscription's validation, and the delivery reports of Azure Communication Services.
+ */
+export const emailEventSchema = z.object({
+  eventType: z.string().max(200),
+  data: z.record(z.string(), z.unknown()).default({}),
+});
+export const emailEventsSchema = z.array(emailEventSchema).min(1).max(100);
+export type EmailEventsInput = z.infer<typeof emailEventsSchema>;
+
+export const emailEventsResultSchema = z.object({
+  /** Answer to Event Grid's subscription validation. */
+  validationResponse: z.string().optional(),
+  /** Addresses newly or again marked undeliverable. */
+  suppressed: z.number().int().nonnegative(),
+});
+export type EmailEventsResult = z.infer<typeof emailEventsResultSchema>;

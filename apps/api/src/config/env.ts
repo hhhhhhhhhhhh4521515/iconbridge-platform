@@ -31,10 +31,21 @@ const baseEnvSchema = z.object({
     .pipe(z.array(z.url({ protocol: /^https?$/ }))),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   /**
+   * password: the password is in DATABASE_URL. entra: Microsoft Entra token of the managed
+   * identity (AZURE_CLIENT_ID), fetched for each new connection; DATABASE_URL then names the
+   * identity as user and carries no password.
+   */
+  DATABASE_AUTH: z.enum(['password', 'entra']).default('password'),
+  /**
    * smtp: Nodemailer (Mailpit locally). azure: Azure Communication Services Email with the
    * managed identity (production), no SMTP setting or password.
    */
   EMAIL_TRANSPORT: z.enum(['smtp', 'azure']).default('smtp'),
+  /**
+   * Key Azure Event Grid sends in the `x-email-events-key` header of the delivery reports
+   * (POST /email-events). Empty: the endpoint answers 404 and no report is read.
+   */
+  EMAIL_EVENTS_KEY: z.union([z.literal(''), z.string().min(32)]).default(''),
   /** azure: https://<communication service>.<geo>.communication.azure.com */
   AZURE_COMMUNICATION_ENDPOINT: z
     .union([z.literal(''), z.url({ protocol: /^https$/ })])
@@ -105,6 +116,10 @@ export const envSchema = baseEnvSchema
       message: 'Set exactly one of AZURE_STORAGE_CONNECTION_STRING and AZURE_STORAGE_ACCOUNT_URL',
     },
   )
+  .refine((env) => env.DATABASE_AUTH !== 'entra' || new URL(env.DATABASE_URL).password === '', {
+    path: ['DATABASE_URL'],
+    message: 'No password in it with DATABASE_AUTH=entra',
+  })
   .refine((env) => env.EMAIL_TRANSPORT !== 'smtp' || env.SMTP_HOST !== '', {
     path: ['SMTP_HOST'],
     message: 'Required with EMAIL_TRANSPORT=smtp',

@@ -7,6 +7,7 @@ import type { Env } from '../config/env.js';
 import type { EmailStatus, Prisma } from '../generated/prisma/client.js';
 import { lazy } from '../common/lazy.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { addressHash } from './email-suppression.js';
 import { EMAIL_PRIORITY, HALF_QUOTA_TEMPLATES, halfQuotaCap } from './mail-priority.js';
 import { MailThrottledError, type MailTransport } from './mail-transport.js';
 import {
@@ -147,6 +148,25 @@ export class MailService implements OnModuleDestroy {
     variables: EmailVariables,
     options: { replyTo?: string } = {},
   ): Promise<string> {
+    if (await this.isSuppressed(to)) {
+      // Azure reported the address undeliverable (audit M2): kept as a cancelled row, so a
+      // status change can still point to it, but never sent.
+      const row = await this.prisma.emailOutbox.create({
+        data: {
+          template,
+          locale,
+          priority: EMAIL_PRIORITY[template],
+          payload: '',
+          status: 'CANCELLED',
+          lastError: 'SUPPRESSED',
+        },
+        select: { id: true },
+      });
+      this.logger.warn(
+        `Email not sent: ${template}, the address bounced before (outbox ${row.id})`,
+      );
+      return row.id;
+    }
     const payload: OutboxPayload = {
       to,
       variables,
@@ -168,6 +188,14 @@ export class MailService implements OnModuleDestroy {
       this.kick();
     }
     return row.id;
+  }
+
+  private async isSuppressed(to: string): Promise<boolean> {
+    const row = await this.prisma.emailSuppression.findUnique({
+      where: { emailHash: addressHash(to) },
+      select: { emailHash: true },
+    });
+    return row !== null;
   }
 
   /** Whether an email was sent, is still waiting, failed for good or was cancelled; null if unknown. */
