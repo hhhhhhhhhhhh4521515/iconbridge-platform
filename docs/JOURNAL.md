@@ -1247,4 +1247,4 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **Checks**: lint, typecheck; unit tests (shared 230, web 84, api 347, plus the controller with no key → 404); `test:e2e` 580 (new `email-events.e2e-spec.ts`: validation, key, statuses that change nothing, case ignored, only the fingerprint stored, emails cancelled, 24-month retention); `test:browser` 170 passed; `pnpm build`.
 
-**PR**: PR_TBD
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/73>
