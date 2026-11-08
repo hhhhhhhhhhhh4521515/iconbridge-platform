@@ -67,6 +67,19 @@ describe('message files', () => {
     }
   });
 
+  it('contain no placeholder left to fill, such as [CONTACT EMAIL], in the three languages', () => {
+    for (const [name, tree] of [
+      ['en', en],
+      ['fr', fr],
+      ['ar', ar],
+    ] as const) {
+      expect(
+        values(tree).filter((text) => /\[[^\]{}]+\]/.test(text)),
+        name,
+      ).toEqual([]);
+    }
+  });
+
   it('state in the privacy policy the retention the code applies, in the three languages', () => {
     for (const [name, tree] of [
       ['en', en],

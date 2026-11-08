@@ -355,13 +355,12 @@
   },
   "legal": {
     "updated": "Last updated: {date}",
-    "draftNotice": "This text is a general model. Have it reviewed by a legal adviser before the site opens.",
     "privacy": {
       "title": "Privacy policy",
       "sections": {
         "who": {
           "title": "Who is responsible for your data",
-          "text": "[COMPANY LEGAL NAME] (\"IconBridge\", \"we\") runs this site and decides how the personal data collected here is used: it is the data controller.\nFor any question or request about your data, write to [CONTACT EMAIL]."
+          "text": "IconBridge Recruitment Ltd (\"IconBridge\", \"we\") runs this site and decides how the personal data collected here is used: it is the data controller.\nFor any question or request about your data, write to contact@iconbridgerecruitment.com."
         },
         "what": {
           "title": "What we collect",
@@ -385,7 +384,7 @@
         },
         "rights": {
           "title": "Your rights",
-          "text": "You can access, correct and download your data, and delete your account, from your account. You can also ask us to restrict or stop a use of your data, object to it, or withdraw a consent you gave, by writing to [CONTACT EMAIL]. We answer within one month.\nYou can also complain to a data protection authority, in particular the one of the country where you live or work."
+          "text": "You can access, correct and download your data, and delete your account, from your account. You can also ask us to restrict or stop a use of your data, object to it, or withdraw a consent you gave, by writing to contact@iconbridgerecruitment.com. We answer within one month.\nYou can also complain to a data protection authority, in particular the one of the country where you live or work."
         },
         "security": {
           "title": "How we protect it",
@@ -397,7 +396,7 @@
         },
         "changes": {
           "title": "Changes",
-          "text": "We may update this policy; the date at the top shows the current version. Questions: [CONTACT EMAIL]."
+          "text": "We may update this policy; the date at the top shows the current version. Questions: contact@iconbridgerecruitment.com."
         }
       }
     },
