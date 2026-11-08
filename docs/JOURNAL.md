@@ -1251,4 +1251,4 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 
 **Checks**: `terraform fmt`, `terraform validate`; the plan is posted on the pull request by CI.
 
-**PR**: PR_TBD
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/75>
