@@ -386,6 +386,21 @@ Country agents sign in with an address on the domain (`bihi@iconbridgerecruitmen
 
 The agents' accounts are created in the back office (**Users and roles** → **Invite a user**, role **Country agent**, the country, and **Set the password now** or an invitation). The agent must choose his own password at the first sign-in.
 
+### Database sign-in (Microsoft Entra, ADR-026)
+
+The API, the tasks, migration and backup jobs sign in to PostgreSQL with tokens of the managed identity `id-iconbridge-prod-itn` (`DATABASE_AUTH=entra`). Since 8 November 2026 there is no firewall rule for a workstation; the only rule is "allow Azure services", which stays until private networking (audit H1 part 2): the Consumption environment has no fixed outgoing address to name instead.
+
+A person who needs the database (a restore, an investigation) does it for the occasion, with the owner's approval:
+
+1. Add their own Entra account as administrator: `az postgres flexible-server ad-admin create -g rg-iconbridge-prod -s psql-iconbridge-prod-itn -u <their sign-in name> -i <their object id> -t User`.
+2. Add their address: `az postgres flexible-server firewall-rule create -g rg-iconbridge-prod -n psql-iconbridge-prod-itn -r tmp-admin --start-ip-address <ip> --end-ip-address <ip>`.
+3. Connect with a token as password: `PGPASSWORD=$(az account get-access-token --resource-type oss-rdbms --query accessToken -o tsv) psql "host=psql-iconbridge-prod-itn.postgres.database.azure.com user=<their sign-in name> dbname=iconbridge sslmode=require"`.
+4. Remove the rule and the administrator afterwards (`... firewall-rule delete`, `... ad-admin delete`). Terraform also removes them at its next apply.
+
+### Email delivery reports (Event Grid, audit M2)
+
+Event Grid posts the delivery reports of the Communication Service to `https://iconbridgerecruitment.com/api/v1/email-events` with the key `email-events-key` (Key Vault) in `x-email-events-key`. Check: Azure portal → Event Grid system topic `egst-iconbridge-email-prod-itn` → subscription `email-delivery-reports` → Metrics: delivered events, no failed deliveries. An address that bounced receives nothing more (`email_suppressions`, the outbox shows `CANCELLED` with `SUPPRESSED`).
+
 ### Costs
 
 | Resource                               | List price (Italy North)             | Expected                                                                                      |
