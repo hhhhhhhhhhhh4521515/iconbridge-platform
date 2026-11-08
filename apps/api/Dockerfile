@@ -68,7 +68,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
       # Loaded by the Prisma CLI from its own paths: the engines and its configuration loader.
       --keep node_modules/prisma --keep node_modules/@prisma/engines \
       --keep node_modules/dotenv \
-    && cp -r /deployed-dev/prisma /deployed-dev/prisma.config.ts /deployed-dev/package.json /migrate/
+    && cp -r /deployed-dev/prisma /deployed-dev/prisma.config.ts /deployed-dev/package.json /migrate/ \
+    && mkdir -p /migrate/scripts && cp apps/api/scripts/database-url.mjs /migrate/scripts/
 
 # ---------------------------------------------------------------------------
 # Runs before each deployment, as an Azure Container Apps Job: applies the migrations,
@@ -93,7 +94,8 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /migrate/ ./
 USER 1000:1000
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist-seed/prisma/seed.js"]
+# scripts/database-url.mjs: with DATABASE_AUTH=entra, a token of the managed identity as password.
+CMD ["sh", "-c", "DATABASE_URL=\"$(node scripts/database-url.mjs)\" && export DATABASE_URL && node node_modules/prisma/build/index.js migrate deploy && node dist-seed/prisma/seed.js"]
 
 # ---------------------------------------------------------------------------
 FROM ${RUNTIME_IMAGE} AS runtime
