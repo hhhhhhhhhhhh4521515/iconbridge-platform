@@ -2,9 +2,10 @@
 # Burstable B1ms server, 32 GB, 7 days of locally redundant backups. Never make it
 # larger and never add a second server: staging is a second database on this one.
 #
-# Public access with firewall rules (Azure services + the administrator's address),
-# TLS required. VNet integration would be safer but needs a VNet-integrated Container
-# Apps environment and a private DNS zone; see docs/adr/ADR-013-azure-infrastructure.md.
+# Public access with one firewall rule (Azure services), TLS required, sign-in with
+# Microsoft Entra tokens of the apps' managed identity (ADR-026). VNet integration would
+# be safer but needs a VNet-integrated Container Apps environment and a private DNS zone
+# (audit H1 part 2; docs/adr/ADR-013-azure-infrastructure.md).
 
 resource "azurerm_postgresql_flexible_server" "this" {
   name                = "psql-iconbridge-${var.name_suffix}"
@@ -25,8 +26,10 @@ resource "azurerm_postgresql_flexible_server" "this" {
   public_network_access_enabled = true
 
   authentication {
-    password_auth_enabled         = true
-    active_directory_auth_enabled = false
+    # Off once the apps run on tokens (ADR-026, step 3).
+    password_auth_enabled         = var.password_auth_enabled
+    active_directory_auth_enabled = true
+    tenant_id                     = var.tenant_id
   }
 
   tags = var.tags
@@ -96,4 +99,15 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "admin" {
   server_id        = azurerm_postgresql_flexible_server.this.id
   start_ip_address = each.value
   end_ip_address   = each.value
+}
+
+# The apps' managed identity is the Entra administrator: the API, the tasks, migration and
+# backup jobs sign in with its tokens (DATABASE_AUTH=entra), as the password user did.
+resource "azurerm_postgresql_flexible_server_active_directory_administrator" "apps" {
+  server_name         = azurerm_postgresql_flexible_server.this.name
+  resource_group_name = var.resource_group_name
+  tenant_id           = var.tenant_id
+  object_id           = var.entra_admin.object_id
+  principal_name      = var.entra_admin.principal_name
+  principal_type      = "ServicePrincipal"
 }

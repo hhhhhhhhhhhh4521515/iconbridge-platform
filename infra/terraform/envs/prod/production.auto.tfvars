@@ -14,3 +14,8 @@ enable_custom_domain  = true
 # Emails from noreply@iconbridgerecruitment.com (domain verified on 28 October 2026).
 email_domain     = "iconbridgerecruitment.com"
 use_email_domain = true
+
+# Audit H1 part 1 (ADR-026): the apps sign in to PostgreSQL with the managed identity, and
+# no workstation address is allowed through the firewall any more (overrides TF_VARS_PROD).
+database_auth      = "entra"
+admin_ip_addresses = []

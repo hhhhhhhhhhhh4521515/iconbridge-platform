@@ -130,7 +130,7 @@ variable "backup_container_url" {
 }
 
 variable "identity_client_id" {
-  description = "Client id of the user-assigned identity (AZURE_CLIENT_ID of the backup job)."
+  description = "Client id of the user-assigned identity (AZURE_CLIENT_ID of the migration and backup jobs)."
   type        = string
 }
 
@@ -142,5 +142,16 @@ variable "custom_domains" {
   validation {
     condition     = alltrue([for method in values(var.custom_domains) : contains(["HTTP", "CNAME"], method)])
     error_message = "Each validation is \"HTTP\" or \"CNAME\"."
+  }
+}
+
+variable "database_auth" {
+  description = "How the migration and backup jobs sign in to PostgreSQL: password or entra (ADR-026). The API and the tasks job get it through api_env."
+  type        = string
+  default     = "password"
+
+  validation {
+    condition     = contains(["password", "entra"], var.database_auth)
+    error_message = "password or entra."
   }
 }

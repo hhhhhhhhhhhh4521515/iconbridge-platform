@@ -42,3 +42,8 @@ output "domain_name" {
   description = "Name of the Azure-managed domain resource, for az commands."
   value       = azurerm_email_communication_service_domain.azure_managed.name
 }
+
+output "communication_service_id" {
+  description = "Id of the Communication Service: the source of the email delivery reports (Event Grid)."
+  value       = azurerm_communication_service.this.id
+}
