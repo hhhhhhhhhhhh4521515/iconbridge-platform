@@ -114,6 +114,18 @@ describe('validateEnv', () => {
     );
   });
 
+  it('signs in to the database with a password by default, or with Entra without one in the URL', () => {
+    expect(validateEnv(valid).DATABASE_AUTH).toBe('password');
+    const entra = validateEnv({
+      ...valid,
+      DATABASE_AUTH: 'entra',
+      DATABASE_URL: 'postgresql://id-iconbridge@db.example:5432/iconbridge?sslmode=require',
+    });
+    expect(entra.DATABASE_AUTH).toBe('entra');
+    expect(() => validateEnv({ ...valid, DATABASE_AUTH: 'entra' })).toThrow(/DATABASE_URL/);
+    expect(() => validateEnv({ ...valid, DATABASE_AUTH: 'entra' })).not.toThrow(/s3cret-value/);
+  });
+
   it('rejects a database URL that is not PostgreSQL', () => {
     expect(() => validateEnv({ ...valid, DATABASE_URL: 'mysql://localhost/db' })).toThrow(
       /DATABASE_URL/,

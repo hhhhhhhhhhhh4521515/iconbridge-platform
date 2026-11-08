@@ -1252,3 +1252,26 @@ The terms keep their own date. The text is split into paragraphs. A unit test ch
 - lint, typecheck; web unit tests 85; `test:browser` 170 passed; `pnpm build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/74>
+
+## 2026-11-07 - Database sign-in with the managed identity (code)
+
+**What**: `DATABASE_AUTH` (`password` by default, `entra`):
+
+- With `entra`, the API and the tasks job give the `pg` pool behind Prisma a password function that returns a Microsoft Entra token of the managed identity for each new connection, and `DATABASE_URL` must carry no password.
+- The migration job puts a token from the Container Apps identity endpoint in the address it gives the Prisma CLI and the seed (`scripts/database-url.mjs`).
+- The backup job gives `pg_dump` the token as `PGPASSWORD`.
+
+ADR-026 sets out the order: this code, then Terraform (Entra on the server, the identity as administrator, the old administrator address rule removed, passwordless addresses), then passwords off. SECURITY.md updated.
+
+**Why**: audit finding H1, part 1.
+
+**Checks**:
+
+- lint, typecheck; API unit tests 350 (pool settings, token for each connection, no token refused, env rule); `test:e2e` 575; `pnpm build`.
+- Rehearsed locally in Entra mode against the real database, with a fake identity endpoint whose token was the local password:
+  - Prisma connected (a wrong token was refused);
+  - `prisma migrate deploy` ran through `database-url.mjs`, and a wrong identity header failed cleanly;
+  - the backup image dumped and uploaded with both tokens, while password mode without a password was refused.
+- Both API images built, trivy 0 high or critical; `test:browser` 170 passed against `docker-compose.prod.yml`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/71>

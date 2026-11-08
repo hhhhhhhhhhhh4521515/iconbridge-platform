@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import type { Env } from '../config/env.js';
 import { PrismaClient } from '../generated/prisma/client.js';
+import { poolConfig } from './database-config.js';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
@@ -16,9 +17,12 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     // The pool connects on first query, so the API can start (and report
     // "not ready") while the database is still coming up.
     super({
-      adapter: new PrismaPg({
-        connectionString: config.get('DATABASE_URL', { infer: true }),
-      }),
+      adapter: new PrismaPg(
+        poolConfig(
+          config.get('DATABASE_URL', { infer: true }),
+          config.get('DATABASE_AUTH', { infer: true }),
+        ),
+      ),
       // Counted, not written: a query can hold personal data.
       log: [{ emit: 'event', level: 'query' }],
     });
