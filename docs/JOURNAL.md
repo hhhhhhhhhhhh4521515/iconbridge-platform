@@ -1275,3 +1275,18 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - Both API images built, trivy 0 high or critical; `test:browser` 170 passed against `docker-compose.prod.yml`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/71>
+
+## 2026-11-08 - No more emails to addresses that bounce (code)
+
+**What**:
+
+- `POST /email-events` receives the delivery reports of Azure Communication Services through Event Grid. It answers the subscription validation, and reads reports only with `EMAIL_EVENTS_KEY` in `x-email-events-key` (404 while unset).
+- A `Bounced` or `Suppressed` report stores the SHA-256 of the address in `email_suppressions` (CHECK constraints). From then on, `MailService` records every email to it as `CANCELLED` (`SUPPRESSED`) without sending it.
+- The retention task forgets a fingerprint 24 months after the last report.
+- Privacy policy (EN/FR/AR), SECURITY.md and ARCHITECTURE updated. The Event Grid subscription and the key are Terraform, in a separate pull request approved by the owner.
+
+**Why**: audit finding M2, with the cheapest option (Event Grid: the first 100,000 operations a month are free).
+
+**Checks**: lint, typecheck; unit tests (shared 230, web 84, api 347, plus the controller with no key → 404); `test:e2e` 580 (new `email-events.e2e-spec.ts`: validation, key, statuses that change nothing, case ignored, only the fingerprint stored, emails cancelled, 24-month retention); `test:browser` 170 passed; `pnpm build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/73>

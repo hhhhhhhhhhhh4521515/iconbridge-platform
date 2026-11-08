@@ -59,6 +59,7 @@ export class TasksService {
     retention: async () => ({
       ...(await this.retention.run()),
       contactMessages: await this.retention.purgeContactMessages(),
+      emailSuppressions: await this.retention.purgeEmailSuppressions(),
     }),
   };
 
