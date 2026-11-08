@@ -50,6 +50,8 @@ const OPEN_ROUTES = [
   'POST /api/v1/job-alerts/confirm',
   'POST /api/v1/job-alerts/unsubscribe',
   'POST /api/v1/contact',
+  // Azure Event Grid: the subscription validation; the reports need the key (audit M2).
+  'POST /api/v1/email-events',
 ].sort();
 
 describe('security (e2e)', () => {

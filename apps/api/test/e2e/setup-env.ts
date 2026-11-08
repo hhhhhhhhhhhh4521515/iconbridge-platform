@@ -22,6 +22,7 @@ Object.assign(process.env, {
   PASSPORT_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
   JWT_ACCESS_SECRET: 'e2e-only-jwt-secret-0123456789abcdef',
   TURNSTILE_SECRET_KEY: 'e2e-secret',
+  EMAIL_EVENTS_KEY: 'e2e-email-events-key-0123456789abcdef',
   TRUST_PROXY_HOPS: '0',
   SCHEDULER_ENABLED: 'false',
 });

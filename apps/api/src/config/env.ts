@@ -35,6 +35,11 @@ const baseEnvSchema = z.object({
    * managed identity (production), no SMTP setting or password.
    */
   EMAIL_TRANSPORT: z.enum(['smtp', 'azure']).default('smtp'),
+  /**
+   * Key Azure Event Grid sends in the `x-email-events-key` header of the delivery reports
+   * (POST /email-events). Empty: the endpoint answers 404 and no report is read.
+   */
+  EMAIL_EVENTS_KEY: z.union([z.literal(''), z.string().min(32)]).default(''),
   /** azure: https://<communication service>.<geo>.communication.azure.com */
   AZURE_COMMUNICATION_ENDPOINT: z
     .union([z.literal(''), z.url({ protocol: /^https$/ })])

@@ -765,3 +765,18 @@ model EmailOutbox {
   @@index([template, sentAt])
   @@map("email_outbox")
 }
+
+/// Addresses Azure reported as undeliverable: a hard bounce, or an address Azure itself
+/// suppresses. Only the SHA-256 of the lower-case address is kept; nothing is sent to it
+/// again (audit M2). Removed RETENTION_MONTHS after the last report.
+model EmailSuppression {
+  /// SHA-256 of the lower-case address, hexadecimal (CHECK constraint).
+  emailHash   String   @id @map("email_hash") @db.Char(64)
+  /// BOUNCED or SUPPRESSED, the status of Azure's last delivery report (CHECK constraint).
+  reason      String   @db.VarChar(16)
+  lastEventAt DateTime @map("last_event_at") @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([lastEventAt])
+  @@map("email_suppressions")
+}

@@ -3,11 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { createTransport } from 'nodemailer';
 import type { Env } from '../config/env.js';
 import { AzureEmailTransport } from './azure-email.transport.js';
+import { EmailEventsController } from './email-events.controller.js';
+import { EmailEventsService } from './email-events.service.js';
 import type { MailTransport } from './mail-transport.js';
 import { MAIL_TRANSPORT, MailService, OUTBOX_CONCURRENCY } from './mail.service.js';
 
 @Global()
 @Module({
+  controllers: [EmailEventsController],
   providers: [
     {
       provide: MAIL_TRANSPORT,
@@ -36,6 +39,7 @@ import { MAIL_TRANSPORT, MailService, OUTBOX_CONCURRENCY } from './mail.service.
       },
     },
     MailService,
+    EmailEventsService,
   ],
   exports: [MailService],
 })

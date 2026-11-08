@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/email-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email delivery reports (Azure Event Grid)
+         * @description Called by Event Grid only. Answers the subscription validation; a hard bounce or an address suppressed by Azure stops all email to that address. The reports need the key in `x-email-events-key`; without EMAIL_EVENTS_KEY the route answers 404.
+         */
+        post: operations["EmailEventsController_receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/register": {
         parameters: {
             query?: never;
@@ -1925,6 +1945,83 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    EmailEventsController_receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    eventType: string;
+                    /** @default {} */
+                    data?: {
+                        [key: string]: unknown;
+                    };
+                }[];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        validationResponse?: string;
+                        suppressed: number;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
     AuthController_register: {
         parameters: {
             query?: never;
