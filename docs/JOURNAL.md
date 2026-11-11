@@ -1356,4 +1356,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
   - Copy deleted afterwards. Production keeps one firewall rule (`allow-azure-services`) and one Entra administrator (the identity).
 - `terraform fmt`, `validate`, read-only plan.
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/82>
