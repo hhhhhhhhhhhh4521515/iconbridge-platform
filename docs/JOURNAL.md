@@ -1489,3 +1489,5 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 - removed the leftover migration `20261111150000_database_owner_role` of the closed #81 from `iconbridge` and `iconbridge_test`;
 - gave their objects back to the `iconbridge` login.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/89>
