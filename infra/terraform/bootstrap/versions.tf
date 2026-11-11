@@ -14,7 +14,7 @@ terraform {
 provider "azurerm" {
   features {}
   # The subscription is chosen by ARM_SUBSCRIPTION_ID (from .azure-context).
-  # The needed resource providers are registered already (docs/00-environment.md).
+  # No automatic registration: the extra providers envs/prod needs are listed in providers.tf.
   resource_provider_registrations = "none"
   # No account key is ever used: containers are managed with Entra ID.
   storage_use_azuread = true

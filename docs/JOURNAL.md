@@ -1319,3 +1319,19 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: `terraform fmt`, `terraform validate`; local read-only plan; the plan is posted on the pull request by CI.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/76>
+
+## 2026-11-11 - Resource providers registered by the bootstrap
+
+**What**: `infra/terraform/bootstrap/providers.tf` registers `Microsoft.EventGrid` and takes over `Microsoft.Communication` (an `import` block, as it was registered by hand). The production configuration reads the registration of `Microsoft.EventGrid` and stops at plan time with a clear message when it is missing. DEPLOYMENT.md and `00-environment.md` now say where the registration happens.
+
+**Why**: the apply of #76 (run 42492315673) stopped halfway with `MissingSubscriptionRegistration` on the Event Grid system topic. The container apps, the jobs, the Entra administrator and the removal of the workstation rule were already applied. The deploy identity has rights only on the resource group, so it cannot register a provider itself.
+
+**Checks**:
+
+- Read-only plan of `main` after the failure: 2 to add (the system topic and its subscription), nothing else.
+- Site and API healthy (`/health/ready` 200, job list 200, home page 200).
+- Bootstrap plan: 1 to import, 1 to add.
+- Production plan with `Microsoft.EventGrid` not registered: stops on the precondition.
+- `terraform fmt`, `terraform validate`.
+
+**PR**: _(this pull request)_

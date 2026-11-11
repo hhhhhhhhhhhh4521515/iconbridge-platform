@@ -341,6 +341,15 @@ module "container_apps" {
 # 100 000 operations a month. The subscription is validated when created: the API must
 # already answer POST /api/v1/email-events (it does with or without its key).
 
+# The deploy identity cannot register resource providers (subscription level): the owner
+# does it with infra/terraform/bootstrap. Checked at plan time instead of failing mid-apply.
+data "azapi_resource_action" "event_grid_provider" {
+  type                   = "Microsoft.Resources/providers@2021-04-01"
+  resource_id            = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/providers/Microsoft.EventGrid"
+  method                 = "GET"
+  response_export_values = ["registrationState"]
+}
+
 resource "azurerm_eventgrid_system_topic" "email" {
   name                   = "egst-iconbridge-email-${local.name_suffix}"
   resource_group_name    = azurerm_resource_group.this.name
@@ -348,6 +357,13 @@ resource "azurerm_eventgrid_system_topic" "email" {
   source_arm_resource_id = module.email.communication_service_id
   topic_type             = "Microsoft.Communication.CommunicationServices"
   tags                   = local.tags
+
+  lifecycle {
+    precondition {
+      condition     = data.azapi_resource_action.event_grid_provider.output.registrationState == "Registered"
+      error_message = "Microsoft.EventGrid is not registered on the subscription: apply infra/terraform/bootstrap first (docs/DEPLOYMENT.md)."
+    }
+  }
 }
 
 resource "azurerm_eventgrid_system_topic_event_subscription" "email_delivery" {
