@@ -1380,4 +1380,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **Checks**: read SPEC, the auth guards, sessions, document checks, storage and the audit log, so the design reuses them. No code changed.
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/86>
