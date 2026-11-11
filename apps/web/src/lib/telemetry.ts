@@ -1,5 +1,6 @@
 import type { Context, Span } from '@opentelemetry/api';
 import type { IncomingMessage } from 'node:http';
+import { TELEMETRY_SAMPLING } from '@iconbridge/shared/telemetry';
 import { isIgnoredPath, probeFilterProcessor, withoutQuery } from './telemetry-redact';
 
 /** Attributes of HTTP spans that hold a URL or its query string. */
@@ -37,7 +38,8 @@ export async function startTelemetry(connectionString: string): Promise<void> {
   };
   startAzureMonitor({
     azureMonitorExporterOptions: { connectionString },
-    tracesPerSecond: 5,
+    // The same ratio as the API: a page and its API calls are kept or dropped together (ADR-028).
+    ...TELEMETRY_SAMPLING,
     spanProcessors: [probeFilter],
     enableLiveMetrics: false,
     instrumentationOptions: {
