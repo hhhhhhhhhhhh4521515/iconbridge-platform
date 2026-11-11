@@ -1345,3 +1345,13 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: `terraform fmt`; the Azure part of the local plan shows `azurerm_role_definition.plan` updated in place with the two actions (`0 to add, 1 to change, 0 to destroy`). The Entra part needs a fresh interactive `az login` of the owner (continuous access evaluation). Applied by the owner (`make tf-apply ENV=github`).
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/83>
+
+## 2026-11-11 - Deploy skips Terraform-only changes
+
+**What**: `deploy.yml` treats `infra/terraform/**` like documentation: when every file changed since the version in production is under `docs/`, a `*.md` file or `infra/terraform/`, nothing is built or deployed. `infra/backup` is the source of the backup image and still deploys. CICD.md updated.
+
+**Why**: the merges of #75, #76 and #78 changed only Terraform and docs, yet each started a deploy of identical images. Those deploys waited for approval in the `production` concurrency group and blocked the infra applies (one was cancelled by a newer pending deploy).
+
+**Checks**: the filter run on sample file lists (Terraform and docs: skip; backup script: deploy; API code: deploy; workflow: deploy) and on `1046524..16bc5dd` (skip); actionlint.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/79>

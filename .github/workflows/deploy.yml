@@ -34,7 +34,8 @@ env:
 
 jobs:
   # Nothing to deploy when every file changed since the version in production is
-  # documentation. Compared with what runs, not with the previous commit: when a newer merge
+  # documentation or Terraform (applied by infra.yml, not part of an image; infra/backup is
+  # the backup image and still deploys). Compared with what runs, not with the previous commit: when a newer merge
   # cancels the CI of an older one, the older code would otherwise never be deployed.
   changes:
     name: Anything to deploy?
@@ -63,11 +64,11 @@ jobs:
           echo "In production: $deployed"
           files=$(git diff --name-only "$deployed" HEAD)
           printf '%s\n' "$files"
-          if grep -qvE '^docs/|\.md$' <<<"$files"; then
+          if grep -qvE '^docs/|\.md$|^infra/terraform/' <<<"$files"; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           else
             echo "deploy=false" >> "$GITHUB_OUTPUT"
-            echo "Documentation only: nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+            echo "Documentation and Terraform only: nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   build:
