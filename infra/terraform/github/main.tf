@@ -92,6 +92,10 @@ resource "azurerm_role_definition" "plan" {
       "Microsoft.Storage/storageAccounts/listKeys/action",
       "Microsoft.App/containerApps/listSecrets/action",
       "Microsoft.App/jobs/listSecrets/action",
+      # Read back the Event Grid webhook: its address (public) and its delivery header (the
+      # email-events key, which this identity already reads from Key Vault).
+      "Microsoft.EventGrid/systemTopics/eventSubscriptions/getFullUrl/action",
+      "Microsoft.EventGrid/systemTopics/eventSubscriptions/getDeliveryAttributes/action",
     ]
   }
 
