@@ -1335,3 +1335,13 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - `terraform fmt`, `terraform validate`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/78>
+
+## 2026-11-11 - Deploy skips Terraform-only changes
+
+**What**: `deploy.yml` treats `infra/terraform/**` like documentation: when every file changed since the version in production is under `docs/`, a `*.md` file or `infra/terraform/`, nothing is built or deployed. `infra/backup` is the source of the backup image and still deploys. CICD.md updated.
+
+**Why**: the merges of #75, #76 and #78 changed only Terraform and docs, yet each started a deploy of identical images. Those deploys waited for approval in the `production` concurrency group and blocked the infra applies (one was cancelled by a newer pending deploy).
+
+**Checks**: the filter run on sample file lists (Terraform and docs: skip; backup script: deploy; API code: deploy; workflow: deploy) and on `1046524..16bc5dd` (skip); actionlint.
+
+**PR**: _(this pull request)_
