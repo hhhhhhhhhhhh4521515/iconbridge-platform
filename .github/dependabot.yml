@@ -38,3 +38,7 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    # azurerm 5.x is postponed until after the internship: only 4.x minor and patch updates.
+    ignore:
+      - dependency-name: hashicorp/azurerm
+        update-types: [version-update:semver-major]
