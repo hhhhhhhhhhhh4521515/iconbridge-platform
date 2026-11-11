@@ -1335,3 +1335,25 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - `terraform fmt`, `terraform validate`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/78>
+
+## 2026-11-11 - Database switch to Entra tokens, after a test on a copy of production
+
+**What**: `database_auth = "entra"` in `production.auto.tfvars`, as in #75. ADR-026 decision 3 now records why no ownership change is needed. DEPLOYMENT.md says the apps use tokens.
+
+**Why**: audit H1 part 1. The switch was held back on 8 November (#76): on standard PostgreSQL, the identity could not have used or altered the tables, which belong to the password login. A point-in-time copy showed that Azure is different: members of `azure_pg_admin` have `pg_read_all_data`, `pg_write_all_data` and the rights of the other non-superuser roles. The 8 November diagnosis was wrong for Azure.
+
+**Checks**:
+
+- Local PostgreSQL 16 simulation of an ownership migration (closed #81): passed locally, but did not reproduce Azure.
+- Point-in-time copy `psql-iconbridge-ownertest-itn` (owner's approval), reached only from this machine. No production data was written to disk.
+  - Real roles: the identity is a member of `azure_pg_admin` only; `has_table_privilege` already true before any change.
+  - The ownership migration failed there ("permission denied to alter restricted role azure_pg_admin") and left nothing behind.
+  - As an Entra user that is a member of `azure_pg_admin` only:
+    - read, write;
+    - `ALTER TABLE jobs`, a new enum value on an enum owned by `iconbridge_admin`, an index, a table with a foreign key;
+    - `prisma migrate deploy` of a test migration, the production seed, `pg_dump` to `/dev/null`.
+  - `iconbridge_admin` altered the table created by the Entra user.
+  - Copy deleted afterwards. Production keeps one firewall rule (`allow-azure-services`) and one Entra administrator (the identity).
+- `terraform fmt`, `validate`, read-only plan.
+
+**PR**: _(this pull request)_

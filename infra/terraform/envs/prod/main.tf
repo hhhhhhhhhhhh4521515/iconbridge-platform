@@ -375,6 +375,8 @@ resource "azurerm_eventgrid_system_topic_event_subscription" "email_delivery" {
   webhook_endpoint {
     url                  = "${local.web_origin}/api/v1/email-events"
     max_events_per_batch = 10
+    # Azure's default, set so the plan stays empty.
+    preferred_batch_size_in_kilobytes = 64
   }
 
   delivery_property {
