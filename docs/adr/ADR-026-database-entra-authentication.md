@@ -1,6 +1,6 @@
 # ADR-026: The apps sign in to PostgreSQL with their managed identity
 
-Date: 2026-11-07. Status: accepted (code); the Terraform change waits for the owner's approval.
+Date: 2026-11-07. Status: accepted. Tokens in production since 11 November 2026; password sign-in turned off by the next Terraform change (decision 4).
 
 ## Context
 
@@ -31,6 +31,9 @@ The owner asked for part 1 now: remove the stale address rule, sign in with Micr
    - A migration giving the objects to a role without login was written and tested locally, then dropped. It was not needed, and Azure refuses grants to `azure_pg_admin` ("permission denied to alter restricted role"), so it would have failed.
    - Objects of later migrations belong to the identity. Any server administrator can still manage them.
 4. **Then password authentication off**, in a last Terraform change, once production has run on tokens. Nothing else signs in with the password: local development uses its own database, and a person who needs the production database signs in with their own Entra account added as administrator for the occasion.
+   - Production ran on tokens on 11 November 2026: the API, one execution of each job (tasks, backup, migration with the seed), with no password in the Key Vault address.
+   - Then `database_password_auth = false`. A variable validation refuses it with `database_auth = "password"`, so Terraform cannot turn the password off under apps that still need it.
+   - The `iconbridge_admin` login and its random password stay. Without password sign-in they cannot be used, and the server needs an administrator login. Turning password sign-in back on is the rollback.
 5. **What stays public for now**: public network access, and the rule "allow public access from any Azure service" (`0.0.0.0`). The apps run in a Consumption environment without a VNet, whose outgoing addresses are shared and change, so no narrower rule can name them. Without a password login, reaching the port is not enough: a connection needs a token issued by our tenant to our identity. Private access (VNet integration and a private endpoint) is part 2.
 
 ## Consequences

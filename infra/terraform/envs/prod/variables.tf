@@ -220,7 +220,12 @@ variable "database_auth" {
 }
 
 variable "database_password_auth" {
-  description = "Password sign-in on PostgreSQL. Set to false once the apps run on Entra tokens (ADR-026, step 3)."
+  description = "Password sign-in on PostgreSQL. Set to false once the apps run on Entra tokens (ADR-026, decision 4); to roll back to database_auth = password, turn it on first."
   type        = bool
   default     = true
+
+  validation {
+    condition     = var.database_password_auth || var.database_auth == "entra"
+    error_message = "Password sign-in can only be off with database_auth = \"entra\": the apps would lose the database."
+  }
 }

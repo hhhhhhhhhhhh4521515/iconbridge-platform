@@ -1387,3 +1387,23 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - `terraform fmt`, `validate`, read-only plan.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/82>
+
+## 2026-11-11 - Production on Entra tokens checked; password sign-in off on PostgreSQL
+
+**What**:
+
+- `database_password_auth = false` in `production.auto.tfvars`: the server accepts Microsoft Entra tokens only (audit H1 part 1, ADR-026 decision 4).
+- A validation of the variable refuses password sign-in off with `database_auth = "password"`.
+- ADR-026, DEPLOYMENT.md, RUNBOOK.md (restore into production, rotation of `db-admin-password`) and SECURITY.md updated.
+
+**Why**: production has run on tokens since the apply of #82, and nothing else signs in with the password. Staging is not deployed, and `iconbridge` is the only application database on the server.
+
+**Checks**:
+
+- After the apply of #82 (run 43100318581: 0 added, 5 changed, 0 destroyed):
+  - API revision `--0000033` (created by the apply) is healthy with `DATABASE_AUTH=entra`. `/api/health/ready` (which runs `SELECT 1`) and `GET /api/v1/jobs` (16 jobs) answered 200.
+  - Key Vault `database-url`: user `id-iconbridge-prod-itn`, no password, `sslmode=require` (checked without printing it). Every database connection is therefore made with a token.
+  - One manual execution of each job, all Succeeded: tasks, backup (`iconbridge-20261111T214837Z.dump`, 364 KB), and migration (`migrate deploy` and the seed). The scheduled tasks executions after the apply also succeeded.
+  - The Log Analytics workspace had reached its daily cap (0.15 GB) at 20:00 UTC, so the console logs of these runs were not ingested. The evidence is the exit codes, the backup blob and the API answers.
+- The new validation, on a copy of the two variables: entra/false, entra/true and password/true accepted; password/false refused.
+- `terraform fmt -check`, `terraform validate`; the plan is posted on the pull request.
