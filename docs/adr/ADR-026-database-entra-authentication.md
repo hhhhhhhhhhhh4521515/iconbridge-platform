@@ -18,8 +18,18 @@ The owner asked for part 1 now: remove the stale address rule, sign in with Micr
    - turn on Entra authentication on the server, keeping passwords for now;
    - make the managed identity the Entra administrator;
    - remove the administrator address rule (`admin_ip_addresses = []`);
-   - give the four apps `DATABASE_AUTH=entra` and a passwordless address in Key Vault, only after the identity can use the tables (below).
-3. **Table ownership before the switch.** Every table, sequence and type was created by the migrations under the password administrator, which owns them. Being the Entra administrator gives the identity no right on objects another role owns, and only an owner can run the migrations' `ALTER TABLE`. The readiness probe (`SELECT 1`) needs no table right, so a revision signed in as the identity would pass it and then fail every query. Ownership is moved to the identity, and tested on a copy of production, before `database_auth = "entra"` is set. Found while reviewing the first apply (8 November), which the owner rejected.
+   - give the four apps `DATABASE_AUTH=entra` and a passwordless address in Key Vault.
+3. **Table ownership: no change needed (tested on a copy of production, 11 November).** Every table, sequence and enum belongs to the password login `iconbridge_admin`.
+   - On standard PostgreSQL 16, another role could neither use these objects nor alter them. The first apply of the switch (8 November) was rejected over that, and the readiness probe (`SELECT 1`) would not have caught it.
+   - Azure differs. Its `azure_pg_admin`, of which every server administrator is a member (the password login, the identity, a person added as Entra administrator), is granted `pg_read_all_data` and `pg_write_all_data`, and its members have the rights of the other non-superuser roles.
+   - On a point-in-time copy of the production server, an Entra user that is a member of `azure_pg_admin` only, as the identity is, did all of these:
+     - read and write;
+     - alter a table owned by `iconbridge_admin`, add a value to one of its enums, create an index and a table with a foreign key to it;
+     - run `prisma migrate deploy` and the production seed;
+     - take a `pg_dump`.
+   - `iconbridge_admin` could alter the table that user created. The copy was deleted after the test.
+   - A migration giving the objects to a role without login was written and tested locally, then dropped. It was not needed, and Azure refuses grants to `azure_pg_admin` ("permission denied to alter restricted role"), so it would have failed.
+   - Objects of later migrations belong to the identity. Any server administrator can still manage them.
 4. **Then password authentication off**, in a last Terraform change, once production has run on tokens. Nothing else signs in with the password: local development uses its own database, and a person who needs the production database signs in with their own Entra account added as administrator for the occasion.
 5. **What stays public for now**: public network access, and the rule "allow public access from any Azure service" (`0.0.0.0`). The apps run in a Consumption environment without a VNet, whose outgoing addresses are shared and change, so no narrower rule can name them. Without a password login, reaching the port is not enough: a connection needs a token issued by our tenant to our identity. Private access (VNet integration and a private endpoint) is part 2.
 
