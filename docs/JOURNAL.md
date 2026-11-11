@@ -1336,6 +1336,36 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/78>
 
+## 2026-11-11 - Plan identity can read the Event Grid webhook
+
+**What**: the custom role "IconBridge Terraform plan" (`infra/terraform/github`) gains `getFullUrl` and `getDeliveryAttributes` on Event Grid system topic subscriptions. CICD.md describes the role.
+
+**Why**: once the subscription `email-delivery-reports` existed, the plan of every pull request failed with `AuthorizationFailed` on `getFullUrl`: the provider reads the webhook back on refresh. The delivery header holds the email-events key, which the plan identity already reads from Key Vault, so it gains nothing new. The deploy identity (Contributor) was not affected.
+
+**Checks**: `terraform fmt`; the Azure part of the local plan shows `azurerm_role_definition.plan` updated in place with the two actions (`0 to add, 1 to change, 0 to destroy`). The Entra part needs a fresh interactive `az login` of the owner (continuous access evaluation). Applied by the owner (`make tf-apply ENV=github`).
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/83>
+
+## 2026-11-11 - Deploy skips Terraform-only changes
+
+**What**: `deploy.yml` treats `infra/terraform/**` like documentation: when every file changed since the version in production is under `docs/`, a `*.md` file or `infra/terraform/`, nothing is built or deployed. `infra/backup` is the source of the backup image and still deploys. CICD.md updated.
+
+**Why**: the merges of #75, #76 and #78 changed only Terraform and docs, yet each started a deploy of identical images. Those deploys waited for approval in the `production` concurrency group and blocked the infra applies (one was cancelled by a newer pending deploy).
+
+**Checks**: the filter run on sample file lists (Terraform and docs: skip; backup script: deploy; API code: deploy; workflow: deploy) and on `1046524..16bc5dd` (skip); actionlint.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/79>
+
+## 2026-11-11 - Dependabot: azurerm major versions ignored
+
+**What**: the Terraform entry of `.github/dependabot.yml` ignores major versions of `hashicorp/azurerm`; minor and patch updates of 4.x still come. Pull requests #58, #59 and #60 (azurerm 4.81.0 to 5.13.0) are closed with "postponed until after the internship".
+
+**Why**: owner's decision. A new major version of the provider changes resource schemas and needs its own reviewed plan.
+
+**Checks**: the configuration is valid YAML; Dependabot reports a configuration error on the pull request if the format is wrong.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/80>
+
 ## 2026-11-11 - Database switch to Entra tokens, after a test on a copy of production
 
 **What**: `database_auth = "entra"` in `production.auto.tfvars`, as in #75. ADR-026 decision 3 now records why no ownership change is needed. DEPLOYMENT.md says the apps use tokens.
