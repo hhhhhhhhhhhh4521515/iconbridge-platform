@@ -1344,4 +1344,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **Checks**: the configuration is valid YAML; Dependabot reports a configuration error on the pull request if the format is wrong.
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/80>
