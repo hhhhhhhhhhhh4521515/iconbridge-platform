@@ -1344,4 +1344,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **Checks**: the filter run on sample file lists (Terraform and docs: skip; backup script: deploy; API code: deploy; workflow: deploy) and on `1046524..16bc5dd` (skip); actionlint.
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/79>
