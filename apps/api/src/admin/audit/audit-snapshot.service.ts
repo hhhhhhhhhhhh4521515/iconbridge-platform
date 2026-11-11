@@ -20,6 +20,7 @@ export class AuditSnapshotService {
         select: {
           id: true,
           email: true,
+          displayName: true,
           role: true,
           isActive: true,
           locale: true,
@@ -38,6 +39,40 @@ export class AuditSnapshotService {
             deletedAt: user.deletedAt?.toISOString() ?? null,
           }
         : null;
+    },
+    // Settings, counts and who belongs: never the content of the space (ADR-027).
+    partner_space: async (id) => {
+      const space = await this.prisma.partnerSpace.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          country: true,
+          defaultLocale: true,
+          isActive: true,
+          logoPath: true,
+          updatedAt: true,
+          members: { select: { userId: true, kind: true }, orderBy: { userId: 'asc' } },
+          _count: { select: { jobs: true, applications: true, files: true } },
+        },
+      });
+      if (!space) {
+        return null;
+      }
+      return {
+        id: space.id,
+        name: space.name,
+        country: space.country,
+        defaultLocale: space.defaultLocale,
+        isActive: space.isActive,
+        hasLogo: space.logoPath !== null,
+        staffMemberIds: space.members.filter((m) => m.kind === 'STAFF').map((m) => m.userId),
+        partnerLoginIds: space.members.filter((m) => m.kind === 'PARTNER').map((m) => m.userId),
+        jobs: space._count.jobs,
+        applications: space._count.applications,
+        files: space._count.files,
+        updatedAt: space.updatedAt.toISOString(),
+      };
     },
     job: async (id) => {
       const job = await this.prisma.job.findUnique({ where: { id } });

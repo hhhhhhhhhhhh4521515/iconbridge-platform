@@ -9,6 +9,8 @@ import type { Response } from 'supertest';
 import { AppModule } from '../../src/app.module.js';
 import { setupApp } from '../../src/app.setup.js';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from '../../src/auth/auth.constants.js';
+import { SessionService } from '../../src/auth/session.service.js';
+import { TokenService } from '../../src/auth/token.service.js';
 import { TurnstileService } from '../../src/auth/turnstile.service.js';
 import { Clock } from '../../src/common/clock/clock.js';
 import { FieldCipher } from '../../src/common/crypto/field-cipher.js';
@@ -267,6 +269,47 @@ export async function createUser(
     role,
     cookies: await login(test, address),
     profileId: user.candidateProfile?.id ?? null,
+  };
+}
+
+/**
+ * Inserts a PARTNER login in a space, with PASSWORD, and gives it a session. Partner logins
+ * cannot use /auth/login (ADR-027); until the partner sign-in exists, the tests issue the
+ * tokens directly, exactly as a sign-in would.
+ */
+export async function createPartnerLogin(
+  test: TestApp,
+  spaceId: string,
+  email = `e2e-partner-${Math.random().toString(36).slice(2, 10)}@example.test`,
+): Promise<TestUser> {
+  passwordHash ??= hashPassword(PASSWORD);
+  const user = await test.prisma.user.create({
+    data: {
+      email,
+      passwordHash: await passwordHash,
+      role: 'PARTNER',
+      displayName: 'Partner Person',
+      partnerMemberships: { create: { partnerSpaceId: spaceId, kind: 'PARTNER' } },
+    },
+  });
+  return {
+    id: user.id,
+    email,
+    role: 'PARTNER',
+    cookies: await sessionFor(test, user.id),
+    profileId: null,
+  };
+}
+
+/** Access and refresh tokens for a user, as a successful sign-in issues them. */
+export async function sessionFor(test: TestApp, userId: string): Promise<Cookies> {
+  const { tokenVersion } = await test.prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { tokenVersion: true },
+  });
+  return {
+    access: await test.app.get(TokenService).signAccessToken(userId, tokenVersion),
+    refresh: await test.app.get(SessionService).start(userId, { ip: null, userAgent: 'e2e' }),
   };
 }
 
