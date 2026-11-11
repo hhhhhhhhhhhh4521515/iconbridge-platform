@@ -1407,3 +1407,5 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
   - The Log Analytics workspace had reached its daily cap (0.15 GB) at 20:00 UTC, so the console logs of these runs were not ingested. The evidence is the exit codes, the backup blob and the API answers.
 - The new validation, on a copy of the two variables: entra/false, entra/true and password/true accepted; password/false refused.
 - `terraform fmt -check`, `terraform validate`; the plan is posted on the pull request.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/87>
