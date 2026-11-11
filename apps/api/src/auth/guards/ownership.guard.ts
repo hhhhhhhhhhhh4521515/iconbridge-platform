@@ -35,8 +35,13 @@ export class OwnershipGuard implements CanActivate {
     if (!user) {
       throw unauthenticated();
     }
-    if (user.role !== 'CANDIDATE' && user.role !== 'COUNTRY_AGENT') {
+    // Staff with the whole back office see every candidate. A partner login never reaches
+    // these routes (RolesGuard), and is refused here too should one ever be opened to it.
+    if (user.role === 'VIEWER' || user.role === 'RECRUITER' || user.role === 'SUPER_ADMIN') {
       return true;
+    }
+    if (user.role === 'PARTNER') {
+      throw notFound();
     }
 
     const id = z.uuid().safeParse(request.params[rule.param]);

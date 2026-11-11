@@ -8,6 +8,7 @@ import {
   ALLOW_PASSWORD_CHANGE_KEY,
   IS_PUBLIC_KEY,
   OPTIONAL_AUTH_KEY,
+  PARTNER_ACCESS_KEY,
   ROLES_KEY,
   SELF_SERVICE_KEY,
 } from '../decorators/index.js';
@@ -20,12 +21,14 @@ export function isAdminPath(path: string): boolean {
 
 /**
  * Global guard, after JwtAuthGuard. On top of the @Roles() lists it applies
- * four rules that do not depend on a decorator being remembered:
+ * five rules that do not depend on a decorator being remembered:
  * 1. a user who must replace a password chosen by a super admin reaches nothing but the
  *    routes marked @AllowPasswordChange() (ADR-024);
- * 2. a candidate never reaches a route under /admin;
- * 3. a route under /admin without @Roles() is refused to everybody;
- * 4. a read-only role (VIEWER) never performs a write, unless the route is @SelfService().
+ * 2. a partner login (PARTNER) reaches nothing but the routes marked @PartnerAccess()
+ *    (ADR-027): no back office, no candidate route, no route of another kind;
+ * 3. a candidate never reaches a route under /admin;
+ * 4. a route under /admin without @Roles() is refused to everybody;
+ * 5. a read-only role (VIEWER) never performs a write, unless the route is @SelfService().
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -57,13 +60,20 @@ export class RolesGuard implements CanActivate {
       );
     }
 
+    if (
+      user.role === 'PARTNER' &&
+      !this.reflector.getAllAndOverride<boolean | undefined>(PARTNER_ACCESS_KEY, targets)
+    ) {
+      throw forbidden();
+    }
+
     const roles = this.reflector.getAllAndOverride<readonly UserRole[] | undefined>(
       ROLES_KEY,
       targets,
     );
     const adminRoute = isAdminPath(request.path);
 
-    if (adminRoute && (user.role === 'CANDIDATE' || !roles)) {
+    if (adminRoute && (user.role === 'CANDIDATE' || user.role === 'PARTNER' || !roles)) {
       throw forbidden();
     }
     if (roles && !roles.includes(user.role)) {

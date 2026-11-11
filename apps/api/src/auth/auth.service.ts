@@ -155,7 +155,8 @@ export class AuthService {
   ): Promise<Acknowledgement> {
     await this.assertHuman(input.turnstileToken, ip);
     const user = await this.findUsableUser(input.email);
-    if (user && !user.emailVerifiedAt) {
+    // Verification is for candidate sign-ups; a partner login never receives this email.
+    if (user && !user.emailVerifiedAt && user.role !== 'PARTNER') {
       await this.sendTokenEmail(user.id, user.email, user.locale, 'verify-email');
     }
     return EMAIL_ACK;
@@ -180,7 +181,12 @@ export class AuthService {
 
   async login(input: LoginInput, meta: RequestMeta): Promise<IssuedSession> {
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
-    const usable = user?.passwordHash && user.isActive && !user.deletedAt ? user : null;
+    // A partner login signs in through the partner area only (ADR-027): here it gets the
+    // answer of a wrong password, so this endpoint does not reveal which kind of account it is.
+    const usable =
+      user?.passwordHash && user.isActive && !user.deletedAt && user.role !== 'PARTNER'
+        ? user
+        : null;
     const passwordMatches = await verifyPassword(
       usable?.passwordHash ?? (await this.getDummyHash()),
       input.password,
@@ -243,7 +249,9 @@ export class AuthService {
   async forgotPassword(input: EmailLinkRequestInput, ip: string | null): Promise<Acknowledgement> {
     await this.assertHuman(input.turnstileToken, ip);
     const user = await this.findUsableUser(input.email);
-    if (user) {
+    // Partner logins get their reset email, in their space's language and with a link to the
+    // partner area, with the partner sign-in (ADR-027, PR 5). Until then: the same answer, no email.
+    if (user && user.role !== 'PARTNER') {
       await this.sendTokenEmail(user.id, user.email, user.locale, 'reset-password');
     }
     return EMAIL_ACK;
@@ -339,6 +347,7 @@ export class AuthService {
       select: {
         id: true,
         email: true,
+        role: true,
         locale: true,
         emailVerifiedAt: true,
         isActive: true,

@@ -38,6 +38,14 @@ export const ALLOW_PASSWORD_CHANGE_KEY = 'auth:allow-password-change';
  */
 export const AllowPasswordChange = () => SetMetadata(ALLOW_PASSWORD_CHANGE_KEY, true);
 
+export const PARTNER_ACCESS_KEY = 'auth:partner-access';
+/**
+ * Opens a route to PARTNER logins (ADR-027). They reach nothing else: every route without
+ * this mark answers 403 to them, whatever its @Roles, so a new route never opens to them by
+ * accident. Their partner space routes, their own session and their password change carry it.
+ */
+export const PartnerAccess = () => SetMetadata(PARTNER_ACCESS_KEY, true);
+
 export const OWNED_RESOURCES = ['candidateProfile', 'document', 'application'] as const;
 export type OwnedResource = (typeof OWNED_RESOURCES)[number];
 export interface OwnershipRule {

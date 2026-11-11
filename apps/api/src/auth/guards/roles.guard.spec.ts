@@ -5,6 +5,7 @@ import {
   ALLOW_PASSWORD_CHANGE_KEY,
   IS_PUBLIC_KEY,
   OPTIONAL_AUTH_KEY,
+  PARTNER_ACCESS_KEY,
   ROLES_KEY,
   SELF_SERVICE_KEY,
 } from '../decorators/index.js';
@@ -75,14 +76,76 @@ describe('RolesGuard', () => {
     });
   });
 
+  describe('a partner login (ADR-027)', () => {
+    const partner = () => user('PARTNER');
+
+    it('reaches the routes marked for partners only', () => {
+      expect(
+        check(
+          { path: '/api/v1/partner-spaces', method: 'GET', user: partner() },
+          { [PARTNER_ACCESS_KEY]: true },
+        ),
+      ).toBe('allowed');
+      expect(
+        check(
+          { path: '/api/v1/me/password', method: 'POST', user: partner() },
+          {
+            [ROLES_KEY]: USER_ROLES,
+            [SELF_SERVICE_KEY]: true,
+            [ALLOW_PASSWORD_CHANGE_KEY]: true,
+            [PARTNER_ACCESS_KEY]: true,
+          },
+        ),
+      ).toBe('allowed');
+    });
+
+    it('is refused on a route open to every role, every session or candidates', () => {
+      expect(
+        check(
+          { path: '/api/v1/me/settings', method: 'PATCH', user: partner() },
+          { [ROLES_KEY]: USER_ROLES, [SELF_SERVICE_KEY]: true },
+        ),
+      ).toBe(403);
+      expect(check({ path: '/api/v1/me/job-alerts', method: 'GET', user: partner() })).toBe(403);
+      expect(
+        check(
+          { path: '/api/v1/me/profile', method: 'GET', user: partner() },
+          { [ROLES_KEY]: PERMISSIONS.MANAGE_OWN_PROFILE },
+        ),
+      ).toBe(403);
+    });
+
+    it('never reaches the back office, even on a route marked for partners', () => {
+      for (const roles of [PERMISSIONS.MANAGE_SETTINGS, USER_ROLES]) {
+        expect(
+          check(
+            { path: '/api/v1/admin/settings', method: 'GET', user: partner() },
+            { [ROLES_KEY]: roles, [PARTNER_ACCESS_KEY]: true },
+          ),
+        ).toBe(403);
+      }
+    });
+
+    it('changes nothing for the other roles', () => {
+      expect(
+        check(
+          { path: '/api/v1/me/settings', method: 'PATCH', user: user('RECRUITER') },
+          { [ROLES_KEY]: USER_ROLES, [SELF_SERVICE_KEY]: true },
+        ),
+      ).toBe('allowed');
+    });
+  });
+
   it('answers 401 when no user is attached to a protected route', () => {
     expect(check({})).toBe(401);
   });
 
   it('lets any signed-in user reach a route without @Roles outside /admin', () => {
-    for (const role of USER_ROLES) {
+    for (const role of USER_ROLES.filter((value) => value !== 'PARTNER')) {
       expect(check({ user: user(role) })).toBe('allowed');
     }
+    // Except a partner login, which reaches only the routes marked for it (ADR-027).
+    expect(check({ user: user('PARTNER') })).toBe(403);
   });
 
   it.each(USER_ROLES)('applies the @Roles list to %s', (role) => {
