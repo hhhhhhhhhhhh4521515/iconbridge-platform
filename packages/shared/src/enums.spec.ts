@@ -40,13 +40,14 @@ describe('application statuses', () => {
 });
 
 describe('roles and destinations', () => {
-  it('accepts the five account roles and nothing else', () => {
+  it('accepts the six account roles and nothing else', () => {
     expect(userRoleSchema.options).toEqual([
       'CANDIDATE',
       'VIEWER',
       'COUNTRY_AGENT',
       'RECRUITER',
       'SUPER_ADMIN',
+      'PARTNER',
     ]);
     expect(userRoleSchema.safeParse('VISITOR').success).toBe(false);
   });
