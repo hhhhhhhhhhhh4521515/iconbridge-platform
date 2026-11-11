@@ -1344,4 +1344,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **Checks**: `terraform fmt`; the Azure part of the local plan shows `azurerm_role_definition.plan` updated in place with the two actions (`0 to add, 1 to change, 0 to destroy`). The Entra part needs a fresh interactive `az login` of the owner (continuous access evaluation). Applied by the owner (`make tf-apply ENV=github`).
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/83>
