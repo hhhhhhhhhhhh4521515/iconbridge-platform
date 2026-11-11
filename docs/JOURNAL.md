@@ -1335,3 +1335,24 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - `terraform fmt`, `terraform validate`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/78>
+
+## 2026-11-11 - Database objects owned by a role the identity is a member of
+
+**What**: migration `20261111150000_database_owner_role` creates `iconbridge_owner` (no login), gives it every table, index, sequence and enum of `public` and `CREATE` on the schema, and grants it to `azure_pg_admin` and to the managed identity. The migration job signs in as `iconbridge_owner` once it uses tokens (`scripts/database-url.mjs`). ADR-026, ARCHITECTURE ("Database roles") and the restore steps of the RUNBOOK are updated.
+
+**Why**: audit H1 part 1. Every object belonged to the password login `iconbridge_admin`, so the apps signed in as the identity would be refused on every table (ADR-026, decision 3).
+
+**Checks**:
+
+- Reproduced the refusal first: as the identity, `SELECT 1` works and `jobs` gives "permission denied".
+- Simulation on a new PostgreSQL 16 container with Azure-like roles, in two set-ups (database owned by the password login, or by `azure_pg_admin`). All checks pass in both:
+  - the identity reads, writes, runs a later migration (alter table, index, enum value, new table), runs the seed and takes a `pg_dump`;
+  - the password login still reads and writes, as the API does until the switch;
+  - new tables belong to `iconbridge_owner`;
+  - a person in `azure_pg_admin` reads and creates as `iconbridge_owner`;
+  - a role outside `azure_pg_admin` is refused.
+- Two bugs found by the simulation and fixed: the schema grant must come before the transfer; and without the role option, tables of later migrations belonged to the identity.
+- lint, typecheck, unit and e2e tests.
+- **Still to do before the deploy**: the same migration on a point-in-time copy of the production server.
+
+**PR**: _(this pull request)_

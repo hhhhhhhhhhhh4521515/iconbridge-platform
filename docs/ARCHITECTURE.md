@@ -401,6 +401,15 @@ Indexes worth knowing:
 
 The `simple` configuration does no stemming: "welders" does not match "welder". It was chosen because offers may be written in English, French or Arabic and a generated column takes one fixed configuration.
 
+### Database roles
+
+The objects of the application (tables, indexes, sequences, enums) belong to `iconbridge_owner`, a role without login (migration `20261111150000_database_owner_role`, ADR-026). Members, with inherited rights:
+
+- `azure_pg_admin` in Azure, so every server administrator: the password login while it exists, the managed identity of the apps, a person added as Entra administrator for a restore;
+- the managed identity `id-iconbridge-prod-itn`, also granted directly.
+
+The migration job signs in as the identity with `options=-c role=iconbridge_owner` (`scripts/database-url.mjs`), so objects of later migrations belong to `iconbridge_owner` too. Local, test and CI databases have neither Azure role: the migration only creates `iconbridge_owner` and moves the objects to it.
+
 ### Deleting data
 
 | When this is deleted                                    | What happens                                                                                                                                                                                                                       |

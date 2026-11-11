@@ -2,7 +2,7 @@
 //
 // DATABASE_AUTH=entra: DATABASE_URL names the managed identity and carries no password; the
 // CLI only takes an address, so a Microsoft Entra token of the identity is put in it as the
-// password (valid long enough for a migration). Container Apps provides IDENTITY_ENDPOINT
+// password (valid long enough for a migration), and the session runs as iconbridge_owner. Container Apps provides IDENTITY_ENDPOINT
 // and IDENTITY_HEADER; AZURE_CLIENT_ID selects the user-assigned identity.
 // Otherwise: DATABASE_URL unchanged.
 const url = process.env.DATABASE_URL;
@@ -36,4 +36,7 @@ if (!response.ok) {
 const { access_token: token } = await response.json();
 const address = new URL(url);
 address.password = token;
+// Objects created by the migrations belong to iconbridge_owner, like the earlier ones, not to
+// the identity itself (migration 20261111150000_database_owner_role, ADR-026).
+address.searchParams.set('options', '-c role=iconbridge_owner');
 process.stdout.write(address.toString());
