@@ -1355,3 +1355,13 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: the filter run on sample file lists (Terraform and docs: skip; backup script: deploy; API code: deploy; workflow: deploy) and on `1046524..16bc5dd` (skip); actionlint.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/79>
+
+## 2026-11-11 - Dependabot: azurerm major versions ignored
+
+**What**: the Terraform entry of `.github/dependabot.yml` ignores major versions of `hashicorp/azurerm`; minor and patch updates of 4.x still come. Pull requests #58, #59 and #60 (azurerm 4.81.0 to 5.13.0) are closed with "postponed until after the internship".
+
+**Why**: owner's decision. A new major version of the provider changes resource schemas and needs its own reviewed plan.
+
+**Checks**: the configuration is valid YAML; Dependabot reports a configuration error on the pull request if the format is wrong.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/80>
