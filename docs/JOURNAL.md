@@ -1365,3 +1365,19 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: the configuration is valid YAML; Dependabot reports a configuration error on the pull request if the format is wrong.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/80>
+
+## 2026-11-11 - Partner spaces: design (ADR-027, proposed)
+
+**What**: ADR-027 describes partner spaces before any code:
+
+- the data model (separate tables, `partner_space_id` and composite foreign keys everywhere);
+- the role `PARTNER` and who can do what;
+- the back-office and partner-area routes, files, and the EN/FR/PL screens;
+- the security rules and the tests that must prove them;
+- the delivery in six pull requests.
+
+**Why**: the owner asked for a design to approve first. Six questions for the owner are listed at the end of the ADR.
+
+**Checks**: read SPEC, the auth guards, sessions, document checks, storage and the audit log, so the design reuses them. No code changed.
+
+**PR**: _(this pull request)_
