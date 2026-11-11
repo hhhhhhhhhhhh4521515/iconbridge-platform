@@ -42,6 +42,14 @@ Roles are read from the database on each request, not from the token: a role cha
 
 A `COUNTRY_AGENT` reaches only the candidates whose nationality is one of his countries, their documents and their applications ([ADR-024](adr/ADR-024-country-agents.md)). The scope is applied in the API (`candidateScope`) on every list, search, detail, status change, note, document download and dashboard figure; anything else answers 404, never the data. Every back-office route whose roles leave him out answers 403: the test reads the list of routes from the running application, so a new route is covered the day it is added. Tests: `country-agent.e2e-spec.ts` (404 for every out-of-scope record, 403 for every forbidden route, nationality and not residence), `admin-country-agents.spec.ts` (Moroccan and Tunisian agents in the browser).
 
+### Partner logins and partner spaces
+
+A `PARTNER` login (a partner company's account, [ADR-027](adr/ADR-027-partner-spaces.md)) reaches only the routes marked `@PartnerAccess()`: today its session (`GET /auth/me`) and its password change. `RolesGuard` refuses it everywhere else, whatever the route's `@Roles`, and always under `/admin`. It cannot sign in through `/auth/login`, which answers as for a wrong password, and forgot-password and resend-verification send it nothing (its own sign-in comes with the partner area). It holds no entry of `PERMISSIONS`.
+
+Partner spaces are managed by super admins only (`MANAGE_PARTNER_SPACES`); the management routes return settings and counts, never the content of a space. Disabling a login ends its sessions and invalidates its access tokens at once. Deleting a space needs its exact name, deletes its rows and its partner logins, and writes an audit entry with counts only. In the database, every child row carries `partner_space_id` and its foreign keys include it, so a row cannot point to a parent of another space.
+
+Tests: `security.e2e-spec.ts` (the list of routes open to partner logins is fixed, and every other route answers 403 to one), `partner-spaces-admin.e2e-spec.ts` (roles refused, login fenced off, access cut on disabling, deletion, cross-space rows refused by the database), `roles.guard.spec.ts`, `permissions.spec.ts`.
+
 ### Records of somebody else (IDOR)
 
 Documents, applications and profiles are always looked up together with their owner. A candidate who asks for a record of another candidate gets 404, the same answer as for a record that does not exist. Tests: `rbac.e2e-spec.ts` ("hides another candidate's profile, document and application behind a 404"), `applications.e2e-spec.ts` (cannot attach another candidate's document, cannot withdraw another candidate's application), `candidate-profile-documents.e2e-spec.ts` (cannot delete another candidate's document).

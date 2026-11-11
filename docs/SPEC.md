@@ -39,6 +39,7 @@ The reasons are recorded in [ADR-001](adr/ADR-001-stack-choice.md).
 | Country agent     | `COUNTRY_AGENT`           | Recruitment agent for one or more countries (ISO codes stored on the user) |
 | Recruiter (admin) | `RECRUITER`               | Back-office user                                                           |
 | Super admin       | `SUPER_ADMIN`             | Platform owner                                                             |
+| Partner           | `PARTNER`                 | Login of a partner company: its partner space only (ADR-027)               |
 
 A candidate belongs to a country by **nationality** only, never by country of residence. "Own countries" below means: only candidates whose nationality is one of the agent's countries; any other candidate, application or document answers 404, as if it did not exist ([ADR-024](adr/ADR-024-country-agents.md)).
 
@@ -63,6 +64,9 @@ A candidate belongs to a country by **nationality** only, never by country of re
 | Delete a candidate or an application (with a reason, audited)                         | -       | -         | -         | -                              | Only if the setting `ALLOW_RECRUITER_DELETE` is on (off by default) | Yes         |
 | Delete a contact message, delete an admin account, erase the job alerts of an address | -       | -         | -         | -                              | -                                                                   | Yes         |
 | Lift the waiting period of one finished application (with a reason, audited)          | -       | -         | -         | -                              | -                                                                   | Yes         |
+| Manage partner spaces, their staff members and partner logins (not their content)     | -       | -         | -         | -                              | -                                                                   | Yes         |
+
+A `PARTNER` login holds none of these capabilities. It reaches its own partner space and its password, nothing else. Inside a space, every member (staff or partner) has the same rights ([ADR-027](adr/ADR-027-partner-spaces.md)).
 
 - The first super admin is created by a seed script from environment variables.
 - There is no public sign-up for admins. A super admin creates a back-office account either with an invitation email (the person chooses the password) or by setting the first password directly; in that case the person must choose a new password at the first sign-in and can do nothing else before. The password follows the same strength rules, is never shown again, logged or audited.

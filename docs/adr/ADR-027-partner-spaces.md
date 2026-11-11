@@ -280,6 +280,16 @@ Production checks use only the test account and data named `E2E …`; no real pa
 
 The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is approved.
 
+### 11. Implementation notes
+
+- **PR 1** (data model, role, fences, management API):
+  - `users.display_name` (≤ 80, optional) holds the name shown to a space's members. A staff account without one is shown by its address.
+  - The role value `PARTNER` has its own migration, before the tables: PostgreSQL does not let a new enum value be used in the transaction that adds it, and the `users_locale_check` constraint uses it.
+  - Partner logins reach only the routes marked `@PartnerAccess()` (an allowlist in `RolesGuard`), so a new route never opens to them by accident.
+  - Until the partner sign-in (PR 5), `/auth/login` refuses them, and forgot-password and resend-verification send them nothing.
+  - Deleting a space refuses while it holds files: their deletion arrives with the upload routes (PR 3).
+  - The logo routes also arrive with the container (PR 3).
+
 ## Consequences
 
 - One more role, and the screens of the partner area to keep translated in three languages, Polish among them.
