@@ -41,10 +41,59 @@ export function requestIdFrom(header: string | string[] | undefined): string {
   return value && /^[A-Za-z0-9_-]{8,64}$/.test(value) ? value : randomUUID();
 }
 
+/**
+ * Level of the line pino-http writes when a request ends (ADR-028). Successful requests
+ * and redirects write none: they are in Application Insights (sampled) and were most of
+ * the container logs. Every client and server error is logged.
+ */
+export function requestLogLevel(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  error?: Error,
+): 'error' | 'warn' | 'silent' {
+  if (error || res.statusCode >= 500) {
+    return 'error';
+  }
+  return res.statusCode >= 400 ? 'warn' : 'silent';
+}
+
+/** Nest's start-up messages (one per module and route at every start of a job or replica). */
+const FRAMEWORK_CONTEXTS = new Set([
+  'InstanceLoader',
+  'RoutesResolver',
+  'RouterExplorer',
+  'NestFactory',
+  'NestApplication',
+]);
+
+const WARN = 40;
+
+/**
+ * Drops the info lines of Nest's start-up; their warnings and errors are kept (ADR-028).
+ * nestjs-pino passes the context as the first argument: `{ context: 'InstanceLoader' }`.
+ */
+export function isFrameworkNoise(args: unknown[], level: number): boolean {
+  const [first] = args;
+  return (
+    level < WARN &&
+    typeof first === 'object' &&
+    first !== null &&
+    FRAMEWORK_CONTEXTS.has(String((first as { context?: unknown }).context))
+  );
+}
+
 export function loggerParams(nodeEnv: Env['NODE_ENV']): Params {
   return {
     pinoHttp: {
       level: nodeEnv === 'test' ? 'silent' : 'info',
+      customLogLevel: requestLogLevel,
+      hooks: {
+        logMethod(args, method, level) {
+          if (!isFrameworkNoise(args, level)) {
+            method.apply(this, args);
+          }
+        },
+      },
       redact: { paths: REDACT_PATHS, censor: REDACTED },
       genReqId: (req: IncomingMessage, res: ServerResponse) => {
         const id = requestIdFrom(req.headers[REQUEST_ID_HEADER]);

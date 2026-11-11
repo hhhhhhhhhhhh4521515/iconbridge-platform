@@ -1443,3 +1443,42 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Why**: the design had to be approved before any code (owner's request).
 
 **Checks**: Prettier; links in the ADR index.
+
+## 2026-11-11 - Telemetry noise cut so Log Analytics stays under its daily cap
+
+**What** (ADR-028):
+
+- No spans for opening pooled PostgreSQL connections (`ignoreConnectSpans`).
+- No performance counters.
+- Traces sampled at 50 % by trace id, the same ratio in the API and the web (`TELEMETRY_SAMPLING` in `packages/shared`).
+- Business events kept in full.
+- pino-http logs nothing for 2xx and 3xx, `warn` for 4xx, `error` for 5xx.
+- Nest's start-up lines only from `warn` up.
+- The cap stays at 0.15 GB a day.
+
+**Why**: the workspace reached its 0.15 GB cap every day from 4 to 11 November (20:00 UTC on the 11th). The log alerts then had no data until 01:00 UTC; the tasks alert fired falsely on 8, 9 and 10 November.
+
+**Numbers** (10 November, 22.3 hours before the cap; about 174 MB for a full day):
+
+| Table                      | Before (MB) | Expected after (MB a day) |
+| -------------------------- | ----------- | ------------------------- |
+| AppDependencies            | 89.4        | 34                        |
+| AppRequests                | 38.6        | 21                        |
+| AppMetrics                 | 13.4        | 14                        |
+| AppPerformanceCounters     | 10.3        | 0                         |
+| ContainerAppConsoleLogs_CL | 9.6         | 1.4                       |
+| Others                     | 0.7         | 0.7                       |
+| **Total**                  | 162.0       | about 71                  |
+
+The measured volume after the deployment is added to the pull request.
+
+**Checks**:
+
+- Unit tests:
+  - the options of the API distro;
+  - the shared sampling settings;
+  - the request log level, and the framework filter;
+  - pino-http on a real HTTP server: no line for 200 and 302, one each for 404 and 500.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`; the browser suite.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/88>
