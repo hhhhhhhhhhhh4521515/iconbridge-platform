@@ -1,6 +1,6 @@
 # ADR-027: Partner spaces
 
-Date: 2026-11-11. Status: **proposed** (design only, waiting for the owner's approval; no code yet).
+Date: 2026-11-11. Status: **accepted** (owner's answers of 11 November 2026, section 10). Delivered in six pull requests (section 9).
 
 ## Context
 
@@ -30,10 +30,12 @@ The partner's people speak Polish, French or English, not Arabic. The public sit
 | Create partner logins ("Set the password now"), disable or enable them, set a new password | Yes                       | -                                            | -           |
 | Choose which IconBridge staff are members                                                  | Yes                       | -                                            | -           |
 | See and edit the content of the space: job demands, applications, files, comments, history | Only if also a member     | **Yes, all members alike**                   | 404         |
+| Delete one application with its files and comments (for example an erasure request)        | Yes, as a member          | -                                            | 404         |
 
 - **The same rights for every member** inside a space, as asked. A member's back-office role does not matter inside a space.
-- **The super admin manages spaces but sees their content only as a member.** They can add themselves; that addition is audited and shown to the space in its history. Proposed default: least privilege (question 1).
-- **Staff members:** any active back-office account (viewer, country agent, recruiter, super admin) can be added. Inside the space it has full rights, even a viewer (question 2).
+- **The super admin manages spaces without seeing their content**: create, members, logins, disable, delete. They see the content only after adding themselves as a member; that addition is audited and shown to the space in its history (answer 1).
+- **Staff members:** any active back-office account (viewer, country agent, recruiter, super admin) can be added. Inside the space it has full rights, even a viewer (answer 2).
+- **Deleting an application** is for a super admin only, who must be a member to find it. It removes the application, its files and its comments (section 7, rule 11; answer 4). Members close job demands; they delete nothing.
 - **A partner login belongs to exactly one space**, given when it is created and never moved. It can do nothing else:
   - no back office;
   - no other space;
@@ -59,8 +61,8 @@ Every child row carries **`partner_space_id`**, and its foreign keys to its pare
 | `partner_jobs`          | `role` (≤ 120, e.g. "Housekeeping"), `positions` (> 0), `locations` (text[], 1 to 10 places), `salary` (optional text ≤ 200), `description` (plain text ≤ 5000), `status` (`OPEN`/`CLOSED`), `closed_at`, `created_by`, `updated_by`                                                                    | `positions` CHECK > 0; `closed_at` set if and only if `status = 'CLOSED'`                                                                                                                                                                  |
 | `partner_applications`  | `partner_job_id`, `first_name`, `last_name`, `nationality` (ISO alpha-2), `phone` (optional, E.164), `email` (optional, lower case), `visa_status`, `visa_appointment_date`, `visa_decision_date`, `dhl_sent_date`, `dhl_tracking_number` (≤ 40), `documents_received_date`, `created_by`, `updated_by` | `visa_status` in `NOT_STARTED`, `APPOINTMENT_BOOKED`, `SUBMITTED`, `APPROVED`, `REFUSED`; `visa_decision_date` only when `APPROVED` or `REFUSED`; `dhl_tracking_number` only with `dhl_sent_date`; dates are `date`, not timestamps        |
 | `partner_files`         | `partner_application_id`, `kind` (`PASSPORT`/`CV`/`WORK_PERMIT`), `format`, `mime_type`, `size_bytes`, `sha256`, `storage_path` (random), `original_name` (sanitised), `uploaded_by`, `created_at`                                                                                                      | Unique (`partner_application_id`, `kind`): one current file per kind. A new upload replaces the old file and deletes its blob                                                                                                              |
-| `partner_comments`      | `partner_job_id` or `partner_application_id` (exactly one, CHECK), `author_id` (nullable, `SET NULL`), `author_name` (snapshot), `body` (plain text ≤ 2000), `created_at`                                                                                                                               | Append-only: no editing or deleting (question 3)                                                                                                                                                                                           |
-| `partner_history`       | `actor_id` (nullable), `actor_name` (snapshot), `entity_type`, `entity_id`, `action`, `field`, `old_value`, `new_value` (text ≤ 500, cut), `created_at`                                                                                                                                                 | Append-only, one row per changed field                                                                                                                                                                                                     |
+| `partner_comments`      | `partner_job_id` or `partner_application_id` (exactly one, CHECK), `author_id` (nullable, `SET NULL`), `author_name` (snapshot), `body` (plain text ≤ 2000), `created_at`                                                                                                                               | Append-only: no editing (answer 3). Deleted only with their application or space                                                                                                                                                           |
+| `partner_history`       | `actor_id` (nullable), `actor_name` (snapshot), `entity_type`, `entity_id`, `partner_application_id` (nullable, the application the entry is about), `action`, `field`, `old_value`, `new_value` (text ≤ 500, cut), `created_at`                                                                        | Append-only, one row per changed field. Rows of a deleted application are removed with it (section 7, rule 11)                                                                                                                             |
 
 - **Users:** the CHECK on `users.locale` becomes `en`/`fr`/`ar`, or `pl` for a `PARTNER`. Staff keep their locale for their emails; the partner area remembers their chosen language in a cookie.
 - **Deletion:** `ON DELETE CASCADE` from `partner_spaces` down to every child, so deleting a space removes every row (section 7).
@@ -103,6 +105,7 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
 | `GET /partner-spaces/:spaceId/files/:fileId/link?inline=true`                                | A 5-minute read-only link, to preview (`inline`) or download                                                       |
 | `GET`, `POST /partner-spaces/:spaceId/{jobs/:jobId \| applications/:applicationId}/comments` | Comments: author name and time shown                                                                               |
 | `GET /partner-spaces/:spaceId/history`                                                       | History, newest first, filter by entity; paginated                                                                 |
+| `DELETE /partner-spaces/:spaceId/applications/:applicationId`                                | Super admin and member only: body `{ confirmName }` equal to the applicant's first and last name (section 7)       |
 
 - **Scoping in the query, every time.** Each service method takes `spaceId` from the guard and puts it in the `WHERE` of every query: `findFirst({ where: { id, partnerSpaceId } })`, never `findUnique({ id })` followed by a check. The same goes for updates (`updateMany` with both, count checked) and for file links.
 - **No route of the public site, the candidate area or the back office reads these tables**, apart from the super admin's management routes, which return counts, never content.
@@ -133,7 +136,7 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
   1. the language in the address;
   2. otherwise the user's last choice (a cookie);
   3. otherwise the default language of the space (the first space, for staff with several).
-- **Emails:** the only email a partner login receives is the password reset of the existing "forgot password" flow. Its template gains `pl`, and a test checks that every template a `PARTNER` can receive has `en`, `fr` and `pl`. Nothing is ever emailed to the people in a partner space.
+- **Emails:** the only email a partner login receives is the password reset (answer 6). It is sent in **the space's default language** and links to `/partners/{lang}/reset-password`. Its template gains `pl`, and a test checks that every template a `PARTNER` can receive has `en`, `fr` and `pl`. Nothing is ever emailed to the people in a partner space.
 - **Unchanged:** the public site and the back office keep `en`, `fr`, `ar` and their routing. `pl` is not added to `LOCALES`.
 
 **Back office screens (super admin; English and French, like the rest of the back office)**
@@ -152,6 +155,7 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
 **Partner area screens (`/partners/{lang}`)**
 
 - **Sign in:** email, password, Turnstile. It leads to "Choose a new password" when one is required; nothing else can be done before.
+- **Forgot password** and **reset password**, with Turnstile, the same answer whether the address exists or not.
 - **My spaces** (staff with several spaces). A partner login goes straight to its space.
 - **Space home:** job demands, open first, with positions, places, and counts per visa status.
 - **Job demand:**
@@ -161,6 +165,7 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
   - comments.
 - **Application:**
   - its form (names, nationality, optional phone and email, visa fields, DHL fields);
+  - for a super admin only, "Delete application": a dialog that lists what will be deleted and requires typing the applicant's name;
   - the three files, each with upload, preview and download;
   - comments;
   - the history of this application.
@@ -183,6 +188,7 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
    - `POST /auth/login` refuses `PARTNER` accounts. The answer is the same as for a wrong password, so neither endpoint reveals which kind of account an address has.
    - The existing protections apply: rate limit `authSensitive` (5 a minute), lockout after 5 failures, the same answer whether the address exists or not.
    - Staff members sign in to the back office as today and reach the partner area from its menu.
+   - "Forgot password" works for partner logins (answer 6): the existing endpoint, the same answer for every address, the email in the space's language. The reset link leads to the partner area, and a reset revokes the login's sessions as today.
 4. **Sessions like the back office:** a 15-minute access token, a 7-day refresh token with rotation and reuse detection, cookies `HttpOnly`, `Secure`, `SameSite=Lax`.
 5. **Access is cut at once.** The guard reads the user, the membership and the space on every request.
    - Disabling a login: `isActive = false` and `tokenVersion + 1`, and its refresh tokens are revoked.
@@ -199,6 +205,14 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
 8. **No personal data in logs:** ids only. `phone`, `email`, `dhlTrackingNumber` and the names are added to `SENSITIVE_KEYS`.
 9. **Plain text only:** descriptions and comments are rendered as text, never as HTML.
 10. **Exports:** none in this version.
+11. **Deleting one application** (answer 4).
+    - Only a `SUPER_ADMIN` who is a member of the space, after confirming by typing the applicant's name.
+    - A `PartnerApplicationDeletionService` deletes the files' blobs first; if that fails, nothing is deleted.
+    - Then, in one transaction:
+      - the application row, with its files and comments (cascade);
+      - every history row about it (`partner_application_id`), because their old and new values hold personal data;
+      - one new history row: action `APPLICATION_DELETED`, the actor and the time, the application's id, and no name or value.
+    - The audit entry holds the space id, the application id and the counts deleted, never names.
 
 ### 8. Tests (required before merging the implementation)
 
@@ -213,6 +227,12 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
 - **Cut-off:**
   - after disabling a login, the next request with its still-valid access token answers 401, and its refresh token no longer works;
   - after disabling a space or removing a member, the next request answers 404.
+- **Deleting an application:**
+  - refused (404) for members who are not super admins, and for a super admin who is not a member;
+  - refused with a wrong `confirmName`;
+  - removes the blobs, the files, the comments and its history rows, and leaves exactly one `APPLICATION_DELETED` entry without personal data;
+  - an application of another space answers 404.
+- **Forgot password:** a partner login receives the reset email in its space's language, Polish included, linking to the partner area.
 - **Separation:**
   - a partner job demand and application, with distinctive names, never appear in the public jobs list, the search, the sitemap, the job alerts, the dashboard figures, the back-office applications and candidates lists, or the exports;
   - no email is queued to an applicant's address.
@@ -245,18 +265,20 @@ The implementation is split into pull requests, each with its tests and green CI
 3. Files: the Terraform container (an infra apply link for the owner), upload, links, deletion.
 4. The super admin's back office screens.
 5. The partner area in EN, FR and PL, sign-in with Turnstile, the browser and axe tests.
-6. Docs: SPEC (roles and the new section), ARCHITECTURE, SECURITY (each new protection and its test), privacy policy (question 5), journal.
+6. Docs: SPEC (roles and the new section), ARCHITECTURE, SECURITY (each new protection and its test), journal. The privacy policy in EN, FR and AR is updated **before the feature opens** (answer 5): IconBridge processes the data of people put forward to partner companies, kept until the application or the space is deleted.
 
 Production checks use only the test account and data named `E2E …`; no real partner data is created.
 
-## Questions for the owner
+### 10. Owner's answers (11 November 2026)
 
-1. **Super admin and content:** may a super admin see a space's content only after adding themselves as a member (proposed), or always?
-2. **Staff roles:** may every back-office role be a member with full rights inside, viewers included (proposed), or only recruiters and super admins?
-3. **Comments:** append-only (proposed), or may an author edit or delete their own?
-4. **Deleting inside a space:** members can close job demands but not delete them or applications (proposed). Should a single application be deletable, with its files, for example when a person asks to be erased? If so: by any member, or by the super admin only?
-5. **Retention and privacy policy:** the data stays until the space is deleted (proposed: no automatic erasure). The privacy policy should then say that IconBridge processes the data of people put forward to partner companies. Should the text be added to the policy in EN, FR and AR before the feature opens?
-6. **Partner login emails:** may a partner login use "forgot password" (proposed, email in their language), or only the super admin resets passwords?
+1. **Super admin and content:** a super admin manages a space (create, members, disable, delete) without seeing its content, and sees the content only after adding themselves as a member.
+2. **Staff roles:** any back-office role can be a member, with full rights inside the space.
+3. **Comments:** append-only.
+4. **Deleting:** members cannot delete applications. A super admin can delete one application with all its files and comments, with confirmation (for example an erasure request). The history keeps only "application deleted by X at time Y", without personal data.
+5. **Privacy policy:** updated in EN, FR and AR before the feature opens. The data is kept until the space or the application is deleted.
+6. **Forgot password:** available to partner logins, with the email in the space's language.
+
+The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is approved.
 
 ## Consequences
 

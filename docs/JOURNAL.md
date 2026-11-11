@@ -1381,3 +1381,21 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 **Checks**: read SPEC, the auth guards, sessions, document checks, storage and the audit log, so the design reuses them. No code changed.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/86>
+
+## 2026-11-11 - Partner spaces design accepted
+
+**What**: ADR-027 records the owner's answers to its six questions and is now accepted.
+
+- A super admin manages spaces without seeing their content.
+- Any back-office role can be a member, with full rights inside.
+- Comments are append-only.
+- A super admin who is a member can delete one application:
+  - its blobs go first, then its rows and its history rows;
+  - the history keeps a single `APPLICATION_DELETED` entry without personal data.
+- The privacy policy is updated before the feature opens.
+- Partner logins can use "forgot password", with the email in the space's language.
+- The separate sign-in endpoint with Turnstile is approved.
+
+**Why**: the design had to be approved before any code (owner's request).
+
+**Checks**: Prettier; links in the ADR index.
