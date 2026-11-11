@@ -1334,4 +1334,4 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - Production plan with `Microsoft.EventGrid` not registered: stops on the precondition.
 - `terraform fmt`, `terraform validate`.
 
-**PR**: _(this pull request)_
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/78>
