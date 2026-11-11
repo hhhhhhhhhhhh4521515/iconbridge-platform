@@ -16,7 +16,9 @@ email_domain     = "iconbridgerecruitment.com"
 use_email_domain = true
 
 # Audit H1 part 1 (ADR-026): no workstation address is allowed through the firewall any more
-# (overrides TF_VARS_PROD). The apps keep the password until the identity owns the tables:
-# every object belongs to the password administrator, so the identity would be refused on them.
-database_auth      = "password"
-admin_ip_addresses = []
+# (overrides TF_VARS_PROD). The apps sign in with tokens of the managed identity; as an Entra
+# administrator it can use and migrate the objects of the password login (ADR-026, decision 3).
+# Password sign-in is off since production ran on tokens on 11 November 2026 (decision 4).
+database_auth          = "entra"
+database_password_auth = false
+admin_ip_addresses     = []

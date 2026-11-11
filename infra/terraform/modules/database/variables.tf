@@ -61,7 +61,7 @@ variable "entra_admin" {
 }
 
 variable "password_auth_enabled" {
-  description = "Password sign-in. Turned off once the apps sign in with Entra tokens (ADR-026, step 3)."
+  description = "Password sign-in. Turned off once the apps sign in with Entra tokens (ADR-026, decision 4)."
   type        = bool
   default     = true
 }

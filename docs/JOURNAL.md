@@ -1366,6 +1366,50 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/80>
 
+## 2026-11-11 - Database switch to Entra tokens, after a test on a copy of production
+
+**What**: `database_auth = "entra"` in `production.auto.tfvars`, as in #75. ADR-026 decision 3 now records why no ownership change is needed. DEPLOYMENT.md says the apps use tokens.
+
+**Why**: audit H1 part 1. The switch was held back on 8 November (#76): on standard PostgreSQL, the identity could not have used or altered the tables, which belong to the password login. A point-in-time copy showed that Azure is different: members of `azure_pg_admin` have `pg_read_all_data`, `pg_write_all_data` and the rights of the other non-superuser roles. The 8 November diagnosis was wrong for Azure.
+
+**Checks**:
+
+- Local PostgreSQL 16 simulation of an ownership migration (closed #81): passed locally, but did not reproduce Azure.
+- Point-in-time copy `psql-iconbridge-ownertest-itn` (owner's approval), reached only from this machine. No production data was written to disk.
+  - Real roles: the identity is a member of `azure_pg_admin` only; `has_table_privilege` already true before any change.
+  - The ownership migration failed there ("permission denied to alter restricted role azure_pg_admin") and left nothing behind.
+  - As an Entra user that is a member of `azure_pg_admin` only:
+    - read, write;
+    - `ALTER TABLE jobs`, a new enum value on an enum owned by `iconbridge_admin`, an index, a table with a foreign key;
+    - `prisma migrate deploy` of a test migration, the production seed, `pg_dump` to `/dev/null`.
+  - `iconbridge_admin` altered the table created by the Entra user.
+  - Copy deleted afterwards. Production keeps one firewall rule (`allow-azure-services`) and one Entra administrator (the identity).
+- `terraform fmt`, `validate`, read-only plan.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/82>
+
+## 2026-11-11 - Production on Entra tokens checked; password sign-in off on PostgreSQL
+
+**What**:
+
+- `database_password_auth = false` in `production.auto.tfvars`: the server accepts Microsoft Entra tokens only (audit H1 part 1, ADR-026 decision 4).
+- A validation of the variable refuses password sign-in off with `database_auth = "password"`.
+- ADR-026, DEPLOYMENT.md, RUNBOOK.md (restore into production, rotation of `db-admin-password`) and SECURITY.md updated.
+
+**Why**: production has run on tokens since the apply of #82, and nothing else signs in with the password. Staging is not deployed, and `iconbridge` is the only application database on the server.
+
+**Checks**:
+
+- After the apply of #82 (run 43100318581: 0 added, 5 changed, 0 destroyed):
+  - API revision `--0000033` (created by the apply) is healthy with `DATABASE_AUTH=entra`. `/api/health/ready` (which runs `SELECT 1`) and `GET /api/v1/jobs` (16 jobs) answered 200.
+  - Key Vault `database-url`: user `id-iconbridge-prod-itn`, no password, `sslmode=require` (checked without printing it). Every database connection is therefore made with a token.
+  - One manual execution of each job, all Succeeded: tasks, backup (`iconbridge-20261111T214837Z.dump`, 364 KB), and migration (`migrate deploy` and the seed). The scheduled tasks executions after the apply also succeeded.
+  - The Log Analytics workspace had reached its daily cap (0.15 GB) at 20:00 UTC, so the console logs of these runs were not ingested. The evidence is the exit codes, the backup blob and the API answers.
+- The new validation, on a copy of the two variables: entra/false, entra/true and password/true accepted; password/false refused.
+- `terraform fmt -check`, `terraform validate`; the plan is posted on the pull request.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/87>
+
 ## 2026-11-11 - Partner spaces: design (ADR-027, proposed)
 
 **What**: ADR-027 describes partner spaces before any code:

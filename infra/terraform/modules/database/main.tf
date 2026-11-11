@@ -26,7 +26,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   public_network_access_enabled = true
 
   authentication {
-    # Off once the apps run on tokens (ADR-026, step 3).
+    # Off once the apps run on tokens (ADR-026, decision 4).
     password_auth_enabled         = var.password_auth_enabled
     active_directory_auth_enabled = true
     tenant_id                     = var.tenant_id

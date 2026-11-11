@@ -387,7 +387,7 @@ The agents' accounts are created in the back office (**Users and roles** → **I
 
 ### Database sign-in (Microsoft Entra, ADR-026)
 
-Entra authentication is on and the managed identity `id-iconbridge-prod-itn` is the server's Entra administrator. The API, the tasks, migration and backup jobs still sign in with the password (`database_auth = "password"`) until the identity owns the tables: the migrations created every object under the password administrator, and the identity has no right on them (ADR-026, decision 3). Since 8 November 2026 there is no firewall rule for a workstation; the only rule is "allow Azure services", which stays until private networking (audit H1 part 2): the Consumption environment has no fixed outgoing address to name instead.
+The API, the tasks, migration and backup jobs sign in to PostgreSQL with tokens of the managed identity `id-iconbridge-prod-itn`, the server's Entra administrator (`database_auth = "entra"`), and password sign-in is off on the server (`database_password_auth = false`). The objects still belong to the password login `iconbridge_admin`; in Azure every server administrator can use and alter them (ADR-026, decision 3). Since 8 November 2026 there is no firewall rule for a workstation; the only rule is "allow Azure services", which stays until private networking (audit H1 part 2): the Consumption environment has no fixed outgoing address to name instead.
 
 A person who needs the database (a restore, an investigation) does it for the occasion, with the owner's approval:
 
