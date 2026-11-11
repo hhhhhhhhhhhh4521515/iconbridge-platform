@@ -202,14 +202,13 @@ echo 'owner = "you@example.com"' > infra/terraform/bootstrap/terraform.tfvars
 make tf-bootstrap
 ```
 
-Creates `rg-iconbridge-tfstate` and the storage account `sticonbridgetfstateitn` (container `tfstate`, versioning, soft delete, no account key). Its own state stays in `infra/terraform/bootstrap/terraform.tfstate` on this machine (git-ignored): keep a copy somewhere safe.
+Creates `rg-iconbridge-tfstate` and the storage account `sticonbridgetfstateitn` (container `tfstate`, versioning, soft delete, no account key), and registers the resource providers that the infrastructure needs beyond those of the subscription: `Microsoft.Communication` (email) and `Microsoft.EventGrid` (delivery reports), in `providers.tf`. Registering is a subscription-level action that the CI identities cannot do, so apply the bootstrap again after adding a provider there; the production plan stops with "Microsoft.EventGrid is not registered" until it is. Its own state stays in `infra/terraform/bootstrap/terraform.tfstate` on this machine (git-ignored): keep a copy somewhere safe.
 
 ### 2. Infrastructure
 
 ```bash
 cp infra/terraform/envs/prod/terraform.tfvars.example infra/terraform/envs/prod/terraform.tfvars
 # owner_email, admin_ip_addresses (curl -s https://api.ipify.org)
-az provider register --namespace Microsoft.Communication --wait   # once, for the email resources
 make tf-init ENV=prod
 make tf-plan ENV=prod      # read the plan
 make tf-apply ENV=prod     # only after approval
