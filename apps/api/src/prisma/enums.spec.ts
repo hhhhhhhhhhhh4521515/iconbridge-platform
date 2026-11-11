@@ -9,6 +9,10 @@ import {
   JOB_CLOSE_REASONS,
   JOB_STATUSES,
   LANGUAGE_LEVELS,
+  PARTNER_FILE_KINDS,
+  PARTNER_JOB_STATUSES,
+  PARTNER_MEMBER_KINDS,
+  PARTNER_VISA_STATUSES,
   SALARY_PERIODS,
   USER_ROLES,
 } from '@iconbridge/shared';
@@ -30,11 +34,15 @@ describe('Prisma enums match packages/shared', () => {
     ['ApplicationStatus', prismaEnums.ApplicationStatus, APPLICATION_STATUSES],
     ['HistoricalMetric', prismaEnums.HistoricalMetric, HISTORICAL_METRICS],
     ['EmailStatus', prismaEnums.EmailStatus, EMAIL_STATUSES],
+    ['PartnerMemberKind', prismaEnums.PartnerMemberKind, PARTNER_MEMBER_KINDS],
+    ['PartnerJobStatus', prismaEnums.PartnerJobStatus, PARTNER_JOB_STATUSES],
+    ['PartnerVisaStatus', prismaEnums.PartnerVisaStatus, PARTNER_VISA_STATUSES],
+    ['PartnerFileKind', prismaEnums.PartnerFileKind, PARTNER_FILE_KINDS],
   ] as const)('%s', (_name, prismaEnum, shared) => {
     expect(Object.values(prismaEnum)).toEqual([...shared]);
   });
 
   it('covers every enum of the schema', () => {
-    expect(Object.keys(prismaEnums)).toHaveLength(12);
+    expect(Object.keys(prismaEnums)).toHaveLength(16);
   });
 });

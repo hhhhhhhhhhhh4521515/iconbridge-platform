@@ -18,6 +18,7 @@ const SPEC_TABLE: Record<Permission, [boolean, boolean, boolean, boolean, boolea
   MANAGE_ADMIN_USERS: [false, false, false, false, true],
   MANAGE_SETTINGS: [false, false, false, false, true],
   WAIVE_COOLDOWN: [false, false, false, false, true],
+  MANAGE_PARTNER_SPACES: [false, false, false, false, true],
 };
 
 const COLUMNS: UserRole[] = ['CANDIDATE', 'VIEWER', 'COUNTRY_AGENT', 'RECRUITER', 'SUPER_ADMIN'];
@@ -25,7 +26,15 @@ const COLUMNS: UserRole[] = ['CANDIDATE', 'VIEWER', 'COUNTRY_AGENT', 'RECRUITER'
 describe('PERMISSIONS', () => {
   it('covers every row of the specification and nothing else', () => {
     expect(Object.keys(PERMISSIONS).sort()).toEqual(Object.keys(SPEC_TABLE).sort());
-    expect(COLUMNS).toEqual([...USER_ROLES]);
+    // PARTNER holds no capability (its own test below), so the table has no column for it.
+    expect(COLUMNS).toEqual(USER_ROLES.filter((role) => role !== 'PARTNER'));
+  });
+
+  it('gives a partner login no capability at all: it only reaches its partner space (ADR-027)', () => {
+    const partner = (Object.keys(PERMISSIONS) as Permission[]).filter((p) =>
+      hasPermission('PARTNER', p),
+    );
+    expect(partner).toEqual([]);
   });
 
   it.each(Object.entries(SPEC_TABLE) as [Permission, boolean[]][])(

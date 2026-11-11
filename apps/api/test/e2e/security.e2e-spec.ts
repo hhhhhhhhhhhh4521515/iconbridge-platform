@@ -2,12 +2,18 @@ import { RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants.js';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import sharp from 'sharp';
-import { IS_PUBLIC_KEY, OPTIONAL_AUTH_KEY, ROLES_KEY } from '../../src/auth/decorators/index.js';
+import {
+  IS_PUBLIC_KEY,
+  OPTIONAL_AUTH_KEY,
+  PARTNER_ACCESS_KEY,
+  ROLES_KEY,
+} from '../../src/auth/decorators/index.js';
 import {
   API,
   cookieHeader,
   createReadyCandidate,
   createTestApp,
+  createPartnerLogin,
   createUser,
   resetDatabase,
   seedCatalog,
@@ -20,6 +26,7 @@ interface Route {
   path: string;
   open: boolean;
   roles: readonly string[] | undefined;
+  partner: boolean;
 }
 
 /**
@@ -53,6 +60,12 @@ const OPEN_ROUTES = [
   // Azure Event Grid: the subscription validation; the reports need the key (audit M2).
   'POST /api/v1/email-events',
 ].sort();
+
+/**
+ * Routes a partner login (PARTNER) may call besides the open ones (ADR-027). Every other
+ * route answers 403 to it; adding a route here is a decision, like OPEN_ROUTES.
+ */
+const PARTNER_ROUTES = ['GET /api/v1/auth/me', 'POST /api/v1/me/password'].sort();
 
 describe('security (e2e)', () => {
   let test: TestApp;
@@ -92,6 +105,9 @@ describe('security (e2e)', () => {
                 reflector.getAllAndOverride<boolean | undefined>(OPTIONAL_AUTH_KEY, targets) ===
                   true,
               roles: reflector.getAllAndOverride<readonly string[] | undefined>(ROLES_KEY, targets),
+              partner:
+                reflector.getAllAndOverride<boolean | undefined>(PARTNER_ACCESS_KEY, targets) ===
+                true,
             },
           ];
         });
@@ -176,6 +192,39 @@ describe('security (e2e)', () => {
           .http()
           [method](path)
           .set('Cookie', cookieHeader(candidate.cookies))
+          .send({});
+        if (response.status !== 403) {
+          failures.push(`${route.method} ${route.path} -> ${String(response.status)}`);
+        }
+      }
+      expect(failures).toEqual([]);
+    });
+  });
+
+  describe('partner logins (ADR-027)', () => {
+    it('opens to partner logins exactly the routes that were decided', () => {
+      const partner = routes
+        .filter((route) => route.partner)
+        .map((route) => `${route.method} ${route.path}`)
+        .sort();
+      expect(partner).toEqual(PARTNER_ROUTES);
+      expect(partner.filter((route) => route.includes('/admin/'))).toEqual([]);
+    });
+
+    it('answers 403 to a partner login on every other route that needs a session', async () => {
+      await resetDatabase(test.prisma);
+      const space = await test.prisma.partnerSpace.create({
+        data: { name: 'E2E Fence', country: 'PL', defaultLocale: 'pl' },
+      });
+      const partner = await createPartnerLogin(test, space.id);
+      const failures: string[] = [];
+      for (const route of routes.filter((entry) => !entry.open && !entry.partner)) {
+        const path = route.path.replace(/:[A-Za-z]+/g, '00000000-0000-4000-8000-000000000000');
+        const method = route.method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
+        const response = await test
+          .http()
+          [method](path)
+          .set('Cookie', cookieHeader(partner.cookies))
           .send({});
         if (response.status !== 403) {
           failures.push(`${route.method} ${route.path} -> ${String(response.status)}`);

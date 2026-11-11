@@ -8,6 +8,14 @@ export type Locale = z.infer<typeof localeSchema>;
 
 export const DEFAULT_LOCALE: Locale = 'en';
 
+/**
+ * Languages of the partner area (ADR-027): English, French and Polish. The public site and
+ * the back office keep LOCALES; `pl` is never added there.
+ */
+export const PARTNER_LOCALES = ['en', 'fr', 'pl'] as const;
+export const partnerLocaleSchema = z.enum(PARTNER_LOCALES);
+export type PartnerLocale = z.infer<typeof partnerLocaleSchema>;
+
 /** Shape of the i18n JSON columns (destination name, slide title, story quote...). */
 export const localizedTextSchema = z.object({
   en: z.string().min(1),

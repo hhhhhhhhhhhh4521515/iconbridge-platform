@@ -29,6 +29,7 @@ import {
   AllowPasswordChange,
   CurrentUser,
   OptionalAuth,
+  PartnerAccess,
   Public,
   Roles,
 } from './decorators/index.js';
@@ -223,6 +224,7 @@ export class AuthController {
 
   @Throttle({ default: RATE_LIMITS.default })
   @AllowPasswordChange()
+  @PartnerAccess()
   @Get('me')
   @ApiCookieAuth()
   @ApiOperation({ summary: 'The signed-in user' })

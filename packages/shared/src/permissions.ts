@@ -35,6 +35,11 @@ export const PERMISSIONS = {
   MANAGE_SETTINGS: ['SUPER_ADMIN'],
   /** Lift the re-application waiting period of one finished application (reason, audited). */
   WAIVE_COOLDOWN: ['SUPER_ADMIN'],
+  /**
+   * Create, change, disable and delete partner spaces, their staff members and partner logins
+   * (ADR-027). It gives no access to a space's content: only membership does.
+   */
+  MANAGE_PARTNER_SPACES: ['SUPER_ADMIN'],
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

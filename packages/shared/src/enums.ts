@@ -1,13 +1,17 @@
 import './zod-setup.js';
 import { z } from 'zod';
 
-/** Account roles. Visitors are unauthenticated and have no role. */
+/**
+ * Account roles. Visitors are unauthenticated and have no role. PARTNER is a login of a
+ * partner company: it reaches only its partner space and its own account (ADR-027).
+ */
 export const USER_ROLES = [
   'CANDIDATE',
   'VIEWER',
   'COUNTRY_AGENT',
   'RECRUITER',
   'SUPER_ADMIN',
+  'PARTNER',
 ] as const;
 export const userRoleSchema = z.enum(USER_ROLES);
 export type UserRole = z.infer<typeof userRoleSchema>;
@@ -159,3 +163,29 @@ export function isGlobalHistoricalMetric(metric: HistoricalMetric): boolean {
 /** Life of an email in the outbox. */
 export const EMAIL_STATUSES = ['PENDING', 'SENT', 'FAILED', 'CANCELLED'] as const;
 export type EmailStatus = (typeof EMAIL_STATUSES)[number];
+
+/** Partner spaces (ADR-027): how a user belongs to a space. */
+export const PARTNER_MEMBER_KINDS = ['STAFF', 'PARTNER'] as const;
+export const partnerMemberKindSchema = z.enum(PARTNER_MEMBER_KINDS);
+export type PartnerMemberKind = z.infer<typeof partnerMemberKindSchema>;
+
+/** A partner's job demand is open or closed; members close and reopen it. */
+export const PARTNER_JOB_STATUSES = ['OPEN', 'CLOSED'] as const;
+export const partnerJobStatusSchema = z.enum(PARTNER_JOB_STATUSES);
+export type PartnerJobStatus = z.infer<typeof partnerJobStatusSchema>;
+
+/** Visa follow-up of a person put forward in a partner space. */
+export const PARTNER_VISA_STATUSES = [
+  'NOT_STARTED',
+  'APPOINTMENT_BOOKED',
+  'SUBMITTED',
+  'APPROVED',
+  'REFUSED',
+] as const;
+export const partnerVisaStatusSchema = z.enum(PARTNER_VISA_STATUSES);
+export type PartnerVisaStatus = z.infer<typeof partnerVisaStatusSchema>;
+
+/** The three files of an application in a partner space, one current file each. */
+export const PARTNER_FILE_KINDS = ['PASSPORT', 'CV', 'WORK_PERMIT'] as const;
+export const partnerFileKindSchema = z.enum(PARTNER_FILE_KINDS);
+export type PartnerFileKind = z.infer<typeof partnerFileKindSchema>;

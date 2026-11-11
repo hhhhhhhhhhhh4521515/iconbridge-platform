@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AdminModule } from './admin/admin.module.js';
+import { PartnerSpacesModule } from './partner-spaces/partner-spaces.module.js';
 import { AuditInterceptor } from './admin/audit/audit.interceptor.js';
 import { RevalidateInterceptor } from './site-cache/revalidate.interceptor.js';
 import { RATE_LIMITS } from './auth/auth.constants.js';
@@ -51,6 +52,7 @@ import { StorageModule } from './storage/storage.module.js';
     StorageModule,
     AuthModule,
     AdminModule,
+    PartnerSpacesModule,
     JobsModule,
     CandidatesModule,
     ContentModule,

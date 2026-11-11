@@ -1482,3 +1482,51 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`; the browser suite.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/88>
+
+## 2026-11-12 - Partner spaces, PR 1: data model, role PARTNER, fences, management API
+
+**What** (ADR-027, PR 1 of 6):
+
+- **Data model:**
+  - tables `partner_spaces`, `partner_space_members`, `partner_jobs`, `partner_applications`, `partner_files`, `partner_comments` and `partner_history`, with composite foreign keys on `partner_space_id`, hand-written CHECK constraints and partial unique indexes;
+  - `users.display_name`;
+  - the role `PARTNER`, in its own migration;
+  - `users_locale_check` now allows `pl` for partner logins.
+- **Shared:** the enums, `PARTNER_LOCALES` (en, fr, pl), the permission `MANAGE_PARTNER_SPACES` (super admin), the management schemas and three error codes.
+- **API:**
+  - `RolesGuard` lets a `PARTNER` through only on routes marked `@PartnerAccess()`: `GET /auth/me` and `POST /me/password` for now;
+  - `/auth/login` answers it as for a wrong password;
+  - forgot-password and resend-verification send it nothing;
+  - `OwnershipGuard` names the roles it lets through.
+- **Super admin routes** under `admin/partner-spaces`:
+  - list, create, read, change and delete spaces (typed name, rows and partner logins, audit with counts);
+  - staff members (any active back-office role);
+  - partner logins ("set the password now", disable, enable, new password);
+  - audited, written to the space history, never returning content.
+- **Docs:** SPEC (role and privilege), ARCHITECTURE (database rules, deletions), SECURITY (partner fence), ADR-027 implementation notes, API types and API.md.
+
+**Why**: owner's approval of ADR-027 on 11 November 2026, delivery in six pull requests.
+
+**Checks**:
+
+- `partner-spaces-admin.e2e-spec.ts` (15 tests):
+  - roles refused (viewer, country agent, recruiter, candidate, partner: 403; anonymous: 401) on every route;
+  - names unique ignoring case;
+  - counts without content;
+  - members and history;
+  - logins: password never returned or audited, language of the space, a login of another space answers 404;
+  - access cut at once when a login is disabled or gets a new password;
+  - the partner fence: `/auth/login` answers as for a wrong password, with no failed-login count; no email;
+  - deletion with the exact name only, the rows and logins gone, the other space untouched, the audit with counts only;
+  - cross-space rows refused by the database.
+- `security.e2e-spec.ts`: a fixed list of routes open to partner logins; 403 to a partner login on every other route.
+- Unit tests: `roles.guard.spec.ts`, `permissions.spec.ts`, `partner.spec.ts`, `enums.spec.ts`.
+- Each CHECK constraint tried by hand on the development database (in a rolled-back transaction); `prisma migrate diff` shows no drift.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`.
+
+**Development database**:
+
+- removed the leftover migration `20261111150000_database_owner_role` of the closed #81 from `iconbridge` and `iconbridge_test`;
+- gave their objects back to the `iconbridge` login.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/89>

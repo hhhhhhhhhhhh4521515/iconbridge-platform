@@ -26,8 +26,44 @@ enum UserRole {
   COUNTRY_AGENT
   RECRUITER
   SUPER_ADMIN
+  /// Login of a partner company: its partner space only (ADR-027).
+  PARTNER
 
   @@map("user_role")
+}
+
+enum PartnerMemberKind {
+  /// A back-office account added by a super admin.
+  STAFF
+  /// A login of the partner company (role PARTNER), in exactly one space.
+  PARTNER
+
+  @@map("partner_member_kind")
+}
+
+enum PartnerJobStatus {
+  OPEN
+  CLOSED
+
+  @@map("partner_job_status")
+}
+
+enum PartnerVisaStatus {
+  NOT_STARTED
+  APPOINTMENT_BOOKED
+  SUBMITTED
+  APPROVED
+  REFUSED
+
+  @@map("partner_visa_status")
+}
+
+enum PartnerFileKind {
+  PASSPORT
+  CV
+  WORK_PERMIT
+
+  @@map("partner_file_kind")
 }
 
 enum EmailTokenType {
@@ -164,8 +200,11 @@ model User {
   lastLoginAt            DateTime? @map("last_login_at") @db.Timestamptz(3)
   /// When the "your account will be erased" email was sent (data retention); cleared by any new activity.
   retentionWarnedAt      DateTime? @map("retention_warned_at") @db.Timestamptz(3)
-  /// Language of the emails sent to the user: en, fr or ar (CHECK constraint).
+  /// Language of the emails sent to the user: en, fr or ar, or pl for a PARTNER (CHECK constraint).
   locale                 String    @default("en") @db.VarChar(2)
+  /// Name shown to the other members of a partner space (ADR-027). Optional for staff, who
+  /// are shown by their address without one.
+  displayName            String?   @map("display_name") @db.VarChar(80)
   /// Consecutive failed logins; reset by a successful login or a password reset.
   failedLoginCount       Int       @default(0) @map("failed_login_count")
   /// Logins are refused until this time (set after too many failures).
@@ -193,6 +232,17 @@ model User {
   statusChanges    ApplicationStatusHistory[]
   applicationNotes ApplicationNote[]
   auditLogs        AuditLog[]
+
+  partnerMemberships   PartnerSpaceMember[] @relation("PartnerMember")
+  partnerMembersAdded  PartnerSpaceMember[] @relation("PartnerMemberAddedBy")
+  partnerSpacesCreated PartnerSpace[]
+  partnerJobsCreated   PartnerJob[]         @relation("PartnerJobCreatedBy")
+  partnerJobsUpdated   PartnerJob[]         @relation("PartnerJobUpdatedBy")
+  partnerAppsCreated   PartnerApplication[] @relation("PartnerApplicationCreatedBy")
+  partnerAppsUpdated   PartnerApplication[] @relation("PartnerApplicationUpdatedBy")
+  partnerFilesUploaded PartnerFile[]
+  partnerComments      PartnerComment[]
+  partnerHistory       PartnerHistory[]
 
   @@index([role])
   /// Lists and counters select accounts by role, leaving out the erased ones.
@@ -779,4 +829,206 @@ model EmailSuppression {
 
   @@index([lastEventAt])
   @@map("email_suppressions")
+}
+
+// ---------------------------------------------------------------------------
+// Partner spaces (ADR-027): a private workspace per partner company. Nothing here is
+// linked to jobs, applications, candidates or documents of the public site. Every child row
+// carries partner_space_id, and its foreign keys to its parents include it, so the database
+// refuses a row of one space attached to a parent of another.
+// ---------------------------------------------------------------------------
+
+model PartnerSpace {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Unique ignoring case (index on lower(name), hand-written).
+  name          String   @db.VarChar(120)
+  /// ISO 3166-1 alpha-2 (CHECK constraint).
+  country       String   @db.Char(2)
+  /// en, fr or pl (CHECK constraint): the partner area and the partner logins' emails.
+  defaultLocale String   @map("default_locale") @db.VarChar(2)
+  /// Path of the logo in the private partner-files container.
+  logoPath      String?  @map("logo_path")
+  /// False: no member can open the space until it is enabled again.
+  isActive      Boolean  @default(true) @map("is_active")
+  createdById   String?  @map("created_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  createdBy    User?                @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  members      PartnerSpaceMember[]
+  jobs         PartnerJob[]
+  applications PartnerApplication[]
+  files        PartnerFile[]
+  comments     PartnerComment[]
+  history      PartnerHistory[]
+
+  @@map("partner_spaces")
+}
+
+model PartnerSpaceMember {
+  partnerSpaceId String            @map("partner_space_id") @db.Uuid
+  userId         String            @map("user_id") @db.Uuid
+  /// PARTNER if and only if the user's role is PARTNER (checked by the service).
+  kind           PartnerMemberKind
+  addedById      String?           @map("added_by_id") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  space   PartnerSpace @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
+  user    User         @relation("PartnerMember", fields: [userId], references: [id], onDelete: Cascade)
+  addedBy User?        @relation("PartnerMemberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  // A partner login belongs to one space: partial unique index on user_id where kind = PARTNER (hand-written).
+  @@id([partnerSpaceId, userId])
+  @@index([userId])
+  @@map("partner_space_members")
+}
+
+/// A job demand of the partner company.
+model PartnerJob {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerSpaceId String           @map("partner_space_id") @db.Uuid
+  role           String           @db.VarChar(120)
+  /// More than 0 (CHECK constraint).
+  positions      Int
+  /// 1 to 10 places (CHECK constraint).
+  locations      String[]
+  salary         String?          @db.VarChar(200)
+  /// Plain text, never HTML.
+  description    String           @default("") @db.VarChar(5000)
+  status         PartnerJobStatus @default(OPEN)
+  /// Set if and only if status is CLOSED (CHECK constraint).
+  closedAt       DateTime?        @map("closed_at") @db.Timestamptz(3)
+  createdById    String?          @map("created_by_id") @db.Uuid
+  updatedById    String?          @map("updated_by_id") @db.Uuid
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  space        PartnerSpace         @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
+  createdBy    User?                @relation("PartnerJobCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy    User?                @relation("PartnerJobUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  applications PartnerApplication[]
+  comments     PartnerComment[]
+
+  @@unique([partnerSpaceId, id])
+  @@index([partnerSpaceId, status, createdAt])
+  @@map("partner_jobs")
+}
+
+/// A person put forward for a job demand, and the follow-up of their visa.
+model PartnerApplication {
+  id                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerSpaceId        String            @map("partner_space_id") @db.Uuid
+  partnerJobId          String            @map("partner_job_id") @db.Uuid
+  firstName             String            @map("first_name") @db.VarChar(100)
+  lastName              String            @map("last_name") @db.VarChar(100)
+  /// ISO 3166-1 alpha-2 (CHECK constraint).
+  nationality           String            @db.Char(2)
+  /// E.164 (CHECK constraint).
+  phone                 String?           @db.VarChar(16)
+  /// Lower case (CHECK constraint). Nothing is ever emailed to it.
+  email                 String?           @db.VarChar(254)
+  visaStatus            PartnerVisaStatus @default(NOT_STARTED) @map("visa_status")
+  visaAppointmentDate   DateTime?         @map("visa_appointment_date") @db.Date
+  /// Only when the visa is APPROVED or REFUSED (CHECK constraint).
+  visaDecisionDate      DateTime?         @map("visa_decision_date") @db.Date
+  dhlSentDate           DateTime?         @map("dhl_sent_date") @db.Date
+  /// Only with dhl_sent_date (CHECK constraint).
+  dhlTrackingNumber     String?           @map("dhl_tracking_number") @db.VarChar(40)
+  documentsReceivedDate DateTime?         @map("documents_received_date") @db.Date
+  createdById           String?           @map("created_by_id") @db.Uuid
+  updatedById           String?           @map("updated_by_id") @db.Uuid
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  space     PartnerSpace     @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
+  job       PartnerJob       @relation(fields: [partnerSpaceId, partnerJobId], references: [partnerSpaceId, id], onDelete: Cascade)
+  createdBy User?            @relation("PartnerApplicationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?            @relation("PartnerApplicationUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  files     PartnerFile[]
+  comments  PartnerComment[]
+  history   PartnerHistory[]
+
+  @@unique([partnerSpaceId, id])
+  @@index([partnerSpaceId, partnerJobId])
+  @@index([partnerSpaceId, visaStatus])
+  @@map("partner_applications")
+}
+
+/// The current passport, CV or work permit of an application; a new upload replaces it.
+model PartnerFile {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerSpaceId       String          @map("partner_space_id") @db.Uuid
+  partnerApplicationId String          @map("partner_application_id") @db.Uuid
+  kind                 PartnerFileKind
+  /// Format detected from the content (inspectDocument).
+  format               String          @db.VarChar(10)
+  mimeType             String          @map("mime_type") @db.VarChar(100)
+  /// More than 0 (CHECK constraint).
+  sizeBytes            Int             @map("size_bytes")
+  sha256               String          @db.Char(64)
+  /// spaces/<spaceId>/<random> in the private partner-files container.
+  storagePath          String          @unique @map("storage_path")
+  originalName         String          @map("original_name") @db.VarChar(255)
+  uploadedById         String?         @map("uploaded_by_id") @db.Uuid
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  space       PartnerSpace       @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
+  application PartnerApplication @relation(fields: [partnerSpaceId, partnerApplicationId], references: [partnerSpaceId, id], onDelete: Cascade)
+  uploadedBy  User?              @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@unique([partnerApplicationId, kind])
+  @@index([partnerSpaceId])
+  @@map("partner_files")
+}
+
+/// Append-only: no editing (ADR-027, answer 3); deleted with its application or space.
+model PartnerComment {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerSpaceId       String   @map("partner_space_id") @db.Uuid
+  /// Exactly one of the job demand and the application (CHECK constraint).
+  partnerJobId         String?  @map("partner_job_id") @db.Uuid
+  partnerApplicationId String?  @map("partner_application_id") @db.Uuid
+  authorId             String?  @map("author_id") @db.Uuid
+  /// The author's name when the comment was written.
+  authorName           String   @map("author_name") @db.VarChar(254)
+  /// Plain text, never HTML.
+  body                 String   @db.VarChar(2000)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  space       PartnerSpace        @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
+  job         PartnerJob?         @relation(fields: [partnerSpaceId, partnerJobId], references: [partnerSpaceId, id], onDelete: Cascade)
+  application PartnerApplication? @relation(fields: [partnerSpaceId, partnerApplicationId], references: [partnerSpaceId, id], onDelete: Cascade)
+  author      User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([partnerSpaceId, partnerJobId, createdAt])
+  @@index([partnerSpaceId, partnerApplicationId, createdAt])
+  @@map("partner_comments")
+}
+
+/// Append-only history of every change in a space: who, what, when, old and new value.
+model PartnerHistory {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerSpaceId       String   @map("partner_space_id") @db.Uuid
+  actorId              String?  @map("actor_id") @db.Uuid
+  actorName            String   @map("actor_name") @db.VarChar(254)
+  /// space, member, login, job, application, file, comment.
+  entityType           String   @map("entity_type") @db.VarChar(30)
+  entityId             String   @map("entity_id") @db.Uuid
+  /// The application the entry is about: its rows go when it is deleted (ADR-027, rule 11).
+  partnerApplicationId String?  @map("partner_application_id") @db.Uuid
+  action               String   @db.VarChar(40)
+  field                String?  @db.VarChar(60)
+  oldValue             String?  @map("old_value") @db.VarChar(500)
+  newValue             String?  @map("new_value") @db.VarChar(500)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  space       PartnerSpace        @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
+  application PartnerApplication? @relation(fields: [partnerSpaceId, partnerApplicationId], references: [partnerSpaceId, id], onDelete: Cascade)
+  actor       User?               @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([partnerSpaceId, createdAt(sort: Desc)])
+  @@index([partnerSpaceId, entityType, entityId])
+  @@map("partner_history")
 }

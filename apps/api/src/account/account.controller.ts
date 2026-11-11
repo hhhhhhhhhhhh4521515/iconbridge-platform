@@ -41,6 +41,7 @@ import { requestMeta, type AuthUser } from '../auth/auth.types.js';
 import {
   AllowPasswordChange,
   CurrentUser,
+  PartnerAccess,
   RequireVerifiedEmail,
   Roles,
   SelfService,
@@ -82,6 +83,7 @@ export class AccountController {
   @Roles(...USER_ROLES)
   @SelfService()
   @AllowPasswordChange()
+  @PartnerAccess()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Change my password',
