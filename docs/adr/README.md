@@ -30,4 +30,5 @@ Each record gives the context, the decision and its consequences. All are accept
 | [024](ADR-024-country-agents.md)                       | Country agents, passwords set by the super admin, optional story quotes  | Security       |
 | [025](ADR-025-closed-jobs-and-filled-positions.md)     | Closed jobs stay visible; a position is filled at Contract signed        | Product        |
 | [026](ADR-026-database-entra-authentication.md)        | The apps sign in to PostgreSQL with their managed identity               | Security       |
+| [027](ADR-027-partner-spaces.md)                       | Partner spaces: a private workspace per partner company                  | Product        |
 | [028](ADR-028-log-volume.md)                           | Less telemetry noise, so the Log Analytics cap is not reached            | Infrastructure |
