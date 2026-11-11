@@ -1335,3 +1335,13 @@ ADR-026 sets out the order: this code, then Terraform (Entra on the server, the 
 - `terraform fmt`, `terraform validate`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/78>
+
+## 2026-11-11 - Plan identity can read the Event Grid webhook
+
+**What**: the custom role "IconBridge Terraform plan" (`infra/terraform/github`) gains `getFullUrl` and `getDeliveryAttributes` on Event Grid system topic subscriptions. CICD.md describes the role.
+
+**Why**: once the subscription `email-delivery-reports` existed, the plan of every pull request failed with `AuthorizationFailed` on `getFullUrl`: the provider reads the webhook back on refresh. The delivery header holds the email-events key, which the plan identity already reads from Key Vault, so it gains nothing new. The deploy identity (Contributor) was not affected.
+
+**Checks**: `terraform fmt`; the Azure part of the local plan shows `azurerm_role_definition.plan` updated in place with the two actions (`0 to add, 1 to change, 0 to destroy`). The Entra part needs a fresh interactive `az login` of the owner (continuous access evaluation). Applied by the owner (`make tf-apply ENV=github`).
+
+**PR**: _(this pull request)_
