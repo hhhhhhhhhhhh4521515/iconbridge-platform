@@ -2271,7 +2271,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Readiness: the API can reach its database */
+        /** Readiness: the API gets a database token (Entra) and runs a transaction */
         get: operations["HealthController_ready"];
         put?: never;
         post?: never;

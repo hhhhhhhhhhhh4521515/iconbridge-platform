@@ -17,10 +17,10 @@ Error codes: `VALIDATION_ERROR`, `UNAUTHENTICATED`, `INVALID_CREDENTIALS`, `FORB
 
 ## Health
 
-| Method | Path            | What                                      | Access |
-| ------ | --------------- | ----------------------------------------- | ------ |
-| GET    | `/health/live`  | Liveness: the process is running          | Public |
-| GET    | `/health/ready` | Readiness: the API can reach its database | Public |
+| Method | Path            | What                                                                    | Access |
+| ------ | --------------- | ----------------------------------------------------------------------- | ------ |
+| GET    | `/health/live`  | Liveness: the process is running                                        | Public |
+| GET    | `/health/ready` | Readiness: the API gets a database token (Entra) and runs a transaction | Public |
 
 ## Public
 
