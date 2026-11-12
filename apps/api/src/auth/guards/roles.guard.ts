@@ -9,6 +9,7 @@ import {
   IS_PUBLIC_KEY,
   OPTIONAL_AUTH_KEY,
   PARTNER_ACCESS_KEY,
+  PARTNER_SPACE_KEY,
   ROLES_KEY,
   SELF_SERVICE_KEY,
 } from '../decorators/index.js';
@@ -28,7 +29,8 @@ export function isAdminPath(path: string): boolean {
  *    (ADR-027): no back office, no candidate route, no route of another kind;
  * 3. a candidate never reaches a route under /admin;
  * 4. a route under /admin without @Roles() is refused to everybody;
- * 5. a read-only role (VIEWER) never performs a write, unless the route is @SelfService().
+ * 5. a read-only role (VIEWER) never performs a write, unless the route is @SelfService() or a
+ *    route of a partner space it is a member of (@PartnerSpaceRoute(), ADR-027).
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -85,7 +87,9 @@ export class RolesGuard implements CanActivate {
     if (
       isWrite &&
       readOnly &&
-      !this.reflector.getAllAndOverride<boolean | undefined>(SELF_SERVICE_KEY, targets)
+      !this.reflector.getAllAndOverride<boolean | undefined>(SELF_SERVICE_KEY, targets) &&
+      // Inside a partner space every member has the same rights (ADR-027, answer 2).
+      !this.reflector.getAllAndOverride<boolean | undefined>(PARTNER_SPACE_KEY, targets)
     ) {
       throw forbidden('This account is read only');
     }

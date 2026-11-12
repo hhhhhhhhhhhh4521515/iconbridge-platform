@@ -12,6 +12,8 @@ export interface AuthUser {
   assignedCountries: string[];
   /** Only a password change is allowed until the user replaces a password chosen by a super admin. */
   passwordChangeRequired: boolean;
+  /** Name shown to the members of a partner space; null for most staff (ADR-027). */
+  displayName: string | null;
 }
 
 export type RequestWithUser = Request & { user?: AuthUser };

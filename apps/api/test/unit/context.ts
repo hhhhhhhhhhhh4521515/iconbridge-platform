@@ -12,6 +12,7 @@ export function user(role: UserRole, overrides: Partial<AuthUser> = {}): AuthUse
     locale: 'en',
     assignedCountries: role === 'COUNTRY_AGENT' ? ['MA'] : [],
     passwordChangeRequired: false,
+    displayName: null,
     ...overrides,
   };
 }
