@@ -65,7 +65,29 @@ const OPEN_ROUTES = [
  * Routes a partner login (PARTNER) may call besides the open ones (ADR-027). Every other
  * route answers 403 to it; adding a route here is a decision, like OPEN_ROUTES.
  */
-const PARTNER_ROUTES = ['GET /api/v1/auth/me', 'POST /api/v1/me/password'].sort();
+const PARTNER_ROUTES = [
+  'GET /api/v1/auth/me',
+  'POST /api/v1/me/password',
+  // The partner area: PartnerSpaceGuard answers 404 outside the caller's spaces.
+  'GET /api/v1/partner-spaces',
+  'GET /api/v1/partner-spaces/:spaceId',
+  'GET /api/v1/partner-spaces/:spaceId/jobs',
+  'POST /api/v1/partner-spaces/:spaceId/jobs',
+  'GET /api/v1/partner-spaces/:spaceId/jobs/:jobId',
+  'PATCH /api/v1/partner-spaces/:spaceId/jobs/:jobId',
+  'POST /api/v1/partner-spaces/:spaceId/jobs/:jobId/close',
+  'POST /api/v1/partner-spaces/:spaceId/jobs/:jobId/reopen',
+  'GET /api/v1/partner-spaces/:spaceId/jobs/:jobId/comments',
+  'POST /api/v1/partner-spaces/:spaceId/jobs/:jobId/comments',
+  'GET /api/v1/partner-spaces/:spaceId/applications',
+  'POST /api/v1/partner-spaces/:spaceId/applications',
+  'GET /api/v1/partner-spaces/:spaceId/applications/:applicationId',
+  'PATCH /api/v1/partner-spaces/:spaceId/applications/:applicationId',
+  'DELETE /api/v1/partner-spaces/:spaceId/applications/:applicationId',
+  'GET /api/v1/partner-spaces/:spaceId/applications/:applicationId/comments',
+  'POST /api/v1/partner-spaces/:spaceId/applications/:applicationId/comments',
+  'GET /api/v1/partner-spaces/:spaceId/history',
+].sort();
 
 describe('security (e2e)', () => {
   let test: TestApp;
@@ -209,6 +231,9 @@ describe('security (e2e)', () => {
         .sort();
       expect(partner).toEqual(PARTNER_ROUTES);
       expect(partner.filter((route) => route.includes('/admin/'))).toEqual([]);
+      // Every route of the partner area is marked: none is left to the general rules.
+      const area = routes.filter((route) => route.path.startsWith(`${API}/partner-spaces`));
+      expect(area.filter((route) => !route.partner)).toEqual([]);
     });
 
     it('answers 403 to a partner login on every other route that needs a session', async () => {
