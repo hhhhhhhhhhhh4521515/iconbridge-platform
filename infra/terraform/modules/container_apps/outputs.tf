@@ -43,6 +43,16 @@ output "web_id" {
   value       = azurerm_container_app.web.id
 }
 
+output "tasks_job_id" {
+  description = "Resource id of the scheduled tasks job (its Executions metric)."
+  value       = azurerm_container_app_job.tasks.id
+}
+
+output "backup_job_id" {
+  description = "Resource id of the database backup job (its Executions metric)."
+  value       = azurerm_container_app_job.backup.id
+}
+
 output "backup_job_name" {
   description = "Name of the database backup job."
   value       = azurerm_container_app_job.backup.name

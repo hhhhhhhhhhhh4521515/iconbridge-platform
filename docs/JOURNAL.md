@@ -1604,3 +1604,25 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/92>
+
+## 2026-11-12 - Alerts: failed job runs from the Executions metric, a tasks alert that the daily cap cannot trigger
+
+**What**:
+
+- New metric alerts `alert-tasks-failed` and `alert-backup-failed`: the platform metric `Executions` of each job in state `Failed`. They replace the log alert `alert-backup` and the failure checks of `alert-tasks`.
+- `alert-tasks` now only says "did not run". It looks for no `ContainerStarted` event of the job in the last hour (system logs). It stays quiet while the workspace's daily cap holds logs back: the latest cap event is a stop, or collection resumed less than an hour ago.
+- ADR-019, ADR-020 and the runbook are updated.
+
+**Why**: on 12 November `alert-tasks` fired at 02:15 and 03:00 UTC while every run succeeded:
+
+- After the cap reset at 01:00, the job's console lines were lost until 03:00. The system logs came back at 01:32. The "no `send-emails` report" check reads those console lines.
+- The "execution failed" checks of `alert-tasks` and `alert-backup` matched `SawCompletedJob` events by job name. Container Apps writes those events under a shortened name (`caj-iconbridge-tasks-prod`, `caj-iconbridge-backup-prod`), so a failed run never fired either alert.
+- The `Executions` metric showed every run of the gap as Succeeded, and the failed runs of 15 October as Failed.
+
+**Checks**:
+
+- Replay of the new "not running" query at 10 times between 11 November 19:45 and 12 November 21:15, through a cap stop, the blackout, the reset and the console-log gap: no alert.
+- With no recent `ContainerStarted` event and no cap event, the query fires.
+- `terraform fmt`, `terraform validate`, and the plan of the infra workflow.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/94>

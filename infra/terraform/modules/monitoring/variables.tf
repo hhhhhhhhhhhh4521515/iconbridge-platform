@@ -48,8 +48,13 @@ variable "tasks_job_name" {
   type        = string
 }
 
-variable "backup_job_name" {
-  description = "Name of the Container Apps Job of the weekly database backup."
+variable "tasks_job_id" {
+  description = "Resource id of the tasks job: the failed-run alert reads its Executions metric."
+  type        = string
+}
+
+variable "backup_job_id" {
+  description = "Resource id of the backup job: the failed-run alert reads its Executions metric."
   type        = string
 }
 
