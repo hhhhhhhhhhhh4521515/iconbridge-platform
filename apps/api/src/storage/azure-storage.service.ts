@@ -7,6 +7,7 @@ import type {
 } from '@azure/storage-blob';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { azureCredential } from '../common/azure-credential.js';
 import { lazy } from '../common/lazy.js';
 import type { Env } from '../config/env.js';
 import {
@@ -34,7 +35,7 @@ export function contentDisposition(fileName: string, inline = false): string {
  *
  * - AZURE_STORAGE_CONNECTION_STRING: Azurite, or an account key. Download links
  *   are service SAS signed with the account key.
- * - AZURE_STORAGE_ACCOUNT_URL: managed identity through DefaultAzureCredential.
+ * - AZURE_STORAGE_ACCOUNT_URL: the managed identity (`azureCredential`).
  *   No key exists anywhere; download links are user-delegation SAS signed with a
  *   key Azure issues to the identity for one hour.
  */
@@ -64,8 +65,7 @@ export class AzureStorageService extends StorageService {
         const credential = service.credential;
         sharedKey = credential instanceof sdk.StorageSharedKeyCredential ? credential : null;
       } else {
-        const { DefaultAzureCredential } = await import('@azure/identity');
-        service = new sdk.BlobServiceClient(accountUrl, new DefaultAzureCredential());
+        service = new sdk.BlobServiceClient(accountUrl, await azureCredential());
       }
       return {
         sdk,

@@ -1605,6 +1605,26 @@ The measured volume after the deployment is added to the pull request.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/92>
 
+## 2026-11-12 - API: managed identity credential, and a readiness check that opens a transaction
+
+**What**:
+
+- In Azure, the API, the tasks job and the storage and email clients share one `ManagedIdentityCredential` (`apps/api/src/common/azure-credential.ts`). It is chosen when Container Apps sets `IDENTITY_ENDPOINT`; elsewhere `DefaultAzureCredential` stays (developers signed in with `az login`).
+- `/health/ready` gets a database token (Entra) and runs an interactive transaction, with the same 2-second wait for a connection as the requests (`PrismaService.checkDatabase`). ADR-026 updated.
+
+**Why**:
+
+- `DefaultAzureCredential` tried the environment credential before the managed identity. Each refusal was an `EnvironmentCredential is unavailable` exception in Application Insights, about 4 MB a day since the database moved to tokens.
+- Just after the deploy of 064d551, two requests answered 500 with "Unable to start a transaction in the given time" while the new revision's readiness check (`SELECT 1`) had already passed.
+
+**Checks**:
+
+- Unit tests of the choice of credential. New e2e test on the real test database, in Entra mode with a fake credential: ready with a token and a transaction, not ready without a token or with a refused one. It fails when the token step is removed.
+- The built API against a fake managed-identity endpoint (`DATABASE_AUTH=entra`, `IDENTITY_ENDPOINT`): readiness and `/api/v1/jobs` answer 200, the token request carries `AZURE_CLIENT_ID`, the token is cached (2 requests for 7 checks, still ready with the endpoint stopped), no `EnvironmentCredential` error.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e` (610 passed), `build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/93>
+
 ## 2026-11-12 - Alerts: failed job runs from the Executions metric, a tasks alert that the daily cap cannot trigger
 
 **What**:

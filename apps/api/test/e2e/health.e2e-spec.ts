@@ -14,12 +14,12 @@ const VERSION = vi.hoisted(() => {
 
 describe('health endpoints (e2e)', () => {
   let app: NestExpressApplication;
-  const queryRaw = vi.fn();
+  const checkDatabase = vi.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
-      .useValue({ $queryRaw: queryRaw })
+      .useValue({ checkDatabase })
       .compile();
 
     app = moduleRef.createNestApplication<NestExpressApplication>();
@@ -33,17 +33,17 @@ describe('health endpoints (e2e)', () => {
   });
 
   beforeEach(() => {
-    queryRaw.mockReset();
+    checkDatabase.mockReset();
   });
 
   it('GET /health/live returns 200 without touching the database', async () => {
     const response = await request(app.getHttpServer()).get('/health/live').expect(200);
     expect(livenessSchema.parse(response.body)).toEqual({ status: 'ok', version: VERSION });
-    expect(queryRaw).not.toHaveBeenCalled();
+    expect(checkDatabase).not.toHaveBeenCalled();
   });
 
   it('GET /health/ready returns 200 when the database answers', async () => {
-    queryRaw.mockResolvedValue([{ '?column?': 1 }]);
+    checkDatabase.mockResolvedValue(undefined);
     const response = await request(app.getHttpServer()).get('/health/ready').expect(200);
     // The deployment waits for this version to know the new revision answers.
     expect(readinessSchema.parse(response.body)).toEqual({
@@ -54,13 +54,18 @@ describe('health endpoints (e2e)', () => {
   });
 
   it('GET /health/ready returns 503 when the database is unreachable', async () => {
-    queryRaw.mockRejectedValue(new Error('connect ECONNREFUSED'));
+    checkDatabase.mockRejectedValue(new Error('connect ECONNREFUSED'));
     const response = await request(app.getHttpServer()).get('/health/ready').expect(503);
     expect(readinessSchema.parse(response.body)).toEqual({
       status: 'error',
       version: VERSION,
       checks: { database: 'error' },
     });
+  });
+
+  it('GET /health/ready returns 503 while no transaction can start', async () => {
+    checkDatabase.mockRejectedValue(new Error('Unable to start a transaction in the given time'));
+    await request(app.getHttpServer()).get('/health/ready').expect(503);
   });
 
   it('keeps health outside the /api/v1 prefix', async () => {

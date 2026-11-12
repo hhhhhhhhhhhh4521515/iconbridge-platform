@@ -89,16 +89,16 @@ flowchart LR
 
 ## API
 
-| URL                                                                                   | Purpose                                                                                                 |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `/api/v1/*`                                                                           | Business endpoints (global prefix)                                                                      |
-| `/api/v1/jobs`, `/jobs/:slug`, `/destinations`, `/categories`, `/stats`               | Public, no session                                                                                      |
-| `/api/v1/auth/*`                                                                      | Registration and sessions                                                                               |
-| `/api/v1/me/*`, `/jobs/:id/apply`, `/jobs/:id/eligibility`, `/documents/:id/download` | Candidate side (download also for the back office)                                                      |
-| `/api/v1/admin/*`                                                                     | Back office (never reachable by candidates)                                                             |
-| `/api/docs`                                                                           | Swagger UI; OpenAPI JSON at `/api/docs-json`                                                            |
-| `/health/live`                                                                        | Liveness: always 200 while the process runs                                                             |
-| `/health/ready`                                                                       | Readiness: 200 with `{"status":"ok","checks":{"database":"ok"}}`, 503 when the database does not answer |
+| URL                                                                                   | Purpose                                                                                                                                          |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/api/v1/*`                                                                           | Business endpoints (global prefix)                                                                                                               |
+| `/api/v1/jobs`, `/jobs/:slug`, `/destinations`, `/categories`, `/stats`               | Public, no session                                                                                                                               |
+| `/api/v1/auth/*`                                                                      | Registration and sessions                                                                                                                        |
+| `/api/v1/me/*`, `/jobs/:id/apply`, `/jobs/:id/eligibility`, `/documents/:id/download` | Candidate side (download also for the back office)                                                                                               |
+| `/api/v1/admin/*`                                                                     | Back office (never reachable by candidates)                                                                                                      |
+| `/api/docs`                                                                           | Swagger UI; OpenAPI JSON at `/api/docs-json`                                                                                                     |
+| `/health/live`                                                                        | Liveness: always 200 while the process runs                                                                                                      |
+| `/health/ready`                                                                       | Readiness: 200 with `{"status":"ok","checks":{"database":"ok"}}` once a database token (Entra) is obtained and a transaction runs, 503 otherwise |
 
 The health endpoints are outside the `/api/v1` prefix so container probes keep a stable, unversioned path.
 
@@ -654,10 +654,10 @@ Another candidate's document answers 404, like a missing one.
 
 `StorageService` is an abstract class; the rest of the API depends on it only. `AzureStorageService` implements it and authenticates in one of two ways:
 
-| Configuration                     | Used for                                                    | Download links                                                                                                             |
-| --------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `AZURE_STORAGE_CONNECTION_STRING` | Azurite locally, or an account key                          | Service SAS signed with the account key                                                                                    |
-| `AZURE_STORAGE_ACCOUNT_URL`       | Azure, with the managed identity (`DefaultAzureCredential`) | User-delegation SAS, signed with a key Azure issues to the identity for one hour; no storage key exists in the application |
+| Configuration                     | Used for                                                                                               | Download links                                                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `AZURE_STORAGE_CONNECTION_STRING` | Azurite locally, or an account key                                                                     | Service SAS signed with the account key                                                                                    |
+| `AZURE_STORAGE_ACCOUNT_URL`       | Azure, with the managed identity (`ManagedIdentityCredential`; `DefaultAzureCredential` outside Azure) | User-delegation SAS, signed with a key Azure issues to the identity for one hour; no storage key exists in the application |
 
 Exactly one of the two variables must be set. The storage key never leaves `AzureStorageService`: clients only ever receive a signed link to one file. Tests replace the service with an in-memory implementation.
 
