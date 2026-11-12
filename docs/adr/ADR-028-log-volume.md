@@ -51,5 +51,5 @@ Health probes were already left out (ADR-019, decision 4): fewer than 10 rows a 
 - A single successful request may be missing from Application Insights. Use the metrics, or reproduce the request.
 - The volume is checked after the deployment, from the `Usage` table, and recorded in the journal.
 - Two noise sources remain for later:
-  - the web's `MaxListenersExceededWarning` (0.7 MB a day), which may point to a listener leak and is worth fixing in the code rather than hiding;
+  - the web's `MaxListenersExceededWarning` (0.7 MB a day). **Investigated on 12 November, not a leak:** Next.js's rewrite proxy adds ten `close` listeners to each response it forwards to the API, the HTTP instrumentation an eleventh, and they go with the response (the heap stays flat over 3,000 calls). The limit is raised for responses only (`apps/web/src/lib/response-listeners.ts`);
   - the pg warning about `sslmode=require` (0.2 MB a day). Changing the address to `verify-full` also changes what Prisma, `pg_dump` and the migration job do.
