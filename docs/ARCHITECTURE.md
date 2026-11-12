@@ -1021,7 +1021,7 @@ flowchart LR
     ID(["id-iconbridge-prod-itn<br/>managed identity"])
     KV[("kv-iconbridge-prod-itn<br/>Key Vault, RBAC")]
     PG[("psql-iconbridge-prod-itn<br/>PostgreSQL 16, B1ms")]
-    ST[("sticonbridgeproditn<br/>candidate-documents, public-media, backups")]
+    ST[("sticonbridgeproditn<br/>candidate-documents, partner-files,<br/>public-media, backups")]
     ACR[("acriconbridgeproditn<br/>or ghcr.io")]
     LOG[("log / appi-iconbridge-prod-itn<br/>0.15 GB a day")]
     ACS[("acs / ecs-iconbridge-prod-itn<br/>Communication Services Email<br/>Azure-managed domain, data in Europe")]
@@ -1051,7 +1051,7 @@ flowchart LR
 | Email                       | `ecs-…`, `acs-iconbridge-prod-itn`  | Azure-managed domain, sender `DoNotReply@<guid>.azurecomm.net` "IconBridge Recruitment", no tracking; 5 emails/min, 10/h ([ADR-014](adr/ADR-014-email-azure-communication-services.md))                                 |
 | Key Vault                   | `kv-iconbridge-prod-itn`            | RBAC, purge protection, 7-day soft delete; generated and hand-set secrets                                                                                                                                               |
 | PostgreSQL Flexible Server  | `psql-iconbridge-prod-itn`          | v16, B1ms, 32 GB, 7-day LRS backups, TLS 1.2, `pg_trgm`, firewall: Azure services + admin IP                                                                                                                            |
-| Storage account             | `sticonbridgeproditn`               | LRS Hot, TLS 1.2, no account key, `public-media` public per blob, `candidate-documents` and `backups` private, `backups` deleted after 30 days, 7-day soft delete, access logs                                          |
+| Storage account             | `sticonbridgeproditn`               | LRS Hot, TLS 1.2, no account key, `public-media` public per blob, `candidate-documents`, `partner-files` and `backups` private, `backups` deleted after 30 days, 7-day soft delete, access logs                         |
 | Container Apps environment  | `cae-iconbridge-prod-itn`           | `ConsumptionOnly` mode set explicitly with azapi (not Express, [ADR-015](adr/ADR-015-container-apps-environment-mode.md)), the only one allowed in the region (shared with any staging)                                 |
 | Web app                     | `ca-iconbridge-web-prod-itn`        | External HTTPS, 0.5 vCPU / 1 GiB, 1 to 2 replicas ([ADR-022](adr/ADR-022-warm-replicas.md)), probes `/api/health/live`, wakes the API when it starts ([ADR-017](adr/ADR-017-cold-start.md))                             |
 | API                         | `ca-iconbridge-api-prod-itn`        | Internal, 0.5 vCPU / 1 GiB, 1 to 2 replicas, probes `/health/live` and `/health/ready`, `SCHEDULER_ENABLED=false`                                                                                                       |

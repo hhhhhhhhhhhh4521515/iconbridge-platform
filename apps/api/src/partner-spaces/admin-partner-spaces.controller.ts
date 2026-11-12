@@ -1,5 +1,26 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Req } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Put,
+  Req,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiCookieAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   addPartnerStaffMemberSchema,
   createPartnerLoginSchema,
@@ -30,8 +51,10 @@ import { z } from 'zod';
 import { Audit, SkipAudit } from '../admin/audit/audit.decorator.js';
 import { requestMeta, type AuthUser } from '../auth/auth.types.js';
 import { CurrentUser, Roles } from '../auth/decorators/index.js';
+import { AppException } from '../common/errors/app.exception.js';
 import { ZodBody, ZodParams } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-openapi.js';
+import { COVER_MAX_BYTES } from '../jobs/job-cover.service.js';
 import { AdminPartnerSpacesService } from './admin-partner-spaces.service.js';
 
 interface SpaceParams {
@@ -118,7 +141,7 @@ export class AdminPartnerSpacesController {
   @ApiParam({ name: 'spaceId', format: 'uuid' })
   @ApiZodBody(deletePartnerSpaceSchema)
   @ApiResponse({ status: 204 })
-  @ApiErrors(400, 401, 403, 404, 409)
+  @ApiErrors(400, 401, 403, 404, 503)
   async remove(
     @ZodParams(partnerSpaceParamsSchema) params: SpaceParams,
     @ZodBody(deletePartnerSpaceSchema) body: DeletePartnerSpaceInput,
@@ -126,6 +149,52 @@ export class AdminPartnerSpacesController {
     @Req() request: Request,
   ): Promise<void> {
     await this.spaces.remove(params.spaceId, body.confirmName, user, requestMeta(request).ip);
+  }
+
+  @Put(':spaceId/logo')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: COVER_MAX_BYTES, files: 1 } }))
+  @Audit({ action: 'partner_space.set_logo', entityType: 'partner_space', idParam: 'spaceId' })
+  @ApiOperation({
+    summary: "Upload or replace the space's logo",
+    description:
+      'JPEG, PNG or WebP, 5 MB at most, in the form field `file`. Checked from its bytes, stored as ' +
+      'WebP, 400 px wide at most, in the private partner-files container; only members get a link.',
+  })
+  @ApiParam({ name: 'spaceId', format: 'uuid' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiZodResponse(200, partnerSpaceSchema)
+  @ApiErrors(400, 401, 403, 404, 413, 415)
+  setLogo(
+    @ZodParams(partnerSpaceParamsSchema) params: SpaceParams,
+    @UploadedFile() file: { buffer: Buffer } | undefined,
+    @CurrentUser() user: AuthUser,
+  ): Promise<PartnerSpace> {
+    if (!file) {
+      throw new AppException('VALIDATION_ERROR', HttpStatus.BAD_REQUEST, 'The request is invalid', [
+        { path: 'file', message: 'Send the image in the form field "file"' },
+      ]);
+    }
+    return this.spaces.setLogo(params.spaceId, file.buffer, user);
+  }
+
+  @Delete(':spaceId/logo')
+  @Audit({ action: 'partner_space.remove_logo', entityType: 'partner_space', idParam: 'spaceId' })
+  @ApiOperation({ summary: "Remove the space's logo" })
+  @ApiParam({ name: 'spaceId', format: 'uuid' })
+  @ApiZodResponse(200, partnerSpaceSchema)
+  @ApiErrors(401, 403, 404)
+  removeLogo(
+    @ZodParams(partnerSpaceParamsSchema) params: SpaceParams,
+    @CurrentUser() user: AuthUser,
+  ): Promise<PartnerSpace> {
+    return this.spaces.removeLogo(params.spaceId, user);
   }
 
   @Get(':spaceId/members')

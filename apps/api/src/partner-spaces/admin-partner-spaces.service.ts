@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   ADMIN_ROLES,
   adminRoleSchema,
@@ -21,10 +21,12 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { AuditService } from '../admin/audit/audit.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
+  actorOf,
   changedFields,
   PartnerHistoryService,
   type PartnerActor,
 } from './partner-history.service.js';
+import { PartnerFilesService } from './partner-files.service.js';
 
 const SPACE_SELECT = {
   id: true,
@@ -80,15 +82,6 @@ const nameTaken = () =>
 const isUniqueViolation = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'P2002';
 
-/** The name shown in a space's history and comments: the display name, else the address. */
-export function actorOf(user: {
-  id: string;
-  email: string;
-  displayName?: string | null;
-}): PartnerActor {
-  return { id: user.id, name: user.displayName ?? user.email };
-}
-
 /**
  * The super admin's management of partner spaces (ADR-027): the spaces, their staff
  * members and their partner logins. Nothing here reads or returns a space's content; the
@@ -96,12 +89,15 @@ export function actorOf(user: {
  */
 @Injectable()
 export class AdminPartnerSpacesService {
+  private readonly logger = new Logger(AdminPartnerSpacesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly history: PartnerHistoryService,
     private readonly sessions: SessionService,
     private readonly passwordPolicy: PasswordPolicyService,
     private readonly audit: AuditService,
+    private readonly files: PartnerFilesService,
   ) {}
 
   async list(actor: AuthUser): Promise<PartnerSpace[]> {
@@ -223,15 +219,9 @@ export class AdminPartnerSpacesService {
         'Type the name of the space exactly to delete it',
       );
     }
-    // Files arrive with their upload routes (ADR-027, PR 3), which add their deletion here,
-    // before the rows. Until then a space cannot hold any; refuse rather than lose track of one.
-    if (space._count.files > 0) {
-      throw new AppException(
-        'CONFLICT',
-        HttpStatus.CONFLICT,
-        'The files of this space must be deleted first',
-      );
-    }
+    // The blobs first (files and logo, everything under spaces/<id>/), then a check that
+    // none remains. If that fails, no row is deleted and a retry finishes the job.
+    const blobs = await this.files.deleteSpaceBlobs(spaceId);
     await this.prisma.$transaction(async (tx) => {
       const logins = await tx.partnerSpaceMember.findMany({
         where: { partnerSpaceId: spaceId, kind: 'PARTNER' },
@@ -255,6 +245,7 @@ export class AdminPartnerSpacesService {
             jobs: space._count.jobs,
             applications: space._count.applications,
             files: space._count.files,
+            blobs,
           },
           after: null,
           ip,
@@ -262,6 +253,22 @@ export class AdminPartnerSpacesService {
         tx,
       );
     });
+    // An upload that raced the deletion left a blob that no row points to any more.
+    const left = await this.files.deleteSpaceBlobs(spaceId).catch(() => null);
+    if (left === null) {
+      this.logger.warn(`Blobs of deleted partner space ${spaceId} left in storage`);
+    }
+  }
+
+  /** The space's logo (super admin): checked from its bytes, re-encoded, private. */
+  async setLogo(spaceId: string, content: Buffer, actor: AuthUser): Promise<PartnerSpace> {
+    await this.files.setLogo(spaceId, content, await this.actor(actor.id));
+    return this.get(spaceId, actor);
+  }
+
+  async removeLogo(spaceId: string, actor: AuthUser): Promise<PartnerSpace> {
+    await this.files.removeLogo(spaceId, await this.actor(actor.id));
+    return this.get(spaceId, actor);
   }
 
   async listStaff(spaceId: string): Promise<PartnerStaffMember[]> {

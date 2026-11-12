@@ -1,8 +1,10 @@
 import './zod-setup.js';
 import { z } from 'zod';
 import { adminRoleSchema, emailSchema, passwordSchema, phoneSchema } from './auth.js';
+import type { DocumentFormat } from './candidate.js';
 import { countryCodeSchema } from './countries.js';
 import {
+  partnerFileKindSchema,
   partnerJobStatusSchema,
   partnerMemberKindSchema,
   partnerVisaStatusSchema,
@@ -136,6 +138,8 @@ export const partnerSpaceSummarySchema = z.object({
   country: z.string(),
   defaultLocale: partnerLocaleSchema,
   hasLogo: z.boolean(),
+  /** A 5-minute read-only link to the logo, for members only; null without a logo. */
+  logoUrl: z.url().nullable(),
   /** How the caller belongs to it. */
   membership: partnerMemberKindSchema,
 });
@@ -300,13 +304,53 @@ export const listPartnerApplicationsQuerySchema = z.object({
 });
 export type ListPartnerApplicationsQuery = z.infer<typeof listPartnerApplicationsQuerySchema>;
 
+// ---------------------------------------------------------------------------
+// Files (ADR-027, section 5)
+// ---------------------------------------------------------------------------
+
+/** Formats accepted for each file, detected from the content: the rules of candidate documents. */
+export const PARTNER_FILE_FORMATS: Record<
+  z.infer<typeof partnerFileKindSchema>,
+  readonly DocumentFormat[]
+> = {
+  PASSPORT: ['pdf', 'jpg', 'png'],
+  CV: ['pdf', 'docx'],
+  WORK_PERMIT: ['pdf', 'jpg', 'png'],
+};
+
+export const partnerFileUploadParamsSchema = z.object({
+  spaceId: z.uuid(),
+  applicationId: z.uuid(),
+  kind: partnerFileKindSchema,
+});
+export const partnerFileParamsSchema = z.object({ spaceId: z.uuid(), fileId: z.uuid() });
+
+export const partnerFileSchema = z.object({
+  id: z.uuid(),
+  kind: partnerFileKindSchema,
+  originalName: z.string(),
+  mimeType: z.string(),
+  sizeBytes: z.number().int(),
+  uploadedBy: z.string().nullable(),
+  uploadedAt: z.iso.datetime(),
+});
+export type PartnerFile = z.infer<typeof partnerFileSchema>;
+
+/** A 5-minute read-only link to one file. */
+export const partnerFileLinkSchema = z.object({ url: z.url(), expiresAt: z.iso.datetime() });
+export type PartnerFileLink = z.infer<typeof partnerFileLinkSchema>;
+
 export const partnerApplicationSchema = partnerApplicationFields.extend({
   nationality: z.string(),
   id: z.uuid(),
   jobId: z.uuid(),
   jobRole: z.string(),
-  /** Which of the three files are there (the files come with their own routes). */
-  files: z.object({ PASSPORT: z.boolean(), CV: z.boolean(), WORK_PERMIT: z.boolean() }),
+  /** The current file of each kind, or null. */
+  files: z.object({
+    PASSPORT: partnerFileSchema.nullable(),
+    CV: partnerFileSchema.nullable(),
+    WORK_PERMIT: partnerFileSchema.nullable(),
+  }),
   createdBy: z.string().nullable(),
   updatedBy: z.string().nullable(),
   createdAt: z.iso.datetime(),

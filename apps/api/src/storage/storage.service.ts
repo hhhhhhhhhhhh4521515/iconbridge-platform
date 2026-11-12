@@ -4,6 +4,12 @@ import type { Readable } from 'node:stream';
 export const PUBLIC_MEDIA_CONTAINER = 'public-media';
 /** Private container: passports, CVs, certificates. Read only through short-lived signed links. */
 export const CANDIDATE_DOCUMENTS_CONTAINER = 'candidate-documents';
+/** Private container of the partner spaces (ADR-027): their files and logos, under spaces/<id>/. */
+export const PARTNER_FILES_CONTAINER = 'partner-files';
+
+/** The private containers; the candidate documents unless a call names another. */
+export type PrivateContainer =
+  typeof CANDIDATE_DOCUMENTS_CONTAINER | typeof PARTNER_FILES_CONTAINER;
 
 export const DOWNLOAD_LINK_TTL_SECONDS = 5 * 60;
 
@@ -30,11 +36,22 @@ export abstract class StorageService {
   /** A missing file is not an error; a failure is logged, not thrown. */
   abstract deletePublic(path: string): Promise<void>;
 
-  abstract uploadPrivate(path: string, content: Buffer, contentType: string): Promise<void>;
+  abstract uploadPrivate(
+    path: string,
+    content: Buffer,
+    contentType: string,
+    container?: PrivateContainer,
+  ): Promise<void>;
   /** A missing file is not an error. Throws when the storage cannot be reached. */
-  abstract deletePrivate(path: string): Promise<void>;
+  abstract deletePrivate(path: string, container?: PrivateContainer): Promise<void>;
   /** Content of a private file, for the server only (GDPR export). */
-  abstract readPrivate(path: string): Promise<Readable>;
+  abstract readPrivate(path: string, container?: PrivateContainer): Promise<Readable>;
   /** Read-only link to one private file, valid for a few minutes. */
-  abstract privateDownloadUrl(path: string, options: DownloadLinkOptions): Promise<string>;
+  abstract privateDownloadUrl(
+    path: string,
+    options: DownloadLinkOptions,
+    container?: PrivateContainer,
+  ): Promise<string>;
+  /** Paths of the private files whose path starts with `prefix`. */
+  abstract listPrivate(prefix: string, container: PrivateContainer): Promise<string[]>;
 }

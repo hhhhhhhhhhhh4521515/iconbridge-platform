@@ -20,7 +20,11 @@ import { MailThrottledError } from '../../src/mail/mail-transport.js';
 import { MAIL_TRANSPORT } from '../../src/mail/mail.service.js';
 import { ApiExpressAdapter } from '../../src/common/http/api-express-adapter.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
-import { StorageService } from '../../src/storage/storage.service.js';
+import {
+  CANDIDATE_DOCUMENTS_CONTAINER,
+  StorageService,
+  type PrivateContainer,
+} from '../../src/storage/storage.service.js';
 import { databaseName } from './test-database.js';
 
 export const API = '/api/v1';
@@ -40,8 +44,13 @@ export interface TestApp {
   prisma: PrismaService;
   /** Public files "uploaded" during the tests: path -> content type and size. */
   files: Map<string, { contentType: string; size: number }>;
-  /** Private files (candidate documents) held by the fake storage: path -> content. */
+  /**
+   * Private files held by the fake storage: path -> content. Candidate documents by their
+   * path; files of other containers as "<container>/<path>" (`privateKey`).
+   */
   privateFiles: Map<string, { contentType: string; content: Buffer }>;
+  /** Set `down` to true and deleting a private file fails, as when the storage is unreachable. */
+  storageState: { down: boolean };
   /** The application clock. `set` freezes it at a date; `reset` returns to real time. */
   clock: FakeClock;
   /** Emails "sent" since the last reset, oldest first. */
@@ -73,6 +82,11 @@ export class FakeClock {
 /** Host of the fake signed links returned for private files. */
 export const FAKE_PRIVATE_HOST = 'https://private.example.test';
 
+/** Key of a private file in `TestApp.privateFiles`. */
+export function privateKey(path: string, container?: PrivateContainer): string {
+  return !container || container === CANDIDATE_DOCUMENTS_CONTAINER ? path : `${container}/${path}`;
+}
+
 export interface TestAppOptions {
   /** Extra controllers, used to exercise guards on routes the product does not have yet. */
   controllers?: Type[];
@@ -85,6 +99,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const mailServer = { down: false, delayMs: 0, throttleMs: 0 };
   const files: TestApp['files'] = new Map();
   const privateFiles: TestApp['privateFiles'] = new Map();
+  const storageState: TestApp['storageState'] = { down: false };
   const clock = new FakeClock();
   let builder = Test.createTestingModule({
     imports: [AppModule],
@@ -119,16 +134,33 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
         files.delete(path);
         return Promise.resolve();
       },
-      uploadPrivate: (path: string, content: Buffer, contentType: string) => {
-        privateFiles.set(path, { contentType, content });
+      uploadPrivate: (
+        path: string,
+        content: Buffer,
+        contentType: string,
+        container?: PrivateContainer,
+      ) => {
+        privateFiles.set(privateKey(path, container), { contentType, content });
         return Promise.resolve();
       },
-      deletePrivate: (path: string) => {
-        privateFiles.delete(path);
+      deletePrivate: (path: string, container?: PrivateContainer) => {
+        if (storageState.down) {
+          return Promise.reject(new Error('storage unreachable'));
+        }
+        privateFiles.delete(privateKey(path, container));
         return Promise.resolve();
       },
-      readPrivate: (path: string) => {
-        const file = privateFiles.get(path);
+      listPrivate: (prefix: string, container: PrivateContainer) => {
+        const start = privateKey(prefix, container);
+        const base = privateKey('', container);
+        return Promise.resolve(
+          [...privateFiles.keys()]
+            .filter((key) => key.startsWith(start))
+            .map((key) => key.slice(base.length)),
+        );
+      },
+      readPrivate: (path: string, container?: PrivateContainer) => {
+        const file = privateFiles.get(privateKey(path, container));
         return file
           ? Promise.resolve(Readable.from(file.content))
           : Promise.reject(new Error('missing blob'));
@@ -136,9 +168,10 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
       privateDownloadUrl: (
         path: string,
         options: { fileName: string; expiresInSeconds?: number; inline?: boolean },
+        container?: PrivateContainer,
       ) =>
         Promise.resolve(
-          `${FAKE_PRIVATE_HOST}/${path}?sp=r&ttl=${options.expiresInSeconds ?? 300}&name=${encodeURIComponent(options.fileName)}${options.inline ? '&inline=1' : ''}`,
+          `${FAKE_PRIVATE_HOST}/${privateKey(path, container)}?sp=r&ttl=${options.expiresInSeconds ?? 300}&name=${encodeURIComponent(options.fileName)}${options.inline ? '&inline=1' : ''}`,
         ),
     })
     .overrideProvider(Clock)
@@ -160,6 +193,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     mailServer,
     files,
     privateFiles,
+    storageState,
     clock,
     http: () => request(app.getHttpServer()),
     close: () => app.close(),

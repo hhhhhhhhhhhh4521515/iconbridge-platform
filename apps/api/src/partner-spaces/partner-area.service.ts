@@ -13,6 +13,7 @@ import {
   type PartnerComment,
   type PartnerHistoryEntry,
   type PartnerJob,
+  type PartnerFileKind,
   type PartnerSpaceSummary,
   type PartnerVisaStatus,
   type Paginated,
@@ -25,8 +26,13 @@ import { Clock } from '../common/clock/clock.js';
 import { AppException, notFound } from '../common/errors/app.exception.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { actorOf } from './admin-partner-spaces.service.js';
 import {
+  PARTNER_FILE_SELECT,
+  PartnerFilesService,
+  toPartnerFile,
+} from './partner-files.service.js';
+import {
+  actorOf,
   changedFields,
   PartnerHistoryService,
   type PartnerActor,
@@ -79,7 +85,7 @@ const APPLICATION_SELECT = {
   createdAt: true,
   updatedAt: true,
   job: { select: { role: true } },
-  files: { select: { kind: true } },
+  files: { select: PARTNER_FILE_SELECT },
   createdBy: PERSON,
   updatedBy: PERSON,
 } satisfies Prisma.PartnerApplicationSelect;
@@ -104,16 +110,19 @@ function applicationFields(row: ApplicationRow) {
 }
 
 function toApplication(row: ApplicationRow): PartnerApplication {
-  const kinds = new Set(row.files.map((file) => file.kind));
+  const fileOf = (kind: PartnerFileKind) => {
+    const file = row.files.find((item) => item.kind === kind);
+    return file ? toPartnerFile(file) : null;
+  };
   return {
     id: row.id,
     jobId: row.partnerJobId,
     jobRole: row.job.role,
     ...applicationFields(row),
     files: {
-      PASSPORT: kinds.has('PASSPORT'),
-      CV: kinds.has('CV'),
-      WORK_PERMIT: kinds.has('WORK_PERMIT'),
+      PASSPORT: fileOf('PASSPORT'),
+      CV: fileOf('CV'),
+      WORK_PERMIT: fileOf('WORK_PERMIT'),
     },
     createdBy: nameOf(row.createdBy),
     updatedBy: nameOf(row.updatedBy),
@@ -141,6 +150,7 @@ export class PartnerAreaService {
     private readonly history: PartnerHistoryService,
     private readonly audit: AuditService,
     private readonly clock: Clock,
+    private readonly files: PartnerFilesService,
   ) {}
 
   /** The caller's active spaces; a partner login has one, staff may have several. */
@@ -159,14 +169,18 @@ export class PartnerAreaService {
       },
       orderBy: { space: { name: 'asc' } },
     });
-    return rows.map((row) => ({
-      id: row.space.id,
-      name: row.space.name,
-      country: row.space.country,
-      defaultLocale: partnerLocaleSchema.parse(row.space.defaultLocale),
-      hasLogo: row.space.logoPath !== null,
-      membership: row.kind,
-    }));
+    return Promise.all(
+      rows.map(async (row) => ({
+        id: row.space.id,
+        name: row.space.name,
+        country: row.space.country,
+        defaultLocale: partnerLocaleSchema.parse(row.space.defaultLocale),
+        hasLogo: row.space.logoPath !== null,
+        // Members only: this method lists the caller's own spaces.
+        logoUrl: await this.files.logoUrl(row.space.logoPath),
+        membership: row.kind,
+      })),
+    );
   }
 
   async space(spaceId: string, user: AuthUser): Promise<PartnerSpaceSummary> {
@@ -433,32 +447,37 @@ export class PartnerAreaService {
       throw applicationNotFound();
     }
     const actor = this.actorFor(user);
-    await this.prisma.$transaction(async (tx) => {
-      const row = await tx.partnerApplication.findFirst({
+    const row = await this.prisma.partnerApplication.findFirst({
+      where: { id: applicationId, partnerSpaceId: spaceId },
+      select: {
+        firstName: true,
+        lastName: true,
+        files: { select: { storagePath: true } },
+      },
+    });
+    if (!row) {
+      throw applicationNotFound();
+    }
+    if (confirmName.trim() !== `${row.firstName} ${row.lastName}`) {
+      throw new AppException(
+        'CONFIRMATION_MISMATCH',
+        HttpStatus.BAD_REQUEST,
+        "Type the applicant's first and last name exactly to delete the application",
+      );
+    }
+    // The blobs first: if one cannot be deleted, no row is (a retry finishes the job).
+    const deletedPaths = row.files.map((file) => file.storagePath);
+    await this.files.deleteBlobs(deletedPaths);
+    const raced = await this.prisma.$transaction(async (tx) => {
+      const current = await tx.partnerApplication.findFirst({
         where: { id: applicationId, partnerSpaceId: spaceId },
         select: {
-          firstName: true,
-          lastName: true,
+          files: { select: { storagePath: true } },
           _count: { select: { files: true, comments: true, history: true } },
         },
       });
-      if (!row) {
+      if (!current) {
         throw applicationNotFound();
-      }
-      if (confirmName.trim() !== `${row.firstName} ${row.lastName}`) {
-        throw new AppException(
-          'CONFIRMATION_MISMATCH',
-          HttpStatus.BAD_REQUEST,
-          "Type the applicant's first and last name exactly to delete the application",
-        );
-      }
-      // Files arrive with their upload routes (PR 3), which delete their blobs here first.
-      if (row._count.files > 0) {
-        throw new AppException(
-          'CONFLICT',
-          HttpStatus.CONFLICT,
-          'The files of this application must be deleted first',
-        );
       }
       // Its files, comments and history rows go with it (composite foreign keys, cascade).
       await tx.partnerApplication.deleteMany({
@@ -479,16 +498,21 @@ export class PartnerAreaService {
           entityId: applicationId,
           before: {
             partnerSpaceId: spaceId,
-            files: row._count.files,
-            comments: row._count.comments,
-            historyEntries: row._count.history,
+            files: current._count.files,
+            comments: current._count.comments,
+            historyEntries: current._count.history,
           },
           after: null,
           ip,
         },
         tx,
       );
+      // A file uploaded between the blob deletion and this transaction.
+      return current.files
+        .map((file) => file.storagePath)
+        .filter((path) => !deletedPaths.includes(path));
     });
+    await this.files.deleteQuietly(raced, `deleted application ${applicationId}`);
   }
 
   // -------------------------------------------------------------------------

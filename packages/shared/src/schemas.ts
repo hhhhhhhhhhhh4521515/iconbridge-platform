@@ -39,6 +39,8 @@ export const API_ERROR_CODES = [
   'PARTNER_SPACE_NAME_TAKEN',
   'CONFIRMATION_MISMATCH',
   'NOT_A_STAFF_ACCOUNT',
+  /** The files of a partner space or application could not be deleted: nothing was deleted. */
+  'STORAGE_UNAVAILABLE',
   'INTERNAL_ERROR',
 ] as const;
 export const apiErrorCodeSchema = z.enum(API_ERROR_CODES);

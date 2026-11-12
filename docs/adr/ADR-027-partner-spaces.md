@@ -295,6 +295,17 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
   - Deleting an application answers 404 to members who are not super admins; it refuses while the application holds files, until PR 3 adds their deletion.
   - A job description change is recorded as a change without the old and new texts, which are long.
 
+- **PR 3** (files):
+  - Container `partner-files` (Terraform, storage module). `StorageService` takes the private container as an argument, defaulting to the candidate documents, and lists by prefix.
+  - Each application's response carries its current file of each kind (id, name, type, size, uploader, time), so the partner area can ask for a link.
+  - A link is JSON (`{ url, expiresAt }`), not a redirect, so the partner area can open a preview in a new tab. A DOCX is always saved, `inline` or not.
+  - The logo is re-encoded by `JobCoverService` (WebP, 400 px wide at most) and stored under the space's prefix. The members' summary of a space carries a 5-minute link to it. The super admin's management view says only whether there is one.
+  - History actions: `FILE_UPLOADED`, `FILE_REPLACED`, `FILE_PREVIEWED`, `FILE_DOWNLOADED`, `LOGO_UPDATED`, `LOGO_REMOVED`.
+  - **Deleting:**
+    - deleting an application or a space deletes its blobs first; if one cannot be deleted, the answer is 503 `STORAGE_UNAVAILABLE` and no row is deleted, so a retry finishes the job;
+    - deleting a space lists everything under `spaces/<spaceId>/`, an orphaned blob included, and checks that nothing remains;
+    - a blob written by an upload that raced the deletion is deleted after the rows.
+
 ## Consequences
 
 - One more role, and the screens of the partner area to keep translated in three languages, Polish among them.
