@@ -33,7 +33,10 @@ describe('log redaction', () => {
         ctx: { input: { refreshToken: 'rt-deep', cookie: 'c-deep' } },
         req: { headers: { cookie: 'ib_access=abc', authorization: 'Bearer xyz' } },
         res: { headers: { 'set-cookie': ['ib_refresh=def'] } },
-        email: 'kept@example.test',
+        email: 'person@example.test',
+        partner: { firstName: 'Zofia', lastName: 'Secret', phone: '+48123456789' },
+        dhlTrackingNumber: 'JD0123456789',
+        applicationId: 'kept-id',
       },
       'test',
     );
@@ -48,11 +51,16 @@ describe('log redaction', () => {
       'ib_access=abc',
       'Bearer xyz',
       'ib_refresh=def',
+      'person@example.test',
+      'Zofia',
+      'Secret',
+      '+48123456789',
+      'JD0123456789',
     ]) {
       expect(line).not.toContain(secret);
     }
     expect(line).toContain(REDACTED);
-    expect(line).toContain('kept@example.test');
+    expect(line).toContain('kept-id');
   });
 });
 
