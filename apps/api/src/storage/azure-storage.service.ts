@@ -13,9 +13,11 @@ import type { Env } from '../config/env.js';
 import {
   CANDIDATE_DOCUMENTS_CONTAINER,
   DOWNLOAD_LINK_TTL_SECONDS,
+  PARTNER_FILES_CONTAINER,
   PUBLIC_MEDIA_CONTAINER,
   StorageService,
   type DownloadLinkOptions,
+  type PrivateContainer,
 } from './storage.service.js';
 
 /** Links are dated slightly in the past so a small clock difference with Azure does not reject them. */
@@ -72,7 +74,12 @@ export class AzureStorageService extends StorageService {
         service,
         sharedKey,
         publicMedia: service.getContainerClient(PUBLIC_MEDIA_CONTAINER),
-        documents: service.getContainerClient(CANDIDATE_DOCUMENTS_CONTAINER),
+        private: {
+          [CANDIDATE_DOCUMENTS_CONTAINER]: service.getContainerClient(
+            CANDIDATE_DOCUMENTS_CONTAINER,
+          ),
+          [PARTNER_FILES_CONTAINER]: service.getContainerClient(PARTNER_FILES_CONTAINER),
+        },
       };
     });
   }
@@ -106,35 +113,62 @@ export class AzureStorageService extends StorageService {
     }
   }
 
-  async uploadPrivate(path: string, content: Buffer, contentType: string): Promise<void> {
-    const { documents } = await this.clients();
-    await this.ensureContainer(documents, undefined);
-    await documents.getBlockBlobClient(path).uploadData(content, {
+  async uploadPrivate(
+    path: string,
+    content: Buffer,
+    contentType: string,
+    container: PrivateContainer = CANDIDATE_DOCUMENTS_CONTAINER,
+  ): Promise<void> {
+    const client = (await this.clients()).private[container];
+    await this.ensureContainer(client, undefined);
+    await client.getBlockBlobClient(path).uploadData(content, {
       blobHTTPHeaders: { blobContentType: contentType, blobCacheControl: 'private, no-store' },
     });
   }
 
-  async deletePrivate(path: string): Promise<void> {
-    const { documents } = await this.clients();
-    await documents.getBlockBlobClient(path).deleteIfExists();
+  async deletePrivate(
+    path: string,
+    container: PrivateContainer = CANDIDATE_DOCUMENTS_CONTAINER,
+  ): Promise<void> {
+    const client = (await this.clients()).private[container];
+    await client.getBlockBlobClient(path).deleteIfExists();
   }
 
-  async readPrivate(path: string): Promise<Readable> {
-    const { documents } = await this.clients();
-    const response = await documents.getBlockBlobClient(path).download();
+  async listPrivate(prefix: string, container: PrivateContainer): Promise<string[]> {
+    const client = (await this.clients()).private[container];
+    if (!(await client.exists())) {
+      return [];
+    }
+    const paths: string[] = [];
+    for await (const blob of client.listBlobsFlat({ prefix })) {
+      paths.push(blob.name);
+    }
+    return paths;
+  }
+
+  async readPrivate(
+    path: string,
+    container: PrivateContainer = CANDIDATE_DOCUMENTS_CONTAINER,
+  ): Promise<Readable> {
+    const client = (await this.clients()).private[container];
+    const response = await client.getBlockBlobClient(path).download();
     if (!response.readableStreamBody) {
       throw new Error('The storage returned no content');
     }
     return response.readableStreamBody as Readable;
   }
 
-  async privateDownloadUrl(path: string, options: DownloadLinkOptions): Promise<string> {
+  async privateDownloadUrl(
+    path: string,
+    options: DownloadLinkOptions,
+    container: PrivateContainer = CANDIDATE_DOCUMENTS_CONTAINER,
+  ): Promise<string> {
     const now = Date.now();
-    const { sdk, service, sharedKey, documents } = await this.clients();
+    const { sdk, service, sharedKey, private: containers } = await this.clients();
     const { BlobSASPermissions, SASProtocol, generateBlobSASQueryParameters } = sdk;
-    const blob = documents.getBlockBlobClient(path);
+    const blob = containers[container].getBlockBlobClient(path);
     const values = {
-      containerName: CANDIDATE_DOCUMENTS_CONTAINER,
+      containerName: container,
       blobName: path,
       permissions: BlobSASPermissions.parse('r'),
       startsOn: new Date(now - CLOCK_SKEW_MS),
@@ -191,5 +225,5 @@ interface Clients {
   service: BlobServiceClient;
   sharedKey: StorageSharedKeyCredential | null;
   publicMedia: ContainerClient;
-  documents: ContainerClient;
+  private: Record<PrivateContainer, ContainerClient>;
 }

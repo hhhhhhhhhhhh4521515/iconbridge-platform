@@ -48,7 +48,16 @@ A `PARTNER` login (a partner company's account, [ADR-027](adr/ADR-027-partner-sp
 
 Partner spaces are managed by super admins only (`MANAGE_PARTNER_SPACES`); the management routes return settings and counts, never the content of a space. Disabling a login ends its sessions and invalidates its access tokens at once. Deleting a space needs its exact name, deletes its rows and its partner logins, and writes an audit entry with counts only. In the database, every child row carries `partner_space_id` and its foreign keys include it, so a row cannot point to a parent of another space.
 
-The partner area (`/partner-spaces/:spaceId/…`) is behind `PartnerSpaceGuard`. On every request it reads the caller's membership and whether the space is active. A non-member, a removed member, a disabled space or an unknown id all answer 404. Every service query also carries the space id in its `WHERE`, so an id of another space is never found, in the path or in the body. Every member has the same rights inside a space, viewers included. Deleting one application is for a super admin who is a member, after typing the applicant's name: its rows and history go, and one entry without personal data remains. The names, phone, email and DHL tracking number of the people in a space are in `SENSITIVE_KEYS`.
+The partner area (`/partner-spaces/:spaceId/…`) is behind `PartnerSpaceGuard`. On every request it reads the caller's membership and whether the space is active. A non-member, a removed member, a disabled space or an unknown id all answer 404. Every service query also carries the space id in its `WHERE`, so an id of another space is never found, in the path or in the body. Every member has the same rights inside a space, viewers included. Deleting one application is for a super admin who is a member, after typing the applicant's name: its blobs go first, then its rows and history, and one entry without personal data remains. The names, phone, email and DHL tracking number of the people in a space are in `SENSITIVE_KEYS`.
+
+**Files of a space** (passport, CV, work permit, logo) live in their own private container, `partner-files`, under `spaces/<spaceId>/<random>`, and go through `StorageService` only. They get the checks of candidate documents:
+
+- the format is read from the content (`inspectUpload`): PDF, JPG or PNG for a passport or a work permit, PDF or DOCX for a CV;
+- the size limit is the `MAX_UPLOAD_SIZE_MB` setting;
+- images are re-encoded without their metadata, and the logo is re-encoded as WebP like a job cover;
+- the stored name is random, the shown name sanitised, and the SHA-256 recorded.
+
+A member gets a 5-minute read-only link (`inline` only for PDF and images), and each link is written to the space's history. Deleting an application or a space deletes the blobs first, then checks that none remains under the space's prefix. If the storage fails, the answer is 503 `STORAGE_UNAVAILABLE` and no row is deleted.
 
 Tests: `partner-spaces-idor.e2e-spec.ts`:
 
@@ -57,8 +66,23 @@ Tests: `partner-spaces-idor.e2e-spec.ts`:
 - access cut at the next request;
 - history field by field;
 - append-only comments;
-- deleting an application;
+- uploads and file links, with crossed file ids;
+- deleting an application, its blobs included, and nothing deleted while the storage fails;
 - no partner data on the public site or in the back office.
+
+`partner-spaces-files.e2e-spec.ts`:
+
+- formats refused from the content whatever the name;
+- the size setting;
+- metadata removed;
+- random storage names in the partner container;
+- replacement deleting the old blob;
+- link expiry and inline rules;
+- each link in the history;
+- the logo, re-encoded and linked for members only;
+- deleting a space removes every blob first, and nothing while the storage fails.
+
+`coverage-gaps.e2e-spec.ts` checks the `partner-files` container on Azurite.
 
 Also: `security.e2e-spec.ts` (the list of routes open to partner logins is fixed, and every other route answers 403 to one), `partner-spaces-admin.e2e-spec.ts` (roles refused, login fenced off, access cut on disabling, deletion, cross-space rows refused by the database), `roles.guard.spec.ts`, `permissions.spec.ts`.
 

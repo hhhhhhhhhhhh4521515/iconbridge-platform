@@ -1,10 +1,39 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Req } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Delete,
+  Get,
+  Header,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Put,
+  Req,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiCookieAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   createPartnerApplicationSchema,
   createPartnerCommentSchema,
   createPartnerJobSchema,
   deletePartnerApplicationSchema,
+  downloadQuerySchema,
+  PARTNER_FILE_KINDS,
+  partnerFileLinkSchema,
+  partnerFileParamsSchema,
+  partnerFileSchema,
+  partnerFileUploadParamsSchema,
   listPartnerApplicationsQuerySchema,
   listPartnerHistoryQuerySchema,
   listPartnerJobsQuerySchema,
@@ -22,6 +51,10 @@ import {
   type CreatePartnerCommentInput,
   type CreatePartnerJobInput,
   type DeletePartnerApplicationInput,
+  type DownloadQuery,
+  type PartnerFile,
+  type PartnerFileKind,
+  type PartnerFileLink,
   type ListPartnerApplicationsQuery,
   type ListPartnerHistoryQuery,
   type ListPartnerJobsQuery,
@@ -38,9 +71,11 @@ import type { Request } from 'express';
 import { z } from 'zod';
 import { requestMeta, type AuthUser } from '../auth/auth.types.js';
 import { CurrentUser, PartnerAccess } from '../auth/decorators/index.js';
+import { AppException } from '../common/errors/app.exception.js';
 import { ZodBody, ZodParams, ZodQuery } from '../common/pipes/zod-validation.pipe.js';
 import { ApiErrors, ApiZodBody, ApiZodResponse } from '../common/swagger/zod-openapi.js';
 import { PartnerAreaService } from './partner-area.service.js';
+import { PartnerFilesService } from './partner-files.service.js';
 import {
   CurrentSpace,
   PartnerSpaceRoute,
@@ -56,6 +91,23 @@ interface ApplicationParams {
   applicationId: string;
 }
 
+interface FileUploadParams {
+  spaceId: string;
+  applicationId: string;
+  kind: PartnerFileKind;
+}
+interface FileParams {
+  spaceId: string;
+  fileId: string;
+}
+interface UploadedPartnerFile {
+  buffer: Buffer;
+  originalname?: string;
+}
+
+/** Hard ceiling of the upload parser; the real limit is the MAX_UPLOAD_SIZE_MB setting. */
+const PARSER_MAX_BYTES = 25 * 1024 * 1024;
+
 const SPACE_PARAM = { name: 'spaceId', format: 'uuid' } as const;
 
 /**
@@ -67,7 +119,10 @@ const SPACE_PARAM = { name: 'spaceId', format: 'uuid' } as const;
 @ApiCookieAuth()
 @Controller('partner-spaces')
 export class PartnerAreaController {
-  constructor(private readonly area: PartnerAreaService) {}
+  constructor(
+    private readonly area: PartnerAreaService,
+    private readonly files: PartnerFilesService,
+  ) {}
 
   @Get()
   @PartnerAccess()
@@ -307,7 +362,7 @@ export class PartnerAreaController {
   @ApiParam({ name: 'applicationId', format: 'uuid' })
   @ApiZodBody(deletePartnerApplicationSchema)
   @ApiResponse({ status: 204 })
-  @ApiErrors(400, 401, 403, 404, 409)
+  @ApiErrors(400, 401, 403, 404, 503)
   async deleteApplication(
     @ZodParams(partnerApplicationParamsSchema) params: ApplicationParams,
     @ZodBody(deletePartnerApplicationSchema) body: DeletePartnerApplicationInput,
@@ -371,5 +426,70 @@ export class PartnerAreaController {
     @CurrentSpace() space: PartnerSpaceContext,
   ): Promise<Paginated<PartnerHistoryEntry>> {
     return this.area.listHistory(space.id, query);
+  }
+
+  // -------------------------------------------------------------------------
+  // Files (ADR-027, section 5)
+  // -------------------------------------------------------------------------
+
+  @Put(':spaceId/applications/:applicationId/files/:kind')
+  @PartnerSpaceRoute()
+  // After the guards: a caller outside the space gets 404 before the upload is read.
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: PARSER_MAX_BYTES, files: 1 } }))
+  @ApiOperation({
+    summary: 'Upload or replace the passport, CV or work permit of an application',
+    description:
+      'Multipart form with `file`, at most the MAX_UPLOAD_SIZE_MB setting (5 MB by default). The format ' +
+      'is checked from the content: PDF or DOCX for a CV; PDF, JPG or PNG for a passport or a work ' +
+      'permit. Images are re-encoded without their metadata. A replaced file is deleted.',
+  })
+  @ApiParam(SPACE_PARAM)
+  @ApiParam({ name: 'applicationId', format: 'uuid' })
+  @ApiParam({ name: 'kind', enum: [...PARTNER_FILE_KINDS] })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiZodResponse(200, partnerFileSchema)
+  @ApiErrors(400, 401, 403, 404, 413, 415)
+  uploadFile(
+    @ZodParams(partnerFileUploadParamsSchema) params: FileUploadParams,
+    @UploadedFile() file: UploadedPartnerFile | undefined,
+    @CurrentSpace() space: PartnerSpaceContext,
+    @CurrentUser() user: AuthUser,
+  ): Promise<PartnerFile> {
+    if (!file) {
+      throw new AppException('VALIDATION_ERROR', HttpStatus.BAD_REQUEST, 'The request is invalid', [
+        { path: 'file', message: 'Send the file in the form field "file"' },
+      ]);
+    }
+    return this.files.upload(space.id, params.applicationId, params.kind, file, user);
+  }
+
+  @Get(':spaceId/files/:fileId/link')
+  @PartnerSpaceRoute()
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({
+    summary: 'A 5-minute read-only link to a file',
+    description:
+      '`inline=true` previews a PDF or an image in the browser; other formats are saved. Each link ' +
+      "is written to the space's history.",
+  })
+  @ApiParam(SPACE_PARAM)
+  @ApiParam({ name: 'fileId', format: 'uuid' })
+  @ApiQuery({ name: 'inline', required: false, enum: ['true', 'false'] })
+  @ApiZodResponse(200, partnerFileLinkSchema)
+  @ApiErrors(400, 401, 403, 404)
+  fileLink(
+    @ZodParams(partnerFileParamsSchema) params: FileParams,
+    @ZodQuery(downloadQuerySchema) query: DownloadQuery,
+    @CurrentSpace() space: PartnerSpaceContext,
+    @CurrentUser() user: AuthUser,
+  ): Promise<PartnerFileLink> {
+    return this.files.link(space.id, params.fileId, query.inline, user);
   }
 }

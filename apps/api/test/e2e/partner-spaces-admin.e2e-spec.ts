@@ -527,6 +527,7 @@ describe('partner spaces: management by the super admin (e2e, ADR-027)', () => {
         jobs: 1,
         applications: 1,
         files: 0,
+        blobs: 0,
       });
       expect(JSON.stringify(audit)).not.toMatch(/Clean|Zofia|Secretname|e2e-partner/);
     });

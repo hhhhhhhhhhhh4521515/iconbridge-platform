@@ -1646,3 +1646,37 @@ The measured volume after the deployment is added to the pull request.
 - `terraform fmt`, `terraform validate`, and the plan of the infra workflow.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/94>
+
+## 2026-11-12 - Partner spaces, PR 3: files, logo and the private container
+
+**What**:
+
+- Terraform: the private container `partner-files` in the storage module.
+- `StorageService`: the private container as an argument (the candidate documents by default), and `listPrivate` by prefix.
+- Partner area:
+  - `PUT /partner-spaces/:spaceId/applications/:applicationId/files/:kind` uploads or replaces the passport, CV or work permit;
+  - `GET /partner-spaces/:spaceId/files/:fileId/link` gives a 5-minute read-only link;
+  - applications list their current files.
+- Back office: `PUT` and `DELETE /admin/partner-spaces/:spaceId/logo`. The members' summary of a space carries a link to the logo.
+- Deleting an application or a space deletes its blobs first. If the storage fails, it answers 503 `STORAGE_UNAVAILABLE` and deletes nothing. The refusals of PR 1 and 2 ("delete the files first") are gone.
+- ADR-027 (PR 3 notes), SECURITY.md, ARCHITECTURE.md and the runbook are updated.
+
+**Why**: PR 3 of ADR-027, section 5 (files) and section 7, rules 7 and 11 (deleting).
+
+**Checks**:
+
+- `partner-spaces-files.e2e-spec.ts`, 15 tests:
+  - formats refused from the content;
+  - the size setting;
+  - metadata removed;
+  - random names in the partner container;
+  - replacement deleting the old blob;
+  - link expiry and inline rules;
+  - the history of each link;
+  - the logo;
+  - space deletion with an orphaned blob, and with the storage down.
+- The IDOR suite now covers the upload and link routes, with crossed file ids, for members, 7 outsiders and visitors. With the space removed from the link query, it fails on that route.
+- Azurite integration test of the new container: listing, the private refusal, an inline link.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e` (626 passed), `build`; `terraform fmt` and `validate`, and the plan of the infra workflow.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/95>

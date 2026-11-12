@@ -4,15 +4,15 @@ Operations of the production site on Azure (`rg-iconbridge-prod`, Italy North). 
 
 Names used below:
 
-| What                   | Name                                                                                |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| Resource group         | `rg-iconbridge-prod`                                                                |
-| Web app / API          | `ca-iconbridge-web-prod-itn` / `ca-iconbridge-api-prod-itn`                         |
-| Jobs                   | `caj-iconbridge-{migrate,tasks,backup}-prod-itn`                                    |
-| Database               | `psql-iconbridge-prod-itn` (PostgreSQL 16, B1ms), database `iconbridge`             |
-| Storage account        | `sticonbridgeproditn` (containers `candidate-documents`, `public-media`, `backups`) |
-| Key Vault              | `kv-iconbridge-prod-itn`                                                            |
-| Action group of alerts | `ag-iconbridge-prod-itn`                                                            |
+| What                   | Name                                                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| Resource group         | `rg-iconbridge-prod`                                                                                 |
+| Web app / API          | `ca-iconbridge-web-prod-itn` / `ca-iconbridge-api-prod-itn`                                          |
+| Jobs                   | `caj-iconbridge-{migrate,tasks,backup}-prod-itn`                                                     |
+| Database               | `psql-iconbridge-prod-itn` (PostgreSQL 16, B1ms), database `iconbridge`                              |
+| Storage account        | `sticonbridgeproditn` (containers `candidate-documents`, `partner-files`, `public-media`, `backups`) |
+| Key Vault              | `kv-iconbridge-prod-itn`                                                                             |
+| Action group of alerts | `ag-iconbridge-prod-itn`                                                                             |
 
 Commands assume `az login` on the owner's account and the repository root (`set -a; . ./.azure-context; set +a` for the subscription id).
 

@@ -86,6 +86,8 @@ const PARTNER_ROUTES = [
   'DELETE /api/v1/partner-spaces/:spaceId/applications/:applicationId',
   'GET /api/v1/partner-spaces/:spaceId/applications/:applicationId/comments',
   'POST /api/v1/partner-spaces/:spaceId/applications/:applicationId/comments',
+  'PUT /api/v1/partner-spaces/:spaceId/applications/:applicationId/files/:kind',
+  'GET /api/v1/partner-spaces/:spaceId/files/:fileId/link',
   'GET /api/v1/partner-spaces/:spaceId/history',
 ].sort();
 

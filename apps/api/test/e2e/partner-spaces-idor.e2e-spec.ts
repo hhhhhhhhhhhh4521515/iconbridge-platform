@@ -10,17 +10,21 @@ import {
   createPartnerLogin,
   createTestApp,
   createUser,
+  privateKey,
   resetDatabase,
   type TestApp,
   type TestUser,
 } from './app.js';
+import { pdf } from './files.js';
 
-type Method = 'get' | 'post' | 'patch' | 'delete';
+type Method = 'get' | 'post' | 'patch' | 'put' | 'delete';
 
 interface Space {
   id: string;
   jobId: string;
   applicationId: string;
+  /** The passport of the application. */
+  fileId: string;
 }
 
 interface World {
@@ -41,6 +45,8 @@ interface Route {
   method: Method;
   path: (s: Space) => string;
   body?: (s: Space) => object;
+  /** A multipart upload in the field `file` instead of a JSON body. */
+  upload?: Buffer;
   /** Answer for a member of the space. */
   ok: number;
 }
@@ -99,6 +105,18 @@ const ROUTES: Route[] = [
     body: () => ({ body: 'Passport received' }),
     ok: 201,
   },
+  {
+    method: 'put',
+    path: (s) => `/partner-spaces/${s.id}/applications/${s.applicationId}/files/PASSPORT`,
+    upload: pdf(),
+    ok: 200,
+  },
+  { method: 'get', path: (s) => `/partner-spaces/${s.id}/files/${s.fileId}/link`, ok: 200 },
+  {
+    method: 'get',
+    path: (s) => `/partner-spaces/${s.id}/files/${s.fileId}/link?inline=true`,
+    ok: 200,
+  },
   { method: 'get', path: (s) => `/partner-spaces/${s.id}/history`, ok: 200 },
 ];
 
@@ -118,6 +136,18 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
       const call = test.http()[method](`${API}${path}`).set('Cookie', cookie);
       return body === undefined ? call : call.send(body);
     };
+  };
+
+  /** One route of the matrix, with its JSON body or its upload. */
+  const callRoute = (user: TestUser | null, route: Route, space: Space) => {
+    if (!route.upload) {
+      return as(user)(route.method, route.path(space), route.body?.(space) ?? {});
+    }
+    return test
+      .http()
+      [route.method](`${API}${route.path(space)}`)
+      .set('Cookie', user ? cookieHeader(user.cookies) : '')
+      .attach('file', route.upload, 'passport.pdf');
   };
 
   const createSpace = async (name: string): Promise<Space> => {
@@ -141,7 +171,25 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
         nationality: 'TN',
       },
     });
-    return { id: space.id, jobId: job.id, applicationId: application.id };
+    const storagePath = `spaces/${space.id}/${name.replace(/\W/g, '')}-passport.pdf`;
+    test.privateFiles.set(privateKey(storagePath, 'partner-files'), {
+      contentType: 'application/pdf',
+      content: pdf(),
+    });
+    const file = await test.prisma.partnerFile.create({
+      data: {
+        partnerSpaceId: space.id,
+        partnerApplicationId: application.id,
+        kind: 'PASSPORT',
+        format: 'pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: pdf().length,
+        sha256: '0'.repeat(64),
+        storagePath,
+        originalName: 'passport.pdf',
+      },
+    });
+    return { id: space.id, jobId: job.id, applicationId: application.id, fileId: file.id };
   };
 
   const addStaff = async (spaceId: string, role: UserRole): Promise<TestUser> => {
@@ -187,7 +235,7 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
     const failures: string[] = [];
     for (const member of w.membersOfA) {
       for (const route of ROUTES) {
-        const response = await as(member)(route.method, route.path(w.a), route.body?.(w.a) ?? {});
+        const response = await callRoute(member, route, w.a);
         if (response.status !== route.ok) {
           failures.push(
             `${member.role} ${route.method} ${route.path(w.a)} -> ${String(response.status)}`,
@@ -203,7 +251,7 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
     const failures: string[] = [];
     for (const caller of [...w.outsiders, null]) {
       for (const route of ROUTES) {
-        const response = await as(caller)(route.method, route.path(w.a), route.body?.(w.a) ?? {});
+        const response = await callRoute(caller, route, w.a);
         const expected = caller ? 404 : 401;
         if (response.status !== expected) {
           failures.push(
@@ -216,23 +264,25 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
     // Nothing was written by the refused calls.
     expect(await test.prisma.partnerJob.count({ where: { partnerSpaceId: w.a.id } })).toBe(1);
     expect(await test.prisma.partnerComment.count()).toBe(0);
+    // No upload replaced the passport, and no link was recorded.
+    const passport = await test.prisma.partnerFile.findUniqueOrThrow({ where: { id: w.a.fileId } });
+    expect(passport.originalName).toBe('passport.pdf');
+    expect(await test.prisma.partnerHistory.count({ where: { entityType: 'file' } })).toBe(0);
   });
 
   it('answers 404 to a member using ids of another space, in the path or in the body', async () => {
     const w = await world();
     const crossed: Space[] = [
       // Space A in the path, a job demand and an application of B.
-      { id: w.a.id, jobId: w.b.jobId, applicationId: w.b.applicationId },
+      { id: w.a.id, jobId: w.b.jobId, applicationId: w.b.applicationId, fileId: w.b.fileId },
     ];
     const failures: string[] = [];
     for (const member of w.membersOfA) {
       for (const space of crossed) {
-        for (const route of ROUTES.filter((r) => r.path(space).match(/jobs\/|applications\//))) {
-          const response = await as(member)(
-            route.method,
-            route.path(space),
-            route.body?.(space) ?? {},
-          );
+        for (const route of ROUTES.filter((r) =>
+          r.path(space).match(/jobs\/|applications\/|files\//),
+        )) {
+          const response = await callRoute(member, route, space);
           if (response.status !== 404) {
             failures.push(
               `${member.role} ${route.method} ${route.path(space)} -> ${String(response.status)}`,
@@ -266,6 +316,16 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
       where: { id: w.b.applicationId },
     });
     expect(untouched.visaStatus).toBe('NOT_STARTED');
+    // B's passport was neither replaced nor linked.
+    const passportB = await test.prisma.partnerFile.findUniqueOrThrow({
+      where: { id: w.b.fileId },
+    });
+    expect(passportB.storagePath).toContain(w.b.id);
+    expect(
+      await test.prisma.partnerHistory.count({
+        where: { partnerSpaceId: w.b.id, entityType: 'file' },
+      }),
+    ).toBe(0);
     expect(await test.prisma.partnerApplication.count({ where: { partnerSpaceId: w.b.id } })).toBe(
       1,
     );
@@ -419,8 +479,28 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
         confirmName: 'Zofia E2EBetaSecret',
       }).expect(404);
 
+      // The storage cannot be reached: nothing is deleted, and a retry finishes the job.
+      const blobsOfA = () =>
+        [...test.privateFiles.keys()].filter((key) =>
+          key.startsWith(`partner-files/spaces/${w.a.id}/`),
+        );
+      expect(blobsOfA()).toHaveLength(1);
+      test.storageState.down = true;
+      try {
+        const down = await as(w.root)('delete', path, name).expect(503);
+        expect(down.body).toMatchObject({ code: 'STORAGE_UNAVAILABLE' });
+      } finally {
+        test.storageState.down = false;
+      }
+      await as(w.partnerA)('get', path).expect(200);
+      expect(blobsOfA()).toHaveLength(1);
+
       await as(w.root)('delete', path, name).expect(204);
       await as(w.partnerA)('get', path).expect(404);
+      // The passport's blob and row are gone; B's passport stays.
+      expect(blobsOfA()).toEqual([]);
+      expect(await test.prisma.partnerFile.count({ where: { id: w.a.fileId } })).toBe(0);
+      expect(await test.prisma.partnerFile.count({ where: { id: w.b.fileId } })).toBe(1);
       expect(
         await test.prisma.partnerComment.count({
           where: { partnerApplicationId: w.a.applicationId },
@@ -439,7 +519,7 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
       const audit = await test.prisma.auditLog.findFirstOrThrow({
         where: { action: 'partner_application.delete' },
       });
-      expect(audit.before).toMatchObject({ comments: 1, files: 0 });
+      expect(audit.before).toMatchObject({ comments: 1, files: 1 });
       expect(JSON.stringify(audit)).not.toMatch(/Zofia|Secret/);
       // The other space is untouched.
       expect(await test.prisma.partnerApplication.count({ where: { id: w.b.applicationId } })).toBe(

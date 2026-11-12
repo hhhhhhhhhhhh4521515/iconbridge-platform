@@ -29,6 +29,15 @@ export interface PartnerHistoryEntry {
   changes?: PartnerChange[];
 }
 
+/** The name shown in a space's history and comments: the display name, else the address. */
+export function actorOf(user: {
+  id: string;
+  email: string;
+  displayName?: string | null;
+}): PartnerActor {
+  return { id: user.id, name: user.displayName ?? user.email };
+}
+
 /** Values are cut to the column's 500 characters. */
 const MAX_VALUE = 500;
 

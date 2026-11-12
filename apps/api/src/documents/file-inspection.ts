@@ -57,16 +57,27 @@ const FORMAT_BY_MIME = new Map<string, DocumentFormat>(
  * accepted for the document type. A renamed executable is refused here. Images are
  * returned without their metadata (see stripImageMetadata).
  */
-export async function inspectDocument(content: Buffer, type: DocumentType): Promise<InspectedFile> {
+export function inspectDocument(content: Buffer, type: DocumentType): Promise<InspectedFile> {
+  return inspectUpload(content, DOCUMENT_FORMATS[type], { documentType: type });
+}
+
+/**
+ * The checks of inspectDocument against a list of accepted formats (the files of partner
+ * spaces, ADR-027). `details` goes into the error, to say which file was refused.
+ */
+export async function inspectUpload(
+  content: Buffer,
+  accepted: readonly DocumentFormat[],
+  details: Record<string, string>,
+): Promise<InspectedFile> {
   const detected = await fileTypeFromBuffer(content);
   const format = detected ? FORMAT_BY_MIME.get(detected.mime) : undefined;
-  const accepted = DOCUMENT_FORMATS[type];
   if (!format || !accepted.includes(format)) {
     throw new AppException(
       'UNSUPPORTED_FILE',
       HttpStatus.UNSUPPORTED_MEDIA_TYPE,
       'The content of this file is not an accepted format',
-      { documentType: type, accepted },
+      { ...details, accepted },
     );
   }
   const stored = await stripImageMetadata(content, format);

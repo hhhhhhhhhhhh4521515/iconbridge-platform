@@ -212,4 +212,51 @@ describe('Azure storage service (integration)', () => {
     expect((await fetch(other)).status).toBe(403);
     await storage.deletePrivate(path);
   });
+
+  it('keeps partner files in their own private container, listed by prefix (ADR-027)', async () => {
+    const prefix = `${name}/spaces/a/`;
+    expect(await storage.listPrivate(prefix, 'partner-files')).toEqual([]);
+    await storage.uploadPrivate(
+      `${prefix}one.pdf`,
+      Buffer.from('one'),
+      'application/pdf',
+      'partner-files',
+    );
+    await storage.uploadPrivate(
+      `${prefix}two.pdf`,
+      Buffer.from('two'),
+      'application/pdf',
+      'partner-files',
+    );
+    await storage.uploadPrivate(
+      `${name}/spaces/b/three.pdf`,
+      Buffer.from('3'),
+      'application/pdf',
+      'partner-files',
+    );
+    expect((await storage.listPrivate(prefix, 'partner-files')).sort()).toEqual([
+      `${prefix}one.pdf`,
+      `${prefix}two.pdf`,
+    ]);
+    // Not in the candidates' container, and not readable without a link.
+    expect(await storage.listPrivate(prefix, 'candidate-documents')).toEqual([]);
+    const plain = `http://127.0.0.1:10000/devstoreaccount1/partner-files/${prefix}one.pdf`;
+    expect([403, 404, 409]).toContain((await fetch(plain)).status);
+
+    const link = await storage.privateDownloadUrl(
+      `${prefix}one.pdf`,
+      { fileName: 'one.pdf', contentType: 'application/pdf', inline: true },
+      'partner-files',
+    );
+    expect(new URL(link).pathname).toBe(`/devstoreaccount1/partner-files/${prefix}one.pdf`);
+    const opened = await fetch(link);
+    expect(opened.status).toBe(200);
+    expect(await opened.text()).toBe('one');
+    expect(opened.headers.get('content-disposition')).toMatch(/^inline;/);
+
+    for (const path of await storage.listPrivate(`${name}/spaces/`, 'partner-files')) {
+      await storage.deletePrivate(path, 'partner-files');
+    }
+    expect(await storage.listPrivate(`${name}/spaces/`, 'partner-files')).toEqual([]);
+  });
 });

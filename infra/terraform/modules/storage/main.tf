@@ -94,6 +94,20 @@ resource "azurerm_storage_container" "documents" {
   }
 }
 
+# Partner spaces (ADR-027): passports, CVs, work permits and logos, under
+# spaces/<spaceId>/. Private like the candidate documents; read only through 5-minute links.
+resource "azurerm_storage_container" "partner_files" {
+  name                  = "partner-files"
+  storage_account_id    = azurerm_storage_account.this.id
+  container_access_type = "private"
+  depends_on            = [time_sleep.rbac]
+
+  lifecycle {
+    # Holds data: deleting it takes a deliberate edit of this file.
+    prevent_destroy = true
+  }
+}
+
 resource "azurerm_storage_container" "public_media" {
   name                  = "public-media"
   storage_account_id    = azurerm_storage_account.this.id
