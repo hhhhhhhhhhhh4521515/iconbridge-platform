@@ -1550,3 +1550,37 @@ The measured volume after the deployment is added to the pull request.
 - Open findings are described only as far as needed to follow their fix.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/90>
+
+## 2026-11-12 - Partner spaces, PR 2: partner area API and the IDOR suite
+
+**What** (ADR-027, PR 2 of 6):
+
+- **Routes** under `partner-spaces`:
+  - my spaces and one space;
+  - job demands (list open first, with counts per visa status; create, edit, close, reopen);
+  - applications (list with filters, create with a job demand of the same space, edit with the visa and DHL fields);
+  - comments, append-only, on job demands and applications;
+  - the history, filtered and paginated;
+  - deleting one application, for a super admin who is a member.
+- **Guard:** `PartnerSpaceGuard` checks the membership and whether the space is active on every request: 404 outside, the same answer whatever the reason. Every query of `PartnerAreaService` carries the space id.
+- **Rules between fields:** a decision date only for an approved or refused visa; a tracking number only with its sending date. They are checked on the merged application, and the database checks them again.
+- **History:** one entry per changed field, with old and new values and the author's display name.
+- **Logs:** names, phone, email and DHL tracking number added to `SENSITIVE_KEYS`.
+- **Docs:** SECURITY, ADR-027 notes, API types and API.md.
+
+**Why**: owner's approval of ADR-027; PR 2 of the delivery plan.
+
+**Checks**:
+
+- `partner-spaces-idor.e2e-spec.ts` (9 tests):
+  - 16 routes for the members of A: a partner login, a recruiter and a viewer;
+  - 404 on every route for seven callers outside A (partner and staff of B, a super admin who is not a member, a recruiter, a viewer, a country agent, a candidate), and 401 for visitors, with nothing written;
+  - crossed ids (B's job demand and application under A, B's job demand in a new application's body): 404;
+  - access cut at the next request when the space is disabled, the member removed or the login disabled;
+  - the history field by field;
+  - append-only comments;
+  - deleting an application: 404 for members and for a super admin outside the space, the typed name, its rows gone, one entry without personal data, the audit with counts;
+  - no partner data in the public jobs or in the back-office lists.
+- The suite was checked against a deliberate fault: without the space id in one query, it failed and named the three routes that leaked.
+- `security.e2e-spec.ts`: every partner-area route marked, and the fixed list of partner routes.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`.

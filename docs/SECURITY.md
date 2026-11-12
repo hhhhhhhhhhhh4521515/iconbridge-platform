@@ -48,7 +48,19 @@ A `PARTNER` login (a partner company's account, [ADR-027](adr/ADR-027-partner-sp
 
 Partner spaces are managed by super admins only (`MANAGE_PARTNER_SPACES`); the management routes return settings and counts, never the content of a space. Disabling a login ends its sessions and invalidates its access tokens at once. Deleting a space needs its exact name, deletes its rows and its partner logins, and writes an audit entry with counts only. In the database, every child row carries `partner_space_id` and its foreign keys include it, so a row cannot point to a parent of another space.
 
-Tests: `security.e2e-spec.ts` (the list of routes open to partner logins is fixed, and every other route answers 403 to one), `partner-spaces-admin.e2e-spec.ts` (roles refused, login fenced off, access cut on disabling, deletion, cross-space rows refused by the database), `roles.guard.spec.ts`, `permissions.spec.ts`.
+The partner area (`/partner-spaces/:spaceId/…`) is behind `PartnerSpaceGuard`. On every request it reads the caller's membership and whether the space is active. A non-member, a removed member, a disabled space or an unknown id all answer 404. Every service query also carries the space id in its `WHERE`, so an id of another space is never found, in the path or in the body. Every member has the same rights inside a space, viewers included. Deleting one application is for a super admin who is a member, after typing the applicant's name: its rows and history go, and one entry without personal data remains. The names, phone, email and DHL tracking number of the people in a space are in `SENSITIVE_KEYS`.
+
+Tests: `partner-spaces-idor.e2e-spec.ts`:
+
+- every route, for members (partner, recruiter, viewer) of space A, and 404 for partners and staff of B, a super admin who is not a member, other roles and candidates; 401 for visitors;
+- crossed ids in the path and the body;
+- access cut at the next request;
+- history field by field;
+- append-only comments;
+- deleting an application;
+- no partner data on the public site or in the back office.
+
+Also: `security.e2e-spec.ts` (the list of routes open to partner logins is fixed, and every other route answers 403 to one), `partner-spaces-admin.e2e-spec.ts` (roles refused, login fenced off, access cut on disabling, deletion, cross-space rows refused by the database), `roles.guard.spec.ts`, `permissions.spec.ts`.
 
 ### Records of somebody else (IDOR)
 
