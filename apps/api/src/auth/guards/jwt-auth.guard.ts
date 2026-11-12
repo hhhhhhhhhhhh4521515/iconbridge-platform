@@ -56,6 +56,7 @@ export class JwtAuthGuard implements CanActivate {
         tokenVersion: true,
         assignedCountries: true,
         passwordChangeRequired: true,
+        displayName: true,
       },
     });
     if (!user || !user.isActive || user.deletedAt || user.tokenVersion !== payload.tv) {
@@ -73,6 +74,7 @@ export class JwtAuthGuard implements CanActivate {
       locale: localeSchema.catch('en').parse(user.locale),
       assignedCountries: user.assignedCountries,
       passwordChangeRequired: user.passwordChangeRequired,
+      displayName: user.displayName,
     } satisfies AuthUser;
     return true;
   }

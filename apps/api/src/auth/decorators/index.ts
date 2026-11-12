@@ -46,6 +46,9 @@ export const PARTNER_ACCESS_KEY = 'auth:partner-access';
  */
 export const PartnerAccess = () => SetMetadata(PARTNER_ACCESS_KEY, true);
 
+/** Set by @PartnerSpaceRoute() (partner-spaces): a route inside a partner space. */
+export const PARTNER_SPACE_KEY = 'auth:partner-space';
+
 export const OWNED_RESOURCES = ['candidateProfile', 'document', 'application'] as const;
 export type OwnedResource = (typeof OWNED_RESOURCES)[number];
 export interface OwnershipRule {

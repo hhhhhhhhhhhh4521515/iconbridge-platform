@@ -289,6 +289,11 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
   - Until the partner sign-in (PR 5), `/auth/login` refuses them, and forgot-password and resend-verification send them nothing.
   - Deleting a space refuses while it holds files: their deletion arrives with the upload routes (PR 3).
   - The logo routes also arrive with the container (PR 3).
+- **PR 2** (partner area API):
+  - `PartnerSpaceGuard` and `@PartnerSpaceRoute()`: the guard finds the membership; the decorator opens the route to partner logins and lets viewers write inside a space.
+  - `AuthUser.displayName` gives the author's name in comments and history.
+  - Deleting an application answers 404 to members who are not super admins; it refuses while the application holds files, until PR 3 adds their deletion.
+  - A job description change is recorded as a change without the old and new texts, which are long.
 
 ## Consequences
 

@@ -1698,6 +1698,212 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partner-spaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My partner spaces (members only see their own) */
+        get: operations["PartnerAreaController_mySpaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of my partner spaces */
+        get: operations["PartnerAreaController_space"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Job demands of the space, open first, with counts per visa status */
+        get: operations["PartnerAreaController_listJobs"];
+        put?: never;
+        /** Create a job demand */
+        post: operations["PartnerAreaController_createJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One job demand */
+        get: operations["PartnerAreaController_getJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a job demand */
+        patch: operations["PartnerAreaController_updateJob"];
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a job demand (nothing changes if it is already closed) */
+        post: operations["PartnerAreaController_closeJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen a closed job demand */
+        post: operations["PartnerAreaController_reopenJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Comments of a job demand, oldest first */
+        get: operations["PartnerAreaController_jobComments"];
+        put?: never;
+        /** Comment on a job demand (comments cannot be edited or deleted) */
+        post: operations["PartnerAreaController_commentJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Applications of the space; filter by job demand, visa status or name */
+        get: operations["PartnerAreaController_listApplications"];
+        put?: never;
+        /**
+         * Put a person forward for a job demand
+         * @description `jobId` must be a job demand of the same space; otherwise the answer is 404.
+         */
+        post: operations["PartnerAreaController_createApplication"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/applications/{applicationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One application */
+        get: operations["PartnerAreaController_getApplication"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an application with its files, comments and history (super admin)
+         * @description For a super admin who is a member of the space, for example after an erasure request. `confirmName` is the applicant's first and last name. Other members get 404. The history keeps one entry without personal data; the audit entry holds counts.
+         */
+        delete: operations["PartnerAreaController_deleteApplication"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit an application, including the visa and DHL follow-up
+         * @description A decision date needs the visa status Approved or Refused; a DHL tracking number needs the date it was sent. The rules are checked on the application as it will be after the change.
+         */
+        patch: operations["PartnerAreaController_updateApplication"];
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Comments of an application, oldest first */
+        get: operations["PartnerAreaController_applicationComments"];
+        put?: never;
+        /** Comment on an application (comments cannot be edited or deleted) */
+        post: operations["PartnerAreaController_commentApplication"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-spaces/{spaceId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * History of the space, newest first
+         * @description Who changed what and when, with the old and the new value. Filter by entity or application.
+         */
+        get: operations["PartnerAreaController_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/success-stories": {
         parameters: {
             query?: never;
@@ -12581,6 +12787,1785 @@ export interface operations {
                         lastLoginAt: string | null;
                         /** Format: date-time */
                         createdAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_mySpaces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        country: string;
+                        /** @enum {string} */
+                        defaultLocale: "en" | "fr" | "pl";
+                        hasLogo: boolean;
+                        /** @enum {string} */
+                        membership: "STAFF" | "PARTNER";
+                    }[];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_space: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        country: string;
+                        /** @enum {string} */
+                        defaultLocale: "en" | "fr" | "pl";
+                        hasLogo: boolean;
+                        /** @enum {string} */
+                        membership: "STAFF" | "PARTNER";
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_listJobs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        role: string;
+                        positions: number;
+                        locations: string[];
+                        salary: string | null;
+                        description: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CLOSED";
+                        /** Format: date-time */
+                        closedAt: string | null;
+                        applications: {
+                            NOT_STARTED: number;
+                            APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        createdBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    }[];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_createJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    role: string;
+                    positions: number;
+                    locations: string[];
+                    /** @default null */
+                    salary?: string | null;
+                    /** @default  */
+                    description?: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        role: string;
+                        positions: number;
+                        locations: string[];
+                        salary: string | null;
+                        description: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CLOSED";
+                        /** Format: date-time */
+                        closedAt: string | null;
+                        applications: {
+                            NOT_STARTED: number;
+                            APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        createdBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_getJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        role: string;
+                        positions: number;
+                        locations: string[];
+                        salary: string | null;
+                        description: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CLOSED";
+                        /** Format: date-time */
+                        closedAt: string | null;
+                        applications: {
+                            NOT_STARTED: number;
+                            APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        createdBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_updateJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    role?: string;
+                    positions?: number;
+                    locations?: string[];
+                    salary?: string | null;
+                    description?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        role: string;
+                        positions: number;
+                        locations: string[];
+                        salary: string | null;
+                        description: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CLOSED";
+                        /** Format: date-time */
+                        closedAt: string | null;
+                        applications: {
+                            NOT_STARTED: number;
+                            APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        createdBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_closeJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        role: string;
+                        positions: number;
+                        locations: string[];
+                        salary: string | null;
+                        description: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CLOSED";
+                        /** Format: date-time */
+                        closedAt: string | null;
+                        applications: {
+                            NOT_STARTED: number;
+                            APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        createdBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_reopenJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        role: string;
+                        positions: number;
+                        locations: string[];
+                        salary: string | null;
+                        description: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CLOSED";
+                        /** Format: date-time */
+                        closedAt: string | null;
+                        applications: {
+                            NOT_STARTED: number;
+                            APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        createdBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_jobComments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        authorName: string;
+                        body: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    }[];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_commentJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    body: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        authorName: string;
+                        body: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_listApplications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        firstName: string;
+                        lastName: string;
+                        nationality: string;
+                        phone: string | null;
+                        /** Format: email */
+                        email: string | null;
+                        /** @enum {string} */
+                        visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        visaAppointmentDate: string | null;
+                        /** Format: date */
+                        visaDecisionDate: string | null;
+                        /** Format: date */
+                        dhlSentDate: string | null;
+                        dhlTrackingNumber: string | null;
+                        /** Format: date */
+                        documentsReceivedDate: string | null;
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobId: string;
+                        jobRole: string;
+                        files: {
+                            PASSPORT: boolean;
+                            CV: boolean;
+                            WORK_PERMIT: boolean;
+                        };
+                        createdBy: string | null;
+                        updatedBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    }[];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_createApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    firstName: string;
+                    lastName: string;
+                    nationality: string;
+                    phone?: string | null;
+                    email?: string | null;
+                    /**
+                     * @default NOT_STARTED
+                     * @enum {string}
+                     */
+                    visaStatus?: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                    /** Format: date */
+                    visaAppointmentDate?: string | null;
+                    /** Format: date */
+                    visaDecisionDate?: string | null;
+                    /** Format: date */
+                    dhlSentDate?: string | null;
+                    dhlTrackingNumber?: string | null;
+                    /** Format: date */
+                    documentsReceivedDate?: string | null;
+                    /** Format: uuid */
+                    jobId: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        firstName: string;
+                        lastName: string;
+                        nationality: string;
+                        phone: string | null;
+                        /** Format: email */
+                        email: string | null;
+                        /** @enum {string} */
+                        visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        visaAppointmentDate: string | null;
+                        /** Format: date */
+                        visaDecisionDate: string | null;
+                        /** Format: date */
+                        dhlSentDate: string | null;
+                        dhlTrackingNumber: string | null;
+                        /** Format: date */
+                        documentsReceivedDate: string | null;
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobId: string;
+                        jobRole: string;
+                        files: {
+                            PASSPORT: boolean;
+                            CV: boolean;
+                            WORK_PERMIT: boolean;
+                        };
+                        createdBy: string | null;
+                        updatedBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_getApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applicationId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        firstName: string;
+                        lastName: string;
+                        nationality: string;
+                        phone: string | null;
+                        /** Format: email */
+                        email: string | null;
+                        /** @enum {string} */
+                        visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        visaAppointmentDate: string | null;
+                        /** Format: date */
+                        visaDecisionDate: string | null;
+                        /** Format: date */
+                        dhlSentDate: string | null;
+                        dhlTrackingNumber: string | null;
+                        /** Format: date */
+                        documentsReceivedDate: string | null;
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobId: string;
+                        jobRole: string;
+                        files: {
+                            PASSPORT: boolean;
+                            CV: boolean;
+                            WORK_PERMIT: boolean;
+                        };
+                        createdBy: string | null;
+                        updatedBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_deleteApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applicationId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirmName: string;
+                };
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_updateApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applicationId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    firstName?: string;
+                    lastName?: string;
+                    nationality?: string;
+                    phone?: string | null;
+                    email?: string | null;
+                    /** @enum {string} */
+                    visaStatus?: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                    /** Format: date */
+                    visaAppointmentDate?: string | null;
+                    /** Format: date */
+                    visaDecisionDate?: string | null;
+                    /** Format: date */
+                    dhlSentDate?: string | null;
+                    dhlTrackingNumber?: string | null;
+                    /** Format: date */
+                    documentsReceivedDate?: string | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        firstName: string;
+                        lastName: string;
+                        nationality: string;
+                        phone: string | null;
+                        /** Format: email */
+                        email: string | null;
+                        /** @enum {string} */
+                        visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        visaAppointmentDate: string | null;
+                        /** Format: date */
+                        visaDecisionDate: string | null;
+                        /** Format: date */
+                        dhlSentDate: string | null;
+                        dhlTrackingNumber: string | null;
+                        /** Format: date */
+                        documentsReceivedDate: string | null;
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobId: string;
+                        jobRole: string;
+                        files: {
+                            PASSPORT: boolean;
+                            CV: boolean;
+                            WORK_PERMIT: boolean;
+                        };
+                        createdBy: string | null;
+                        updatedBy: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_applicationComments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applicationId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        authorName: string;
+                        body: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    }[];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_commentApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applicationId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    body: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        authorName: string;
+                        body: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    PartnerAreaController_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            actorName: string;
+                            /** @enum {string} */
+                            entityType: "space" | "member" | "login" | "job" | "application" | "file" | "comment";
+                            /** Format: uuid */
+                            entityId: string;
+                            action: string;
+                            field: string | null;
+                            oldValue: string | null;
+                            newValue: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        page: number;
+                        pageSize: number;
+                        total: number;
                     };
                 };
             };

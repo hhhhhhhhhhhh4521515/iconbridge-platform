@@ -19,6 +19,12 @@ const SENSITIVE_KEYS = [
   'passportNumberEncrypted',
   'cookie',
   'authorization',
+  // People of a partner space (ADR-027), and any address: logs carry ids only.
+  'email',
+  'phone',
+  'firstName',
+  'lastName',
+  'dhlTrackingNumber',
 ];
 
 /**
