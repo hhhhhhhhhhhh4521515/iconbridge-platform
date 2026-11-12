@@ -1681,6 +1681,31 @@ The measured volume after the deployment is added to the pull request.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/95>
 
+## 2026-11-13 - Partner spaces, PR 4: the super admin's back-office screens
+
+**What**:
+
+- Menu entry "Partner spaces" for super admins.
+- The list page: name, country, state, members and logins, membership.
+- A page per space:
+  - settings (name, country, default language) and the logo;
+  - counts of job demands, applications and files;
+  - the tabs Members (add or remove a back-office account) and Partner logins (create one with its first password, disable or enable it, set a new password);
+  - disable or enable the space;
+  - delete it, in a dialog that lists what goes and needs the exact name;
+  - "Open the space" for members.
+- English and French texts. A `PARTNER` login is refused by the back-office shell, like a candidate. The browser-test clean-up removes spaces named `E2E …`. ADR-027 (PR 4 notes) updated.
+
+**Why**: PR 4 of ADR-027, section 6 (back-office screens).
+
+**Checks**:
+
+- New browser test `admin-partner-spaces.spec.ts`: create, logo, member, login, disable and enable, wrong and right name on deletion.
+- axe on the list and on a space page, in English and French.
+- `pnpm lint`, `typecheck`, `test`, `build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/97>
+
 ## 2026-11-13 - API: no 500 on the first requests of a new revision
 
 **What**:

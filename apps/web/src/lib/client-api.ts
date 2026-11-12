@@ -116,6 +116,12 @@ export type AdminSlide = Body<'/api/v1/admin/home-slides', 'get'>[number];
 export type AdminDestination = Body<'/api/v1/admin/destinations', 'get'>[number];
 export type AdminCategory = Body<'/api/v1/admin/categories', 'get'>[number];
 export type AdminUser = Body<'/api/v1/admin/users', 'get'>['items'][number];
+export type AdminPartnerSpace = Body<'/api/v1/admin/partner-spaces/{spaceId}', 'get'>;
+export type PartnerStaffMember = Body<
+  '/api/v1/admin/partner-spaces/{spaceId}/members',
+  'get'
+>[number];
+export type PartnerLogin = Body<'/api/v1/admin/partner-spaces/{spaceId}/logins', 'get'>[number];
 export type ContactMessage = Body<'/api/v1/admin/contact-messages', 'get'>['items'][number];
 export type AuditEntry = Body<'/api/v1/admin/audit-logs', 'get'>['items'][number];
 export type SettingValues = Body<'/api/v1/admin/settings', 'get'>;

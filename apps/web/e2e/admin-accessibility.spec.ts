@@ -1,6 +1,6 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { check } from './axe';
-import { adminSession } from './support';
+import { adminSession, STAMP } from './support';
 
 /** axe on the screens of the back office, signed in as the super admin. */
 test.describe('accessibility of the back office', () => {
@@ -26,11 +26,31 @@ test.describe('accessibility of the back office', () => {
         '/en/admin/settings',
         '/en/admin/audit',
         '/en/admin/password',
+        '/en/admin/partner-spaces',
         '/fr/admin',
       ]) {
         await check(page, path);
       }
     } finally {
+      await admin.close();
+    }
+  });
+
+  test('a partner space (ADR-027)', async ({ browser }) => {
+    const admin = await adminSession(browser);
+    const created = await admin.request.post('/api/v1/admin/partner-spaces', {
+      data: { name: `E2E Axe ${STAMP}`, country: 'PL', defaultLocale: 'pl' },
+    });
+    expect(created.ok()).toBe(true);
+    const { id } = (await created.json()) as { id: string };
+    try {
+      const page = await admin.newPage();
+      await check(page, `/en/admin/partner-spaces/${id}`);
+      await check(page, `/fr/admin/partner-spaces/${id}`);
+    } finally {
+      await admin.request.delete(`/api/v1/admin/partner-spaces/${id}`, {
+        data: { confirmName: `E2E Axe ${STAMP}` },
+      });
       await admin.close();
     }
   });

@@ -52,7 +52,8 @@ async function load(): Promise<State> {
     goToLogin();
     return { status: 'loading' };
   }
-  if (user.role === 'CANDIDATE') {
+  // A partner login has its own area (ADR-027); the back office refuses it on every call.
+  if (user.role === 'CANDIDATE' || user.role === 'PARTNER') {
     return { status: 'forbidden' };
   }
   const capabilities = await attempt(api.GET('/api/v1/admin/capabilities'));

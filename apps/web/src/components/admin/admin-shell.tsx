@@ -6,6 +6,7 @@ import {
   Briefcase,
   ExternalLink,
   FileText,
+  Handshake,
   Images,
   KeyRound,
   LayoutDashboard,
@@ -67,6 +68,12 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: 'administration',
     items: [
       { key: 'users', href: '/admin/users', icon: ShieldCheck, needs: 'MANAGE_ADMIN_USERS' },
+      {
+        key: 'partnerSpaces',
+        href: '/admin/partner-spaces',
+        icon: Handshake,
+        needs: 'MANAGE_PARTNER_SPACES',
+      },
       { key: 'settings', href: '/admin/settings', icon: Settings, needs: 'MANAGE_SETTINGS' },
       { key: 'audit', href: '/admin/audit', icon: ScrollText, needs: 'MANAGE_SETTINGS' },
     ],

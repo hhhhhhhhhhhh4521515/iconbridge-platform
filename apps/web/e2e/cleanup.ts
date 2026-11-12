@@ -179,6 +179,19 @@ export async function cleanUp(request: APIRequestContext, baseURL: string): Prom
       }),
     );
   }
+  // Partner spaces named "E2E …" (ADR-027): their files, rows and partner logins go with them.
+  const spacesResponse = await request.get('/api/v1/admin/partner-spaces');
+  const spaces = spacesResponse.ok()
+    ? ((await spacesResponse.json()) as { id: string; name: string }[])
+    : [];
+  for (const space of spaces.filter((item) => item.name.startsWith('E2E '))) {
+    await check(
+      `partner space ${space.id}`,
+      request.delete(`/api/v1/admin/partner-spaces/${space.id}`, {
+        data: { confirmName: space.name },
+      }),
+    );
+  }
   for (const user of await items<{ id: string; email: string }>(
     request,
     '/api/v1/admin/users?pageSize=100',
