@@ -1,7 +1,12 @@
 import './zod-setup.js';
 import { z } from 'zod';
-import { adminRoleSchema, emailSchema, passwordSchema } from './auth.js';
+import { adminRoleSchema, emailSchema, passwordSchema, phoneSchema } from './auth.js';
 import { countryCodeSchema } from './countries.js';
+import {
+  partnerJobStatusSchema,
+  partnerMemberKindSchema,
+  partnerVisaStatusSchema,
+} from './enums.js';
 import { partnerLocaleSchema } from './i18n.js';
 
 /**
@@ -112,3 +117,256 @@ export const partnerLoginSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 export type PartnerLogin = z.infer<typeof partnerLoginSchema>;
+
+// ---------------------------------------------------------------------------
+// The partner area (ADR-027): what members of a space send and receive. Every id in a path
+// or a body is looked up inside the space of the path; another space's id answers 404.
+// ---------------------------------------------------------------------------
+
+export const partnerJobParamsSchema = z.object({ spaceId: z.uuid(), jobId: z.uuid() });
+export const partnerApplicationParamsSchema = z.object({
+  spaceId: z.uuid(),
+  applicationId: z.uuid(),
+});
+
+/** A space as its members see it. */
+export const partnerSpaceSummarySchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  country: z.string(),
+  defaultLocale: partnerLocaleSchema,
+  hasLogo: z.boolean(),
+  /** How the caller belongs to it. */
+  membership: partnerMemberKindSchema,
+});
+export type PartnerSpaceSummary = z.infer<typeof partnerSpaceSummarySchema>;
+
+const plainText = (max: number) => z.string().trim().max(max);
+const locationSchema = z.string().trim().min(1).max(100);
+
+const partnerJobFields = z.object({
+  /** For example "Housekeeping". */
+  role: z.string().trim().min(1).max(120),
+  positions: z.number().int().min(1).max(1000),
+  /** 1 to 10 places, each once. */
+  locations: z
+    .array(locationSchema)
+    .min(1)
+    .max(10)
+    .refine((items) => new Set(items.map((item) => item.toLowerCase())).size === items.length, {
+      message: 'Each place may appear once',
+    }),
+  /** Free text, e.g. "4,500 PLN gross a month". */
+  salary: plainText(200).nullable(),
+  /** Plain text, shown as text, never as HTML. */
+  description: plainText(5000),
+});
+
+export const createPartnerJobSchema = partnerJobFields.extend({
+  salary: partnerJobFields.shape.salary.optional().default(null),
+  description: partnerJobFields.shape.description.optional().default(''),
+});
+export type CreatePartnerJobInput = z.infer<typeof createPartnerJobSchema>;
+
+export const updatePartnerJobSchema = partnerJobFields
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, { message: 'Nothing to change' });
+export type UpdatePartnerJobInput = z.infer<typeof updatePartnerJobSchema>;
+
+export const listPartnerJobsQuerySchema = z.object({
+  status: partnerJobStatusSchema.optional(),
+});
+export type ListPartnerJobsQuery = z.infer<typeof listPartnerJobsQuerySchema>;
+
+const visaCounts = z.object({
+  NOT_STARTED: z.number().int(),
+  APPOINTMENT_BOOKED: z.number().int(),
+  SUBMITTED: z.number().int(),
+  APPROVED: z.number().int(),
+  REFUSED: z.number().int(),
+});
+
+export const partnerJobSchema = z.object({
+  id: z.uuid(),
+  role: z.string(),
+  positions: z.number().int(),
+  locations: z.array(z.string()),
+  salary: z.string().nullable(),
+  description: z.string(),
+  status: partnerJobStatusSchema,
+  closedAt: z.iso.datetime().nullable(),
+  /** Applications of this job demand per visa status. */
+  applications: visaCounts,
+  createdBy: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export type PartnerJob = z.infer<typeof partnerJobSchema>;
+
+const calendarDate = z.iso.date();
+/** Decision dates only for a decided visa. */
+export const DECIDED_VISA_STATUSES = ['APPROVED', 'REFUSED'] as const;
+
+const partnerApplicationFields = z.object({
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+  nationality: countryCodeSchema,
+  phone: phoneSchema.nullable(),
+  email: emailSchema.nullable(),
+  visaStatus: partnerVisaStatusSchema,
+  visaAppointmentDate: calendarDate.nullable(),
+  visaDecisionDate: calendarDate.nullable(),
+  dhlSentDate: calendarDate.nullable(),
+  dhlTrackingNumber: z
+    .string()
+    .trim()
+    .min(4)
+    .max(40)
+    .regex(/^[A-Za-z0-9 -]+$/, 'Letters, digits, spaces and dashes only')
+    .nullable(),
+  documentsReceivedDate: calendarDate.nullable(),
+});
+
+/** The fields the rules between fields read; loose, so a stored row can be checked too. */
+interface ApplicationState {
+  visaStatus?: string | undefined;
+  visaDecisionDate?: string | null | undefined;
+  dhlSentDate?: string | null | undefined;
+  dhlTrackingNumber?: string | null | undefined;
+}
+
+/**
+ * The rules between fields, checked on the whole application after a change (the API merges
+ * a partial change with the stored row first; the database checks them again).
+ */
+export function partnerApplicationIssues(
+  state: ApplicationState,
+): { path: string; message: string }[] {
+  const issues: { path: string; message: string }[] = [];
+  if (
+    state.visaDecisionDate &&
+    !(DECIDED_VISA_STATUSES as readonly string[]).includes(state.visaStatus ?? 'NOT_STARTED')
+  ) {
+    issues.push({
+      path: 'visaDecisionDate',
+      message: 'A decision date needs the visa status Approved or Refused',
+    });
+  }
+  if (state.dhlTrackingNumber && !state.dhlSentDate) {
+    issues.push({
+      path: 'dhlTrackingNumber',
+      message: 'A tracking number needs the date it was sent',
+    });
+  }
+  return issues;
+}
+
+const withApplicationRules = <T extends z.ZodType<ApplicationState>>(schema: T) =>
+  schema.superRefine((body, context) => {
+    for (const issue of partnerApplicationIssues(body)) {
+      context.addIssue({ code: 'custom', path: [issue.path], message: issue.message });
+    }
+  });
+
+export const createPartnerApplicationSchema = withApplicationRules(
+  partnerApplicationFields
+    .extend({
+      /** The job demand, in the same space. */
+      jobId: z.uuid(),
+      visaStatus: partnerVisaStatusSchema.default('NOT_STARTED'),
+    })
+    .partial({
+      phone: true,
+      email: true,
+      visaAppointmentDate: true,
+      visaDecisionDate: true,
+      dhlSentDate: true,
+      dhlTrackingNumber: true,
+      documentsReceivedDate: true,
+    }),
+);
+export type CreatePartnerApplicationInput = z.infer<typeof createPartnerApplicationSchema>;
+
+export const updatePartnerApplicationSchema = partnerApplicationFields
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, { message: 'Nothing to change' });
+export type UpdatePartnerApplicationInput = z.infer<typeof updatePartnerApplicationSchema>;
+
+export const listPartnerApplicationsQuerySchema = z.object({
+  jobId: z.uuid().optional(),
+  visaStatus: partnerVisaStatusSchema.optional(),
+  /** Part of a first or last name. */
+  q: z.string().trim().min(1).max(100).optional(),
+});
+export type ListPartnerApplicationsQuery = z.infer<typeof listPartnerApplicationsQuerySchema>;
+
+export const partnerApplicationSchema = partnerApplicationFields.extend({
+  nationality: z.string(),
+  id: z.uuid(),
+  jobId: z.uuid(),
+  jobRole: z.string(),
+  /** Which of the three files are there (the files come with their own routes). */
+  files: z.object({ PASSPORT: z.boolean(), CV: z.boolean(), WORK_PERMIT: z.boolean() }),
+  createdBy: z.string().nullable(),
+  updatedBy: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export type PartnerApplication = z.infer<typeof partnerApplicationSchema>;
+
+/** Deleting one application (super admin and member): the applicant's first and last name. */
+export const deletePartnerApplicationSchema = z.object({
+  confirmName: z.string().trim().min(1).max(201),
+});
+export type DeletePartnerApplicationInput = z.infer<typeof deletePartnerApplicationSchema>;
+
+export const createPartnerCommentSchema = z.object({ body: z.string().trim().min(1).max(2000) });
+export type CreatePartnerCommentInput = z.infer<typeof createPartnerCommentSchema>;
+
+export const partnerCommentSchema = z.object({
+  id: z.uuid(),
+  authorName: z.string(),
+  body: z.string(),
+  createdAt: z.iso.datetime(),
+});
+export type PartnerComment = z.infer<typeof partnerCommentSchema>;
+
+export const PARTNER_HISTORY_ENTITY_TYPES = [
+  'space',
+  'member',
+  'login',
+  'job',
+  'application',
+  'file',
+  'comment',
+] as const;
+
+export const listPartnerHistoryQuerySchema = z.object({
+  entityType: z.enum(PARTNER_HISTORY_ENTITY_TYPES).optional(),
+  entityId: z.uuid().optional(),
+  /** Entries about one application, whatever their entity (files, comments). */
+  applicationId: z.uuid().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type ListPartnerHistoryQuery = z.infer<typeof listPartnerHistoryQuerySchema>;
+
+export const partnerHistoryEntrySchema = z.object({
+  id: z.uuid(),
+  actorName: z.string(),
+  entityType: z.enum(PARTNER_HISTORY_ENTITY_TYPES),
+  entityId: z.uuid(),
+  action: z.string(),
+  field: z.string().nullable(),
+  oldValue: z.string().nullable(),
+  newValue: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type PartnerHistoryEntry = z.infer<typeof partnerHistoryEntrySchema>;
+
+export const partnerHistoryPageSchema = z.object({
+  items: z.array(partnerHistoryEntrySchema),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+  total: z.number().int(),
+});
