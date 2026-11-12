@@ -410,7 +410,8 @@ module "monitoring" {
   api_app_id                 = module.container_apps.api_id
   web_app_id                 = module.container_apps.web_id
   tasks_job_name             = module.container_apps.tasks_job_name
-  backup_job_name            = module.container_apps.backup_job_name
+  tasks_job_id               = module.container_apps.tasks_job_id
+  backup_job_id              = module.container_apps.backup_job_id
   postgres_server_id         = module.database.server_id
   storage_account_id         = module.storage.account_id
   site_url                   = local.web_origin

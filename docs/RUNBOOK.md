@@ -83,9 +83,10 @@ Test notifications (`az monitor action-group test-notifications create`, the por
 | `alert-api-5xx`          | Application Insights → Failures (operation and exception type); logs by `traceId`: workbook "IconBridge Jobs – operations"                                                                 |
 | `alert-postgres-cpu`     | Database → Monitoring → Query Performance Insight; a slow query after a deployment means rolling back                                                                                      |
 | `alert-storage-failures` | Storage account → Insights → Failures; Azure status page for Italy North                                                                                                                   |
-| `alert-tasks`            | `az containerapp job execution list -g rg-iconbridge-prod -n caj-iconbridge-tasks-prod-itn -o table`, then the execution's logs; database stopped?                                         |
+| `alert-tasks-failed`     | A run failed: `az containerapp job execution list -g rg-iconbridge-prod -n caj-iconbridge-tasks-prod-itn -o table`, then the execution's logs (the JSON line of the failed task)           |
+| `alert-tasks`            | No run for an hour: `az containerapp job execution list -g rg-iconbridge-prod -n caj-iconbridge-tasks-prod-itn -o table`, then the execution's logs; database stopped?                     |
 | `alert-emails-abandoned` | `email_outbox` rows with status `FAILED`; the Azure Communication Services quota (100 an hour on the site's domain, `EMAIL_HOURLY_QUOTA`; 10 on the Azure-managed fallback) and the domain |
-| `alert-backup`           | [Backups](#backups): run the job again and read its logs                                                                                                                                   |
+| `alert-backup-failed`    | [Backups](#backups): run the job again and read its logs                                                                                                                                   |
 | Budget 50 / 80 / 100 %   | Cost Management → Cost analysis by resource; availability tests left on? A minimum replica above 0?                                                                                        |
 
 ## Backups
@@ -228,7 +229,7 @@ az postgres flexible-server stop  -g rg-iconbridge-prod -n psql-iconbridge-prod-
 az postgres flexible-server start -g rg-iconbridge-prod -n psql-iconbridge-prod-itn
 ```
 
-While it is stopped the site answers errors, the tasks job fails every 15 minutes (`alert-tasks` fires) and the weekly backup fails. Within the free 750 hours of B1ms a month, one server running all month (at most 744 hours) costs nothing: stopping saves credit only after the free year, or when another server (a point-in-time restore) runs at the same time.
+While it is stopped the site answers errors, the tasks job fails every 15 minutes (`alert-tasks-failed` fires) and the weekly backup fails. Within the free 750 hours of B1ms a month, one server running all month (at most 744 hours) costs nothing: stopping saves credit only after the free year, or when another server (a point-in-time restore) runs at the same time.
 
 ## Destroy everything at the end of the internship
 

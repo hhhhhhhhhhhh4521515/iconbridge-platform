@@ -103,64 +103,89 @@ resource "azurerm_monitor_metric_alert" "storage_availability" {
   }
 }
 
-# --- Scheduled tasks and emails (container logs) ------------------------------------------
+# --- Scheduled tasks, backup and emails ------------------------------------------------
 
-# The tasks job prints one JSON line per task ({"task": …, "ok": …}) and exits with 1 when
-# one fails; Container Apps then logs the execution as failed. It runs every 15 minutes:
-# no send-emails report in an hour means it does not run at all.
+# Failed runs come from the jobs' Executions metric (platform data, state Failed for a few
+# minutes after an execution fails), not from Log Analytics. Two reasons (12 November 2026):
+# the console lines of the tasks job were lost for two hours after the workspace's daily
+# cap reset, and Container Apps writes its "SawCompletedJob" events under a shortened job
+# name ("caj-iconbridge-tasks-prod"), which the log queries never matched.
+locals {
+  failed_job_alerts = {
+    tasks = {
+      job_id      = var.tasks_job_id
+      description = "A run of the scheduled tasks failed (a task reported an error and the job exited with 1). Read the job's console logs (docs/RUNBOOK.md)."
+      frequency   = "PT5M"
+      window      = "PT15M"
+    }
+    backup = {
+      job_id      = var.backup_job_id
+      description = "The weekly database backup failed. Run it again (docs/RUNBOOK.md, Backups) and read its logs."
+      frequency   = "PT1H"
+      window      = "PT6H"
+    }
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "job_failed" {
+  for_each            = local.failed_job_alerts
+  name                = "alert-${each.key}-failed-${var.name_suffix}"
+  resource_group_name = var.resource_group_name
+  scopes              = [each.value.job_id]
+  description         = each.value.description
+  severity            = 2
+  frequency           = each.value.frequency
+  window_size         = each.value.window
+  tags                = var.tags
+
+  criteria {
+    metric_namespace = "Microsoft.App/jobs"
+    metric_name      = "Executions"
+    aggregation      = "Maximum"
+    operator         = "GreaterThan"
+    threshold        = 0
+
+    dimension {
+      name     = "state"
+      operator = "Include"
+      values   = ["Failed"]
+    }
+  }
+
+  action {
+    action_group_id = local.action.action_group_id
+  }
+}
+
+# The tasks job runs every 15 minutes: no container started in the last hour means it does
+# not run. A metric alert cannot say this (no data never fires), so it reads the job's
+# system logs. Not while the workspace's daily cap holds the logs back: the latest cap
+# event is a stop, or collection resumed less than an hour ago. Logs are then missing, not
+# runs. The window is a day so the query sees the cap event that started a long gap.
 resource "azurerm_monitor_scheduled_query_rules_alert_v2" "tasks" {
   name                 = "alert-tasks-${var.name_suffix}"
   resource_group_name  = var.resource_group_name
   location             = var.location
   scopes               = [var.log_analytics_workspace_id]
-  description          = "A scheduled task failed, or the tasks job did not run for an hour (emails to retry, closing jobs, job alerts, retention)."
+  description          = "The scheduled tasks job did not run for an hour (emails to retry, closing jobs, job alerts, retention)."
   severity             = 2
   evaluation_frequency = "PT15M"
-  window_duration      = "PT1H"
+  window_duration      = "P1D"
   tags                 = var.tags
 
   criteria {
     query                   = <<-KQL
-      let reports = ContainerAppConsoleLogs_CL
-        | where ContainerJobName_s == "${var.tasks_job_name}"
-        | extend report = parse_json(Log_s)
-        | where isnotempty(tostring(report.task));
-      let failedTasks = toscalar(reports | where tobool(report.ok) == false | count);
-      let failedRuns = toscalar(ContainerAppSystemLogs_CL
-        | where JobName_s == "${var.tasks_job_name}" and Reason_s == "SawCompletedJob" and Log_s has "Failed"
+      let starts = toscalar(ContainerAppSystemLogs_CL
+        | where TimeGenerated > ago(1h)
+        | where JobName_s == "${var.tasks_job_name}" and Reason_s == "ContainerStarted"
         | count);
-      let runs = toscalar(reports | where tostring(report.task) == "send-emails" | count);
-      print failedTasks, failedRuns, runs
-      | where failedTasks > 0 or failedRuns > 0 or runs == 0
-    KQL
-    time_aggregation_method = "Count"
-    operator                = "GreaterThan"
-    threshold               = 0
-  }
-
-  action {
-    action_groups = [local.action.action_group_id]
-  }
-}
-
-# The weekly backup job failed (pg_dump or the upload; the script exits non-zero and the
-# execution is marked failed). Checked once a day over two days: cheap, and a Sunday
-# failure is reported on Sunday or Monday.
-resource "azurerm_monitor_scheduled_query_rules_alert_v2" "backup" {
-  name                 = "alert-backup-${var.name_suffix}"
-  resource_group_name  = var.resource_group_name
-  location             = var.location
-  scopes               = [var.log_analytics_workspace_id]
-  description          = "The weekly database backup failed. Run it again (docs/RUNBOOK.md, Backups) and read its logs."
-  severity             = 2
-  evaluation_frequency = "P1D"
-  window_duration      = "P2D"
-  tags                 = var.tags
-
-  criteria {
-    query                   = <<-KQL
-      ContainerAppSystemLogs_CL
-      | where JobName_s == "${var.backup_job_name}" and Reason_s == "SawCompletedJob" and Log_s has "Failed"
+      let caps = Operation | where Detail has "daily limit";
+      let lastStop = toscalar(caps | where Detail has "stopped" | summarize max(TimeGenerated));
+      let lastStart = toscalar(caps | where Detail has "started" | summarize max(TimeGenerated));
+      let capped = isnotnull(lastStop) and (isnull(lastStart) or lastStop > lastStart);
+      let resumed = isnotnull(lastStart) and lastStart > ago(1h);
+      print starts, capped, resumed
+      | where starts == 0 and not(capped) and not(resumed)
     KQL
     time_aggregation_method = "Count"
     operator                = "GreaterThan"
