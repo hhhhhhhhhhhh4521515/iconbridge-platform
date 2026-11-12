@@ -1,4 +1,6 @@
 import type { PoolConfig } from 'pg';
+import { azureCredential } from '../common/azure-credential.js';
+import { lazy } from '../common/lazy.js';
 
 /** Audience of the Microsoft Entra tokens accepted by Azure Database for PostgreSQL. */
 export const ENTRA_DATABASE_SCOPE = 'https://ossrdbms-aad.database.windows.net/.default';
@@ -6,12 +8,6 @@ export const ENTRA_DATABASE_SCOPE = 'https://ossrdbms-aad.database.windows.net/.
 /** What `@azure/identity` credentials offer; replaced by a fake in tests. */
 export interface TokenSource {
   getToken(scope: string): Promise<{ token: string } | null>;
-}
-
-async function managedIdentity(): Promise<TokenSource> {
-  // Reads AZURE_CLIENT_ID, like the mail and storage clients; caches and renews the token.
-  const { DefaultAzureCredential } = await import('@azure/identity');
-  return new DefaultAzureCredential();
 }
 
 /**
@@ -25,13 +21,14 @@ async function managedIdentity(): Promise<TokenSource> {
 export function poolConfig(
   url: string,
   auth: 'password' | 'entra',
-  tokenSource: () => Promise<TokenSource> = managedIdentity,
+  tokenSource: () => Promise<TokenSource> = azureCredential,
 ): PoolConfig {
   if (auth === 'password') {
     return { connectionString: url };
   }
   const parsed = new URL(url);
-  let source: Promise<TokenSource> | undefined;
+  // The credential caches and renews the token; a failure to create it is retried.
+  const source = lazy(tokenSource);
   return {
     host: parsed.hostname,
     port: parsed.port === '' ? 5432 : Number(parsed.port),
@@ -40,8 +37,7 @@ export function poolConfig(
     // Azure requires TLS; the certificate is checked against the system authorities.
     ssl: parsed.searchParams.get('sslmode') !== 'disable',
     password: async () => {
-      source ??= tokenSource();
-      const token = await (await source).getToken(ENTRA_DATABASE_SCOPE);
+      const token = await (await source()).getToken(ENTRA_DATABASE_SCOPE);
       if (!token) {
         throw new Error('No Microsoft Entra token for the database (DATABASE_AUTH=entra)');
       }

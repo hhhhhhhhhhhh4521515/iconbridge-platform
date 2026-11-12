@@ -1,4 +1,5 @@
 import type { EmailClient, EmailMessage } from '@azure/communication-email';
+import { azureCredential } from '../common/azure-credential.js';
 import { lazy } from '../common/lazy.js';
 import { MailThrottledError, type MailTransport, type OutgoingEmail } from './mail-transport.js';
 
@@ -11,7 +12,7 @@ const MAX_RETRY_AFTER_MS = 3_600_000;
 
 /**
  * Sends through Azure Communication Services Email with the managed identity
- * (DefaultAzureCredential reads AZURE_CLIENT_ID). The sender (`from`) is a plain address of
+ * (`azureCredential`, AZURE_CLIENT_ID). The sender (`from`) is a plain address of
  * the domain linked to the Communication Service; its display name is set on that
  * domain's sender username in Azure, not here.
  *
@@ -27,11 +28,11 @@ export class AzureEmailTransport implements MailTransport {
   static create(endpoint: string): AzureEmailTransport {
     return new AzureEmailTransport(
       lazy(async () => {
-        const [{ EmailClient: Client }, { DefaultAzureCredential }] = await Promise.all([
+        const [{ EmailClient: Client }, credential] = await Promise.all([
           import('@azure/communication-email'),
-          import('@azure/identity'),
+          azureCredential(),
         ]);
-        return new Client(endpoint, new DefaultAzureCredential(), {
+        return new Client(endpoint, credential, {
           // The outbox retries, and waits as long as Azure asks; the SDK must not wait
           // inside a send (its throttling policy would sleep for the Retry-After).
           retryOptions: { maxRetries: 0 },

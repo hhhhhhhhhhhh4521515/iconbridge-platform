@@ -57304,7 +57304,7 @@
             }
           }
         },
-        "summary": "Readiness: the API can reach its database",
+        "summary": "Readiness: the API gets a database token (Entra) and runs a transaction",
         "tags": [
           "health"
         ],

@@ -11,7 +11,7 @@ The owner asked for part 1 now: remove the stale address rule, sign in with Micr
 ## Decision
 
 1. **`DATABASE_AUTH`** (`password` by default, `entra`). With `entra`, `DATABASE_URL` names the user-assigned managed identity as the user and carries no password (refused at start otherwise).
-   - API and tasks job (`PrismaService`): the `pg` pool behind Prisma gets the fields of the address one by one and a password function that returns a token of the identity (`DefaultAzureCredential`, scope `https://ossrdbms-aad.database.windows.net/.default`). `pg` calls it for each new connection, and the credential caches and renews the token. A connection string cannot be used there: `pg` would replace the function with the string's empty password.
+   - API and tasks job (`PrismaService`): the `pg` pool behind Prisma gets the fields of the address one by one and a password function that returns a token of the identity (`azureCredential()`, scope `https://ossrdbms-aad.database.windows.net/.default`). `pg` calls it for each new connection, and the credential caches and renews the token. A connection string cannot be used there: `pg` would replace the function with the string's empty password.
    - Migration job: `scripts/database-url.mjs` asks the Container Apps identity endpoint for a token and puts it in the address it gives the Prisma CLI and the seed. The CLI only takes an address, and a token lasts long enough for a migration.
    - Backup job: `backup.sh` gets the token the same way it already gets the Blob Storage one and gives it to `pg_dump` as `PGPASSWORD`.
 2. **Terraform** (separate pull request, approved by the owner):
@@ -42,3 +42,9 @@ The owner asked for part 1 now: remove the stale address rule, sign in with Micr
 - The identity is the server's Entra administrator, as the password user was its administrator; a role with fewer rights for the API is a possible later step.
 - Local development, CI and `docker-compose.prod.yml` keep `DATABASE_AUTH=password`.
 - Rollback before passwords are turned off: set `DATABASE_AUTH=password` and the old address back (Terraform). After: turn password authentication on again first.
+
+## Updates
+
+- 12 November 2026:
+  - In Azure, the API, the tasks job and the storage and email clients use one `ManagedIdentityCredential` (`apps/api/src/common/azure-credential.ts`), chosen when Container Apps sets `IDENTITY_ENDPOINT`. `DefaultAzureCredential` stays for machines outside Azure. Before, `DefaultAzureCredential` first tried the environment credential, which recorded a `CredentialUnavailableError` exception in Application Insights for each token (about 4 MB a day) and delayed the first token of a new revision.
+  - `/health/ready` gets a database token and runs an interactive transaction, with the same 2-second wait for a connection as the requests. A new revision takes traffic only when that works: just after the deploy of 12 November, two requests failed with "Unable to start a transaction in the given time" while the old check (`SELECT 1`) had passed.

@@ -47,12 +47,14 @@ export class HealthController {
   }
 
   @Get('ready')
-  @ApiOperation({ summary: 'Readiness: the API can reach its database' })
+  @ApiOperation({
+    summary: 'Readiness: the API gets a database token (Entra) and runs a transaction',
+  })
   @ApiOkResponse({ schema: readinessExample('ok') })
   @ApiServiceUnavailableResponse({ schema: readinessExample('error') })
   async ready(@Res({ passthrough: true }) response: Response): Promise<Readiness> {
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
+      await this.prisma.checkDatabase();
     } catch (error) {
       this.logger.error(
         `Database readiness check failed: ${error instanceof Error ? error.name : 'unknown error'}`,
