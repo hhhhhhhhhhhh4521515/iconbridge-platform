@@ -1530,3 +1530,23 @@ The measured volume after the deployment is added to the pull request.
 - gave their objects back to the `iconbridge` login.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/89>
+
+## 2026-11-12 - Audit report of November 2026 published, with the status of each finding
+
+**What**: `docs/AUDIT-2026-11.md`, the production audit of 2 November, now gives each finding's status on 12 November:
+
+- **H1:** part 1 fixed, part 2 planned.
+- **Fixed:** H2, M1, M2, M4, M5, M6 and M10; L1, L2, L3, L7 and L11.
+- **Planned:** M3, M8 and M9.
+- **Owner's action:** M7.
+- **Accepted or open:** the other Low findings.
+- **Corrected:** L7's advisories come through mjml and archiver, not exceljs.
+
+**Why**: the owner asked to keep the report unpublished until H1 part 1 and H2 were live, and to publish it then without anything that helps an attacker. The repository is public.
+
+**Checks**:
+
+- No address, account, IP, subscription id or code line number in the report; gitleaks finds nothing.
+- Open findings are described only as far as needed to follow their fix.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/90>
