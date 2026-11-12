@@ -306,6 +306,13 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
     - deleting a space lists everything under `spaces/<spaceId>/`, an orphaned blob included, and checks that nothing remains;
     - a blob written by an upload that raced the deletion is deleted after the rows.
 
+- **PR 4** (back-office screens):
+  - Menu entry "Partner spaces" for `MANAGE_PARTNER_SPACES`.
+  - The list page; a page per space with its settings, logo, counts, the tabs Members and Partner logins, disable or enable, and delete. Deleting lists what goes and needs the exact name.
+  - "Open the space" is a plain link to `/partners/{defaultLocale}/spaces/{id}`, shown only to a member, since the partner area lives outside the site's languages (PR 5).
+  - A `PARTNER` login that opens `/admin` gets the "not for this account" screen, like a candidate.
+  - The browser tests remove spaces named `E2E …` at the end of a run.
+
 ## Consequences
 
 - One more role, and the screens of the partner area to keep translated in three languages, Polish among them.
