@@ -1551,6 +1551,24 @@ The measured volume after the deployment is added to the pull request.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/90>
 
+## 2026-11-12 - Web: no MaxListenersExceededWarning on proxied API calls
+
+**What**: when telemetry runs, every response of the web server may hold 16 listeners instead of 10 (`raiseResponseListenerLimit`, through Node's `http.server.request.start` diagnostics channel). Every other emitter keeps Node's default. ADR-028 updated.
+
+**Why**: the web app printed `MaxListenersExceededWarning: 11 close listeners added to [ServerResponse]` about 2,700 times in two days (0.7 MB a day of logs). Investigated as a possible listener leak; it is not one:
+
+- **Reproduced locally:** production build with telemetry on (exporter pointed at a closed local port), almost one warning per API call that the web origin forwards (`/api/v1/*`). There were none for pages, and none with telemetry off.
+- **Where the listeners come from:** a probe recording who adds each `close` listener on a response. Next.js's rewrite proxy adds ten: the router, two request adapters, `proxy-request`, `httpxy` and the pipe. The OpenTelemetry HTTP instrumentation adds the eleventh.
+- **Not a leak:** heap after garbage collection over 3,000 proxied calls was 40.8, 41.1, 36.6 and 37.4 MB with telemetry off, and 58.9, 55.3, 56.6 and 57.9 MB with it on. The listeners are released with their response.
+
+**Checks**:
+
+- New unit test: a response gets the raised limit, and 11 listeners give no warning.
+- Production build with telemetry on, after the fix: 0 warnings over 300 proxied calls and three pages (3,299 over 3,000 before).
+- `pnpm lint`, `typecheck`, `test`, `build`; `pnpm test:browser`: 170 passed.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/91>
+
 ## 2026-11-12 - Partner spaces, PR 2: partner area API and the IDOR suite
 
 **What** (ADR-027, PR 2 of 6):

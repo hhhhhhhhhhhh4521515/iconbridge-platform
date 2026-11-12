@@ -1,6 +1,7 @@
 import type { Context, Span } from '@opentelemetry/api';
 import type { IncomingMessage } from 'node:http';
 import { TELEMETRY_SAMPLING } from '@iconbridge/shared/telemetry';
+import { raiseResponseListenerLimit } from './response-listeners';
 import { isIgnoredPath, probeFilterProcessor, withoutQuery } from './telemetry-redact';
 
 /** Attributes of HTTP spans that hold a URL or its query string. */
@@ -13,6 +14,9 @@ const URL_ATTRIBUTES = ['url.full', 'url.query', 'http.url', 'http.target', 'nex
  */
 export async function startTelemetry(connectionString: string): Promise<void> {
   process.env['OTEL_SERVICE_NAME'] ??= 'iconbridge-web';
+  // The HTTP instrumentation adds one `close` listener to each response, past Node's limit
+  // on the responses of the API proxy (see response-listeners.ts).
+  raiseResponseListenerLimit();
   // Renamed: despite its name it is not a React hook.
   const { useAzureMonitor: startAzureMonitor } = await import('@azure/monitor-opentelemetry');
   const { isSpanContextValid, trace } = await import('@opentelemetry/api');
