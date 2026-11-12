@@ -5,6 +5,9 @@ import type { Env } from '../config/env.js';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { poolConfig } from './database-config.js';
 
+/** How long a transaction waits for a connection of the pool. */
+export const TRANSACTION_MAX_WAIT_MS = 10_000;
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   /**
@@ -27,6 +30,10 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
       adapter: new PrismaPg(pool),
       // Counted, not written: a query can hold personal data.
       log: [{ emit: 'event', level: 'query' }],
+      // A transaction, and the batch Prisma makes of queries started together, waits this
+      // long for a connection (2 s by default). Opening one on a new revision can take
+      // longer: TLS, a Microsoft Entra token, a busy 0.5 vCPU (12 and 13 November 2026).
+      transactionOptions: { maxWait: TRANSACTION_MAX_WAIT_MS },
     });
     (this as unknown as { $on(event: 'query', listener: () => void): void }).$on('query', () => {
       this.queryCount += 1;
@@ -38,7 +45,7 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
    * Readiness: what a request needs before it can use the database. With Entra, a token
    * from the managed identity (cached by the credential, so asking again is cheap); then a
    * real interactive transaction, with the same wait for a connection as the requests
-   * (Prisma's default maxWait of 2 s). A new revision takes traffic only once this works,
+   * (TRANSACTION_MAX_WAIT_MS; the probe's own 3-second timeout ends it sooner). A new revision takes traffic only once this works,
    * not on the first connection alone: two requests of a revision that had just started
    * failed with "Unable to start a transaction in the given time" (12 November 2026).
    */

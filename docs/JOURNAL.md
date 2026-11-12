@@ -1680,3 +1680,24 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm lint`, `typecheck`, `test`, `test:e2e` (626 passed), `build`; `terraform fmt` and `validate`, and the plan of the infra workflow.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/95>
+
+## 2026-11-13 - API: no 500 on the first requests of a new revision
+
+**What**:
+
+- Prisma's transaction wait for a connection is 10 seconds instead of 2.
+- The `pg` pool keeps idle connections 5 minutes instead of 10 seconds.
+- ADR-026 updated.
+
+**Why**: after the deploy of e500eda, `/api/v1/jobs` and `/api/v1/stats` answered 500 at 23:28:32 UTC, about 40 seconds after the revision started and after readiness had passed. The error was "Transaction API error: Unable to start a transaction in the given time".
+
+- Prisma runs transactions, and the batches it makes of queries started together, with a 2-second wait for a connection.
+- `pg` had closed the readiness check's connection after 10 idle seconds, so these first requests had to open new connections (TLS and an Entra token check by the server) on a fresh 0.5 vCPU replica.
+- The `CredentialUnavailableError` exceptions came only from the previous revision: none from e500eda.
+
+**Checks**:
+
+- New e2e test with a token that takes 2.5 seconds: an interactive and a batch transaction succeed. Before the fix it failed with the production error.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e` (627 passed), `build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/98>
