@@ -423,9 +423,17 @@ function FileRow({
     if (target) {
       target.opener = null;
       target.location.href = result.data.url;
-    } else {
-      window.location.assign(result.data.url);
+      return;
     }
+    // Saved through a hidden frame: the page stays on screen whatever the storage answers.
+    const frame = document.createElement('iframe');
+    frame.hidden = true;
+    frame.title = t('download');
+    frame.src = result.data.url;
+    document.body.append(frame);
+    window.setTimeout(() => {
+      frame.remove();
+    }, 60_000);
   };
   const formats = kind === 'CV' ? t('formatsCv') : t('formatsScan');
   const accept =
