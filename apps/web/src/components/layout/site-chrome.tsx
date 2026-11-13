@@ -1,9 +1,12 @@
-import { Mail, MessageCircle, Phone } from 'lucide-react';
+import { Handshake, Mail, MessageCircle, Phone } from 'lucide-react';
 import Image from 'next/image';
+import NextLink from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { pick } from '@/lib/format';
+import { partnerHref, partnerLangForSite } from '@/lib/partner-locale';
+import { cta } from '@/lib/ui';
 import { AuthActions } from './auth-actions';
 import { LocaleSwitcher, MobileMenu, ThemeToggle } from './header-controls';
 
@@ -66,7 +69,7 @@ export async function TopBar() {
 
 function Logo({ name }: { name: string }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5 rounded-lg" aria-label={name}>
+    <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg" aria-label={name}>
       <Image
         src="/brand/logo.webp"
         alt=""
@@ -82,18 +85,61 @@ function Logo({ name }: { name: string }) {
   );
 }
 
+/**
+ * The sign-in of the partner area, in the visitor's language (Arabic: English). A plain link:
+ * the partner area is a root layout of its own, outside the site's language routing.
+ */
+function PartnerSpaceLink({
+  locale,
+  label,
+  className,
+  compact = false,
+}: {
+  locale: string;
+  label: string;
+  className: string;
+  /** In the desk header: the icon with a tooltip; the name is read out, and shown in the phone menu and the footer. */
+  compact?: boolean;
+}) {
+  const lang = partnerLangForSite(locale);
+  return (
+    <NextLink
+      href={partnerHref(lang, '/login')}
+      hrefLang={lang}
+      className={className}
+      data-testid="partner-space-link"
+      {...(compact ? { title: label } : {})}
+    >
+      <Handshake className={compact ? 'size-5' : 'size-4'} aria-hidden />
+      {compact ? <span className="sr-only">{label}</span> : label}
+    </NextLink>
+  );
+}
+
 export async function Header() {
-  const [t, common] = await Promise.all([getTranslations('nav'), getTranslations('common')]);
+  const [t, common, locale] = await Promise.all([
+    getTranslations('nav'),
+    getTranslations('common'),
+    getLocale(),
+  ]);
   const links = NAV.map((item) => (
     <li key={item.key}>
       <Link
         href={item.href}
-        className="inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-medium whitespace-nowrap text-foreground hover:bg-muted"
+        className="inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-medium whitespace-nowrap text-foreground hover:bg-muted xl:px-1.5 2xl:px-2.5"
       >
         {t(item.key)}
       </Link>
     </li>
   ));
+  const partner = (compact: boolean) => (
+    <PartnerSpaceLink
+      locale={locale}
+      label={t('partnerSpace')}
+      compact={compact}
+      className={`${cta.ghost} whitespace-nowrap ${compact ? 'min-w-11 px-2' : 'px-3'}`}
+    />
+  );
   const actions = (
     <AuthActions
       labels={{
@@ -116,13 +162,17 @@ export async function Header() {
             <LocaleSwitcher label={common('language')} />
           </div>
           <ThemeToggle lightLabel={common('themeLight')} darkLabel={common('themeDark')} />
-          <div className="hidden items-center gap-2 xl:flex">{actions}</div>
+          <div className="hidden items-center gap-2 xl:flex">
+            {partner(true)}
+            {actions}
+          </div>
           <MobileMenu openLabel={common('openMenu')} closeLabel={common('close')}>
             <nav aria-label={t('main')}>
               <ul className="flex flex-col">{links}</ul>
             </nav>
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
               {actions}
+              {partner(false)}
             </div>
             <div className="mt-3 sm:hidden">
               <LocaleSwitcher label={common('language')} />
@@ -197,6 +247,13 @@ export async function Footer() {
                 </Link>
               </li>
             ))}
+            <li>
+              <PartnerSpaceLink
+                locale={locale}
+                label={nav('partnerSpace')}
+                className={`${link} gap-1.5`}
+              />
+            </li>
           </ul>
         </div>
         <div>

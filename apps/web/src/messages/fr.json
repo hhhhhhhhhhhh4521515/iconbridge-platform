@@ -47,7 +47,8 @@
     "jobSeeker": "Espace candidat",
     "login": "Connexion",
     "account": "Mon compte",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "partnerSpace": "Espace partenaire"
   },
   "footer": {
     "tagline": "Votre pont vers un emploi à Malte, en Pologne ou en mer.",
