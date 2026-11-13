@@ -265,25 +265,25 @@ Error codes: `VALIDATION_ERROR`, `UNAUTHENTICATED`, `INVALID_CREDENTIALS`, `FORB
 
 ## Partner spaces
 
-| Method | Path                                                                         | What                                                                     | Access    |
-| ------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------- |
-| GET    | `/api/v1/partner-spaces`                                                     | My partner spaces (members only see their own)                           | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}`                                           | One of my partner spaces                                                 | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/jobs`                                      | Job demands of the space, open first, with counts per visa status        | Signed in |
-| POST   | `/api/v1/partner-spaces/{spaceId}/jobs`                                      | Create a job demand                                                      | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}`                              | One job demand                                                           | Signed in |
-| PATCH  | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}`                              | Edit a job demand                                                        | Signed in |
-| POST   | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/close`                        | Close a job demand (nothing changes if it is already closed)             | Signed in |
-| POST   | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/reopen`                       | Reopen a closed job demand                                               | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/comments`                     | Comments of a job demand, oldest first                                   | Signed in |
-| POST   | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/comments`                     | Comment on a job demand (comments cannot be edited or deleted)           | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/applications`                              | Applications of the space; filter by job demand, visa status or name     | Signed in |
-| POST   | `/api/v1/partner-spaces/{spaceId}/applications`                              | Put a person forward for a job demand                                    | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}`              | One application                                                          | Signed in |
-| PATCH  | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}`              | Edit an application, including the visa and DHL follow-up                | Signed in |
-| DELETE | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}`              | Delete an application with its files, comments and history (super admin) | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/comments`     | Comments of an application, oldest first                                 | Signed in |
-| POST   | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/comments`     | Comment on an application (comments cannot be edited or deleted)         | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/history`                                   | History of the space, newest first                                       | Signed in |
-| PUT    | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/files/{kind}` | Upload or replace the passport, CV or work permit of an application      | Signed in |
-| GET    | `/api/v1/partner-spaces/{spaceId}/files/{fileId}/link`                       | A 5-minute read-only link to a file                                      | Signed in |
+| Method | Path                                                                         | What                                                                              | Access    |
+| ------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------- |
+| GET    | `/api/v1/partner-spaces`                                                     | My partner spaces (members only see their own)                                    | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}`                                           | One of my partner spaces                                                          | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/jobs`                                      | Job demands of the space, open first, with counts per work permit and visa status | Signed in |
+| POST   | `/api/v1/partner-spaces/{spaceId}/jobs`                                      | Create a job demand                                                               | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}`                              | One job demand                                                                    | Signed in |
+| PATCH  | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}`                              | Edit a job demand                                                                 | Signed in |
+| POST   | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/close`                        | Close a job demand (nothing changes if it is already closed)                      | Signed in |
+| POST   | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/reopen`                       | Reopen a closed job demand                                                        | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/comments`                     | Comments of a job demand, oldest first                                            | Signed in |
+| POST   | `/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/comments`                     | Comment on a job demand (comments cannot be edited or deleted)                    | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/applications`                              | Applications of the space; filter by job demand, work permit, visa status or name | Signed in |
+| POST   | `/api/v1/partner-spaces/{spaceId}/applications`                              | Put a person forward for a job demand                                             | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}`              | One application                                                                   | Signed in |
+| PATCH  | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}`              | Edit an application, including the work permit, visa and DHL follow-up            | Signed in |
+| DELETE | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}`              | Delete an application with its files, comments and history (super admin)          | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/comments`     | Comments of an application, oldest first                                          | Signed in |
+| POST   | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/comments`     | Comment on an application (comments cannot be edited or deleted)                  | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/history`                                   | History of the space, newest first                                                | Signed in |
+| PUT    | `/api/v1/partner-spaces/{spaceId}/applications/{applicationId}/files/{kind}` | Upload or replace the passport, CV or work permit of an application               | Signed in |
+| GET    | `/api/v1/partner-spaces/{spaceId}/files/{fileId}/link`                       | A 5-minute read-only link to a file                                               | Signed in |

@@ -28,6 +28,9 @@ import {
   usePartner,
   usePartnerCall,
   useSpace,
+  WORK_PERMIT_STATUSES,
+  WorkPermitBadge,
+  type WorkPermitStatus,
 } from './partner-ui';
 
 const VISA_STATUSES = [
@@ -443,14 +446,26 @@ export function NewJob() {
   );
 }
 
-function ApplicationsTable({ job, items }: { job: PartnerJob; items: PartnerApplication[] }) {
+function ApplicationsTable({
+  job,
+  items,
+  filtered,
+}: {
+  job: PartnerJob;
+  items: PartnerApplication[];
+  filtered: boolean;
+}) {
   const t = useTranslations('partner.table');
   const jobText = useTranslations('partner.job');
   const visa = useTranslations('partner.visa');
   const space = useSpace();
   const { lang } = usePartner();
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">{jobText('noApplications')}</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        {filtered ? jobText('noFilteredApplications') : jobText('noApplications')}
+      </p>
+    );
   }
   return (
     <div className="relative overflow-x-auto rounded-lg border border-border">
@@ -464,6 +479,7 @@ function ApplicationsTable({ job, items }: { job: PartnerJob; items: PartnerAppl
               [
                 'name',
                 'nationality',
+                'workPermit',
                 'visaStatus',
                 'appointment',
                 'decision',
@@ -493,6 +509,9 @@ function ApplicationsTable({ job, items }: { job: PartnerJob; items: PartnerAppl
                 </NextLink>
               </td>
               <td className="px-3 py-2">{countryName(application.nationality, lang)}</td>
+              <td className="px-3 py-2">
+                <WorkPermitBadge status={application.workPermitStatus} />
+              </td>
               <td className="px-3 py-2 whitespace-nowrap">{visa(application.visaStatus)}</td>
               <td className="px-3 py-2 whitespace-nowrap">
                 {formatDate(application.visaAppointmentDate, lang)}
@@ -514,6 +533,60 @@ function ApplicationsTable({ job, items }: { job: PartnerJob; items: PartnerAppl
   );
 }
 
+/**
+ * The work permit counts of a job demand, each a filter of the table below: one pressed
+ * button at a time, "All" first. Counts come from the job demand, so they stay whole while a
+ * filter is on.
+ */
+function WorkPermitFilter({
+  counts,
+  value,
+  onChange,
+}: {
+  counts: PartnerJob['workPermits'];
+  value: WorkPermitStatus | null;
+  onChange: (value: WorkPermitStatus | null) => void;
+}) {
+  const t = useTranslations('partner.workPermit');
+  const total = WORK_PERMIT_STATUSES.reduce((sum, status) => sum + counts[status], 0);
+  const options: { key: WorkPermitStatus | null; label: string; count: number }[] = [
+    { key: null, label: t('all'), count: total },
+    ...WORK_PERMIT_STATUSES.map((status) => ({
+      key: status,
+      label: t(status),
+      count: counts[status],
+    })),
+  ];
+  return (
+    <div
+      role="group"
+      aria-label={t('filter')}
+      className="mb-3 flex flex-wrap gap-2"
+      data-testid="work-permit-filter"
+    >
+      {options.map((option) => (
+        <button
+          key={option.key ?? 'all'}
+          type="button"
+          aria-pressed={value === option.key}
+          data-status={option.key ?? 'ALL'}
+          className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
+            value === option.key
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-background hover:bg-muted'
+          }`}
+          onClick={() => {
+            onChange(option.key);
+          }}
+        >
+          {option.label}
+          <span className="tabular-nums">{option.count}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function JobDetail({ jobId }: { jobId: string }) {
   const t = useTranslations('partner.job');
   const home = useTranslations('partner.home');
@@ -521,6 +594,7 @@ export function JobDetail({ jobId }: { jobId: string }) {
   const { lang } = usePartner();
   const call = usePartnerCall();
   const [editing, setEditing] = useState(false);
+  const [permit, setPermit] = useState<WorkPermitStatus | null>(null);
   const path = { params: { path: { spaceId: space.id, jobId } } };
   const job = useLoad(
     () => api.GET('/api/v1/partner-spaces/{spaceId}/jobs/{jobId}', path),
@@ -529,9 +603,12 @@ export function JobDetail({ jobId }: { jobId: string }) {
   const applications = useLoad(
     () =>
       api.GET('/api/v1/partner-spaces/{spaceId}/applications', {
-        params: { path: { spaceId: space.id }, query: { jobId } },
+        params: {
+          path: { spaceId: space.id },
+          query: { jobId, ...(permit ? { workPermitStatus: permit } : {}) },
+        },
       }),
-    `applications:${jobId}`,
+    `applications:${jobId}:${permit ?? 'all'}`,
   );
   if (job.failed) {
     return <Failed onRetry={() => job.reload()} />;
@@ -640,10 +717,11 @@ export function JobDetail({ jobId }: { jobId: string }) {
             {t('newApplication')}
           </NextLink>
         </div>
+        <WorkPermitFilter counts={current.workPermits} value={permit} onChange={setPermit} />
         {applications.failed ? (
           <Failed onRetry={() => applications.reload()} />
         ) : applications.data ? (
-          <ApplicationsTable job={current} items={applications.data} />
+          <ApplicationsTable job={current} items={applications.data} filtered={permit !== null} />
         ) : (
           <LoadingText />
         )}

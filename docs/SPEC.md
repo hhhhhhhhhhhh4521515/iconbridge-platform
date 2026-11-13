@@ -176,7 +176,7 @@ Data retention: a candidate account with no activity for 24 months and no applic
 
 ### 7.6 Partner spaces
 
-A private workspace per partner company ([ADR-027](adr/ADR-027-partner-spaces.md)), at `/partners/{en|fr|pl}`, in English, French or Polish, not linked from the public site and not indexed.
+A private workspace per partner company ([ADR-027](adr/ADR-027-partner-spaces.md)), at `/partners/{en|fr|pl}`, in English, French or Polish, not indexed. The site's header and footer link to its sign-in ("Partner space"; Arabic opens English), and it has the site's logo, font, colours, header, footer and dark mode.
 
 - **Super admin, in the back office ("Partner spaces"):**
   - creates a space (name, country, default language, logo);
@@ -186,7 +186,8 @@ A private workspace per partner company ([ADR-027](adr/ADR-027-partner-spaces.md
   - sees settings and counts only, and the content only after adding themselves as a member.
 - **Members** (the partner logins and the staff added), all with the same rights:
   - job demands: role, positions, places, optional salary and description; close and reopen;
-  - applications: names, nationality, optional phone and email, visa status and dates, DHL dates and tracking number;
+  - applications: names, nationality, optional phone and email, work permit status and dates (above the visa), visa status and dates, DHL dates and tracking number;
+  - per job demand, a work permit badge per application and the counts per status, which filter the table;
   - the passport, CV and work permit, with preview and download;
   - append-only comments;
   - a history of every change, file opened and comment.

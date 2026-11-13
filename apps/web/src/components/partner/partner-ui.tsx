@@ -17,20 +17,39 @@ import {
   refreshSession,
   type SessionUser,
 } from '@/lib/client-api';
-import {
-  PARTNER_LANG_NAMES,
-  PARTNER_LANGS,
-  partnerHref,
-  type PartnerLang,
-} from '@/lib/partner-locale';
+import { PartnerHeader } from './partner-chrome';
+import { partnerHref, type PartnerLang } from '@/lib/partner-locale';
 import { cta } from '@/lib/ui';
 import { ChangePassword } from './auth-forms';
 
-/** Set when the visitor picks a language: from then on, the space's language no longer applies. */
-export const LANG_CHOSEN_COOKIE = 'partner_lang_chosen';
-
 export const heading = 'text-lg font-semibold';
 export const card = 'rounded-xl border border-border bg-card p-4 md:p-5';
+
+/** Work permit statuses, in the order of the process (ADR-027, amendment 1). */
+export const WORK_PERMIT_STATUSES = ['NOT_STARTED', 'SUBMITTED', 'APPROVED', 'REFUSED'] as const;
+export type WorkPermitStatus = (typeof WORK_PERMIT_STATUSES)[number];
+
+/** Tones with enough contrast in light and dark mode (4.5:1 at least, checked by axe). */
+const STATUS_TONES: Record<WorkPermitStatus, string> = {
+  NOT_STARTED: 'bg-muted text-foreground',
+  SUBMITTED: 'bg-brand-blue/15 text-brand-navy dark:bg-brand-blue/30 dark:text-white',
+  APPROVED: 'bg-emerald-700 text-white',
+  REFUSED: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
+};
+
+/** A work permit status as a badge; the text carries the meaning, the colour only helps. */
+export function WorkPermitBadge({ status }: { status: WorkPermitStatus }) {
+  const t = useTranslations('partner.workPermit');
+  return (
+    <span
+      data-testid="work-permit-badge"
+      data-status={status}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STATUS_TONES[status]}`}
+    >
+      {t(status)}
+    </span>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Texts of errors
@@ -187,33 +206,6 @@ export function Failed({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** The language switch: the same page in another language. */
-export function LanguageSwitch({ lang }: { lang: PartnerLang }) {
-  const t = useTranslations('partner.header');
-  const pathname = usePathname();
-  const rest = pathname.replace(/^\/partners\/[a-z]{2}/, '');
-  return (
-    <nav aria-label={t('language')} className="flex text-sm">
-      {PARTNER_LANGS.map((code) => (
-        <a
-          key={code}
-          href={`${partnerHref(code, rest)}${typeof window === 'undefined' ? '' : window.location.search}`}
-          hrefLang={code}
-          lang={code}
-          aria-current={code === lang ? 'true' : undefined}
-          title={PARTNER_LANG_NAMES[code]}
-          onClick={() => {
-            document.cookie = `${LANG_CHOSEN_COOKIE}=1; path=/partners; max-age=31536000; samesite=lax; secure`;
-          }}
-          className="inline-flex size-10 items-center justify-center rounded-lg font-medium text-muted-foreground hover:bg-muted aria-[current=true]:bg-secondary aria-[current=true]:text-secondary-foreground"
-        >
-          {code.toUpperCase()}
-        </a>
-      ))}
-    </nav>
-  );
-}
-
 export interface SpaceSummary {
   id: string;
   name: string;
@@ -255,8 +247,8 @@ function Header({ space }: { space: SpaceSummary | null }) {
       ]
     : [];
   return (
-    <header className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2">
+    <PartnerHeader>
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <NextLink href={home} className="flex min-h-11 items-center gap-3 font-semibold">
           {space?.logoUrl ? (
             // A 5-minute link to a private blob: not something next/image can optimise.
@@ -267,9 +259,9 @@ function Header({ space }: { space: SpaceSummary | null }) {
               className="h-9 w-auto max-w-32 object-contain"
             />
           ) : null}
-          <span>{space ? space.name : t('brand')}</span>
+          <span>{space ? space.name : t('mySpaces')}</span>
         </NextLink>
-        <div className="flex flex-wrap items-center gap-1">
+        <nav aria-label={t('menu')} className="flex flex-wrap items-center gap-1">
           {menu.map((item) => (
             <NextLink
               key={item.href}
@@ -280,7 +272,6 @@ function Header({ space }: { space: SpaceSummary | null }) {
               {item.label}
             </NextLink>
           ))}
-          <LanguageSwitch lang={lang} />
           <NextLink href={partnerHref(lang, '/password')} className={`${cta.ghost} px-3`}>
             <KeyRound className="size-4" aria-hidden />
             <span className="hidden md:inline">{t('changePassword')}</span>
@@ -291,9 +282,9 @@ function Header({ space }: { space: SpaceSummary | null }) {
             <span className="hidden md:inline">{t('signOut')}</span>
             <span className="sr-only md:hidden">{t('signOut')}</span>
           </button>
-        </div>
+        </nav>
       </div>
-    </header>
+    </PartnerHeader>
   );
 }
 
@@ -346,7 +337,7 @@ export function PartnerFrame({
 
   const main = (content: ReactNode) => (
     <>
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+      <main id="main" className="container-page w-full flex-1 py-6">
         {content}
       </main>
       <Toaster position="bottom-right" richColors closeButton />

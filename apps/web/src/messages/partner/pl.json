@@ -12,7 +12,19 @@
       "mySpaces": "Moje przestrzenie",
       "jobs": "Zapotrzebowania",
       "history": "Historia",
-      "logoAlt": "Logo {name}"
+      "logoAlt": "Logo {name}",
+      "area": "Strefa partnera",
+      "siteLink": "IconBridge Jobs, strona publiczna",
+      "menu": "Menu przestrzeni"
+    },
+    "footer": {
+      "tagline": "Twój pomost do pracy na Malcie, w Polsce lub na morzu.",
+      "site": "Strona publiczna",
+      "contact": "Kontakt",
+      "privacy": "Polityka prywatności",
+      "terms": "Warunki korzystania",
+      "rights": "Wszelkie prawa zastrzeżone.",
+      "label": "IconBridge Jobs"
     },
     "login": {
       "title": "Logowanie do strefy partnera",
@@ -68,6 +80,14 @@
       "applications": "{count, plural, one {# kandydatura} few {# kandydatury} many {# kandydatur} other {# kandydatury}}",
       "places": "Miejsca"
     },
+    "workPermit": {
+      "NOT_STARTED": "Nierozpoczęte",
+      "SUBMITTED": "Złożone",
+      "APPROVED": "Przyznane",
+      "REFUSED": "Odmowa",
+      "all": "Wszystkie",
+      "filter": "Filtruj według statusu zezwolenia na pracę"
+    },
     "visa": {
       "NOT_STARTED": "Nierozpoczęta",
       "APPOINTMENT_BOOKED": "Termin umówiony",
@@ -101,7 +121,8 @@
       "noApplications": "Nie ma jeszcze kandydatur do tego zapotrzebowania.",
       "back": "Wszystkie zapotrzebowania",
       "edit": "Edytuj",
-      "cancel": "Anuluj"
+      "cancel": "Anuluj",
+      "noFilteredApplications": "Brak kandydatur z tym statusem zezwolenia na pracę."
     },
     "table": {
       "name": "Imię i nazwisko",
@@ -110,7 +131,8 @@
       "appointment": "Termin",
       "decision": "Decyzja",
       "dhlSent": "Wysyłka DHL",
-      "documentsReceived": "Dokumenty otrzymane"
+      "documentsReceived": "Dokumenty otrzymane",
+      "workPermit": "Zezwolenie na pracę"
     },
     "application": {
       "newTitle": "Nowa kandydatura",
@@ -138,7 +160,12 @@
       "back": "Wróć do zapotrzebowania",
       "noDate": "—",
       "updatedBy": "Ostatnia zmiana: {name}, {date}",
-      "clearDate": "Wyczyść"
+      "clearDate": "Wyczyść",
+      "workPermit": "Zezwolenie na pracę",
+      "workPermitStatus": "Status zezwolenia na pracę",
+      "workPermitSubmitted": "Data złożenia (opcjonalnie)",
+      "workPermitDecisionHint": "Tylko gdy zezwolenie na pracę zostało przyznane lub odmówione.",
+      "workPermitFileHint": "Samo zezwolenie na pracę dodaj w sekcji Pliki."
     },
     "files": {
       "title": "Pliki",
@@ -251,6 +278,9 @@
         "jobId": "zapotrzebowanie",
         "kind": "plik",
         "originalName": "nazwa pliku",
+        "workPermitStatus": "status zezwolenia na pracę",
+        "workPermitSubmittedDate": "złożenie zezwolenia na pracę",
+        "workPermitDecisionDate": "decyzja w sprawie zezwolenia na pracę",
         "other": "{name}"
       }
     },
@@ -269,7 +299,8 @@
       "tracking": "Tylko litery, cyfry, spacje i myślniki, od 4 do 40 znaków.",
       "decisionNeedsStatus": "Data decyzji wymaga statusu Przyznana lub Odmowa.",
       "trackingNeedsDate": "Numer przesyłki wymaga daty wysyłki.",
-      "typeName": "Wpisz nazwę dokładnie tak, jak podano."
+      "typeName": "Wpisz nazwę dokładnie tak, jak podano.",
+      "permitDecisionNeedsStatus": "Data decyzji wymaga statusu zezwolenia na pracę Przyznane lub Odmowa."
     },
     "api": {
       "INVALID_CREDENTIALS": "Adres e-mail lub hasło jest nieprawidłowe.",

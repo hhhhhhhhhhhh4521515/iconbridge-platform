@@ -15,6 +15,8 @@ import {
   type TestApp,
   type TestUser,
 } from './app.js';
+import { z } from 'zod';
+import { Prisma } from '../../src/generated/prisma/client.js';
 import { pdf } from './files.js';
 
 type Method = 'get' | 'post' | 'patch' | 'put' | 'delete';
@@ -78,6 +80,11 @@ const ROUTES: Route[] = [
   },
   { method: 'get', path: (s) => `/partner-spaces/${s.id}/applications`, ok: 200 },
   {
+    method: 'get',
+    path: (s) => `/partner-spaces/${s.id}/applications?jobId=${s.jobId}&workPermitStatus=SUBMITTED`,
+    ok: 200,
+  },
+  {
     method: 'post',
     path: (s) => `/partner-spaces/${s.id}/applications`,
     body: (s) => ({ jobId: s.jobId, firstName: 'Amina', lastName: 'E2E', nationality: 'MA' }),
@@ -92,6 +99,16 @@ const ROUTES: Route[] = [
     method: 'patch',
     path: (s) => `/partner-spaces/${s.id}/applications/${s.applicationId}`,
     body: () => ({ visaStatus: 'APPOINTMENT_BOOKED', visaAppointmentDate: '2026-12-01' }),
+    ok: 200,
+  },
+  {
+    method: 'patch',
+    path: (s) => `/partner-spaces/${s.id}/applications/${s.applicationId}`,
+    body: () => ({
+      workPermitStatus: 'APPROVED',
+      workPermitSubmittedDate: '2026-11-02',
+      workPermitDecisionDate: '2026-11-20',
+    }),
     ok: 200,
   },
   {
@@ -316,6 +333,8 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
       where: { id: w.b.applicationId },
     });
     expect(untouched.visaStatus).toBe('NOT_STARTED');
+    expect(untouched.workPermitStatus).toBe('NOT_STARTED');
+    expect(untouched.workPermitDecisionDate).toBeNull();
     // B's passport was neither replaced nor linked.
     const passportB = await test.prisma.partnerFile.findUniqueOrThrow({
       where: { id: w.b.fileId },
@@ -438,6 +457,134 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
         ['salary', null, '4,500 PLN'],
       ].sort(),
     );
+  });
+
+  it('follows the work permit: default, rule, counts, filter and history (ADR-027, amendment 1)', async () => {
+    const w = await world();
+    const call = as(w.partnerA);
+    const path = `/partner-spaces/${w.a.id}/applications/${w.a.applicationId}`;
+    const before = partnerApplicationSchema.parse((await call('get', path).expect(200)).body);
+    expect(before).toMatchObject({
+      workPermitStatus: 'NOT_STARTED',
+      workPermitSubmittedDate: null,
+      workPermitDecisionDate: null,
+    });
+
+    // A decision date needs Approved or Refused, on the application after the change.
+    await call('patch', path, { workPermitDecisionDate: '2026-11-20' }).expect(400);
+    await call('patch', path, {
+      workPermitStatus: 'SUBMITTED',
+      workPermitDecisionDate: '2026-11-20',
+    }).expect(400);
+    await call('patch', path, { workPermitStatus: 'PENDING' }).expect(400);
+    // The visa rule does not stand in for the work permit one.
+    await call('patch', path, {
+      visaStatus: 'APPROVED',
+      workPermitDecisionDate: '2026-11-20',
+    }).expect(400);
+    await call('patch', path, {
+      workPermitStatus: 'SUBMITTED',
+      workPermitSubmittedDate: '2026-11-02',
+    }).expect(200);
+    const decided = partnerApplicationSchema.parse(
+      (
+        await call('patch', path, {
+          workPermitStatus: 'REFUSED',
+          workPermitDecisionDate: '2026-11-20',
+        }).expect(200)
+      ).body,
+    );
+    expect(decided).toMatchObject({
+      workPermitStatus: 'REFUSED',
+      workPermitSubmittedDate: '2026-11-02',
+      workPermitDecisionDate: '2026-11-20',
+      visaStatus: 'NOT_STARTED',
+    });
+    // The stored decision date stays: going back to Submitted is refused until it is cleared.
+    await call('patch', path, { workPermitStatus: 'SUBMITTED' }).expect(400);
+    await call('patch', path, {
+      workPermitStatus: 'SUBMITTED',
+      workPermitDecisionDate: null,
+    }).expect(200);
+
+    // A second application, created with its work permit.
+    const second = partnerApplicationSchema.parse(
+      (
+        await call('post', `/partner-spaces/${w.a.id}/applications`, {
+          jobId: w.a.jobId,
+          firstName: 'Olena',
+          lastName: 'E2E',
+          nationality: 'UA',
+          workPermitStatus: 'APPROVED',
+          workPermitDecisionDate: '2026-11-05',
+        }).expect(201)
+      ).body,
+    );
+    expect(second.workPermitStatus).toBe('APPROVED');
+    await call('post', `/partner-spaces/${w.a.id}/applications`, {
+      jobId: w.a.jobId,
+      firstName: 'Ivan',
+      lastName: 'E2E',
+      nationality: 'UA',
+      workPermitStatus: 'NOT_STARTED',
+      workPermitDecisionDate: '2026-11-05',
+    }).expect(400);
+
+    const job = partnerJobSchema.parse(
+      (await call('get', `/partner-spaces/${w.a.id}/jobs/${w.a.jobId}`).expect(200)).body,
+    );
+    expect(job.workPermits).toEqual({ NOT_STARTED: 0, SUBMITTED: 1, APPROVED: 1, REFUSED: 0 });
+    const listed = z
+      .array(partnerApplicationSchema)
+      .parse(
+        (
+          await call(
+            'get',
+            `/partner-spaces/${w.a.id}/applications?jobId=${w.a.jobId}&workPermitStatus=APPROVED`,
+          ).expect(200)
+        ).body,
+      );
+    expect(listed.map((item) => item.id)).toEqual([second.id]);
+    await call('get', `/partner-spaces/${w.a.id}/applications?workPermitStatus=BOOKED`).expect(400);
+
+    const history = partnerHistoryPageSchema.parse(
+      (
+        await call(
+          'get',
+          `/partner-spaces/${w.a.id}/history?applicationId=${w.a.applicationId}`,
+        ).expect(200)
+      ).body,
+    );
+    expect(
+      history.items
+        .filter((entry) => entry.field?.startsWith('workPermit'))
+        .map((entry) => [entry.field, entry.oldValue, entry.newValue, entry.actorName])
+        .sort(),
+    ).toEqual(
+      [
+        ['workPermitStatus', 'NOT_STARTED', 'SUBMITTED', 'Partner Person'],
+        ['workPermitSubmittedDate', null, '2026-11-02', 'Partner Person'],
+        ['workPermitStatus', 'SUBMITTED', 'REFUSED', 'Partner Person'],
+        ['workPermitDecisionDate', null, '2026-11-20', 'Partner Person'],
+        ['workPermitStatus', 'REFUSED', 'SUBMITTED', 'Partner Person'],
+        ['workPermitDecisionDate', '2026-11-20', null, 'Partner Person'],
+      ].sort(),
+    );
+  });
+
+  it('gives rows written without the work permit columns Not started, and the database checks the rule', async () => {
+    const w = await world();
+    // What the API version still running during a deploy writes: no work permit column.
+    const rows = await test.prisma.$queryRaw<{ id: string; status: string }[]>(Prisma.sql`
+      INSERT INTO partner_applications (partner_space_id, partner_job_id, first_name, last_name, nationality, updated_at)
+      VALUES (${w.a.id}::uuid, ${w.a.jobId}::uuid, 'Old', 'E2E', 'MA', now())
+      RETURNING id, work_permit_status::text AS status`);
+    expect(rows[0]?.status).toBe('NOT_STARTED');
+    await expect(
+      test.prisma.$executeRaw(Prisma.sql`
+        UPDATE partner_applications SET work_permit_decision_date = '2026-11-20'
+        WHERE id = ${w.a.applicationId}::uuid`),
+    ).rejects.toThrow(/partner_applications_work_permit_decision_check/);
   });
 
   it('keeps comments append-only, with their author and time', async () => {

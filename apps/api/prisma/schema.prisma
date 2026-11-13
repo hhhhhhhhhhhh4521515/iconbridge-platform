@@ -58,6 +58,15 @@ enum PartnerVisaStatus {
   @@map("partner_visa_status")
 }
 
+enum PartnerWorkPermitStatus {
+  NOT_STARTED
+  SUBMITTED
+  APPROVED
+  REFUSED
+
+  @@map("partner_work_permit_status")
+}
+
 enum PartnerFileKind {
   PASSPORT
   CV
@@ -917,29 +926,33 @@ model PartnerJob {
 
 /// A person put forward for a job demand, and the follow-up of their visa.
 model PartnerApplication {
-  id                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  partnerSpaceId        String            @map("partner_space_id") @db.Uuid
-  partnerJobId          String            @map("partner_job_id") @db.Uuid
-  firstName             String            @map("first_name") @db.VarChar(100)
-  lastName              String            @map("last_name") @db.VarChar(100)
+  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerSpaceId          String                  @map("partner_space_id") @db.Uuid
+  partnerJobId            String                  @map("partner_job_id") @db.Uuid
+  firstName               String                  @map("first_name") @db.VarChar(100)
+  lastName                String                  @map("last_name") @db.VarChar(100)
   /// ISO 3166-1 alpha-2 (CHECK constraint).
-  nationality           String            @db.Char(2)
+  nationality             String                  @db.Char(2)
   /// E.164 (CHECK constraint).
-  phone                 String?           @db.VarChar(16)
+  phone                   String?                 @db.VarChar(16)
   /// Lower case (CHECK constraint). Nothing is ever emailed to it.
-  email                 String?           @db.VarChar(254)
-  visaStatus            PartnerVisaStatus @default(NOT_STARTED) @map("visa_status")
-  visaAppointmentDate   DateTime?         @map("visa_appointment_date") @db.Date
+  email                   String?                 @db.VarChar(254)
+  workPermitStatus        PartnerWorkPermitStatus @default(NOT_STARTED) @map("work_permit_status")
+  workPermitSubmittedDate DateTime?               @map("work_permit_submitted_date") @db.Date
+  /// Only when the work permit is APPROVED or REFUSED (CHECK constraint).
+  workPermitDecisionDate  DateTime?               @map("work_permit_decision_date") @db.Date
+  visaStatus              PartnerVisaStatus       @default(NOT_STARTED) @map("visa_status")
+  visaAppointmentDate     DateTime?               @map("visa_appointment_date") @db.Date
   /// Only when the visa is APPROVED or REFUSED (CHECK constraint).
-  visaDecisionDate      DateTime?         @map("visa_decision_date") @db.Date
-  dhlSentDate           DateTime?         @map("dhl_sent_date") @db.Date
+  visaDecisionDate        DateTime?               @map("visa_decision_date") @db.Date
+  dhlSentDate             DateTime?               @map("dhl_sent_date") @db.Date
   /// Only with dhl_sent_date (CHECK constraint).
-  dhlTrackingNumber     String?           @map("dhl_tracking_number") @db.VarChar(40)
-  documentsReceivedDate DateTime?         @map("documents_received_date") @db.Date
-  createdById           String?           @map("created_by_id") @db.Uuid
-  updatedById           String?           @map("updated_by_id") @db.Uuid
-  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt             DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  dhlTrackingNumber       String?                 @map("dhl_tracking_number") @db.VarChar(40)
+  documentsReceivedDate   DateTime?               @map("documents_received_date") @db.Date
+  createdById             String?                 @map("created_by_id") @db.Uuid
+  updatedById             String?                 @map("updated_by_id") @db.Uuid
+  createdAt               DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   space     PartnerSpace     @relation(fields: [partnerSpaceId], references: [id], onDelete: Cascade)
   job       PartnerJob       @relation(fields: [partnerSpaceId, partnerJobId], references: [partnerSpaceId, id], onDelete: Cascade)
@@ -952,6 +965,7 @@ model PartnerApplication {
   @@unique([partnerSpaceId, id])
   @@index([partnerSpaceId, partnerJobId])
   @@index([partnerSpaceId, visaStatus])
+  @@index([partnerSpaceId, workPermitStatus])
   @@map("partner_applications")
 }
 

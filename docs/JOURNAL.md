@@ -1812,3 +1812,29 @@ The measured volume after the deployment is added to the pull request.
 - The production smoke test passed on e4f641c with the test account only. Nothing named `E2E` is left.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/102>
+
+## 2026-11-13 - Partner spaces: the work permit, and the partner area as part of the site
+
+**What**:
+
+- **Work permit** (ADR-027, amendment 1):
+  - an additive migration: the enum `partner_work_permit_status`, three columns with `NOT_STARTED` by default, an index, and a CHECK so that a decision date needs Approved or Refused;
+  - the shared schemas, the API (create, edit, list filter `workPermitStatus`, counts `workPermits` per job demand) and the history of every change;
+  - the screens: a "Work permit" section above "Visa" (the decision date only once it is decided), a badge column, and the counts as filter buttons on the job demand;
+  - complete EN, FR and PL texts.
+- **Part of the site** (ADR-027, amendment 2):
+  - "Partner space" in the site's header (desk and phone menu) and footer, in EN, FR and AR; Arabic opens the English sign-in;
+  - the partner screens get the site's header, navy footer, logo, colours and dark mode;
+  - the serif font is fixed: both layouts take their fonts from `lib/fonts.ts`, since `--font-sans` needs `--font-cairo` too;
+  - the sign-in stays `noindex`; the ADR gives the reason.
+
+**Why**: production feedback of 13 November.
+
+**Checks**:
+
+- Unit tests of the work permit rule at its boundary (`partner.spec.ts`).
+- The IDOR suite with the new edit and filter, and the e2e test of defaults, rule, counts, filter, history and the database CHECK.
+- The Polish browser test of the work permit, and `site-links.spec.ts` (the links in each language, the font, dark mode, `noindex`) in Chromium, phone and Firefox.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e`, `test:browser` and `build`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/103>

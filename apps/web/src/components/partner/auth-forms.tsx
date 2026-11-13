@@ -9,9 +9,15 @@ import { PasswordField } from '@/components/auth/password-field';
 import { Turnstile } from '@/components/forms/turnstile';
 import { api, attempt, failure, sessionChanged } from '@/lib/client-api';
 import { safeNext } from '@/lib/forms';
-import { isPartnerLang, partnerHref, type PartnerLang } from '@/lib/partner-locale';
+import {
+  isPartnerLang,
+  LANG_CHOSEN_COOKIE,
+  partnerHref,
+  type PartnerLang,
+} from '@/lib/partner-locale';
 import { cta, field } from '@/lib/ui';
-import { LanguageSwitch, LANG_CHOSEN_COOKIE, usePartnerApiError } from './partner-ui';
+import { PartnerHeader } from './partner-chrome';
+import { usePartnerApiError } from './partner-ui';
 
 const input = `${field} aria-[invalid=true]:border-destructive`;
 
@@ -30,20 +36,17 @@ export function AuthCard({
   intro?: string;
   children: ReactNode;
 }) {
-  const lang = usePartnerLang();
-  const t = useTranslations('partner.header');
   return (
-    <main id="main" className="mx-auto w-full max-w-md flex-1 px-4 py-10">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <p className="font-semibold">{t('brand')}</p>
-        <LanguageSwitch lang={lang} />
-      </div>
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {intro ? <p className="mt-1 mb-5 text-sm text-muted-foreground">{intro}</p> : null}
-        {children}
-      </div>
-    </main>
+    <>
+      <PartnerHeader />
+      <main id="main" className="mx-auto w-full max-w-md flex-1 px-4 py-10">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {intro ? <p className="mt-1 mb-5 text-sm text-muted-foreground">{intro}</p> : null}
+          {children}
+        </div>
+      </main>
+    </>
   );
 }
 

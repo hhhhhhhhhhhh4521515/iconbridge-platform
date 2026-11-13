@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   PARTNER_VISA_STATUSES,
+  PARTNER_WORK_PERMIT_STATUSES,
   partnerApplicationIssues,
   partnerLocaleSchema,
   type CreatePartnerApplicationInput,
@@ -16,6 +17,7 @@ import {
   type PartnerFileKind,
   type PartnerSpaceSummary,
   type PartnerVisaStatus,
+  type PartnerWorkPermitStatus,
   type Paginated,
   type UpdatePartnerApplicationInput,
   type UpdatePartnerJobInput,
@@ -76,6 +78,9 @@ const APPLICATION_SELECT = {
   nationality: true,
   phone: true,
   email: true,
+  workPermitStatus: true,
+  workPermitSubmittedDate: true,
+  workPermitDecisionDate: true,
   visaStatus: true,
   visaAppointmentDate: true,
   visaDecisionDate: true,
@@ -100,6 +105,9 @@ function applicationFields(row: ApplicationRow) {
     nationality: row.nationality,
     phone: row.phone,
     email: row.email,
+    workPermitStatus: row.workPermitStatus,
+    workPermitSubmittedDate: day(row.workPermitSubmittedDate),
+    workPermitDecisionDate: day(row.workPermitDecisionDate),
     visaStatus: row.visaStatus,
     visaAppointmentDate: day(row.visaAppointmentDate),
     visaDecisionDate: day(row.visaDecisionDate),
@@ -129,6 +137,13 @@ function toApplication(row: ApplicationRow): PartnerApplication {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function emptyWorkPermitCounts(): Record<PartnerWorkPermitStatus, number> {
+  return Object.fromEntries(PARTNER_WORK_PERMIT_STATUSES.map((status) => [status, 0])) as Record<
+    PartnerWorkPermitStatus,
+    number
+  >;
 }
 
 function emptyVisaCounts(): Record<PartnerVisaStatus, number> {
@@ -330,6 +345,7 @@ export class PartnerAreaService {
         partnerSpaceId: spaceId,
         ...(query.jobId ? { partnerJobId: query.jobId } : {}),
         ...(query.visaStatus ? { visaStatus: query.visaStatus } : {}),
+        ...(query.workPermitStatus ? { workPermitStatus: query.workPermitStatus } : {}),
         ...(query.q
           ? {
               OR: [
@@ -665,9 +681,11 @@ export class PartnerAreaService {
     }
   }
 
-  /** The four dates of an application, as `date` columns (undefined: unchanged). */
+  /** The six dates of an application, as `date` columns (undefined: unchanged). */
   private dates(fields: UpdatePartnerApplicationInput) {
     return {
+      workPermitSubmittedDate: toDate(fields.workPermitSubmittedDate),
+      workPermitDecisionDate: toDate(fields.workPermitDecisionDate),
       visaAppointmentDate: toDate(fields.visaAppointmentDate),
       visaDecisionDate: toDate(fields.visaDecisionDate),
       dhlSentDate: toDate(fields.dhlSentDate),
@@ -676,15 +694,27 @@ export class PartnerAreaService {
   }
 
   private async withCounts(spaceId: string, rows: JobRow[]): Promise<PartnerJob[]> {
-    const groups = await this.prisma.partnerApplication.groupBy({
-      by: ['partnerJobId', 'visaStatus'],
-      where: { partnerSpaceId: spaceId, partnerJobId: { in: rows.map((row) => row.id) } },
-      _count: { _all: true },
-    });
+    const where = { partnerSpaceId: spaceId, partnerJobId: { in: rows.map((row) => row.id) } };
+    const [visaGroups, permitGroups] = await Promise.all([
+      this.prisma.partnerApplication.groupBy({
+        by: ['partnerJobId', 'visaStatus'],
+        where,
+        _count: { _all: true },
+      }),
+      this.prisma.partnerApplication.groupBy({
+        by: ['partnerJobId', 'workPermitStatus'],
+        where,
+        _count: { _all: true },
+      }),
+    ]);
     return rows.map((row) => {
       const applications = emptyVisaCounts();
-      for (const group of groups.filter((item) => item.partnerJobId === row.id)) {
+      for (const group of visaGroups.filter((item) => item.partnerJobId === row.id)) {
         applications[group.visaStatus] = group._count._all;
+      }
+      const workPermits = emptyWorkPermitCounts();
+      for (const group of permitGroups.filter((item) => item.partnerJobId === row.id)) {
+        workPermits[group.workPermitStatus] = group._count._all;
       }
       return {
         id: row.id,
@@ -696,6 +726,7 @@ export class PartnerAreaService {
         status: row.status,
         closedAt: row.closedAt?.toISOString() ?? null,
         applications,
+        workPermits,
         createdBy: nameOf(row.createdBy),
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),

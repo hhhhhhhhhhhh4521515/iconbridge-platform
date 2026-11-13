@@ -1,22 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Cairo, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Providers } from '@/components/layout/providers';
 import { isRtl, routing } from '@/i18n/routing';
+import { fontVariables } from '@/lib/fonts';
 import { SITE_URL } from '@/lib/seo';
 import '../globals.css';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-// Not preloaded: only Arabic pages use it, and the browser fetches it when it is needed.
-const cairo = Cairo({
-  subsets: ['arabic'],
-  variable: '--font-cairo',
-  display: 'swap',
-  preload: false,
-});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -54,7 +45,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
     <html
       lang={locale}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
-      className={`${inter.variable} ${cairo.variable} h-full antialiased`}
+      className={`${fontVariables} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">

@@ -38,6 +38,7 @@ import {
   listPartnerApplicationsQuerySchema,
   listPartnerHistoryQuerySchema,
   listPartnerJobsQuerySchema,
+  PARTNER_WORK_PERMIT_STATUSES,
   partnerApplicationParamsSchema,
   partnerApplicationSchema,
   partnerCommentSchema,
@@ -154,7 +155,9 @@ export class PartnerAreaController {
 
   @Get(':spaceId/jobs')
   @PartnerSpaceRoute()
-  @ApiOperation({ summary: 'Job demands of the space, open first, with counts per visa status' })
+  @ApiOperation({
+    summary: 'Job demands of the space, open first, with counts per work permit and visa status',
+  })
   @ApiParam(SPACE_PARAM)
   @ApiQuery({ name: 'status', required: false, enum: ['OPEN', 'CLOSED'] })
   @ApiZodResponse(200, z.array(partnerJobSchema))
@@ -283,13 +286,20 @@ export class PartnerAreaController {
 
   @Get(':spaceId/applications')
   @PartnerSpaceRoute()
-  @ApiOperation({ summary: 'Applications of the space; filter by job demand, visa status or name' })
+  @ApiOperation({
+    summary: 'Applications of the space; filter by job demand, work permit, visa status or name',
+  })
   @ApiParam(SPACE_PARAM)
   @ApiQuery({ name: 'jobId', required: false, type: String, format: 'uuid' })
   @ApiQuery({
     name: 'visaStatus',
     required: false,
     enum: ['NOT_STARTED', 'APPOINTMENT_BOOKED', 'SUBMITTED', 'APPROVED', 'REFUSED'],
+  })
+  @ApiQuery({
+    name: 'workPermitStatus',
+    required: false,
+    enum: [...PARTNER_WORK_PERMIT_STATUSES],
   })
   @ApiQuery({ name: 'q', required: false, description: 'Part of a first or last name' })
   @ApiZodResponse(200, z.array(partnerApplicationSchema))
@@ -338,9 +348,9 @@ export class PartnerAreaController {
   @Patch(':spaceId/applications/:applicationId')
   @PartnerSpaceRoute()
   @ApiOperation({
-    summary: 'Edit an application, including the visa and DHL follow-up',
+    summary: 'Edit an application, including the work permit, visa and DHL follow-up',
     description:
-      'A decision date needs the visa status Approved or Refused; a DHL tracking number needs the ' +
+      'A decision date needs the work permit or visa status Approved or Refused; a DHL tracking number needs the ' +
       'date it was sent. The rules are checked on the application as it will be after the change.',
   })
   @ApiParam(SPACE_PARAM)
