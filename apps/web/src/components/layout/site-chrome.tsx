@@ -106,6 +106,9 @@ function PartnerSpaceLink({
     <NextLink
       href={partnerHref(lang, '/login')}
       hrefLang={lang}
+      // No prefetch: the partner area's answer sets its language cookie, which only people
+      // who open the partner area should get.
+      prefetch={false}
       className={className}
       data-testid="partner-space-link"
       {...(compact ? { title: label } : {})}

@@ -81,6 +81,15 @@ test.describe('the partner space from the site', () => {
     }
   });
 
+  test('visiting the site sets no cookie of the partner area', async ({ page }) => {
+    await page.goto('/en');
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Partner space' }).hover();
+    await page.mouse.move(0, 0);
+    await page.goto('/en/jobs');
+    const cookies = await page.context().cookies();
+    expect(cookies.map((cookie) => cookie.name)).not.toContain('partner_lang');
+  });
+
   test('the sign-in stays out of search engines', async ({ request }) => {
     const response = await request.get('/partners/en/login');
     expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');

@@ -1848,3 +1848,25 @@ The measured volume after the deployment is added to the pull request.
 **Checks**: the spec repeated 3 times in WebKit, in its container (9 passed), and twice in Chromium and Firefox (12 passed).
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/104>
+
+## 2026-11-13 - The site's "Partner space" link is not prefetched
+
+**What**:
+
+- The two "Partner space" links of the site have `prefetch={false}`.
+- `site-links.spec.ts` checks that visiting the site sets no `partner_lang` cookie.
+
+**Why**: the production check after #103 found `partner_lang` in a candidate's browser. Next.js prefetched the link, and the proxy answered the prefetch with the partner area's language cookie. That cookie is meant only for people who open the partner area.
+
+**Checks**:
+
+- The new test failed without the change (the cookie was there) and passes with it.
+- `site-links.spec.ts`: 30 passed in Chromium, phone and Firefox.
+- Production after #103:
+  - health on 176a48a;
+  - the migration job succeeded;
+  - 1,586 requests and no 5xx;
+  - the smoke test passed with the test account on the custom domain.
+    The local `.env.e2e-prod` still had the default Container Apps address. The site redirects it to the domain, so `page.request` went without cookies (401).
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/105>
