@@ -175,7 +175,7 @@ Every route needs a session. Bodies and queries are validated with zod schemas o
   - readable without JavaScript, with logical CSS;
   - dates entered with `DateField`;
   - an axe check in a new `partner-accessibility.spec.ts`;
-  - `noindex`, and nothing linked from the public site.
+  - `noindex`; linked from the site's header and footer since amendment 2.
 
 ### 7. Security rules
 
@@ -330,6 +330,35 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
 - **PR 6** (docs):
   - SPEC section 7.6, ARCHITECTURE (the partner area and its back-office screens), and the runbook "Open a partner space";
   - the privacy policy in EN, FR and AR gains the section "People put forward to our partner companies": what is recorded, why, who sees it, where it is stored, kept until the application or the space is deleted, and erasure on request. Dated 13 November 2026, deployed with or before the partner area.
+
+## Amendments
+
+### 1. The work permit (13 November 2026, production feedback)
+
+- **Why:** partners follow the work permit first, then the visa; it had only a file box.
+- **Data:** `partner_applications` gains `work_permit_status` (enum `partner_work_permit_status`: `NOT_STARTED`, `SUBMITTED`, `APPROVED`, `REFUSED`; NOT NULL, default `NOT_STARTED`), `work_permit_submitted_date` and `work_permit_decision_date` (`date`, optional), and an index on (`partner_space_id`, `work_permit_status`).
+  - CHECK `partner_applications_work_permit_decision_check`: a decision date only when `APPROVED` or `REFUSED`, the rule of the visa.
+  - Additive migration only: existing rows get `NOT_STARTED`. The API version still running during a deploy reads and writes without the new columns.
+- **API:** the fields are part of an application (create, edit, detail, list). The rule is checked on the application as it will be after the change (`partnerApplicationIssues`), then again by the database. The list filters by `workPermitStatus`; a job demand carries `workPermits`, its counts per status. Every change goes to the history as one entry per field. The IDOR suite covers the edit and the filter.
+- **Screens:**
+  - the application form shows a "Work permit" section above "Visa": status, submission date, and the decision date only when approved or refused;
+  - the file itself stays in the Files box;
+  - the job demand's table gains a "Work permit" column with a badge, and buttons with the count of each status that filter the table.
+
+### 2. The partner area is part of the site (13 November 2026, production feedback)
+
+- **Why:** partners found the area by its address only, and it looked like another site, with a serif font.
+- **Font:** `--font-sans` names `--font-inter` and `--font-cairo`. The partner layout defined only the first, which made the whole `font-family` invalid. Both layouts now take their fonts from `lib/fonts.ts`; Inter has `latin-ext` for Polish.
+- **Branding:** every partner screen has the site's header (logo, theme switch), with the partner area's label, the language switch, and the space's menu under it in the same banner; the site's navy footer; the site's background, colours and dark mode.
+- **Links:** "Partner space" in the site's header (desk and phone menu, next to the account buttons) and footer, in EN, FR and AR. In the desk header it is a handshake icon with its name read out and as a tooltip, since the label did not fit beside the menu at 1280 px; the phone menu and the footer show the label. It opens `/partners/{en|fr}/login`; Arabic opens English. The partner logo goes back to the site, Polish to English.
+- **Unchanged security:**
+  - Turnstile, the rate limits and the forced password change;
+  - the proxy's redirect without a session;
+  - `noindex` on every partner page.
+- **The sign-in stays out of search engines:**
+  - it has nothing to find, and partners arrive from the site's links;
+  - indexing would only point bots at a sign-in form;
+  - the candidates' sign-in is treated the same way (`robots.txt` disallows `/*/login`).
 
 ## Consequences
 

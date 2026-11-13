@@ -52,7 +52,7 @@ It signs in through `POST /auth/partner-login` only:
 - the lock after 5 wrong passwords and the cookies are those of `/auth/login`;
 - any other account gets the answer of a wrong password there, as a partner login does on `/auth/login`.
 
-Forgot-password sends it the reset email in its space's language (English, French or Polish), linking to `/partners/{lang}/reset-password`, with the limits per address. Resend-verification sends it nothing. The web app's partner area (`/partners/{lang}`) is marked `noindex`, linked from nowhere on the public site, and its private pages redirect to the partner sign-in without a session; the back-office shell refuses a partner login like a candidate.
+Forgot-password sends it the reset email in its space's language (English, French or Polish), linking to `/partners/{lang}/reset-password`, with the limits per address. Resend-verification sends it nothing. The web app's partner area (`/partners/{lang}`) is marked `noindex` (its sign-in too, also disallowed by `robots.txt`), linked from the site's header and footer to its sign-in only, and its private pages redirect to the partner sign-in without a session; the back-office shell refuses a partner login like a candidate.
 
 Partner spaces are managed by super admins only (`MANAGE_PARTNER_SPACES`); the management routes return settings and counts, never the content of a space. Disabling a login ends its sessions and invalidates its access tokens at once. Deleting a space needs its exact name, deletes its rows and its partner logins, and writes an audit entry with counts only. In the database, every child row carries `partner_space_id` and its foreign keys include it, so a row cannot point to a parent of another space.
 
