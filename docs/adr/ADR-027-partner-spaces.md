@@ -313,6 +313,20 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
   - A `PARTNER` login that opens `/admin` gets the "not for this account" screen, like a candidate.
   - The browser tests remove spaces named `E2E …` at the end of a run.
 
+- **PR 5** (partner area, sign-in, emails):
+  - `POST /auth/partner-login`: Turnstile, partner logins only, the same lock and cookies as `/auth/login`. Forgot and reset password use the existing endpoints; a partner login's reset email follows its space's language (the `reset-password` template gains `pl`) and links to `/partners/{lang}/reset-password`.
+  - **Web routes and texts:**
+    - the partner area is a root layout of its own under `/partners/[lang]` (`en`, `fr`, `pl`), outside next-intl's routing;
+    - its links are plain `next/link` addresses built by `partnerHref`, not `@/i18n/navigation`;
+    - the proxy gives it the same CSP, `X-Robots-Tag: noindex`, a `partner_lang` cookie (the last language visited), and the redirect to the partner sign-in without a session;
+    - `/partners` goes to the cookie's language, English otherwise.
+  - **Language after sign-in:** the space's default language, unless the person picked one with the switch (`partner_lang_chosen`).
+  - **Messages:** in `messages/partner/{en,fr,pl}.json`, with the few site keys that shared components read (`common`, `forms`, `auth`). A unit test checks the keys, the placeholders, no empty value, and every partner error code.
+  - **Deviation from section 6 ("readable without JavaScript"):**
+    - signed-in screens render in the browser, like the candidate area and the back office; a `<noscript>` notice says that JavaScript is needed;
+    - sign-in needs Turnstile, which needs JavaScript, and server-side calls with the session would have to rebuild the forwarded client address that the rate limits and the audit rely on;
+    - the screens use logical CSS, `DateSelects` for dates, and pass axe.
+  - Staff members sign in on the site, then open the partner area; the partner sign-in links there.
 - **PR 6** (docs):
   - SPEC section 7.6, ARCHITECTURE (the partner area and its back-office screens), and the runbook "Open a partner space";
   - the privacy policy in EN, FR and AR gains the section "People put forward to our partner companies": what is recorded, why, who sees it, where it is stored, kept until the application or the space is deleted, and erasure on request. Dated 13 November 2026, deployed with or before the partner area.

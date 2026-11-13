@@ -1,12 +1,12 @@
 import type { ConfigService } from '@nestjs/config';
-import { LOCALES } from '@iconbridge/shared';
+import { LOCALES, PARTNER_LOCALES } from '@iconbridge/shared';
 import type { MailTransport } from './mail-transport.js';
 import type { Env } from '../config/env.js';
 import { Clock } from '../common/clock/clock.js';
 import type { FieldCipher } from '../common/crypto/field-cipher.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { MailService, retryDelayMs } from './mail.service.js';
-import { EMAIL_TEMPLATES } from './mail.templates.js';
+import { EMAIL_TEMPLATES, emailContent, PARTNER_EMAIL_TEMPLATES } from './mail.templates.js';
 
 const config = {
   get: (key: string) =>
@@ -86,6 +86,40 @@ describe('MailService', () => {
       actionUrl: 'http://localhost:3000/en/verify-email?token=a"><script>x</script>',
     });
     expect(email.html).not.toContain('<script>x</script>');
+  });
+
+  it('has every email a partner login can receive in English, French and Polish (ADR-027)', async () => {
+    const { service } = createService();
+    const subjects = new Set<string>();
+    for (const template of PARTNER_EMAIL_TEMPLATES) {
+      for (const locale of PARTNER_LOCALES) {
+        const email = await service.render(template, locale, {
+          actionUrl: service.partnerLinkFor(locale, 'reset-password', 'abc'),
+          expiresInHours: 1,
+        });
+        expect(email.subject.length).toBeGreaterThan(10);
+        expect(email.html).toContain(`lang="${locale}"`);
+        expect(email.text).toContain(
+          `http://localhost:3000/partners/${locale}/reset-password?token=abc`,
+        );
+        subjects.add(email.subject);
+      }
+    }
+    expect(subjects.size).toBe(PARTNER_EMAIL_TEMPLATES.length * PARTNER_LOCALES.length);
+    // Polish counts hours its own way.
+    expect(
+      emailContent('reset-password', 'pl', { actionUrl: 'x', expiresInHours: 1 }).footnotes[0],
+    ).toContain('godzinę');
+    expect(
+      emailContent('reset-password', 'pl', { actionUrl: 'x', expiresInHours: 3 }).footnotes[0],
+    ).toContain('3 godziny');
+    expect(
+      emailContent('reset-password', 'pl', { actionUrl: 'x', expiresInHours: 5 }).footnotes[0],
+    ).toContain('5 godzin');
+    // Only those: another template in Polish is refused rather than sent in the wrong language.
+    expect(() => emailContent('job-alert', 'pl', { actionUrl: 'x' })).toThrow(
+      'No job-alert email in pl',
+    );
   });
 
   it('builds links to the localised web pages', () => {

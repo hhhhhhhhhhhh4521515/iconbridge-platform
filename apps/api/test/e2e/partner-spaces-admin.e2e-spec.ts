@@ -446,10 +446,11 @@ describe('partner spaces: management by the super admin (e2e, ADR-027)', () => {
       expect(row.failedLoginCount).toBe(0);
     });
 
-    it('gets the usual answer and no email from forgot-password and resend-verification', async () => {
+    // forgot-password sends partner logins their own email: partner-sign-in.e2e-spec.ts.
+    it('gets the usual answer and no email from resend-verification', async () => {
       const space = await createSpace();
       const partner = await createPartnerLogin(test, space.id, 'e2e-partner@example.test');
-      for (const path of ['/auth/forgot-password', '/auth/resend-verification']) {
+      for (const path of ['/auth/resend-verification']) {
         const forPartner = await test
           .http()
           .post(`${API}${path}`)

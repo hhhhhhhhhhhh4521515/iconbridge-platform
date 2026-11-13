@@ -121,6 +121,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/partner-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in to the partner area (partner logins only)
+         * @description Needs a Turnstile token. Any other account gets the answer of a wrong password, as a partner login does on /auth/login. Same cookies and lock rules as /auth/login.
+         */
+        post: operations["AuthController_partnerLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -2690,6 +2710,92 @@ export interface operations {
                 "application/json": {
                     email: string;
                     password: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: email */
+                        email: string;
+                        /** @enum {string} */
+                        role: "CANDIDATE" | "VIEWER" | "COUNTRY_AGENT" | "RECRUITER" | "SUPER_ADMIN" | "PARTNER";
+                        emailVerified: boolean;
+                        /** @enum {string} */
+                        locale: "en" | "fr" | "ar";
+                        firstName: string | null;
+                        lastName: string | null;
+                        passwordChangeRequired: boolean;
+                        assignedCountries: string[];
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
+    AuthController_partnerLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    email: string;
+                    password: string;
+                    turnstileToken: string;
                 };
             };
         };
@@ -13280,7 +13386,9 @@ export interface operations {
     };
     PartnerAreaController_listJobs: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: "OPEN" | "CLOSED";
+            };
             header?: never;
             path: {
                 spaceId: unknown;
@@ -14060,7 +14168,9 @@ export interface operations {
     };
     PartnerAreaController_listApplications: {
         parameters: {
-            query?: never;
+            query?: {
+                jobId?: string;
+            };
             header?: never;
             path: {
                 spaceId: unknown;
@@ -14956,7 +15066,13 @@ export interface operations {
     };
     PartnerAreaController_history: {
         parameters: {
-            query?: never;
+            query?: {
+                pageSize?: number;
+                page?: number;
+                applicationId?: string;
+                entityId?: string;
+                entityType?: "space" | "member" | "login" | "job" | "application" | "file" | "comment";
+            };
             header?: never;
             path: {
                 spaceId: unknown;

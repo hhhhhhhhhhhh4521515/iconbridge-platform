@@ -1,10 +1,13 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   localeSchema,
+  partnerLocaleSchema,
   type Acknowledgement,
   type CurrentUser,
   type EmailLinkRequestInput,
   type LoginInput,
+  type PartnerLocale,
+  type PartnerSignInInput,
   type RegisterInput,
   type ResetPasswordInput,
 } from '@iconbridge/shared';
@@ -179,14 +182,26 @@ export class AuthService {
     return EMAIL_ACK;
   }
 
-  async login(input: LoginInput, meta: RequestMeta): Promise<IssuedSession> {
+  /** The partner sign-in (ADR-027): Turnstile first, then the checks of `login`. */
+  async partnerLogin(input: PartnerSignInInput, meta: RequestMeta): Promise<IssuedSession> {
+    await this.assertHuman(input.turnstileToken, meta.ip);
+    return this.login({ email: input.email, password: input.password }, meta, 'partner');
+  }
+
+  /**
+   * `site`: every account but partner logins. `partner` (ADR-027): partner logins only, after
+   * a Turnstile check. Each answers the other kind as a wrong password, so neither endpoint
+   * reveals which kind of account an address has.
+   */
+  async login(
+    input: LoginInput,
+    meta: RequestMeta,
+    audience: 'site' | 'partner' = 'site',
+  ): Promise<IssuedSession> {
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
-    // A partner login signs in through the partner area only (ADR-027): here it gets the
-    // answer of a wrong password, so this endpoint does not reveal which kind of account it is.
+    const rightKind = (user?.role === 'PARTNER') === (audience === 'partner');
     const usable =
-      user?.passwordHash && user.isActive && !user.deletedAt && user.role !== 'PARTNER'
-        ? user
-        : null;
+      user?.passwordHash && user.isActive && !user.deletedAt && rightKind ? user : null;
     const passwordMatches = await verifyPassword(
       usable?.passwordHash ?? (await this.getDummyHash()),
       input.password,
@@ -249,9 +264,10 @@ export class AuthService {
   async forgotPassword(input: EmailLinkRequestInput, ip: string | null): Promise<Acknowledgement> {
     await this.assertHuman(input.turnstileToken, ip);
     const user = await this.findUsableUser(input.email);
-    // Partner logins get their reset email, in their space's language and with a link to the
-    // partner area, with the partner sign-in (ADR-027, PR 5). Until then: the same answer, no email.
-    if (user && user.role !== 'PARTNER') {
+    if (user?.role === 'PARTNER') {
+      // In the space's language (the login's locale follows it), linking to the partner area.
+      await this.sendPartnerReset(user.id, user.email, user.partnerLocale);
+    } else if (user) {
       await this.sendTokenEmail(user.id, user.email, user.locale, 'reset-password');
     }
     return EMAIL_ACK;
@@ -357,7 +373,28 @@ export class AuthService {
     if (!user || !user.isActive || user.deletedAt) {
       return null;
     }
-    return { ...user, locale: localeSchema.catch('en').parse(user.locale) };
+    return {
+      ...user,
+      locale: localeSchema.catch('en').parse(user.locale),
+      partnerLocale: partnerLocaleSchema.catch('en').parse(user.locale),
+    };
+  }
+
+  /** The reset email of a partner login (ADR-027, answer 6), with the same limits. */
+  private async sendPartnerReset(
+    userId: string,
+    email: string,
+    locale: PartnerLocale,
+  ): Promise<void> {
+    if (!(await this.reserveEmailLink(userId))) {
+      this.logger.warn(`Email link limit reached, reset-password not sent (user ${userId})`);
+      return;
+    }
+    const token = await this.emailTokens.issue(userId, 'RESET_PASSWORD', RESET_PASSWORD_TTL_MS);
+    await this.mail.send(email, 'reset-password', locale, {
+      actionUrl: this.mail.partnerLinkFor(locale, 'reset-password', token),
+      expiresInHours: msToHours(RESET_PASSWORD_TTL_MS),
+    });
   }
 
   private async sendTokenEmail(

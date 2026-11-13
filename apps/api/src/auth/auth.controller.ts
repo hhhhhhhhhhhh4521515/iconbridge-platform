@@ -6,6 +6,7 @@ import {
   currentUserSchema,
   emailLinkRequestSchema,
   loginSchema,
+  partnerSignInSchema,
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
@@ -13,6 +14,7 @@ import {
   type CurrentUser as CurrentUserDto,
   type EmailLinkRequestInput,
   type LoginInput,
+  type PartnerSignInInput,
   type RegisterInput,
   type ResetPasswordInput,
   type VerifyEmailInput,
@@ -130,6 +132,29 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<CurrentUserDto> {
     const session = await this.auth.login(body, requestMeta(request));
+    setAuthCookies(response, session.accessToken, session.refreshToken);
+    return session.user;
+  }
+
+  @Public()
+  @Throttle(SENSITIVE)
+  @Post('partner-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Sign in to the partner area (partner logins only)',
+    description:
+      'Needs a Turnstile token. Any other account gets the answer of a wrong password, as a ' +
+      'partner login does on /auth/login. Same cookies and lock rules as /auth/login.',
+  })
+  @ApiZodBody(partnerSignInSchema)
+  @ApiZodResponse(200, currentUserSchema)
+  @ApiErrors(400, 401, 429)
+  async partnerLogin(
+    @ZodBody(partnerSignInSchema) body: PartnerSignInInput,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<CurrentUserDto> {
+    const session = await this.auth.partnerLogin(body, requestMeta(request));
     setAuthCookies(response, session.accessToken, session.refreshToken);
     return session.user;
   }
