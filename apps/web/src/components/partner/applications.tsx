@@ -35,6 +35,9 @@ import {
   usePartnerApiError,
   usePartnerCall,
   useSpace,
+  WORK_PERMIT_STATUSES,
+  WorkPermitBadge,
+  type WorkPermitStatus,
 } from './partner-ui';
 
 const VISA_STATUSES = [
@@ -54,6 +57,9 @@ interface Values {
   nationality: string | null;
   phone: string;
   email: string;
+  workPermitStatus: WorkPermitStatus;
+  workPermitSubmittedDate: string;
+  workPermitDecisionDate: string;
   visaStatus: VisaStatus;
   visaAppointmentDate: string;
   visaDecisionDate: string;
@@ -63,7 +69,15 @@ interface Values {
 }
 
 type DateFieldName =
-  'visaAppointmentDate' | 'visaDecisionDate' | 'dhlSentDate' | 'documentsReceivedDate';
+  | 'workPermitSubmittedDate'
+  | 'workPermitDecisionDate'
+  | 'visaAppointmentDate'
+  | 'visaDecisionDate'
+  | 'dhlSentDate'
+  | 'documentsReceivedDate';
+
+/** A work permit decision date only for a decided work permit (the API checks it again). */
+const isDecided = (status: WorkPermitStatus) => status === 'APPROVED' || status === 'REFUSED';
 
 const toValues = (application: PartnerApplication | null): Values => ({
   firstName: application?.firstName ?? '',
@@ -71,6 +85,9 @@ const toValues = (application: PartnerApplication | null): Values => ({
   nationality: application?.nationality ?? null,
   phone: application?.phone ?? '',
   email: application?.email ?? '',
+  workPermitStatus: application?.workPermitStatus ?? 'NOT_STARTED',
+  workPermitSubmittedDate: application?.workPermitSubmittedDate ?? '',
+  workPermitDecisionDate: application?.workPermitDecisionDate ?? '',
   visaStatus: application?.visaStatus ?? 'NOT_STARTED',
   visaAppointmentDate: application?.visaAppointmentDate ?? '',
   visaDecisionDate: application?.visaDecisionDate ?? '',
@@ -87,6 +104,12 @@ const toBody = (values: Values) => ({
   nationality: values.nationality ?? '',
   phone: orNull(values.phone),
   email: orNull(values.email),
+  workPermitStatus: values.workPermitStatus,
+  workPermitSubmittedDate: orNull(values.workPermitSubmittedDate),
+  // The field is hidden until the work permit is decided: a hidden date is not kept.
+  workPermitDecisionDate: isDecided(values.workPermitStatus)
+    ? orNull(values.workPermitDecisionDate)
+    : null,
   visaStatus: values.visaStatus,
   visaAppointmentDate: orNull(values.visaAppointmentDate),
   visaDecisionDate: orNull(values.visaDecisionDate),
@@ -107,6 +130,7 @@ function ApplicationForm({
 }) {
   const t = useTranslations('partner.application');
   const visa = useTranslations('partner.visa');
+  const permit = useTranslations('partner.workPermit');
   const errorText = useTranslations('partner.errors');
   const space = useSpace();
   const { lang } = usePartner();
@@ -122,6 +146,9 @@ function ApplicationForm({
   };
   const custom = {
     'A decision date needs the visa status Approved or Refused': errorText('decisionNeedsStatus'),
+    'A decision date needs the work permit status Approved or Refused': errorText(
+      'permitDecisionNeedsStatus',
+    ),
     'A tracking number needs the date it was sent': errorText('trackingNeedsDate'),
     phone: errorText('phone'),
     dhlTrackingNumber: errorText('tracking'),
@@ -261,6 +288,32 @@ function ApplicationForm({
             )}
           </FormField>
         </div>
+      </fieldset>
+      <fieldset className="space-y-4" data-testid="work-permit-section">
+        <legend className={`${heading} mb-2`}>{t('workPermit')}</legend>
+        <FormField label={t('workPermitStatus')} error={errors.workPermitStatus}>
+          {(props) => (
+            <select
+              {...props}
+              className={`${input} max-w-xs`}
+              value={values.workPermitStatus}
+              onChange={set('workPermitStatus')}
+            >
+              {WORK_PERMIT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {permit(status)}
+                </option>
+              ))}
+            </select>
+          )}
+        </FormField>
+        <div className="grid gap-4 md:grid-cols-2">
+          {dateField('workPermitSubmittedDate', t('workPermitSubmitted'))}
+          {isDecided(values.workPermitStatus)
+            ? dateField('workPermitDecisionDate', t('decisionDate'), t('workPermitDecisionHint'))
+            : null}
+        </div>
+        <p className="text-sm text-muted-foreground">{t('workPermitFileHint')}</p>
       </fieldset>
       <fieldset className="space-y-4">
         <legend className={`${heading} mb-2`}>{t('visa')}</legend>
@@ -643,6 +696,10 @@ export function ApplicationDetail({ applicationId }: { applicationId: string }) 
           <h1 className="text-2xl font-bold tracking-tight">
             {application.firstName} {application.lastName}
           </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">{t('workPermit')}:</span>
+            <WorkPermitBadge status={application.workPermitStatus} />
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {t('job')}: {application.jobRole}
             {application.updatedBy

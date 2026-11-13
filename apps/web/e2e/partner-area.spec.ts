@@ -151,6 +151,112 @@ test.describe('partner area', () => {
     }
   });
 
+  test('the work permit comes before the visa, with counts, a filter and its history, in Polish', async ({
+    browser,
+  }) => {
+    test.setTimeout(180_000);
+    const admin = await adminSession(browser);
+    const project = test.info().project.name;
+    const name = `E2E Zezwolenie ${STAMP}-${project}`;
+    const email = `e2e-partner-permit-${STAMP}-${project}@example.test`;
+    const spaceId = await createSpace(admin.request, name);
+    const partnerContext = await browser.newContext({ locale: 'pl-PL' });
+    try {
+      const login = await admin.request.post(`/api/v1/admin/partner-spaces/${spaceId}/logins`, {
+        data: { email, displayName: 'E2E Ola', password: PASSWORD },
+      });
+      expect(login.status()).toBe(201);
+      const page = await partnerContext.newPage();
+      await page.goto('/partners/pl/login');
+      await page.getByLabel('Adres e-mail').fill(email);
+      await page.getByLabel(/^Hasło/).fill(PASSWORD);
+      await page.getByRole('button', { name: 'Zaloguj się' }).click();
+      await page.getByLabel(/^Obecne hasło/).fill(PASSWORD);
+      await page.getByLabel(/^Nowe hasło/).fill(NEW_PASSWORD);
+      await page.getByRole('button', { name: 'Zmień hasło' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'Zapotrzebowania' })).toBeVisible();
+
+      // A job demand and two applications, through the API with the partner's own session.
+      const jobResponse = await page.request.post(`/api/v1/partner-spaces/${spaceId}/jobs`, {
+        data: { role: 'E2E Kucharz', positions: 2, locations: ['Kraków'] },
+      });
+      expect(jobResponse.status()).toBe(201);
+      const jobId = ((await jobResponse.json()) as { id: string }).id;
+      for (const [firstName, workPermitStatus] of [
+        ['Nadia', 'NOT_STARTED'],
+        ['Omar', 'SUBMITTED'],
+      ] as const) {
+        const created = await page.request.post(`/api/v1/partner-spaces/${spaceId}/applications`, {
+          data: { jobId, firstName, lastName: 'E2E', nationality: 'MA', workPermitStatus },
+        });
+        expect(created.status()).toBe(201);
+      }
+
+      // The job demand: a badge per application, counts that filter the table.
+      await page.goto(`/partners/pl/spaces/${spaceId}/jobs/${jobId}`);
+      const table = page.getByTestId('applications-table');
+      await expect(table.getByRole('columnheader', { name: 'Zezwolenie na pracę' })).toBeVisible();
+      await expect(table.getByRole('row', { name: /Omar E2E/ })).toContainText('Złożone');
+      await expect(table.getByRole('row', { name: /Nadia E2E/ })).toContainText('Nierozpoczęte');
+      const filter = page.getByRole('group', {
+        name: 'Filtruj według statusu zezwolenia na pracę',
+      });
+      await expect(filter.getByRole('button', { name: 'Wszystkie 2' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await filter.getByRole('button', { name: 'Złożone 1' }).click();
+      await expect(filter.getByRole('button', { name: 'Złożone 1' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await expect(table.getByRole('row')).toHaveCount(2);
+      await expect(table).toContainText('Omar E2E');
+      await filter.getByRole('button', { name: 'Odmowa 0' }).click();
+      await expect(
+        page.getByText('Brak kandydatur z tym statusem zezwolenia na pracę.'),
+      ).toBeVisible();
+      await filter.getByRole('button', { name: 'Wszystkie 2' }).click();
+      await table.getByRole('link', { name: 'Omar E2E' }).click();
+
+      // The application: the work permit section above the visa section.
+      const form = page.getByTestId('application-form');
+      await expect(form.locator(':scope > fieldset > legend')).toHaveText([
+        'Osoba',
+        'Zezwolenie na pracę',
+        'Wiza',
+        'DHL',
+      ]);
+      const section = page.getByTestId('work-permit-section');
+      await expect(section.getByLabel('Status zezwolenia na pracę')).toHaveValue('SUBMITTED');
+      // The decision date shows only once the work permit is decided.
+      await expect(section.getByText('Data decyzji')).toHaveCount(0);
+      await section.getByLabel('Status zezwolenia na pracę').selectOption('APPROVED');
+      await expect(section.getByText('Data decyzji').first()).toBeVisible();
+      await expect(section).toContainText('Samo zezwolenie na pracę dodaj w sekcji Pliki.');
+      await form.getByRole('button', { name: 'Zapisz' }).click();
+      await expect(toast(page, 'Kandydatura zapisana.')).toBeVisible();
+      await expect(page.getByTestId('work-permit-badge').first()).toHaveText('Przyznane');
+      // The work permit file stays in the Files box.
+      await expect(page.getByTestId('file-WORK_PERMIT')).toContainText('Zezwolenie na pracę');
+
+      // Every change in the history, in Polish.
+      await page.reload();
+      await expect(page.getByTestId('history')).toContainText(
+        'status zezwolenia na pracę: Złożone → Przyznane',
+      );
+      await page.goto(`/partners/pl/spaces/${spaceId}/jobs/${jobId}`);
+      await expect(filter.getByRole('button', { name: 'Przyznane 1' })).toBeVisible();
+    } finally {
+      await partnerContext.close();
+      const removed = await admin.request.delete(`/api/v1/admin/partner-spaces/${spaceId}`, {
+        data: { confirmName: name },
+      });
+      expect(removed.status()).toBe(204);
+      await admin.close();
+    }
+  });
+
   test('a stranger sees nothing, and the reset email speaks Polish', async ({ browser }) => {
     const admin = await adminSession(browser);
     const project = test.info().project.name;

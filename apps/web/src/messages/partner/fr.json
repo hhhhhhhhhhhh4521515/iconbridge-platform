@@ -12,7 +12,19 @@
       "mySpaces": "Mes espaces",
       "jobs": "Demandes de postes",
       "history": "Historique",
-      "logoAlt": "Logo de {name}"
+      "logoAlt": "Logo de {name}",
+      "area": "Espace partenaire",
+      "siteLink": "IconBridge Jobs, le site public",
+      "menu": "Menu de l’espace"
+    },
+    "footer": {
+      "tagline": "Votre pont vers un emploi à Malte, en Pologne ou en mer.",
+      "site": "Site public",
+      "contact": "Contact",
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions d’utilisation",
+      "rights": "Tous droits réservés.",
+      "label": "IconBridge Jobs"
     },
     "login": {
       "title": "Connexion à l’espace partenaire",
@@ -68,6 +80,14 @@
       "applications": "{count, plural, one {# candidature} other {# candidatures}}",
       "places": "Lieux"
     },
+    "workPermit": {
+      "NOT_STARTED": "Non commencé",
+      "SUBMITTED": "Déposé",
+      "APPROVED": "Accordé",
+      "REFUSED": "Refusé",
+      "all": "Tous",
+      "filter": "Filtrer par statut du permis de travail"
+    },
     "visa": {
       "NOT_STARTED": "Non commencé",
       "APPOINTMENT_BOOKED": "Rendez-vous pris",
@@ -101,7 +121,8 @@
       "noApplications": "Aucune candidature pour cette demande pour l’instant.",
       "back": "Toutes les demandes",
       "edit": "Modifier",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "noFilteredApplications": "Aucune candidature avec ce statut du permis de travail."
     },
     "table": {
       "name": "Nom",
@@ -110,7 +131,8 @@
       "appointment": "Rendez-vous",
       "decision": "Décision",
       "dhlSent": "Envoi DHL",
-      "documentsReceived": "Documents reçus"
+      "documentsReceived": "Documents reçus",
+      "workPermit": "Permis de travail"
     },
     "application": {
       "newTitle": "Nouvelle candidature",
@@ -138,7 +160,12 @@
       "back": "Retour à la demande",
       "noDate": "—",
       "updatedBy": "Dernière modification par {name} le {date}",
-      "clearDate": "Effacer"
+      "clearDate": "Effacer",
+      "workPermit": "Permis de travail",
+      "workPermitStatus": "Statut du permis de travail",
+      "workPermitSubmitted": "Date de dépôt (facultatif)",
+      "workPermitDecisionHint": "Seulement quand le permis de travail est accordé ou refusé.",
+      "workPermitFileHint": "Déposez le permis de travail lui-même dans le cadre Fichiers."
     },
     "files": {
       "title": "Fichiers",
@@ -251,6 +278,9 @@
         "jobId": "demande",
         "kind": "fichier",
         "originalName": "nom du fichier",
+        "workPermitStatus": "statut du permis de travail",
+        "workPermitSubmittedDate": "dépôt du permis de travail",
+        "workPermitDecisionDate": "décision du permis de travail",
         "other": "{name}"
       }
     },
@@ -269,7 +299,8 @@
       "tracking": "Lettres, chiffres, espaces et tirets seulement, de 4 à 40 caractères.",
       "decisionNeedsStatus": "Une date de décision demande le statut Accordé ou Refusé.",
       "trackingNeedsDate": "Un numéro de suivi demande la date d’envoi.",
-      "typeName": "Tapez le nom exactement comme indiqué."
+      "typeName": "Tapez le nom exactement comme indiqué.",
+      "permitDecisionNeedsStatus": "Une date de décision demande le statut du permis de travail Accordé ou Refusé."
     },
     "api": {
       "INVALID_CREDENTIALS": "L’adresse e-mail ou le mot de passe est incorrect.",

@@ -12,7 +12,19 @@
       "mySpaces": "My spaces",
       "jobs": "Job demands",
       "history": "History",
-      "logoAlt": "Logo of {name}"
+      "logoAlt": "Logo of {name}",
+      "area": "Partner space",
+      "siteLink": "IconBridge Jobs, the public site",
+      "menu": "Menu of the space"
+    },
+    "footer": {
+      "tagline": "Your bridge to a job in Malta, Poland or at sea.",
+      "site": "Public site",
+      "contact": "Contact",
+      "privacy": "Privacy policy",
+      "terms": "Terms of use",
+      "rights": "All rights reserved.",
+      "label": "IconBridge Jobs"
     },
     "login": {
       "title": "Sign in to the partner area",
@@ -68,6 +80,14 @@
       "applications": "{count, plural, one {# application} other {# applications}}",
       "places": "Places"
     },
+    "workPermit": {
+      "NOT_STARTED": "Not started",
+      "SUBMITTED": "Submitted",
+      "APPROVED": "Approved",
+      "REFUSED": "Refused",
+      "all": "All",
+      "filter": "Filter by work permit status"
+    },
     "visa": {
       "NOT_STARTED": "Not started",
       "APPOINTMENT_BOOKED": "Appointment booked",
@@ -101,7 +121,8 @@
       "noApplications": "No application for this job demand yet.",
       "back": "All job demands",
       "edit": "Edit",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "noFilteredApplications": "No application with this work permit status."
     },
     "table": {
       "name": "Name",
@@ -110,7 +131,8 @@
       "appointment": "Appointment",
       "decision": "Decision",
       "dhlSent": "DHL sent",
-      "documentsReceived": "Documents received"
+      "documentsReceived": "Documents received",
+      "workPermit": "Work permit"
     },
     "application": {
       "newTitle": "New application",
@@ -138,7 +160,12 @@
       "back": "Back to the job demand",
       "noDate": "—",
       "updatedBy": "Last change by {name} on {date}",
-      "clearDate": "Clear"
+      "clearDate": "Clear",
+      "workPermit": "Work permit",
+      "workPermitStatus": "Work permit status",
+      "workPermitSubmitted": "Submission date (optional)",
+      "workPermitDecisionHint": "Only when the work permit is approved or refused.",
+      "workPermitFileHint": "Upload the work permit itself in the Files box."
     },
     "files": {
       "title": "Files",
@@ -251,6 +278,9 @@
         "jobId": "job demand",
         "kind": "file",
         "originalName": "file name",
+        "workPermitStatus": "work permit status",
+        "workPermitSubmittedDate": "work permit submitted",
+        "workPermitDecisionDate": "work permit decision",
         "other": "{name}"
       }
     },
@@ -269,7 +299,8 @@
       "tracking": "Letters, digits, spaces and dashes only, 4 to 40 characters.",
       "decisionNeedsStatus": "A decision date needs the visa status Approved or Refused.",
       "trackingNeedsDate": "A tracking number needs the date it was sent.",
-      "typeName": "Type the name exactly as shown."
+      "typeName": "Type the name exactly as shown.",
+      "permitDecisionNeedsStatus": "A decision date needs the work permit status Approved or Refused."
     },
     "api": {
       "INVALID_CREDENTIALS": "The email address or the password is wrong.",

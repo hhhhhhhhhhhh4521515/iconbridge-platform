@@ -1,18 +1,22 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { Providers } from '@/components/layout/providers';
+import { PartnerFooter } from '@/components/partner/partner-chrome';
 import { isPartnerLang, partnerMessages, PARTNER_LANGS } from '@/lib/partner-locale';
+import { fontVariables } from '@/lib/fonts';
 import { SITE_URL } from '@/lib/seo';
 import '../../globals.css';
 
-const inter = Inter({ subsets: ['latin', 'latin-ext'], variable: '--font-inter', display: 'swap' });
-
-/** The two texts the server writes itself: the title and the notice without JavaScript. */
-const metaOf = (messages: Record<string, unknown>) =>
-  (messages as { partner: { meta: { title: string; noscript: string } } }).partner.meta;
+/** The texts the server writes itself: the title, the notice without JavaScript, the skip link. */
+const metaOf = (messages: Record<string, unknown>) => {
+  const typed = messages as {
+    partner: { meta: { title: string; noscript: string } };
+    common: { skipToContent: string };
+  };
+  return { ...typed.partner.meta, skip: typed.common.skipToContent };
+};
 
 export function generateStaticParams() {
   return PARTNER_LANGS.map((lang) => ({ lang }));
@@ -36,14 +40,16 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: `${meta.title} | IconBridge`, template: `%s | ${meta.title}` },
-    // Private: never indexed, never linked from the public site (ADR-027).
+    // Never indexed, the sign-in included (ADR-027, amendment 2): it has nothing to find,
+    // partners arrive from the site's header and footer, and the candidates' sign-in is
+    // treated the same way (robots.txt disallows /*/login; the proxy sends x-robots-tag).
     robots: { index: false, follow: false },
   };
 }
 
 /**
  * The partner area (ADR-027): a root layout of its own, in English, French or Polish,
- * outside the site's languages. Signed-in screens render in the browser, like the candidate
+ * outside the site's languages, with the site's fonts, colours, header and footer. Signed-in screens render in the browser, like the candidate
  * area and the back office; without JavaScript the page says so.
  */
 export default async function PartnerLayout({ children, params }: LayoutProps<'/partners/[lang]'>) {
@@ -58,17 +64,26 @@ export default async function PartnerLayout({ children, params }: LayoutProps<'/
     <html
       lang={lang}
       dir="ltr"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${fontVariables} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col bg-muted/40 text-foreground">
+      <body className="flex min-h-full flex-col bg-background text-foreground">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        >
+          {meta.skip}
+        </a>
         <noscript>
           <p className="m-4 rounded-lg border border-border bg-background p-4 text-sm">
             {meta.noscript}
           </p>
         </noscript>
         <NextIntlClientProvider locale={lang} messages={messages} timeZone="UTC">
-          <Providers nonce={nonce}>{children}</Providers>
+          <Providers nonce={nonce}>
+            {children}
+            <PartnerFooter />
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>

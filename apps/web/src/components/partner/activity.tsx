@@ -150,6 +150,7 @@ type EntityType = (typeof PARTNER_HISTORY_ENTITY_TYPES)[number];
 function useValueText(): (field: string | null, value: string | null) => string {
   const t = useTranslations('partner.history');
   const visa = useTranslations('partner.visa');
+  const permit = useTranslations('partner.workPermit');
   const { lang } = usePartner();
   return (fieldName, value) => {
     if (value === null || value === '') {
@@ -157,6 +158,9 @@ function useValueText(): (field: string | null, value: string | null) => string 
     }
     if (fieldName === 'visaStatus' && visa.has(value)) {
       return visa(value);
+    }
+    if (fieldName === 'workPermitStatus' && permit.has(value)) {
+      return permit(value);
     }
     if (/^\d{4}-\d{2}-\d{2}(T|$)/.test(value) && fieldName?.toLowerCase().includes('date')) {
       return formatDate(value.slice(0, 10), lang);

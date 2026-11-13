@@ -27,3 +27,14 @@ export async function partnerText(lang: PartnerLang, key: string): Promise<strin
   }
   return typeof node === 'string' ? node : key;
 }
+
+/** The partner area's language for a visitor of the site: Arabic has none, English stands in. */
+export const partnerLangForSite = (locale: string): PartnerLang =>
+  isPartnerLang(locale) ? locale : 'en';
+
+/** The site's language for a page of the partner area: Polish has none, English stands in. */
+export const siteLocaleForPartner = (lang: PartnerLang): 'en' | 'fr' =>
+  lang === 'fr' ? 'fr' : 'en';
+
+/** Set when the person picked a language themselves: the space's language then stops leading. */
+export const LANG_CHOSEN_COOKIE = 'partner_lang_chosen';
