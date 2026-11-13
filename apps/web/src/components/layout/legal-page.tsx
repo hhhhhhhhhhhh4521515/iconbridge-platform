@@ -2,7 +2,7 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 
 /** Date of the last change of each legal text; update it together with the messages. */
 const LAST_UPDATED = {
-  privacy: new Date('2026-11-07T00:00:00Z'),
+  privacy: new Date('2026-11-13T00:00:00Z'),
   terms: new Date('2026-10-11T00:00:00Z'),
 };
 

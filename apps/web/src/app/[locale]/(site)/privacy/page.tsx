@@ -8,6 +8,7 @@ const SECTIONS = [
   'what',
   'why',
   'share',
+  'partners',
   'transfers',
   'keep',
   'rights',

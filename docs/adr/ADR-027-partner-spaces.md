@@ -1,6 +1,6 @@
 # ADR-027: Partner spaces
 
-Date: 2026-11-11. Status: **accepted** (owner's answers of 11 November 2026, section 10). Delivered in six pull requests (section 9).
+Date: 2026-11-11. Status: **accepted** (owner's answers of 11 November 2026, section 10). Delivered in six pull requests (section 9), the last on 13 November 2026.
 
 ## Context
 
@@ -312,6 +312,10 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
   - "Open the space" is a plain link to `/partners/{defaultLocale}/spaces/{id}`, shown only to a member, since the partner area lives outside the site's languages (PR 5).
   - A `PARTNER` login that opens `/admin` gets the "not for this account" screen, like a candidate.
   - The browser tests remove spaces named `E2E …` at the end of a run.
+
+- **PR 6** (docs):
+  - SPEC section 7.6, ARCHITECTURE (the partner area and its back-office screens), and the runbook "Open a partner space";
+  - the privacy policy in EN, FR and AR gains the section "People put forward to our partner companies": what is recorded, why, who sees it, where it is stored, kept until the application or the space is deleted, and erasure on request. Dated 13 November 2026, deployed with or before the partner area.
 
 ## Consequences
 
