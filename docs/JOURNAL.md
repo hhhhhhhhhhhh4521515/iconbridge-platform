@@ -1838,3 +1838,13 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm lint`, `typecheck`, `test`, `test:e2e`, `test:browser` and `build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/103>
+
+## 2026-11-13 - Partner browser tests wait for hydration
+
+**What**: `partner-area.spec.ts` fills the partner sign-in and forgot-password forms through `fillAndSend`. It fills again until the button is enabled, then sends.
+
+**Why**: on `main` after #103, WebKit typed into a page opened directly before React hydrated it. Hydration emptied the fields, so the button stayed disabled. The run repeated it in the older partner tests under load. The app itself is unchanged: the button is enabled only when React holds the values.
+
+**Checks**: the spec repeated 3 times in WebKit, in its container (9 passed), and twice in Chromium and Firefox (12 passed).
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/104>
