@@ -185,12 +185,15 @@ A private workspace per partner company ([ADR-027](adr/ADR-027-partner-spaces.md
   - disables, enables or deletes a space;
   - sees settings and counts only, and the content only after adding themselves as a member.
 - **Members** (the partner logins and the staff added), all with the same rights:
-  - job demands: role, positions, places, optional salary and description; close and reopen;
+  - job demands: role, positions, places, optional salary (amount, currency and period, plus free details) and description; close and reopen;
+  - a dashboard: the partner's logo, name and flag, counts of open demands, candidates, work permits and visas approved, and the job demands as cards with positions filled (visas approved);
+  - per job demand, filters by work permit and visa status and a search by name; per application, a progress stepper, a calendar for dates and a thread of comments;
   - applications: names, nationality, optional phone and email, work permit status and dates (above the visa), visa status and dates, DHL dates and tracking number;
   - per job demand, a work permit badge per application and the counts per status, which filter the table;
   - the passport, CV and work permit, with preview and download;
   - append-only comments;
   - a history of every change, file opened and comment.
+- **Deleting a job demand** without applications: a super admin who is a member, after typing its role. Its comments go; one history line with the role remains.
 - **Deleting an application** (for example after an erasure request): a super admin who is a member, after typing the person's name. Its files, comments and history go; one line without personal data remains.
 - **Partner logins:**
   - sign in on their own page with Turnstile, and choose their own password at the first sign-in;

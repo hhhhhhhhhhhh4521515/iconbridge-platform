@@ -360,6 +360,27 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
   - indexing would only point bots at a sign-in form;
   - the candidates' sign-in is treated the same way (`robots.txt` disallows `/*/login`).
 
+### 3. The partner area as a dashboard (13 November 2026, production feedback)
+
+- **Why:** partners found the area plain and hard to scan. It now has the layout of a dashboard, in the site's colours, font and dark mode.
+- **Salary:** `partner_jobs` gains `salary_amount` (integer > 0), `salary_currency` (`EUR`, `PLN`, `USD`, `GBP`, `CHF`, `CZK`) and `salary_period` (`HOUR`, `MONTH`, `YEAR`). They are all set or all null, which `partner_jobs_salary_complete_check` enforces. The API checks the same rule on the merged state first (`partnerJobIssues`). Cards show "4,500 PLN / month". The free text `salary` stays as "salary details" (for example "gross, plus accommodation"). The migration is additive, and existing demands keep their text without an amount.
+- **Positions filled:** the applications whose visa is approved, shown as "1 / 5 filled" with a bar. This needs no new data.
+- **Deleting a job demand:** `DELETE /partner-spaces/:spaceId/jobs/:jobId` with `confirmName` (the role). The rules:
+  - only a super admin who is a member; other members get 404, like for applications;
+  - only without applications (409 `JOB_HAS_APPLICATIONS`). The job row is locked first (`FOR UPDATE`), so an application being added at that moment is waited for and counted;
+  - its comments go;
+  - the history keeps one `JOB_DELETED` entry with the role, which is not personal data. The audit entry holds the count of comments.
+- **Screens:**
+  - **Home:** a band with the partner's logo (or initials), name and flag, and four counts (open demands, candidates, work permits approved, visas approved). The job demands are cards with place, salary, positions filled, chips per stage, an Open/Closed badge and the last update. An empty space shows one sentence and "Create the first job demand".
+  - **Job demand:** labelled facts. The applications are a table from tablet width and cards on phones, with initials and badges. Grey means not started, blue under way, green approved or received, red refused. Filters by work permit and by visa, plus a search by name (`q`, already in the API).
+  - **Application:** a stepper (work permit, visa appointment, visa decision, DHL sent, documents received; green when done, with its date). The form sections are cards with icons, and dates come from a calendar.
+    - The calendar is in the page's language, works with the keyboard and has month and year lists. It replaces the three lists, and still avoids `<input type="date">`.
+    - A fixed save bar appears once something changed, with Discard.
+    - The Files card shows type icons, size, uploader and date, and takes a dropped file.
+    - Comments read as a thread with initials; the history is a vertical timeline.
+- **Screenshots:** `docs/screenshots/partner-area/` (English, desktop and phone), made by `e2e/partner-screenshots.spec.ts` with `PARTNER_SCREENSHOTS=<folder>` and invented data.
+- **Unchanged:** every rule, route guard and the IDOR suite. The only new route is the deletion, listed in `PARTNER_ROUTES` of `security.e2e-spec.ts`. The checks: axe on every screen, in dark mode and at 375 px, with no horizontal scroll.
+
 ## Consequences
 
 - One more role, and the screens of the partner area to keep translated in three languages, Polish among them.
