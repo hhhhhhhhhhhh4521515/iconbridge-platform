@@ -1788,3 +1788,27 @@ The measured volume after the deployment is added to the pull request.
 **Checks**: the journey 3 times in parallel in Chromium and Firefox (12 passed), twice in WebKit in its container (4 passed); `partner-accessibility.spec.ts` in Chromium and Firefox.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/101>
+
+## 2026-11-13 - Final security audit, production smoke test of the partner area
+
+**What**:
+
+- `docs/AUDIT-2026-11.md`:
+  - the final audit of 13 November (version e4f641c), covering the public site, candidate area, back office, partner spaces, API, Azure and CI/CD against the OWASP Top 10;
+  - new findings M11 (alerts on failed job runs, fixed), L13 (500 at start-up, fixed), L14 (credential exceptions, fixed), L15 (low advisory, open) and L16 (CORS header, accepted).
+- `production.prod.ts` also checks the partner area, creating nothing:
+  - the sign-in without a session;
+  - `noindex` and the CSP;
+  - nothing for a candidate;
+  - Turnstile before the password.
+- `deploy.yml` no longer deploys when only tests changed (`apps/web/e2e`, `apps/api/test`, specs). CICD.md updated.
+
+**Why**: task 3 and task 4 of the owner's list of 12 November.
+
+**Checks**:
+
+- `pnpm audit --prod` (1 low), `trivy fs` (no HIGH or CRITICAL), `gitleaks git` (no leak).
+- Azure and GitHub settings read with `show` and `list`.
+- The production smoke test passed on e4f641c with the test account only. Nothing named `E2E` is left.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/102>
