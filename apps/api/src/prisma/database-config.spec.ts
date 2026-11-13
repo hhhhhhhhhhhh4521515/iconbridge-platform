@@ -6,7 +6,10 @@ const URL_ENTRA =
 describe('poolConfig', () => {
   it('keeps DATABASE_URL as it is with a password', () => {
     const url = 'postgresql://iconbridge:secret@localhost:5432/iconbridge?schema=public';
-    expect(poolConfig(url, 'password')).toEqual({ connectionString: url });
+    expect(poolConfig(url, 'password')).toEqual({
+      connectionString: url,
+      idleTimeoutMillis: 300_000,
+    });
   });
 
   it('signs in with a token of the managed identity, asked for each new connection (audit H1)', async () => {
@@ -23,6 +26,7 @@ describe('poolConfig', () => {
       user: 'id-iconbridge-prod',
       database: 'iconbridge',
       ssl: true,
+      idleTimeoutMillis: 300_000,
     });
     expect(config).not.toHaveProperty('connectionString');
     const password = config.password as () => Promise<string>;
