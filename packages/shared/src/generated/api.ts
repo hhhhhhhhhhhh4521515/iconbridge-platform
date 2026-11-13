@@ -1780,7 +1780,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Job demands of the space, open first, with counts per visa status */
+        /** Job demands of the space, open first, with counts per work permit and visa status */
         get: operations["PartnerAreaController_listJobs"];
         put?: never;
         /** Create a job demand */
@@ -1868,7 +1868,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Applications of the space; filter by job demand, visa status or name */
+        /** Applications of the space; filter by job demand, work permit, visa status or name */
         get: operations["PartnerAreaController_listApplications"];
         put?: never;
         /**
@@ -1901,8 +1901,8 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Edit an application, including the visa and DHL follow-up
-         * @description A decision date needs the visa status Approved or Refused; a DHL tracking number needs the date it was sent. The rules are checked on the application as it will be after the change.
+         * Edit an application, including the work permit, visa and DHL follow-up
+         * @description A decision date needs the work permit or visa status Approved or Refused; a DHL tracking number needs the date it was sent. The rules are checked on the application as it will be after the change.
          */
         patch: operations["PartnerAreaController_updateApplication"];
         trace?: never;
@@ -13421,6 +13421,12 @@ export interface operations {
                             APPROVED: number;
                             REFUSED: number;
                         };
+                        workPermits: {
+                            NOT_STARTED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
                         createdBy: string | null;
                         /** Format: date-time */
                         createdAt: string;
@@ -13538,6 +13544,12 @@ export interface operations {
                             APPROVED: number;
                             REFUSED: number;
                         };
+                        workPermits: {
+                            NOT_STARTED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
                         createdBy: string | null;
                         /** Format: date-time */
                         createdAt: string;
@@ -13644,6 +13656,12 @@ export interface operations {
                             APPROVED: number;
                             REFUSED: number;
                         };
+                        workPermits: {
+                            NOT_STARTED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
                         createdBy: string | null;
                         /** Format: date-time */
                         createdAt: string;
@@ -13741,6 +13759,12 @@ export interface operations {
                         applications: {
                             NOT_STARTED: number;
                             APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        workPermits: {
+                            NOT_STARTED: number;
                             SUBMITTED: number;
                             APPROVED: number;
                             REFUSED: number;
@@ -13851,6 +13875,12 @@ export interface operations {
                             APPROVED: number;
                             REFUSED: number;
                         };
+                        workPermits: {
+                            NOT_STARTED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
                         createdBy: string | null;
                         /** Format: date-time */
                         createdAt: string;
@@ -13938,6 +13968,12 @@ export interface operations {
                         applications: {
                             NOT_STARTED: number;
                             APPOINTMENT_BOOKED: number;
+                            SUBMITTED: number;
+                            APPROVED: number;
+                            REFUSED: number;
+                        };
+                        workPermits: {
+                            NOT_STARTED: number;
                             SUBMITTED: number;
                             APPROVED: number;
                             REFUSED: number;
@@ -14169,6 +14205,10 @@ export interface operations {
     PartnerAreaController_listApplications: {
         parameters: {
             query?: {
+                /** @description Part of a first or last name */
+                q?: unknown;
+                workPermitStatus?: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                visaStatus?: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                 jobId?: string;
             };
             header?: never;
@@ -14191,6 +14231,12 @@ export interface operations {
                         phone: string | null;
                         /** Format: email */
                         email: string | null;
+                        /** @enum {string} */
+                        workPermitStatus: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        workPermitSubmittedDate: string | null;
+                        /** Format: date */
+                        workPermitDecisionDate: string | null;
                         /** @enum {string} */
                         visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                         /** Format: date */
@@ -14337,6 +14383,15 @@ export interface operations {
                      * @default NOT_STARTED
                      * @enum {string}
                      */
+                    workPermitStatus?: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                    /** Format: date */
+                    workPermitSubmittedDate?: string | null;
+                    /** Format: date */
+                    workPermitDecisionDate?: string | null;
+                    /**
+                     * @default NOT_STARTED
+                     * @enum {string}
+                     */
                     visaStatus?: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                     /** Format: date */
                     visaAppointmentDate?: string | null;
@@ -14365,6 +14420,12 @@ export interface operations {
                         phone: string | null;
                         /** Format: email */
                         email: string | null;
+                        /** @enum {string} */
+                        workPermitStatus: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        workPermitSubmittedDate: string | null;
+                        /** Format: date */
+                        workPermitDecisionDate: string | null;
                         /** @enum {string} */
                         visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                         /** Format: date */
@@ -14514,6 +14575,12 @@ export interface operations {
                         phone: string | null;
                         /** Format: email */
                         email: string | null;
+                        /** @enum {string} */
+                        workPermitStatus: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        workPermitSubmittedDate: string | null;
+                        /** Format: date */
+                        workPermitDecisionDate: string | null;
                         /** @enum {string} */
                         visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                         /** Format: date */
@@ -14744,6 +14811,12 @@ export interface operations {
                     phone?: string | null;
                     email?: string | null;
                     /** @enum {string} */
+                    workPermitStatus?: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                    /** Format: date */
+                    workPermitSubmittedDate?: string | null;
+                    /** Format: date */
+                    workPermitDecisionDate?: string | null;
+                    /** @enum {string} */
                     visaStatus?: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                     /** Format: date */
                     visaAppointmentDate?: string | null;
@@ -14770,6 +14843,12 @@ export interface operations {
                         phone: string | null;
                         /** Format: email */
                         email: string | null;
+                        /** @enum {string} */
+                        workPermitStatus: "NOT_STARTED" | "SUBMITTED" | "APPROVED" | "REFUSED";
+                        /** Format: date */
+                        workPermitSubmittedDate: string | null;
+                        /** Format: date */
+                        workPermitDecisionDate: string | null;
                         /** @enum {string} */
                         visaStatus: "NOT_STARTED" | "APPOINTMENT_BOOKED" | "SUBMITTED" | "APPROVED" | "REFUSED";
                         /** Format: date */

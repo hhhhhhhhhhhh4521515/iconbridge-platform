@@ -185,6 +185,16 @@ export const PARTNER_VISA_STATUSES = [
 export const partnerVisaStatusSchema = z.enum(PARTNER_VISA_STATUSES);
 export type PartnerVisaStatus = z.infer<typeof partnerVisaStatusSchema>;
 
+/** Work permit of a partner application, followed before the visa (ADR-027, amendment 1). */
+export const PARTNER_WORK_PERMIT_STATUSES = [
+  'NOT_STARTED',
+  'SUBMITTED',
+  'APPROVED',
+  'REFUSED',
+] as const;
+export const partnerWorkPermitStatusSchema = z.enum(PARTNER_WORK_PERMIT_STATUSES);
+export type PartnerWorkPermitStatus = z.infer<typeof partnerWorkPermitStatusSchema>;
+
 /** The three files of an application in a partner space, one current file each. */
 export const PARTNER_FILE_KINDS = ['PASSPORT', 'CV', 'WORK_PERMIT'] as const;
 export const partnerFileKindSchema = z.enum(PARTNER_FILE_KINDS);

@@ -13,6 +13,7 @@ import {
   PARTNER_JOB_STATUSES,
   PARTNER_MEMBER_KINDS,
   PARTNER_VISA_STATUSES,
+  PARTNER_WORK_PERMIT_STATUSES,
   SALARY_PERIODS,
   USER_ROLES,
 } from '@iconbridge/shared';
@@ -37,12 +38,13 @@ describe('Prisma enums match packages/shared', () => {
     ['PartnerMemberKind', prismaEnums.PartnerMemberKind, PARTNER_MEMBER_KINDS],
     ['PartnerJobStatus', prismaEnums.PartnerJobStatus, PARTNER_JOB_STATUSES],
     ['PartnerVisaStatus', prismaEnums.PartnerVisaStatus, PARTNER_VISA_STATUSES],
+    ['PartnerWorkPermitStatus', prismaEnums.PartnerWorkPermitStatus, PARTNER_WORK_PERMIT_STATUSES],
     ['PartnerFileKind', prismaEnums.PartnerFileKind, PARTNER_FILE_KINDS],
   ] as const)('%s', (_name, prismaEnum, shared) => {
     expect(Object.values(prismaEnum)).toEqual([...shared]);
   });
 
   it('covers every enum of the schema', () => {
-    expect(Object.keys(prismaEnums)).toHaveLength(16);
+    expect(Object.keys(prismaEnums)).toHaveLength(17);
   });
 });

@@ -8,6 +8,7 @@ import {
   partnerJobStatusSchema,
   partnerMemberKindSchema,
   partnerVisaStatusSchema,
+  partnerWorkPermitStatusSchema,
 } from './enums.js';
 import { partnerLocaleSchema } from './i18n.js';
 
@@ -190,6 +191,13 @@ const visaCounts = z.object({
   REFUSED: z.number().int(),
 });
 
+const workPermitCounts = z.object({
+  NOT_STARTED: z.number().int(),
+  SUBMITTED: z.number().int(),
+  APPROVED: z.number().int(),
+  REFUSED: z.number().int(),
+});
+
 export const partnerJobSchema = z.object({
   id: z.uuid(),
   role: z.string(),
@@ -201,6 +209,8 @@ export const partnerJobSchema = z.object({
   closedAt: z.iso.datetime().nullable(),
   /** Applications of this job demand per visa status. */
   applications: visaCounts,
+  /** Applications of this job demand per work permit status. */
+  workPermits: workPermitCounts,
   createdBy: z.string().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -210,6 +220,8 @@ export type PartnerJob = z.infer<typeof partnerJobSchema>;
 const calendarDate = z.iso.date();
 /** Decision dates only for a decided visa. */
 export const DECIDED_VISA_STATUSES = ['APPROVED', 'REFUSED'] as const;
+/** Decision dates only for a decided work permit. */
+export const DECIDED_WORK_PERMIT_STATUSES = ['APPROVED', 'REFUSED'] as const;
 
 const partnerApplicationFields = z.object({
   firstName: z.string().trim().min(1).max(100),
@@ -217,6 +229,9 @@ const partnerApplicationFields = z.object({
   nationality: countryCodeSchema,
   phone: phoneSchema.nullable(),
   email: emailSchema.nullable(),
+  workPermitStatus: partnerWorkPermitStatusSchema,
+  workPermitSubmittedDate: calendarDate.nullable(),
+  workPermitDecisionDate: calendarDate.nullable(),
   visaStatus: partnerVisaStatusSchema,
   visaAppointmentDate: calendarDate.nullable(),
   visaDecisionDate: calendarDate.nullable(),
@@ -233,6 +248,8 @@ const partnerApplicationFields = z.object({
 
 /** The fields the rules between fields read; loose, so a stored row can be checked too. */
 interface ApplicationState {
+  workPermitStatus?: string | undefined;
+  workPermitDecisionDate?: string | null | undefined;
   visaStatus?: string | undefined;
   visaDecisionDate?: string | null | undefined;
   dhlSentDate?: string | null | undefined;
@@ -247,6 +264,17 @@ export function partnerApplicationIssues(
   state: ApplicationState,
 ): { path: string; message: string }[] {
   const issues: { path: string; message: string }[] = [];
+  if (
+    state.workPermitDecisionDate &&
+    !(DECIDED_WORK_PERMIT_STATUSES as readonly string[]).includes(
+      state.workPermitStatus ?? 'NOT_STARTED',
+    )
+  ) {
+    issues.push({
+      path: 'workPermitDecisionDate',
+      message: 'A decision date needs the work permit status Approved or Refused',
+    });
+  }
   if (
     state.visaDecisionDate &&
     !(DECIDED_VISA_STATUSES as readonly string[]).includes(state.visaStatus ?? 'NOT_STARTED')
@@ -277,9 +305,12 @@ export const createPartnerApplicationSchema = withApplicationRules(
     .extend({
       /** The job demand, in the same space. */
       jobId: z.uuid(),
+      workPermitStatus: partnerWorkPermitStatusSchema.default('NOT_STARTED'),
       visaStatus: partnerVisaStatusSchema.default('NOT_STARTED'),
     })
     .partial({
+      workPermitSubmittedDate: true,
+      workPermitDecisionDate: true,
       phone: true,
       email: true,
       visaAppointmentDate: true,
@@ -299,6 +330,7 @@ export type UpdatePartnerApplicationInput = z.infer<typeof updatePartnerApplicat
 export const listPartnerApplicationsQuerySchema = z.object({
   jobId: z.uuid().optional(),
   visaStatus: partnerVisaStatusSchema.optional(),
+  workPermitStatus: partnerWorkPermitStatusSchema.optional(),
   /** Part of a first or last name. */
   q: z.string().trim().min(1).max(100).optional(),
 });

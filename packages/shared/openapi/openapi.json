@@ -44268,6 +44268,38 @@
                         ],
                         "additionalProperties": false
                       },
+                      "workPermits": {
+                        "type": "object",
+                        "properties": {
+                          "NOT_STARTED": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "SUBMITTED": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "APPROVED": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "REFUSED": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "NOT_STARTED",
+                          "SUBMITTED",
+                          "APPROVED",
+                          "REFUSED"
+                        ],
+                        "additionalProperties": false
+                      },
                       "createdBy": {
                         "nullable": true,
                         "type": "string"
@@ -44293,6 +44325,7 @@
                       "status",
                       "closedAt",
                       "applications",
+                      "workPermits",
                       "createdBy",
                       "createdAt",
                       "updatedAt"
@@ -44585,7 +44618,7 @@
             "cookie": []
           }
         ],
-        "summary": "Job demands of the space, open first, with counts per visa status",
+        "summary": "Job demands of the space, open first, with counts per work permit and visa status",
         "tags": [
           "partner spaces"
         ],
@@ -44738,6 +44771,38 @@
                       ],
                       "additionalProperties": false
                     },
+                    "workPermits": {
+                      "type": "object",
+                      "properties": {
+                        "NOT_STARTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "SUBMITTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "APPROVED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "REFUSED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ],
+                      "additionalProperties": false
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string"
@@ -44763,6 +44828,7 @@
                     "status",
                     "closedAt",
                     "applications",
+                    "workPermits",
                     "createdBy",
                     "createdAt",
                     "updatedAt"
@@ -45169,6 +45235,38 @@
                       ],
                       "additionalProperties": false
                     },
+                    "workPermits": {
+                      "type": "object",
+                      "properties": {
+                        "NOT_STARTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "SUBMITTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "APPROVED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "REFUSED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ],
+                      "additionalProperties": false
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string"
@@ -45194,6 +45292,7 @@
                     "status",
                     "closedAt",
                     "applications",
+                    "workPermits",
                     "createdBy",
                     "createdAt",
                     "updatedAt"
@@ -45570,6 +45669,38 @@
                       ],
                       "additionalProperties": false
                     },
+                    "workPermits": {
+                      "type": "object",
+                      "properties": {
+                        "NOT_STARTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "SUBMITTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "APPROVED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "REFUSED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ],
+                      "additionalProperties": false
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string"
@@ -45595,6 +45726,7 @@
                     "status",
                     "closedAt",
                     "applications",
+                    "workPermits",
                     "createdBy",
                     "createdAt",
                     "updatedAt"
@@ -46001,6 +46133,38 @@
                       ],
                       "additionalProperties": false
                     },
+                    "workPermits": {
+                      "type": "object",
+                      "properties": {
+                        "NOT_STARTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "SUBMITTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "APPROVED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "REFUSED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ],
+                      "additionalProperties": false
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string"
@@ -46026,6 +46190,7 @@
                     "status",
                     "closedAt",
                     "applications",
+                    "workPermits",
                     "createdBy",
                     "createdAt",
                     "updatedAt"
@@ -46363,6 +46528,38 @@
                       ],
                       "additionalProperties": false
                     },
+                    "workPermits": {
+                      "type": "object",
+                      "properties": {
+                        "NOT_STARTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "SUBMITTED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "APPROVED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "REFUSED": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ],
+                      "additionalProperties": false
+                    },
                     "createdBy": {
                       "nullable": true,
                       "type": "string"
@@ -46388,6 +46585,7 @@
                     "status",
                     "closedAt",
                     "applications",
+                    "workPermits",
                     "createdBy",
                     "createdAt",
                     "updatedAt"
@@ -47272,6 +47470,42 @@
         "operationId": "PartnerAreaController_listApplications",
         "parameters": [
           {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Part of a first or last name",
+            "schema": {}
+          },
+          {
+            "name": "workPermitStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "NOT_STARTED",
+                "SUBMITTED",
+                "APPROVED",
+                "REFUSED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "visaStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "NOT_STARTED",
+                "APPOINTMENT_BOOKED",
+                "SUBMITTED",
+                "APPROVED",
+                "REFUSED"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "name": "jobId",
             "required": false,
             "in": "query",
@@ -47323,6 +47557,27 @@
                         "maxLength": 254,
                         "format": "email",
                         "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      },
+                      "workPermitStatus": {
+                        "type": "string",
+                        "enum": [
+                          "NOT_STARTED",
+                          "SUBMITTED",
+                          "APPROVED",
+                          "REFUSED"
+                        ]
+                      },
+                      "workPermitSubmittedDate": {
+                        "nullable": true,
+                        "type": "string",
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                      },
+                      "workPermitDecisionDate": {
+                        "nullable": true,
+                        "type": "string",
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                       },
                       "visaStatus": {
                         "type": "string",
@@ -47561,6 +47816,9 @@
                       "nationality",
                       "phone",
                       "email",
+                      "workPermitStatus",
+                      "workPermitSubmittedDate",
+                      "workPermitDecisionDate",
                       "visaStatus",
                       "visaAppointmentDate",
                       "visaDecisionDate",
@@ -47864,7 +48122,7 @@
             "cookie": []
           }
         ],
-        "summary": "Applications of the space; filter by job demand, visa status or name",
+        "summary": "Applications of the space; filter by job demand, work permit, visa status or name",
         "tags": [
           "partner spaces"
         ],
@@ -47913,6 +48171,28 @@
                   "email": {
                     "nullable": true,
                     "type": "string"
+                  },
+                  "workPermitStatus": {
+                    "default": "NOT_STARTED",
+                    "type": "string",
+                    "enum": [
+                      "NOT_STARTED",
+                      "SUBMITTED",
+                      "APPROVED",
+                      "REFUSED"
+                    ]
+                  },
+                  "workPermitSubmittedDate": {
+                    "nullable": true,
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "workPermitDecisionDate": {
+                    "nullable": true,
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   },
                   "visaStatus": {
                     "default": "NOT_STARTED",
@@ -48004,6 +48284,27 @@
                       "maxLength": 254,
                       "format": "email",
                       "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                    },
+                    "workPermitStatus": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ]
+                    },
+                    "workPermitSubmittedDate": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "workPermitDecisionDate": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                     },
                     "visaStatus": {
                       "type": "string",
@@ -48242,6 +48543,9 @@
                     "nationality",
                     "phone",
                     "email",
+                    "workPermitStatus",
+                    "workPermitSubmittedDate",
+                    "workPermitDecisionDate",
                     "visaStatus",
                     "visaAppointmentDate",
                     "visaDecisionDate",
@@ -48607,6 +48911,27 @@
                       "format": "email",
                       "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
                     },
+                    "workPermitStatus": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ]
+                    },
+                    "workPermitSubmittedDate": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "workPermitDecisionDate": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
                     "visaStatus": {
                       "type": "string",
                       "enum": [
@@ -48844,6 +49169,9 @@
                     "nationality",
                     "phone",
                     "email",
+                    "workPermitStatus",
+                    "workPermitSubmittedDate",
+                    "workPermitDecisionDate",
                     "visaStatus",
                     "visaAppointmentDate",
                     "visaDecisionDate",
@@ -49086,7 +49414,7 @@
         "x-verified-email": false
       },
       "patch": {
-        "description": "A decision date needs the visa status Approved or Refused; a DHL tracking number needs the date it was sent. The rules are checked on the application as it will be after the change.",
+        "description": "A decision date needs the work permit or visa status Approved or Refused; a DHL tracking number needs the date it was sent. The rules are checked on the application as it will be after the change.",
         "operationId": "PartnerAreaController_updateApplication",
         "parameters": [
           {
@@ -49134,6 +49462,27 @@
                   "email": {
                     "nullable": true,
                     "type": "string"
+                  },
+                  "workPermitStatus": {
+                    "type": "string",
+                    "enum": [
+                      "NOT_STARTED",
+                      "SUBMITTED",
+                      "APPROVED",
+                      "REFUSED"
+                    ]
+                  },
+                  "workPermitSubmittedDate": {
+                    "nullable": true,
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "workPermitDecisionDate": {
+                    "nullable": true,
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   },
                   "visaStatus": {
                     "type": "string",
@@ -49213,6 +49562,27 @@
                       "maxLength": 254,
                       "format": "email",
                       "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                    },
+                    "workPermitStatus": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "SUBMITTED",
+                        "APPROVED",
+                        "REFUSED"
+                      ]
+                    },
+                    "workPermitSubmittedDate": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "workPermitDecisionDate": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                     },
                     "visaStatus": {
                       "type": "string",
@@ -49451,6 +49821,9 @@
                     "nationality",
                     "phone",
                     "email",
+                    "workPermitStatus",
+                    "workPermitSubmittedDate",
+                    "workPermitDecisionDate",
                     "visaStatus",
                     "visaAppointmentDate",
                     "visaDecisionDate",
@@ -49753,7 +50126,7 @@
             "cookie": []
           }
         ],
-        "summary": "Edit an application, including the visa and DHL follow-up",
+        "summary": "Edit an application, including the work permit, visa and DHL follow-up",
         "tags": [
           "partner spaces"
         ],
