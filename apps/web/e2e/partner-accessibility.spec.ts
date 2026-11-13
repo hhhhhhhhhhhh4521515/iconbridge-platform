@@ -33,7 +33,14 @@ test.describe('accessibility of the partner area', () => {
       });
       const job = (await (
         await admin.request.post(`/api/v1/partner-spaces/${spaceId}/jobs`, {
-          data: { role: 'E2E Axe Cook', positions: 2, locations: ['Lyon'] },
+          data: {
+            role: 'E2E Axe Cook',
+            positions: 2,
+            locations: ['Lyon'],
+            salaryAmount: 2400,
+            salaryCurrency: 'EUR',
+            salaryPeriod: 'MONTH',
+          },
         })
       ).json()) as { id: string };
       const application = (await (
@@ -46,6 +53,26 @@ test.describe('accessibility of the partner area', () => {
         { multipart: { file: { name: 'cv.pdf', mimeType: 'application/pdf', buffer: PDF } } },
       );
       expect(upload.status()).toBe(200);
+      // Every tone of badge and step: grey, blue, green and red.
+      const decided = await admin.request.post(`/api/v1/partner-spaces/${spaceId}/applications`, {
+        data: {
+          jobId: job.id,
+          firstName: 'Tone',
+          lastName: 'E2E',
+          nationality: 'TN',
+          workPermitStatus: 'APPROVED',
+          workPermitDecisionDate: '2026-10-01',
+          visaStatus: 'REFUSED',
+          visaAppointmentDate: '2026-10-10',
+          visaDecisionDate: '2026-10-20',
+        },
+      });
+      expect(decided.status()).toBe(201);
+      const comment = await admin.request.post(
+        `/api/v1/partner-spaces/${spaceId}/applications/${application.id}/comments`,
+        { data: { body: 'E2E axe comment' } },
+      );
+      expect(comment.status()).toBe(201);
 
       const signed = await admin.newPage();
       for (const lang of ['en', 'pl']) {
@@ -58,6 +85,28 @@ test.describe('accessibility of the partner area', () => {
         await check(signed, `${base}/applications/${application.id}`);
         await check(signed, `${base}/history`);
         await check(signed, `/partners/${lang}/password`);
+      }
+
+      // Dark mode and a phone, in English: axe again, and nothing wider than the screen.
+      const screens = [
+        `/partners/en/spaces/${spaceId}`,
+        `/partners/en/spaces/${spaceId}/jobs/${job.id}`,
+        `/partners/en/spaces/${spaceId}/applications/${application.id}`,
+        `/partners/en/spaces/${spaceId}/history`,
+      ];
+      await signed.emulateMedia({ colorScheme: 'dark' });
+      for (const path of screens) {
+        await check(signed, path);
+        await expect(signed.locator('html')).toHaveClass(/dark/);
+      }
+      await signed.emulateMedia({ colorScheme: 'light' });
+      await signed.setViewportSize({ width: 375, height: 812 });
+      for (const path of screens) {
+        await check(signed, path);
+        const overflow = await signed.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        );
+        expect.soft(overflow, `horizontal scroll on ${path} at 375 px`).toBeLessThanOrEqual(0);
       }
     } finally {
       await admin.request.delete(`/api/v1/admin/partner-spaces/${spaceId}`, {
