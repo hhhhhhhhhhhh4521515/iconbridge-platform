@@ -14,7 +14,8 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * Whatever the tests create is removed at the end of the run (`e2e/cleanup.ts`).
  */
-const ADMIN = /admin.*\.spec\.ts$/;
+/** The back office and the partner area: they sign several people in and create shared data. */
+const ADMIN = /(admin|partner).*\.spec\.ts$/;
 const DESK = { width: 1440, height: 900 };
 /**
  * WebKit runs through `pnpm test:browser:webkit` only (it sets E2E_WEBKIT): it needs

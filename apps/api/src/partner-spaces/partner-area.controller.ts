@@ -30,6 +30,7 @@ import {
   deletePartnerApplicationSchema,
   downloadQuerySchema,
   PARTNER_FILE_KINDS,
+  PARTNER_HISTORY_ENTITY_TYPES,
   partnerFileLinkSchema,
   partnerFileParamsSchema,
   partnerFileSchema,
@@ -155,6 +156,7 @@ export class PartnerAreaController {
   @PartnerSpaceRoute()
   @ApiOperation({ summary: 'Job demands of the space, open first, with counts per visa status' })
   @ApiParam(SPACE_PARAM)
+  @ApiQuery({ name: 'status', required: false, enum: ['OPEN', 'CLOSED'] })
   @ApiZodResponse(200, z.array(partnerJobSchema))
   @ApiErrors(400, 401, 403, 404)
   listJobs(
@@ -283,6 +285,13 @@ export class PartnerAreaController {
   @PartnerSpaceRoute()
   @ApiOperation({ summary: 'Applications of the space; filter by job demand, visa status or name' })
   @ApiParam(SPACE_PARAM)
+  @ApiQuery({ name: 'jobId', required: false, type: String, format: 'uuid' })
+  @ApiQuery({
+    name: 'visaStatus',
+    required: false,
+    enum: ['NOT_STARTED', 'APPOINTMENT_BOOKED', 'SUBMITTED', 'APPROVED', 'REFUSED'],
+  })
+  @ApiQuery({ name: 'q', required: false, description: 'Part of a first or last name' })
   @ApiZodResponse(200, z.array(partnerApplicationSchema))
   @ApiErrors(400, 401, 403, 404)
   listApplications(
@@ -418,6 +427,11 @@ export class PartnerAreaController {
       'Who changed what and when, with the old and the new value. Filter by entity or application.',
   })
   @ApiParam(SPACE_PARAM)
+  @ApiQuery({ name: 'entityType', required: false, enum: [...PARTNER_HISTORY_ENTITY_TYPES] })
+  @ApiQuery({ name: 'entityId', required: false, type: String, format: 'uuid' })
+  @ApiQuery({ name: 'applicationId', required: false, type: String, format: 'uuid' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
   @ApiZodResponse(200, partnerHistoryPageSchema)
   @ApiErrors(400, 401, 403, 404)
   history(

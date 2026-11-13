@@ -44,7 +44,15 @@ A `COUNTRY_AGENT` reaches only the candidates whose nationality is one of his co
 
 ### Partner logins and partner spaces
 
-A `PARTNER` login (a partner company's account, [ADR-027](adr/ADR-027-partner-spaces.md)) reaches only the routes marked `@PartnerAccess()`: today its session (`GET /auth/me`) and its password change. `RolesGuard` refuses it everywhere else, whatever the route's `@Roles`, and always under `/admin`. It cannot sign in through `/auth/login`, which answers as for a wrong password, and forgot-password and resend-verification send it nothing (its own sign-in comes with the partner area). It holds no entry of `PERMISSIONS`.
+A `PARTNER` login (a partner company's account, [ADR-027](adr/ADR-027-partner-spaces.md)) reaches only the routes marked `@PartnerAccess()`: its session (`GET /auth/me`), its password change and the partner area. `RolesGuard` refuses it everywhere else, whatever the route's `@Roles`, and always under `/admin`. It holds no entry of `PERMISSIONS`.
+
+It signs in through `POST /auth/partner-login` only:
+
+- Turnstile is checked first;
+- the lock after 5 wrong passwords and the cookies are those of `/auth/login`;
+- any other account gets the answer of a wrong password there, as a partner login does on `/auth/login`.
+
+Forgot-password sends it the reset email in its space's language (English, French or Polish), linking to `/partners/{lang}/reset-password`, with the limits per address. Resend-verification sends it nothing. The web app's partner area (`/partners/{lang}`) is marked `noindex`, linked from nowhere on the public site, and its private pages redirect to the partner sign-in without a session; the back-office shell refuses a partner login like a candidate.
 
 Partner spaces are managed by super admins only (`MANAGE_PARTNER_SPACES`); the management routes return settings and counts, never the content of a space. Disabling a login ends its sessions and invalidates its access tokens at once. Deleting a space needs its exact name, deletes its rows and its partner logins, and writes an audit entry with counts only. In the database, every child row carries `partner_space_id` and its foreign keys include it, so a row cannot point to a parent of another space.
 
@@ -83,6 +91,16 @@ Tests: `partner-spaces-idor.e2e-spec.ts`:
 - deleting a space removes every blob first, and nothing while the storage fails.
 
 `coverage-gaps.e2e-spec.ts` checks the `partner-files` container on Azurite.
+
+`partner-sign-in.e2e-spec.ts`:
+
+- Turnstile required;
+- staff, candidates, unknown addresses and wrong passwords answered alike;
+- the lock;
+- the Polish reset email and its link;
+- the limit per address.
+
+`mail.service.spec.ts` checks that every email a partner login can receive exists in en, fr and pl. The browser tests `partner-area.spec.ts` (the whole journey in Polish, the redirect without a session, a non-member super admin refused) and `partner-accessibility.spec.ts` (axe on every partner screen) run in the `admin` project.
 
 Also: `security.e2e-spec.ts` (the list of routes open to partner logins is fixed, and every other route answers 403 to one), `partner-spaces-admin.e2e-spec.ts` (roles refused, login fenced off, access cut on disabling, deletion, cross-space rows refused by the database), `roles.guard.spec.ts`, `permissions.spec.ts`.
 

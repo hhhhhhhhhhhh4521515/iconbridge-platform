@@ -49,6 +49,12 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+/** Sign-in of a partner login (ADR-027): its own endpoint, with Turnstile. */
+export const partnerSignInSchema = loginSchema.extend({
+  turnstileToken: z.string().min(1).max(2048),
+});
+export type PartnerSignInInput = z.infer<typeof partnerSignInSchema>;
+
 export const verifyEmailSchema = z.object({ token: emailTokenSchema });
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 

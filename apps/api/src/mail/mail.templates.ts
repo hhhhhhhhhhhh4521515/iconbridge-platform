@@ -1,4 +1,4 @@
-import type { ApplicationStatus, Locale } from '@iconbridge/shared';
+import type { ApplicationStatus, Locale, PartnerLocale } from '@iconbridge/shared';
 
 export const EMAIL_TEMPLATES = [
   'verify-email',
@@ -15,6 +15,15 @@ export const EMAIL_TEMPLATES = [
   'contact-message',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
+
+/**
+ * Languages of the emails: the site's, and Polish for the partner logins (ADR-027), whose
+ * only email is the password reset. Polish has only the templates a partner login receives.
+ */
+export type EmailLocale = Locale | PartnerLocale;
+
+/** Every email a PARTNER login can receive: each exists in en, fr and pl (tested). */
+export const PARTNER_EMAIL_TEMPLATES = ['reset-password'] as const satisfies EmailTemplate[];
 
 /** Variables available to the templates. */
 export interface EmailVariables {
@@ -460,14 +469,43 @@ const ar: Record<EmailTemplate, Builder> = {
   }),
 };
 
+/** Polish: only what a partner login receives (PARTNER_EMAIL_TEMPLATES). */
+const pl: Record<(typeof PARTNER_EMAIL_TEMPLATES)[number], Builder> = {
+  'reset-password': ({ expiresInHours = 0 }) => ({
+    subject: `Zresetuj hasło - ${BRAND}`,
+    heading: 'Zresetuj hasło',
+    paragraphs: ['Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta.'],
+    buttonLabel: 'Wybierz nowe hasło',
+    footnotes: [
+      `Ten link działa jeden raz, przez ${expiresInHours} ${polishHours(expiresInHours)}.`,
+      'Jeśli to nie Ty wysłałeś tę prośbę, zignoruj tę wiadomość: Twoje hasło się nie zmieni.',
+    ],
+  }),
+};
+
+/** "godzina", "godziny" or "godzin", as Polish counts them. */
+function polishHours(count: number): string {
+  if (count === 1) {
+    return 'godzinę';
+  }
+  const lastTwo = count % 100;
+  const last = count % 10;
+  return last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14) ? 'godziny' : 'godzin';
+}
+
 const CONTENT: Record<Locale, Record<EmailTemplate, Builder>> = { en, fr, ar };
+const PARTIAL: Record<'pl', Partial<Record<EmailTemplate, Builder>>> = { pl };
 
 export function emailContent(
   template: EmailTemplate,
-  locale: Locale,
+  locale: EmailLocale,
   variables: EmailVariables,
 ): EmailContent {
-  return CONTENT[locale][template](variables);
+  const builder = locale === 'pl' ? PARTIAL.pl[template] : CONTENT[locale][template];
+  if (!builder) {
+    throw new Error(`No ${template} email in ${locale}`);
+  }
+  return builder(variables);
 }
 
 const escapeHtml = (value: string) =>
@@ -478,7 +516,7 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', '&quot;');
 
 /** MJML source of the single layout shared by all emails. Arabic is rendered right-to-left. */
-export function emailMjml(content: EmailContent, locale: Locale, actionUrl: string): string {
+export function emailMjml(content: EmailContent, locale: EmailLocale, actionUrl: string): string {
   const rtl = locale === 'ar';
   const align = rtl ? 'right' : 'left';
   const text = (body: string, extra = '') =>

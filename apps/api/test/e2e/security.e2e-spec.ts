@@ -40,6 +40,8 @@ const OPEN_ROUTES = [
   'POST /api/v1/auth/verify-email',
   'POST /api/v1/auth/resend-verification',
   'POST /api/v1/auth/login',
+  // The partner sign-in (ADR-027): Turnstile, partner logins only.
+  'POST /api/v1/auth/partner-login',
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/logout',
   'POST /api/v1/auth/forgot-password',
