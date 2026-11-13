@@ -1775,3 +1775,16 @@ The measured volume after the deployment is added to the pull request.
 **Checks**: message tests (same keys in FR, EN and AR), `pnpm lint`, `typecheck`, `test`, `build`; the browser tests of the public pages.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/100>
+
+## 2026-11-13 - Partner area: downloads keep the page, and a race-free browser test
+
+**What**:
+
+- The partner area saves a file through a hidden frame instead of navigating the page to the 5-minute link, so the page stays whatever the storage answers.
+- `partner-area.spec.ts` listens for the link requests before each click and checks their disposition (`inline` for a preview, `attachment` with the file name for a download), instead of waiting for browser-specific pop-up and download events.
+
+**Why**: CI on `main` after #100 failed the partner journey in Chromium (the preview request came before the test listened) and in WebKit, where the page navigated to the storage link and left the app.
+
+**Checks**: the journey 3 times in parallel in Chromium and Firefox (12 passed), twice in WebKit in its container (4 passed); `partner-accessibility.spec.ts` in Chromium and Firefox.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/101>

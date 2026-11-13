@@ -89,23 +89,32 @@ test.describe('partner area', () => {
       });
       await expect(toast(page, 'Plik dodany.')).toBeVisible();
       await expect(page.getByTestId('file-PASSPORT')).toContainText('paszport.pdf');
-      const preview = page.waitForEvent('popup');
+      // Each button asks for a 5-minute link at the click: a preview to show (a new tab), a
+      // download to save. Listened for before the click: the link is requested at once. A
+      // headless browser neither displays PDFs nor saves the same way everywhere, so the
+      // requests themselves are checked.
+      const linkTo = (disposition: RegExp) =>
+        partnerContext.waitForEvent('request', {
+          predicate: (request) =>
+            request.url().includes('/partner-files/spaces/') &&
+            disposition.test(new URL(request.url()).searchParams.get('rscd') ?? ''),
+        });
+      const shown = linkTo(/^inline/);
       await page
         .getByTestId('file-PASSPORT')
         .getByRole('button', { name: /Podgląd/ })
         .click();
-      const tab = await preview;
-      // Opened blank at the click (no pop-up blocker), then sent to the 5-minute link, to be
-      // shown, not saved. A headless browser does not display PDFs: the request is checked.
-      const shown = await tab.waitForRequest(/\/partner-files\/spaces\//);
-      expect(new URL(shown.url()).searchParams.get('rscd') ?? '').toMatch(/^inline/);
-      await tab.close();
-      const download = page.waitForEvent('download');
+      await shown;
+      for (const tab of partnerContext.pages().filter((other) => other !== page)) {
+        await tab.close();
+      }
+      const saved = linkTo(/^attachment; filename="paszport\.pdf"/);
       await page
         .getByTestId('file-PASSPORT')
         .getByRole('button', { name: /Pobierz/ })
         .click();
-      expect((await download).suggestedFilename()).toBe('paszport.pdf');
+      await saved;
+      await expect(page.getByTestId('file-PASSPORT')).toBeVisible();
 
       // A comment, and the history of the application.
       const comments = page.getByTestId('comments');
