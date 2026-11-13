@@ -43,15 +43,29 @@ export function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
+/** Pages of the partner area that need no session (ADR-027). */
+const PARTNER_PUBLIC = /^\/partners\/[a-z]{2}\/(login|forgot-password|reset-password)(\/|$)/;
+
 /** Sends the visitor to the login page, which brings them back here afterwards. */
 export function goToLogin(): void {
+  const partner = /^\/partners\/([a-z]{2})(\/.*)?$/.exec(window.location.pathname);
+  if (partner) {
+    // The partner area has its own sign-in, in the language of the address.
+    const [, lang = 'en', rest = ''] = partner;
+    const here = `${rest}${window.location.search}`;
+    window.location.replace(`/partners/${lang}/login?next=${encodeURIComponent(here)}`);
+    return;
+  }
   const [, locale = 'fr', ...rest] = window.location.pathname.split('/');
   const here = `/${rest.join('/')}${window.location.search}`;
   // A full page load on purpose: whatever the page held about the old session is dropped.
   window.location.replace(`/${locale}/login?next=${encodeURIComponent(here)}`);
 }
 
-const inAccountArea = () => /^\/[a-z]{2}\/(account|admin)(\/|$)/.test(window.location.pathname);
+const inAccountArea = () =>
+  /^\/[a-z]{2}\/(account|admin)(\/|$)/.test(window.location.pathname) ||
+  (window.location.pathname.startsWith('/partners/') &&
+    !PARTNER_PUBLIC.test(window.location.pathname));
 
 /** What to do when the session cannot be renewed. */
 export function sessionLost(): void {
@@ -122,6 +136,21 @@ export type PartnerStaffMember = Body<
   'get'
 >[number];
 export type PartnerLogin = Body<'/api/v1/admin/partner-spaces/{spaceId}/logins', 'get'>[number];
+export type PartnerSpaceItem = Body<'/api/v1/partner-spaces', 'get'>[number];
+export type PartnerJob = Body<'/api/v1/partner-spaces/{spaceId}/jobs/{jobId}', 'get'>;
+export type PartnerApplication = Body<
+  '/api/v1/partner-spaces/{spaceId}/applications/{applicationId}',
+  'get'
+>;
+export type PartnerFile = NonNullable<PartnerApplication['files']['PASSPORT']>;
+export type PartnerComment = Body<
+  '/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/comments',
+  'get'
+>[number];
+export type PartnerHistoryEntry = Body<
+  '/api/v1/partner-spaces/{spaceId}/history',
+  'get'
+>['items'][number];
 export type ContactMessage = Body<'/api/v1/admin/contact-messages', 'get'>['items'][number];
 export type AuditEntry = Body<'/api/v1/admin/audit-logs', 'get'>['items'][number];
 export type SettingValues = Body<'/api/v1/admin/settings', 'get'>;

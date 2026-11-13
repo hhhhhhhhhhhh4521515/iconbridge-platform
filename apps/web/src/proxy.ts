@@ -63,6 +63,33 @@ function privateAreaRedirect(request: NextRequest): NextResponse | null {
   return NextResponse.redirect(url);
 }
 
+/** The partner area (ADR-027): its own languages, outside the site's routing. */
+const PARTNER_LOCALES = ['en', 'fr', 'pl'];
+const PARTNER_LANG_COOKIE = 'partner_lang';
+const PARTNER_PATH = /^\/partners(?:\/([^/]+))?(\/.*)?$/;
+const PARTNER_PUBLIC_PAGES = new Set(['/login', '/forgot-password', '/reset-password']);
+
+/**
+ * `/partners` and an unknown language go to the visitor's last language (a cookie), English
+ * otherwise; a private page without a session goes to the partner sign-in. Null: the page
+ * is served, in the language of the address, which the cookie then remembers.
+ */
+function partnerRedirect(request: NextRequest, lang: string | undefined, rest: string) {
+  const url = request.nextUrl.clone();
+  if (!lang || !PARTNER_LOCALES.includes(lang)) {
+    const remembered = request.cookies.get(PARTNER_LANG_COOKIE)?.value ?? '';
+    const target = PARTNER_LOCALES.includes(remembered) ? remembered : 'en';
+    url.pathname = `/partners/${target}${lang ? rest : ''}`;
+    return NextResponse.redirect(url);
+  }
+  if (!PARTNER_PUBLIC_PAGES.has(rest) && !request.cookies.has(SESSION_MARKER)) {
+    url.pathname = `/partners/${lang}/login`;
+    url.search = rest ? `?next=${encodeURIComponent(`${rest}${request.nextUrl.search}`)}` : '';
+    return NextResponse.redirect(url);
+  }
+  return null;
+}
+
 export default function proxy(request: NextRequest): NextResponse {
   if (request.nextUrl.pathname.startsWith(API_PREFIX)) {
     return proxyToApi(request);
@@ -77,7 +104,17 @@ export default function proxy(request: NextRequest): NextResponse {
   if (canonical) {
     return NextResponse.redirect(canonical, 308);
   }
-  const redirect = privateAreaRedirect(request);
+  const partnerMatch = PARTNER_PATH.exec(request.nextUrl.pathname);
+  let partner: { lang: string } | null = null;
+  if (partnerMatch) {
+    const [, lang, rest = ''] = partnerMatch;
+    const moved = partnerRedirect(request, lang, rest);
+    if (moved) {
+      return moved;
+    }
+    partner = { lang: lang ?? 'en' };
+  }
+  const redirect = partner ? null : privateAreaRedirect(request);
   if (redirect) {
     return redirect;
   }
@@ -92,6 +129,19 @@ export default function proxy(request: NextRequest): NextResponse {
   });
   request.headers.set('x-nonce', nonce);
   request.headers.set('content-security-policy', policy);
+  if (partner) {
+    // Not the site's language routing: the partner area has en, fr and pl (ADR-027).
+    const response = NextResponse.next({ request: { headers: request.headers } });
+    response.headers.set('content-security-policy', policy);
+    response.headers.set('x-robots-tag', 'noindex, nofollow');
+    response.cookies.set(PARTNER_LANG_COOKIE, partner.lang, {
+      path: '/partners',
+      sameSite: 'lax',
+      secure: true,
+      maxAge: 365 * 24 * 3600,
+    });
+    return response;
+  }
   const response = handleI18n(request);
   response.headers.set('content-security-policy', policy);
   return response;

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Locale } from '@iconbridge/shared';
+import type { Locale, PartnerLocale } from '@iconbridge/shared';
 import { Clock } from '../common/clock/clock.js';
 import { FieldCipher } from '../common/crypto/field-cipher.js';
 import type { Env } from '../config/env.js';
@@ -12,6 +12,7 @@ import { EMAIL_PRIORITY, HALF_QUOTA_TEMPLATES, halfQuotaCap } from './mail-prior
 import { MailThrottledError, type MailTransport } from './mail-transport.js';
 import {
   emailContent,
+  type EmailLocale,
   emailMjml,
   emailText,
   type EmailTemplate,
@@ -101,6 +102,15 @@ export class MailService implements OnModuleDestroy {
     return url.toString();
   }
 
+  /** Link to a page of the partner area (ADR-027), e.g. https://site/pl/… → /partners/pl/… */
+  partnerLinkFor(locale: PartnerLocale, path: string, token?: string): string {
+    const url = new URL(`/partners/${locale}/${path}`, this.webOrigin);
+    if (token) {
+      url.searchParams.set('token', token);
+    }
+    return url.toString();
+  }
+
   /** Link to any localised page of the web app. */
   pageUrl(locale: Locale, path: string, query: Record<string, string> = {}): string {
     const url = new URL(`/${locale}/${path}`, this.webOrigin);
@@ -112,7 +122,7 @@ export class MailService implements OnModuleDestroy {
 
   async render(
     template: EmailTemplate,
-    locale: Locale,
+    locale: EmailLocale,
     variables: EmailVariables,
   ): Promise<RenderedEmail> {
     const content = emailContent(template, locale, variables);
@@ -132,7 +142,7 @@ export class MailService implements OnModuleDestroy {
   async send(
     to: string,
     template: EmailTemplate,
-    locale: Locale,
+    locale: EmailLocale,
     variables: EmailVariables,
     options: { replyTo?: string } = {},
   ): Promise<boolean> {
@@ -144,7 +154,7 @@ export class MailService implements OnModuleDestroy {
   async enqueue(
     to: string,
     template: EmailTemplate,
-    locale: Locale,
+    locale: EmailLocale,
     variables: EmailVariables,
     options: { replyTo?: string } = {},
   ): Promise<string> {
@@ -310,7 +320,7 @@ export class MailService implements OnModuleDestroy {
       await this.deliver(
         payload.to,
         row.template as EmailTemplate,
-        row.locale as Locale,
+        row.locale as EmailLocale,
         payload.variables,
         payload.replyTo ? { replyTo: payload.replyTo } : {},
       );
@@ -451,7 +461,7 @@ export class MailService implements OnModuleDestroy {
   async deliver(
     to: string,
     template: EmailTemplate,
-    locale: Locale,
+    locale: EmailLocale,
     variables: EmailVariables,
     options: { replyTo?: string } = {},
   ): Promise<void> {

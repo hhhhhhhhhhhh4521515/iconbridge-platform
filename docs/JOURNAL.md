@@ -1726,3 +1726,35 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm lint`, `typecheck`, `test`, `test:e2e` (627 passed), `build`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/98>
+
+## 2026-11-13 - Partner spaces, PR 5: the partner area in EN, FR and PL, partner sign-in and reset email
+
+**What**:
+
+- **API:**
+  - `POST /auth/partner-login` with Turnstile, partner logins only;
+  - the reset email of a partner login in its space's language (`reset-password` in Polish), linking to the partner area;
+  - query parameters of the partner lists documented, for the typed client.
+- **Web, the partner area under `/partners/{en|fr|pl}`:**
+  - sign-in, forgot and reset password, and the forced password change;
+  - my spaces; job demands (open first, counts per visa status); a job demand (edit, close, reopen, applications table, comments);
+  - an application (form with the visa and DHL fields, three files with upload, preview and download, comments, history, delete for a super admin);
+  - the history of the space with a filter;
+  - a header with the logo, the language switch, password and sign-out.
+- **Proxy:** CSP, `noindex`, the language cookie, and the redirect without a session.
+- **Docs:** ADR-027 (PR 5 notes, including the deviation on "readable without JavaScript") and SECURITY.md.
+
+**Why**: PR 5 of ADR-027, sections 6 and 7, and the owner's answer 6.
+
+**Checks**:
+
+- `partner-sign-in.e2e-spec.ts` (6 tests); the PR 1 fence test narrowed to resend-verification.
+- Unit tests:
+  - partner emails in en, fr and pl, with Polish plurals of hours;
+  - the partner messages (same keys, placeholders, error codes).
+- Browser:
+  - `partner-area.spec.ts`: the whole journey in Polish, the redirect without a session, a non-member super admin refused;
+  - `partner-accessibility.spec.ts`: axe on every partner screen in three languages.
+- `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`, `test:browser`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/99>
