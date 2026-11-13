@@ -1891,3 +1891,5 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm test:browser` (Chromium and Firefox): 214 passed. The new dashboard test covers the summary, salary, filters, search, calendar, save bar, stepper and deletion. axe runs on every partner screen in light and dark mode and at 375 px, with no horizontal scroll.
 - WebKit: the partner and site-link specs passed (61). Two candidate tests failed once under load in the full WebKit run and passed when re-run; this branch does not touch them.
 - Screenshots of every screen in English, desktop and phone: `docs/screenshots/partner-area/`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/106>
