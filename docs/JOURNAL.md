@@ -1758,3 +1758,20 @@ The measured volume after the deployment is added to the pull request.
 - `pnpm lint`, `typecheck`, `test`, `test:e2e`, `build`, `test:browser`.
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/99>
+
+## 2026-11-13 - Partner spaces, PR 6: SPEC, ARCHITECTURE, runbook and the privacy policy
+
+**What**:
+
+- **Privacy policy**, in EN, FR and AR, dated 13 November 2026: a new section "People put forward to our partner companies".
+  - What partner companies and our team record, why, and who sees it (members of the space only).
+  - Where it is stored (EU, private files, 5-minute links, every change recorded) and that nothing is emailed to these people.
+  - How long it is kept (until the application or the space is deleted), and erasure on request.
+  - What partner accounts hold, and the language cookie.
+- **SPEC** section 7.6 "Partner spaces"; ARCHITECTURE "Web application (partner area)" and the back-office route; the runbook "Open a partner space"; ADR-027 PR 6 notes.
+
+**Why**: PR 6 of ADR-027, and the owner's answer 5: the privacy policy is updated before the feature opens.
+
+**Checks**: message tests (same keys in FR, EN and AR), `pnpm lint`, `typecheck`, `test`, `build`; the browser tests of the public pages.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/100>

@@ -1,6 +1,6 @@
 # ADR-027: Partner spaces
 
-Date: 2026-11-11. Status: **accepted** (owner's answers of 11 November 2026, section 10). Delivered in six pull requests (section 9).
+Date: 2026-11-11. Status: **accepted** (owner's answers of 11 November 2026, section 10). Delivered in six pull requests (section 9), the last on 13 November 2026.
 
 ## Context
 
@@ -327,6 +327,9 @@ The separate partner sign-in endpoint with Turnstile (section 7, rule 3) is appr
     - sign-in needs Turnstile, which needs JavaScript, and server-side calls with the session would have to rebuild the forwarded client address that the rate limits and the audit rely on;
     - the screens use logical CSS, `DateSelects` for dates, and pass axe.
   - Staff members sign in on the site, then open the partner area; the partner sign-in links there.
+- **PR 6** (docs):
+  - SPEC section 7.6, ARCHITECTURE (the partner area and its back-office screens), and the runbook "Open a partner space";
+  - the privacy policy in EN, FR and AR gains the section "People put forward to our partner companies": what is recorded, why, who sees it, where it is stored, kept until the application or the space is deleted, and erasure on request. Dated 13 November 2026, deployed with or before the partner area.
 
 ## Consequences
 

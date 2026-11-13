@@ -170,9 +170,32 @@ The applications and candidates lists filter by **nationality** (never country o
 
 ### 7.5 Security and legal
 
-Rate limiting, CAPTCHA (Cloudflare Turnstile) on register/apply/contact, private files, GDPR data export and account deletion, privacy policy and terms pages.
+Rate limiting, CAPTCHA (Cloudflare Turnstile) on register/apply/contact and on the partner sign-in, private files, GDPR data export and account deletion, privacy policy and terms pages.
 
 Data retention: a candidate account with no activity for 24 months and no application in progress is erased like a GDPR deletion, after a warning email 30 days before; messages of the contact form are deleted after 24 months. Uploaded pictures lose their metadata (EXIF, GPS). The full list of protections is in [SECURITY.md](SECURITY.md).
+
+### 7.6 Partner spaces
+
+A private workspace per partner company ([ADR-027](adr/ADR-027-partner-spaces.md)), at `/partners/{en|fr|pl}`, in English, French or Polish, not linked from the public site and not indexed.
+
+- **Super admin, in the back office ("Partner spaces"):**
+  - creates a space (name, country, default language, logo);
+  - adds back-office accounts as members;
+  - creates the partner company's logins with a first password;
+  - disables, enables or deletes a space;
+  - sees settings and counts only, and the content only after adding themselves as a member.
+- **Members** (the partner logins and the staff added), all with the same rights:
+  - job demands: role, positions, places, optional salary and description; close and reopen;
+  - applications: names, nationality, optional phone and email, visa status and dates, DHL dates and tracking number;
+  - the passport, CV and work permit, with preview and download;
+  - append-only comments;
+  - a history of every change, file opened and comment.
+- **Deleting an application** (for example after an erasure request): a super admin who is a member, after typing the person's name. Its files, comments and history go; one line without personal data remains.
+- **Partner logins:**
+  - sign in on their own page with Turnstile, and choose their own password at the first sign-in;
+  - can reset it by email in the space's language;
+  - nothing else is ever emailed, and nothing is sent to the people in a space.
+- **Separation:** none of these data appear on the public site, in candidate accounts, in the back-office lists, counters or exports, or in job alerts. The data are kept until the application or the space is deleted (privacy policy, "People put forward to our partner companies").
 
 ## 8. Azure for Students constraints
 

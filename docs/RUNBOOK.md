@@ -209,6 +209,23 @@ There is no public sign-up for back-office accounts (SPEC).
 
 If no super admin can sign in any more, the migration job's seed creates the first super admin only when none exists: reset the password of the existing one with **Forgot password** on the sign-in page (the email goes to its address).
 
+## Open a partner space
+
+For a super admin, in the back office ([ADR-027](adr/ADR-027-partner-spaces.md)). Never create test data with real names in production: test spaces start with `E2E `.
+
+1. **Back office → Partner spaces → New partner space**: name, the partner's country, and the default language (English, French or Polish). The language is that of the partner area and of the partner logins' emails.
+2. **Logo** (optional): JPEG, PNG or WebP, 5 MB at most. It is stored privately; only members see it.
+3. **Members tab → Add a member**: every IconBridge account that works with this partner, any role. Add yourself to see and open the space ("Open the space"); without it you see only settings and counts.
+4. **Partner logins tab → Create a login**:
+   - the person's email, the name shown to the other members, and a first password;
+   - give the password by another channel than email: the person replaces it at the first sign-in;
+   - logins are deleted with the space.
+5. Send the partner the address `https://iconbridgerecruitment.com/partners/{en|fr|pl}/login`. A partner who forgets the password uses "Forgotten password?" there: the email arrives in the space's language.
+6. **Day to day:**
+   - disable a login, or the whole space, from the same screen; access stops at the next request;
+   - "Delete the space" asks for its exact name and deletes its files first;
+   - an application is deleted by a super admin who is a member, from the application's screen, by typing the person's name.
+
 ## Reset the waiting period for a candidate
 
 A candidate may apply to the same job only once every 6 months (SPEC section 6, setting `REAPPLY_COOLDOWN_MONTHS`). When the agency decides a candidate must be able to apply again sooner (for example after a rejection by mistake), a **super admin** lifts the waiting period of that one application:

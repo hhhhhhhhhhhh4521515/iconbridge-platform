@@ -931,6 +931,7 @@ Decisions and reasons: [ADR-009](adr/ADR-009-back-office.md).
 | `/admin/content/catalog`            | all (viewer: read only) | Destinations and categories                                                                                                                                  |
 | `/admin/users`                      | super admin             | Invite, change role, disable, log out everywhere                                                                                                             |
 | `/admin/settings`, `/admin/audit`   | super admin             | Rules, contact details, social links; audit log with filters and before/after                                                                                |
+| `/admin/partner-spaces`, `/[id]`    | super admin             | Partner spaces: settings, logo, counts, members, partner logins, disable, delete by typing the name; no content ([ADR-027](adr/ADR-027-partner-spaces.md))   |
 
 ### Historical results
 
@@ -957,6 +958,24 @@ A super admin always may; a recruiter when `ALLOW_RECRUITER_DELETE` is on; a vie
 ### Questions of a job
 
 `jobs.questions` holds up to ten questions (`packages/shared/src/questions.ts`). `POST /jobs/:id/apply` checks the answers with `checkAnswers` (required, yes/no, one of the choices, no unknown key) and stores the questions as asked in `applications.questions`. The detail and the export read that copy. A job without questions accepts free answers, and the form asks its two general questions.
+
+## Web application (partner area)
+
+Decisions and reasons: [ADR-027](adr/ADR-027-partner-spaces.md).
+
+- `app/partners/[lang]` is a root layout of its own, in `en`, `fr` or `pl`, outside the site's next-intl routing: its texts are `messages/partner/{lang}.json`, its links are built by `partnerHref` (`lib/partner-locale.ts`).
+- **The proxy** (`proxy.ts`):
+  - gives these pages the site's CSP and `X-Robots-Tag: noindex`;
+  - remembers the last language in the `partner_lang` cookie;
+  - sends `/partners` to it, English otherwise;
+  - sends a private page without a session to `/partners/{lang}/login?next=…`.
+- **Sign-in and session:**
+  - `POST /auth/partner-login` with Turnstile, partner logins only; staff members sign in on the site;
+  - the session and its silent refresh are those of the candidate area (`lib/client-api.ts`), and a lost session goes back to the partner sign-in;
+  - `PartnerFrame` loads the session, makes a partner login replace a password set by a super admin first, and loads the space for the header (404 for a non-member, like the API).
+- **Screens:** my spaces, job demands, a job demand, a new application, an application (form, files, comments, history, deletion by a super admin), the history of the space, password. Signed-in screens render in the browser, with a `<noscript>` notice.
+- **Files** open through 5-minute links asked for at the click (`GET …/files/:id/link`), written to the space's history; a preview opens in a new tab.
+- **Tests:** `partner-area.spec.ts` and `partner-accessibility.spec.ts` run in the `admin` project of Playwright, which matches `admin` and `partner` specs.
 
 ## Configuration
 
