@@ -69,6 +69,12 @@ const ROUTES: Route[] = [
     body: () => ({ positions: 4 }),
     ok: 200,
   },
+  {
+    method: 'patch',
+    path: (s) => `/partner-spaces/${s.id}/jobs/${s.jobId}`,
+    body: () => ({ salaryAmount: 4500, salaryCurrency: 'PLN', salaryPeriod: 'MONTH' }),
+    ok: 200,
+  },
   { method: 'post', path: (s) => `/partner-spaces/${s.id}/jobs/${s.jobId}/close`, ok: 200 },
   { method: 'post', path: (s) => `/partner-spaces/${s.id}/jobs/${s.jobId}/reopen`, ok: 200 },
   { method: 'get', path: (s) => `/partner-spaces/${s.id}/jobs/${s.jobId}/comments`, ok: 200 },
@@ -672,6 +678,115 @@ describe('partner area: every route scoped to its space (IDOR e2e, ADR-027)', ()
       expect(await test.prisma.partnerApplication.count({ where: { id: w.b.applicationId } })).toBe(
         1,
       );
+    });
+  });
+
+  it('keeps the salary amount, currency and period together (ADR-027, amendment 3)', async () => {
+    const w = await world();
+    const jobs = `/partner-spaces/${w.a.id}/jobs`;
+    // All three or none, on creation...
+    const half = await as(w.partnerA)('post', jobs, {
+      role: 'E2E Baker',
+      positions: 2,
+      locations: ['Gdańsk'],
+      salaryAmount: 3000,
+    }).expect(400);
+    expect(half.body).toMatchObject({ code: 'VALIDATION_ERROR' });
+    const created = await as(w.partnerA)('post', jobs, {
+      role: 'E2E Baker',
+      positions: 2,
+      locations: ['Gdańsk'],
+      salaryAmount: 3000,
+      salaryCurrency: 'PLN',
+      salaryPeriod: 'MONTH',
+      salary: 'gross, plus accommodation',
+    }).expect(201);
+    const job = partnerJobSchema.parse(created.body);
+    expect(job).toMatchObject({ salaryAmount: 3000, salaryCurrency: 'PLN', salaryPeriod: 'MONTH' });
+    // ...and on the merged state of a change: removing only the currency is refused.
+    const path = `${jobs}/${job.id}`;
+    await as(w.partnerA)('patch', path, { salaryCurrency: null }).expect(400);
+    await as(w.partnerA)('patch', path, { salaryCurrency: 'XYZ' }).expect(400);
+    await as(w.partnerA)('patch', path, { salaryAmount: 3200 }).expect(200);
+    await as(w.partnerA)('patch', path, {
+      salaryAmount: null,
+      salaryCurrency: null,
+      salaryPeriod: null,
+    }).expect(200);
+    // Existing demands have no amount; the free text stays.
+    const old = partnerJobSchema.parse((await as(w.partnerA)('get', `${jobs}/${w.a.jobId}`)).body);
+    expect(old).toMatchObject({ salaryAmount: null, salaryCurrency: null, salaryPeriod: null });
+    const history = partnerHistoryPageSchema.parse(
+      (await as(w.partnerA)('get', `/partner-spaces/${w.a.id}/history?entityId=${job.id}`)).body,
+    );
+    expect(
+      history.items
+        .filter((entry) => entry.field === 'salaryAmount')
+        .map((entry) => [entry.oldValue, entry.newValue]),
+    ).toEqual(
+      expect.arrayContaining([
+        [null, '3000'],
+        ['3000', '3200'],
+        ['3200', null],
+      ]),
+    );
+    // The database refuses half a salary, whatever the API does.
+    await expect(
+      test.prisma.$executeRaw(Prisma.sql`
+        UPDATE "partner_jobs" SET "salary_amount" = 10 WHERE "id" = ${w.a.jobId}::uuid`),
+    ).rejects.toThrow(/partner_jobs_salary_complete_check/);
+  });
+
+  describe('deleting a job demand (ADR-027, amendment 3)', () => {
+    it('is for a super admin who is a member, after typing the role, and only without applications', async () => {
+      const w = await world();
+      const created = await as(w.partnerA)('post', `/partner-spaces/${w.a.id}/jobs`, {
+        role: 'E2E Driver',
+        positions: 1,
+        locations: ['Łódź'],
+      }).expect(201);
+      const emptyJob = partnerJobSchema.parse(created.body).id;
+      const path = `/partner-spaces/${w.a.id}/jobs/${emptyJob}`;
+      await as(w.partnerA)('post', `${path}/comments`, { body: 'Start in March' }).expect(201);
+      const name = { confirmName: 'E2E Driver' };
+
+      // Members other than a super admin, outsiders, and a super admin outside the space: 404.
+      for (const user of [...w.membersOfA, ...w.outsiders]) {
+        await as(user)('delete', path, name).expect(404);
+      }
+      await as(null)('delete', path, name).expect(401);
+      await test.prisma.partnerSpaceMember.create({
+        data: { partnerSpaceId: w.a.id, userId: w.root.id, kind: 'STAFF' },
+      });
+      // The wrong name, a job demand of B through A, and a job demand with an application.
+      const wrong = await as(w.root)('delete', path, { confirmName: 'E2E' }).expect(400);
+      expect(wrong.body).toMatchObject({ code: 'CONFIRMATION_MISMATCH' });
+      await as(w.root)('delete', `/partner-spaces/${w.a.id}/jobs/${w.b.jobId}`, {
+        confirmName: 'E2E Beta Cleaner',
+      }).expect(404);
+      const busy = await as(w.root)('delete', `/partner-spaces/${w.a.id}/jobs/${w.a.jobId}`, {
+        confirmName: 'E2E Alpha Cleaner',
+      }).expect(409);
+      expect(busy.body).toMatchObject({ code: 'JOB_HAS_APPLICATIONS' });
+      expect(await test.prisma.partnerApplication.count({ where: { id: w.a.applicationId } })).toBe(
+        1,
+      );
+
+      await as(w.root)('delete', path, name).expect(204);
+      await as(w.partnerA)('get', path).expect(404);
+      expect(await test.prisma.partnerComment.count({ where: { partnerJobId: emptyJob } })).toBe(0);
+      const left = await test.prisma.partnerHistory.findMany({
+        where: { partnerSpaceId: w.a.id, entityId: emptyJob, action: 'JOB_DELETED' },
+      });
+      expect(left.map((entry) => [entry.field, entry.oldValue, entry.newValue])).toEqual([
+        ['role', 'E2E Driver', null],
+      ]);
+      const audit = await test.prisma.auditLog.findFirstOrThrow({
+        where: { action: 'partner_job.delete' },
+      });
+      expect(audit.before).toMatchObject({ partnerSpaceId: w.a.id, comments: 1 });
+      // B is untouched.
+      expect(await test.prisma.partnerJob.count({ where: { id: w.b.jobId } })).toBe(1);
     });
   });
 

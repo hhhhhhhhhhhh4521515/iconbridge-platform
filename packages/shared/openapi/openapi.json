@@ -44210,6 +44210,33 @@
                           "type": "string"
                         }
                       },
+                      "salaryAmount": {
+                        "nullable": true,
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "salaryCurrency": {
+                        "nullable": true,
+                        "type": "string",
+                        "enum": [
+                          "EUR",
+                          "PLN",
+                          "USD",
+                          "GBP",
+                          "CHF",
+                          "CZK"
+                        ]
+                      },
+                      "salaryPeriod": {
+                        "nullable": true,
+                        "type": "string",
+                        "enum": [
+                          "HOUR",
+                          "MONTH",
+                          "YEAR"
+                        ]
+                      },
                       "salary": {
                         "nullable": true,
                         "type": "string"
@@ -44320,6 +44347,9 @@
                       "role",
                       "positions",
                       "locations",
+                      "salaryAmount",
+                      "salaryCurrency",
+                      "salaryPeriod",
                       "salary",
                       "description",
                       "status",
@@ -44665,6 +44695,36 @@
                       "maxLength": 100
                     }
                   },
+                  "salaryAmount": {
+                    "default": null,
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000000
+                  },
+                  "salaryCurrency": {
+                    "default": null,
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "EUR",
+                      "PLN",
+                      "USD",
+                      "GBP",
+                      "CHF",
+                      "CZK"
+                    ]
+                  },
+                  "salaryPeriod": {
+                    "default": null,
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "HOUR",
+                      "MONTH",
+                      "YEAR"
+                    ]
+                  },
                   "salary": {
                     "default": null,
                     "nullable": true,
@@ -44712,6 +44772,33 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "salaryAmount": {
+                      "nullable": true,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "salaryCurrency": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "EUR",
+                        "PLN",
+                        "USD",
+                        "GBP",
+                        "CHF",
+                        "CZK"
+                      ]
+                    },
+                    "salaryPeriod": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "HOUR",
+                        "MONTH",
+                        "YEAR"
+                      ]
                     },
                     "salary": {
                       "nullable": true,
@@ -44823,6 +44910,9 @@
                     "role",
                     "positions",
                     "locations",
+                    "salaryAmount",
+                    "salaryCurrency",
+                    "salaryPeriod",
                     "salary",
                     "description",
                     "status",
@@ -45177,6 +45267,33 @@
                         "type": "string"
                       }
                     },
+                    "salaryAmount": {
+                      "nullable": true,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "salaryCurrency": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "EUR",
+                        "PLN",
+                        "USD",
+                        "GBP",
+                        "CHF",
+                        "CZK"
+                      ]
+                    },
+                    "salaryPeriod": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "HOUR",
+                        "MONTH",
+                        "YEAR"
+                      ]
+                    },
                     "salary": {
                       "nullable": true,
                       "type": "string"
@@ -45287,6 +45404,9 @@
                     "role",
                     "positions",
                     "locations",
+                    "salaryAmount",
+                    "salaryCurrency",
+                    "salaryPeriod",
                     "salary",
                     "description",
                     "status",
@@ -45570,6 +45690,33 @@
                       "maxLength": 100
                     }
                   },
+                  "salaryAmount": {
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000000
+                  },
+                  "salaryCurrency": {
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "EUR",
+                      "PLN",
+                      "USD",
+                      "GBP",
+                      "CHF",
+                      "CZK"
+                    ]
+                  },
+                  "salaryPeriod": {
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "HOUR",
+                      "MONTH",
+                      "YEAR"
+                    ]
+                  },
                   "salary": {
                     "nullable": true,
                     "type": "string",
@@ -45610,6 +45757,33 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "salaryAmount": {
+                      "nullable": true,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "salaryCurrency": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "EUR",
+                        "PLN",
+                        "USD",
+                        "GBP",
+                        "CHF",
+                        "CZK"
+                      ]
+                    },
+                    "salaryPeriod": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "HOUR",
+                        "MONTH",
+                        "YEAR"
+                      ]
                     },
                     "salary": {
                       "nullable": true,
@@ -45721,6 +45895,9 @@
                     "role",
                     "positions",
                     "locations",
+                    "salaryAmount",
+                    "salaryCurrency",
+                    "salaryPeriod",
                     "salary",
                     "description",
                     "status",
@@ -46025,6 +46202,410 @@
         "x-access": "session",
         "x-roles": [],
         "x-verified-email": false
+      },
+      "delete": {
+        "description": "For a super admin who is a member of the space. `confirmName` is the role of the job demand. Other members get 404; a job demand with applications answers 409 JOB_HAS_APPLICATIONS. Its comments go; the history keeps one entry with the role.",
+        "operationId": "PartnerAreaController_deleteJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "spaceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  }
+                },
+                "required": [
+                  "confirmName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "PARTNER_SPACE_NAME_TAKEN",
+                        "CONFIRMATION_MISMATCH",
+                        "NOT_A_STAFF_ACCOUNT",
+                        "STORAGE_UNAVAILABLE",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "PARTNER_SPACE_NAME_TAKEN",
+                        "CONFIRMATION_MISMATCH",
+                        "NOT_A_STAFF_ACCOUNT",
+                        "STORAGE_UNAVAILABLE",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "PARTNER_SPACE_NAME_TAKEN",
+                        "CONFIRMATION_MISMATCH",
+                        "NOT_A_STAFF_ACCOUNT",
+                        "STORAGE_UNAVAILABLE",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "PARTNER_SPACE_NAME_TAKEN",
+                        "CONFIRMATION_MISMATCH",
+                        "NOT_A_STAFF_ACCOUNT",
+                        "STORAGE_UNAVAILABLE",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "VALIDATION_ERROR",
+                        "UNAUTHENTICATED",
+                        "INVALID_CREDENTIALS",
+                        "FORBIDDEN",
+                        "EMAIL_NOT_VERIFIED",
+                        "NOT_FOUND",
+                        "CONFLICT",
+                        "EMAIL_TAKEN",
+                        "INVALID_TOKEN",
+                        "WEAK_PASSWORD",
+                        "CAPTCHA_FAILED",
+                        "LAST_SUPER_ADMIN",
+                        "CANNOT_DISABLE_SELF",
+                        "INVALID_JOB_TRANSITION",
+                        "JOB_NOT_PUBLISHABLE",
+                        "JOB_HAS_APPLICATIONS",
+                        "UNSUPPORTED_FILE",
+                        "FILE_TOO_LARGE",
+                        "DOCUMENT_IN_USE",
+                        "PROFILE_INCOMPLETE",
+                        "PASSPORT_EXPIRED",
+                        "JOB_NOT_OPEN",
+                        "MAX_ACTIVE_APPLICATIONS",
+                        "CANNOT_WITHDRAW",
+                        "INVALID_APPLICATION_TRANSITION",
+                        "NO_POSITION_LEFT",
+                        "CONSENT_REQUIRED",
+                        "IMAGE_REQUIRED",
+                        "RATE_LIMITED",
+                        "REAPPLY_COOLDOWN",
+                        "UNDO_NOT_ALLOWED",
+                        "COOLDOWN_WAIVER_NOT_ALLOWED",
+                        "PASSWORD_CHANGE_REQUIRED",
+                        "PARTNER_SPACE_NAME_TAKEN",
+                        "CONFIRMATION_MISMATCH",
+                        "NOT_A_STAFF_ACCOUNT",
+                        "STORAGE_UNAVAILABLE",
+                        "INTERNAL_ERROR"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {},
+                    "nextAllowedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Delete a job demand without applications (super admin)",
+        "tags": [
+          "partner spaces"
+        ],
+        "x-access": "session",
+        "x-roles": [],
+        "x-verified-email": false
       }
     },
     "/api/v1/partner-spaces/{spaceId}/jobs/{jobId}/close": {
@@ -46074,6 +46655,33 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "salaryAmount": {
+                      "nullable": true,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "salaryCurrency": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "EUR",
+                        "PLN",
+                        "USD",
+                        "GBP",
+                        "CHF",
+                        "CZK"
+                      ]
+                    },
+                    "salaryPeriod": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "HOUR",
+                        "MONTH",
+                        "YEAR"
+                      ]
                     },
                     "salary": {
                       "nullable": true,
@@ -46185,6 +46793,9 @@
                     "role",
                     "positions",
                     "locations",
+                    "salaryAmount",
+                    "salaryCurrency",
+                    "salaryPeriod",
                     "salary",
                     "description",
                     "status",
@@ -46470,6 +47081,33 @@
                         "type": "string"
                       }
                     },
+                    "salaryAmount": {
+                      "nullable": true,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "salaryCurrency": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "EUR",
+                        "PLN",
+                        "USD",
+                        "GBP",
+                        "CHF",
+                        "CZK"
+                      ]
+                    },
+                    "salaryPeriod": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "HOUR",
+                        "MONTH",
+                        "YEAR"
+                      ]
+                    },
                     "salary": {
                       "nullable": true,
                       "type": "string"
@@ -46580,6 +47218,9 @@
                     "role",
                     "positions",
                     "locations",
+                    "salaryAmount",
+                    "salaryCurrency",
+                    "salaryPeriod",
                     "salary",
                     "description",
                     "status",

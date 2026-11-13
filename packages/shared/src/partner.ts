@@ -149,6 +149,51 @@ export type PartnerSpaceSummary = z.infer<typeof partnerSpaceSummarySchema>;
 const plainText = (max: number) => z.string().trim().max(max);
 const locationSchema = z.string().trim().min(1).max(100);
 
+/** Currencies offered for a job demand's salary. */
+export const PARTNER_SALARY_CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF', 'CZK'] as const;
+export const partnerSalaryCurrencySchema = z.enum(PARTNER_SALARY_CURRENCIES);
+export type PartnerSalaryCurrency = z.infer<typeof partnerSalaryCurrencySchema>;
+/** What the salary amount is paid for. */
+export const PARTNER_SALARY_PERIODS = ['HOUR', 'MONTH', 'YEAR'] as const;
+export const partnerSalaryPeriodSchema = z.enum(PARTNER_SALARY_PERIODS);
+export type PartnerSalaryPeriod = z.infer<typeof partnerSalaryPeriodSchema>;
+
+/** The salary fields the rule reads; loose, so a stored row can be checked too. */
+interface JobSalaryState {
+  salaryAmount?: number | null | undefined;
+  salaryCurrency?: string | null | undefined;
+  salaryPeriod?: string | null | undefined;
+}
+
+/**
+ * The amount, its currency and its period go together: all three or none (the API checks
+ * the merged state after a change; the database checks it again).
+ */
+export function partnerJobIssues(state: JobSalaryState): { path: string; message: string }[] {
+  const set = [state.salaryAmount, state.salaryCurrency, state.salaryPeriod].filter(
+    (value) => value !== null && value !== undefined,
+  ).length;
+  if (set === 0 || set === 3) {
+    return [];
+  }
+  const missing = (['salaryAmount', 'salaryCurrency', 'salaryPeriod'] as const).find(
+    (key) => state[key] === null || state[key] === undefined,
+  );
+  return [
+    {
+      path: missing ?? 'salaryAmount',
+      message: 'The salary needs an amount, a currency and a period',
+    },
+  ];
+}
+
+const withJobRules = <T extends z.ZodType<JobSalaryState>>(schema: T) =>
+  schema.superRefine((body, context) => {
+    for (const issue of partnerJobIssues(body)) {
+      context.addIssue({ code: 'custom', path: [issue.path], message: issue.message });
+    }
+  });
+
 const partnerJobFields = z.object({
   /** For example "Housekeeping". */
   role: z.string().trim().min(1).max(120),
@@ -161,16 +206,25 @@ const partnerJobFields = z.object({
     .refine((items) => new Set(items.map((item) => item.toLowerCase())).size === items.length, {
       message: 'Each place may appear once',
     }),
-  /** Free text, e.g. "4,500 PLN gross a month". */
+  /** The salary, a whole amount (e.g. 4500 PLN a MONTH); all three or none. */
+  salaryAmount: z.number().int().min(1).max(10_000_000).nullable(),
+  salaryCurrency: partnerSalaryCurrencySchema.nullable(),
+  salaryPeriod: partnerSalaryPeriodSchema.nullable(),
+  /** Free text about the pay, e.g. "gross, plus accommodation". */
   salary: plainText(200).nullable(),
   /** Plain text, shown as text, never as HTML. */
   description: plainText(5000),
 });
 
-export const createPartnerJobSchema = partnerJobFields.extend({
-  salary: partnerJobFields.shape.salary.optional().default(null),
-  description: partnerJobFields.shape.description.optional().default(''),
-});
+export const createPartnerJobSchema = withJobRules(
+  partnerJobFields.extend({
+    salaryAmount: partnerJobFields.shape.salaryAmount.optional().default(null),
+    salaryCurrency: partnerJobFields.shape.salaryCurrency.optional().default(null),
+    salaryPeriod: partnerJobFields.shape.salaryPeriod.optional().default(null),
+    salary: partnerJobFields.shape.salary.optional().default(null),
+    description: partnerJobFields.shape.description.optional().default(''),
+  }),
+);
 export type CreatePartnerJobInput = z.infer<typeof createPartnerJobSchema>;
 
 export const updatePartnerJobSchema = partnerJobFields
@@ -203,6 +257,9 @@ export const partnerJobSchema = z.object({
   role: z.string(),
   positions: z.number().int(),
   locations: z.array(z.string()),
+  salaryAmount: z.number().int().nullable(),
+  salaryCurrency: partnerSalaryCurrencySchema.nullable(),
+  salaryPeriod: partnerSalaryPeriodSchema.nullable(),
   salary: z.string().nullable(),
   description: z.string(),
   status: partnerJobStatusSchema,
@@ -389,6 +446,15 @@ export const partnerApplicationSchema = partnerApplicationFields.extend({
   updatedAt: z.iso.datetime(),
 });
 export type PartnerApplication = z.infer<typeof partnerApplicationSchema>;
+
+/**
+ * Deleting a job demand without applications (super admin and member): its role, typed
+ * exactly. Its comments go; one history entry with the role remains.
+ */
+export const deletePartnerJobSchema = z.object({
+  confirmName: z.string().trim().min(1).max(120),
+});
+export type DeletePartnerJobInput = z.infer<typeof deletePartnerJobSchema>;
 
 /** Deleting one application (super admin and member): the applicant's first and last name. */
 export const deletePartnerApplicationSchema = z.object({

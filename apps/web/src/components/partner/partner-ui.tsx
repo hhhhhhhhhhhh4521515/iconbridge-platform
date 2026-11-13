@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyRound, LogOut } from 'lucide-react';
+import { History, KeyRound, LayoutGrid, LogOut, type LucideIcon } from 'lucide-react';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -22,32 +22,212 @@ import { partnerHref, type PartnerLang } from '@/lib/partner-locale';
 import { cta } from '@/lib/ui';
 import { ChangePassword } from './auth-forms';
 
-export const heading = 'text-lg font-semibold';
-export const card = 'rounded-xl border border-border bg-card p-4 md:p-5';
+export const heading = 'text-lg font-semibold tracking-tight';
+/** The partner area's card: the site's radius, a soft shadow, one padding scale. */
+export const card =
+  'rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm md:p-6';
+/** A card that is a link or holds one: it rises on hover. */
+export const cardHover = 'transition-shadow hover:shadow-md hover:border-foreground/20';
 
 /** Work permit statuses, in the order of the process (ADR-027, amendment 1). */
 export const WORK_PERMIT_STATUSES = ['NOT_STARTED', 'SUBMITTED', 'APPROVED', 'REFUSED'] as const;
 export type WorkPermitStatus = (typeof WORK_PERMIT_STATUSES)[number];
+export const VISA_STATUSES = [
+  'NOT_STARTED',
+  'APPOINTMENT_BOOKED',
+  'SUBMITTED',
+  'APPROVED',
+  'REFUSED',
+] as const;
+export type VisaStatus = (typeof VISA_STATUSES)[number];
 
-/** Tones with enough contrast in light and dark mode (4.5:1 at least, checked by axe). */
-const STATUS_TONES: Record<WorkPermitStatus, string> = {
-  NOT_STARTED: 'bg-muted text-foreground',
-  SUBMITTED: 'bg-brand-blue/15 text-brand-navy dark:bg-brand-blue/30 dark:text-white',
-  APPROVED: 'bg-emerald-700 text-white',
-  REFUSED: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
+/**
+ * The four tones of a status: grey not started, blue under way, green done, red refused.
+ * Each pair has 4.5:1 contrast at least in light and dark mode (checked by axe); the text
+ * carries the meaning, the colour and the dot only help.
+ */
+export type Tone = 'grey' | 'blue' | 'green' | 'red';
+const TONES: Record<Tone, { badge: string; dot: string }> = {
+  grey: { badge: 'bg-muted text-foreground', dot: 'bg-muted-foreground' },
+  blue: {
+    badge: 'bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-100',
+    dot: 'bg-blue-600 dark:bg-blue-400',
+  },
+  green: {
+    badge: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
+    dot: 'bg-emerald-600 dark:bg-emerald-400',
+  },
+  red: {
+    badge: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-100',
+    dot: 'bg-red-600 dark:bg-red-400',
+  },
 };
 
-/** A work permit status as a badge; the text carries the meaning, the colour only helps. */
+export const toneOf = (status: string): Tone =>
+  status === 'APPROVED'
+    ? 'green'
+    : status === 'REFUSED'
+      ? 'red'
+      : status === 'NOT_STARTED'
+        ? 'grey'
+        : 'blue';
+
+export function Badge({
+  tone,
+  children,
+  testId,
+  status,
+}: {
+  tone: Tone;
+  children: ReactNode;
+  testId?: string;
+  status?: string;
+}) {
+  return (
+    <span
+      data-testid={testId}
+      data-status={status}
+      data-tone={tone}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${TONES[tone].badge}`}
+    >
+      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${TONES[tone].dot}`} />
+      {children}
+    </span>
+  );
+}
+
+/** A work permit status as a badge. */
 export function WorkPermitBadge({ status }: { status: WorkPermitStatus }) {
   const t = useTranslations('partner.workPermit');
   return (
-    <span
-      data-testid="work-permit-badge"
-      data-status={status}
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STATUS_TONES[status]}`}
-    >
+    <Badge tone={toneOf(status)} testId="work-permit-badge" status={status}>
       {t(status)}
+    </Badge>
+  );
+}
+
+/** A visa status as a badge. */
+export function VisaBadge({ status }: { status: VisaStatus }) {
+  const t = useTranslations('partner.visa');
+  return (
+    <Badge tone={toneOf(status)} testId="visa-badge" status={status}>
+      {t(status)}
+    </Badge>
+  );
+}
+
+/** Open or closed, for a job demand. */
+export function JobStatusBadge({ status }: { status: 'OPEN' | 'CLOSED' }) {
+  const t = useTranslations('partner.home');
+  return (
+    <Badge tone={status === 'OPEN' ? 'green' : 'grey'} testId="job-status" status={status}>
+      {status === 'OPEN' ? t('open') : t('closed')}
+    </Badge>
+  );
+}
+
+/** Initials of a name in a circle; decorative, the name is always written next to it. */
+export function Avatar({
+  name,
+  size = 'md',
+  onDark = false,
+}: {
+  name: string;
+  size?: 'sm' | 'md' | 'lg';
+  /** On a navy background: gold, so the circle stays visible. */
+  onDark?: boolean;
+}) {
+  const initials =
+    name
+      .split(/[\s@.-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || '?';
+  const sizes = { sm: 'size-8 text-xs', md: 'size-10 text-sm', lg: 'size-14 text-lg' };
+  return (
+    <span
+      aria-hidden
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${
+        onDark
+          ? 'bg-brand-gold text-brand-navy'
+          : 'bg-brand-navy text-white dark:bg-brand-gold dark:text-brand-navy'
+      } ${sizes[size]}`}
+    >
+      {initials}
     </span>
+  );
+}
+
+/** An icon in a tinted square, for the cards' titles. */
+export function IconTile({ icon: Icon, tone = 'navy' }: { icon: LucideIcon; tone?: string }) {
+  const tones: Record<string, string> = {
+    navy: 'bg-brand-navy/10 text-brand-navy dark:bg-white/10 dark:text-white',
+    blue: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
+    green: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    gold: 'bg-brand-gold-soft text-brand-navy dark:text-brand-gold',
+  };
+  return (
+    <span
+      aria-hidden
+      className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl ${tones[tone] ?? tones.navy}`}
+    >
+      <Icon className="size-5" />
+    </span>
+  );
+}
+
+/** The title of a card, with its icon. */
+export function CardTitle({
+  icon,
+  id,
+  children,
+  as: Tag = 'h2',
+}: {
+  icon: LucideIcon;
+  id?: string;
+  children: ReactNode;
+  as?: 'h2' | 'h3' | 'span';
+}) {
+  return (
+    <Tag id={id} className={`${heading} flex items-center gap-3`}>
+      <IconTile icon={icon} />
+      {children}
+    </Tag>
+  );
+}
+
+/** A grey block that stands for content still loading; same size, so nothing moves. */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <span aria-hidden className={`block animate-pulse rounded-lg bg-muted ${className}`} />;
+}
+
+/** Nothing here yet: an icon, one sentence and, often, the next step. */
+export function EmptyState({
+  icon: Icon,
+  text,
+  action,
+  testId,
+}: {
+  icon: LucideIcon;
+  text: string;
+  action?: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <div
+      data-testid={testId}
+      className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border px-6 py-12 text-center"
+    >
+      <span
+        aria-hidden
+        className="inline-flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
+        <Icon className="size-7" />
+      </span>
+      <p className="max-w-sm text-sm text-muted-foreground">{text}</p>
+      {action}
+    </div>
   );
 }
 
@@ -184,12 +364,39 @@ export function Centered({ children }: { children: ReactNode }) {
   return <div className="mx-auto w-full max-w-md px-4 py-10">{children}</div>;
 }
 
-export function LoadingText() {
+/**
+ * A screen or a part still loading: grey blocks in the shape of the content, and the word
+ * for screen readers; `variant` gives the shape.
+ */
+export function LoadingText({ variant = 'block' }: { variant?: 'block' | 'page' | 'cards' }) {
   const t = useTranslations('partner.ui');
   return (
-    <p role="status" className="py-6 text-center text-sm text-muted-foreground">
-      {t('loading')}
-    </p>
+    <div role="status" className="w-full" data-testid="loading">
+      <span className="sr-only">{t('loading')}</span>
+      {variant === 'page' ? (
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64 max-w-full" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((item) => (
+              <Skeleton key={item} className="h-24" />
+            ))}
+          </div>
+          <Skeleton className="h-64" />
+        </div>
+      ) : variant === 'cards' ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((item) => (
+            <Skeleton key={item} className="h-56" />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3 py-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -209,6 +416,7 @@ export function Failed({ onRetry }: { onRetry: () => void }) {
 export interface SpaceSummary {
   id: string;
   name: string;
+  country: string;
   logoUrl: string | null;
   defaultLocale: PartnerLang;
   membership: 'STAFF' | 'PARTNER';
@@ -238,10 +446,16 @@ function Header({ space }: { space: SpaceSummary | null }) {
   const home = space ? partnerHref(lang, `/spaces/${space.id}`) : partnerHref(lang);
   const menu = space
     ? [
-        { href: home, label: t('jobs'), current: pathname === home || pathname.includes('/jobs') },
+        {
+          href: home,
+          label: t('jobs'),
+          icon: LayoutGrid,
+          current: !pathname.endsWith('/history'),
+        },
         {
           href: partnerHref(lang, `/spaces/${space.id}/history`),
           label: t('history'),
+          icon: History,
           current: pathname.endsWith('/history'),
         },
       ]
@@ -261,23 +475,31 @@ function Header({ space }: { space: SpaceSummary | null }) {
           ) : null}
           <span>{space ? space.name : t('mySpaces')}</span>
         </NextLink>
-        <nav aria-label={t('menu')} className="flex flex-wrap items-center gap-1">
+        <nav aria-label={t('menu')} className="flex items-center gap-0.5 sm:gap-1">
           {menu.map((item) => (
             <NextLink
               key={item.href}
               href={item.href}
               aria-current={item.current ? 'page' : undefined}
-              className={`${cta.ghost} px-3 aria-[current=page]:bg-secondary`}
+              className={`${cta.ghost} px-2.5! aria-[current=page]:bg-secondary aria-[current=page]:text-secondary-foreground sm:px-3!`}
             >
+              <item.icon className="size-4" aria-hidden />
               {item.label}
             </NextLink>
           ))}
-          <NextLink href={partnerHref(lang, '/password')} className={`${cta.ghost} px-3`}>
+          <NextLink
+            href={partnerHref(lang, '/password')}
+            className={`${cta.ghost} px-2.5! sm:px-3!`}
+          >
             <KeyRound className="size-4" aria-hidden />
             <span className="hidden md:inline">{t('changePassword')}</span>
             <span className="sr-only md:hidden">{t('changePassword')}</span>
           </NextLink>
-          <button type="button" className={`${cta.ghost} px-3`} onClick={() => void logout()}>
+          <button
+            type="button"
+            className={`${cta.ghost} px-2.5! sm:px-3!`}
+            onClick={() => void logout()}
+          >
             <LogOut className="size-4" aria-hidden />
             <span className="hidden md:inline">{t('signOut')}</span>
             <span className="sr-only md:hidden">{t('signOut')}</span>
@@ -337,15 +559,22 @@ export function PartnerFrame({
 
   const main = (content: ReactNode) => (
     <>
-      <main id="main" className="container-page w-full flex-1 py-6">
+      <main id="main" className="container-page w-full flex-1 py-8 md:py-10">
         {content}
       </main>
-      <Toaster position="bottom-right" richColors closeButton />
+      {/* Above the bar that saves an application (about 4.5 rem high), never over its buttons. */}
+      <Toaster
+        position="bottom-right"
+        richColors
+        closeButton
+        offset={{ bottom: '6rem', right: '1.5rem' }}
+        mobileOffset={{ bottom: '6rem' }}
+      />
     </>
   );
 
   if (state.status === 'loading') {
-    return main(<LoadingText />);
+    return main(<LoadingText variant="page" />);
   }
   if (state.status === 'failed') {
     return main(
@@ -385,7 +614,7 @@ export function PartnerFrame({
         <Header space={null} />
         {main(
           loadedSpace === undefined ? (
-            <LoadingText />
+            <LoadingText variant="page" />
           ) : (
             <Centered>
               <div role="alert" className={`${card} text-center`} data-testid="space-not-found">

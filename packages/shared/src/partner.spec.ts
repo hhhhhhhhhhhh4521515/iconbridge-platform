@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { LOCALES, PARTNER_LOCALES } from './i18n.js';
 import { PARTNER_WORK_PERMIT_STATUSES } from './enums.js';
 import {
+  createPartnerJobSchema,
+  deletePartnerJobSchema,
+  partnerJobIssues,
   createPartnerApplicationSchema,
   createPartnerLoginSchema,
   listPartnerApplicationsQuerySchema,
@@ -147,5 +150,61 @@ describe('partner applications: the work permit', () => {
       listPartnerApplicationsQuerySchema.safeParse({ workPermitStatus: 'APPOINTMENT_BOOKED' })
         .success,
     ).toBe(false);
+  });
+});
+
+describe('partner job demands: the salary (ADR-027, amendment 3)', () => {
+  const job = { role: 'Cook', positions: 2, locations: ['Kraków'] };
+
+  it('takes all three parts or none', () => {
+    expect(createPartnerJobSchema.safeParse(job).success).toBe(true);
+    expect(
+      createPartnerJobSchema.safeParse({
+        ...job,
+        salaryAmount: 3000,
+        salaryCurrency: 'PLN',
+        salaryPeriod: 'MONTH',
+      }).success,
+    ).toBe(true);
+    for (const half of [
+      { salaryAmount: 3000 },
+      { salaryAmount: 3000, salaryCurrency: 'PLN' },
+      { salaryCurrency: 'PLN', salaryPeriod: 'MONTH' },
+      { salaryPeriod: 'HOUR' },
+    ]) {
+      const parsed = createPartnerJobSchema.safeParse({ ...job, ...half });
+      expect(parsed.success).toBe(false);
+      expect(parsed.error?.issues[0]?.message).toBe(
+        'The salary needs an amount, a currency and a period',
+      );
+    }
+  });
+
+  it('names the first missing part, and checks a merged state', () => {
+    expect(
+      partnerJobIssues({ salaryAmount: 1, salaryCurrency: 'EUR', salaryPeriod: null }),
+    ).toEqual([
+      { path: 'salaryPeriod', message: 'The salary needs an amount, a currency and a period' },
+    ]);
+    expect(
+      partnerJobIssues({ salaryAmount: null, salaryCurrency: null, salaryPeriod: null }),
+    ).toEqual([]);
+  });
+
+  it('refuses an amount of 0, a fraction and an unknown currency', () => {
+    const full = { ...job, salaryCurrency: 'PLN', salaryPeriod: 'MONTH' };
+    expect(createPartnerJobSchema.safeParse({ ...full, salaryAmount: 0 }).success).toBe(false);
+    expect(createPartnerJobSchema.safeParse({ ...full, salaryAmount: 1.5 }).success).toBe(false);
+    expect(createPartnerJobSchema.safeParse({ ...full, salaryAmount: 1 }).success).toBe(true);
+    expect(
+      createPartnerJobSchema.safeParse({ ...full, salaryAmount: 1, salaryCurrency: 'XYZ' }).success,
+    ).toBe(false);
+  });
+
+  it('asks for the role to delete a job demand', () => {
+    expect(deletePartnerJobSchema.safeParse({ confirmName: '  ' }).success).toBe(false);
+    expect(deletePartnerJobSchema.parse({ confirmName: ' Cook ' })).toEqual({
+      confirmName: 'Cook',
+    });
   });
 });

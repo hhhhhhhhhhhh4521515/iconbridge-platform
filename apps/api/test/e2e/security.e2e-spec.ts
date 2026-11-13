@@ -77,6 +77,7 @@ const PARTNER_ROUTES = [
   'POST /api/v1/partner-spaces/:spaceId/jobs',
   'GET /api/v1/partner-spaces/:spaceId/jobs/:jobId',
   'PATCH /api/v1/partner-spaces/:spaceId/jobs/:jobId',
+  'DELETE /api/v1/partner-spaces/:spaceId/jobs/:jobId',
   'POST /api/v1/partner-spaces/:spaceId/jobs/:jobId/close',
   'POST /api/v1/partner-spaces/:spaceId/jobs/:jobId/reopen',
   'GET /api/v1/partner-spaces/:spaceId/jobs/:jobId/comments',

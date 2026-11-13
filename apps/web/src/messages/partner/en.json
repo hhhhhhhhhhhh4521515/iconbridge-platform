@@ -75,10 +75,29 @@
       "newJob": "New job demand",
       "open": "Open",
       "closed": "Closed",
-      "empty": "No job demand yet.",
+      "empty": "No job demand yet. Create the first one, then put people forward for it.",
       "positions": "{count, plural, one {# position} other {# positions}}",
       "applications": "{count, plural, one {# application} other {# applications}}",
-      "places": "Places"
+      "places": "Places",
+      "openJobs": "Open job demands",
+      "closedJobs": "Closed job demands",
+      "createFirst": "Create the first job demand",
+      "filled": "{filled} / {positions} filled",
+      "filledLabel": "Positions filled",
+      "updated": "Updated {date}",
+      "noApplicationsYet": "No application yet.",
+      "workPermitStage": "Work permit",
+      "visaStage": "Visa",
+      "location": "Location",
+      "salary": "Salary",
+      "noSalary": "Salary not given",
+      "summary": {
+        "label": "Summary of the space",
+        "openJobs": "Open demands",
+        "candidates": "Candidates",
+        "permitsApproved": "Work permits approved",
+        "visasApproved": "Visas approved"
+      }
     },
     "workPermit": {
       "NOT_STARTED": "Not started",
@@ -93,7 +112,9 @@
       "APPOINTMENT_BOOKED": "Appointment booked",
       "SUBMITTED": "Submitted",
       "APPROVED": "Approved",
-      "REFUSED": "Refused"
+      "REFUSED": "Refused",
+      "all": "All",
+      "filter": "Filter by visa status"
     },
     "job": {
       "newTitle": "New job demand",
@@ -103,8 +124,8 @@
       "positions": "Number of positions",
       "places": "Places",
       "placesHint": "One place per line, at most 10.",
-      "salary": "Salary (optional)",
-      "salaryHint": "For example: 4,500 PLN gross a month",
+      "salary": "Salary details (optional)",
+      "salaryHint": "For example: gross, plus accommodation",
       "description": "Description (optional)",
       "create": "Create the job demand",
       "save": "Save",
@@ -122,7 +143,26 @@
       "back": "All job demands",
       "edit": "Edit",
       "cancel": "Cancel",
-      "noFilteredApplications": "No application with this work permit status."
+      "noFilteredApplications": "No application matches these filters.",
+      "pageTitle": "Job demand",
+      "details": "Details",
+      "positionsLabel": "Positions",
+      "locationLabel": "Location",
+      "salaryLabel": "Salary",
+      "descriptionLabel": "Description",
+      "notGiven": "Not given",
+      "salaryLegend": "Salary (optional)",
+      "salaryAmount": "Amount",
+      "salaryCurrency": "Currency",
+      "salaryPeriod": "Per",
+      "salaryValue": "{amount} {currency} / {period}",
+      "per": {
+        "HOUR": "hour",
+        "MONTH": "month",
+        "YEAR": "year"
+      },
+      "search": "Search by name",
+      "searchPlaceholder": "Search by first or last name"
     },
     "table": {
       "name": "Name",
@@ -132,7 +172,8 @@
       "decision": "Decision",
       "dhlSent": "DHL sent",
       "documentsReceived": "Documents received",
-      "workPermit": "Work permit"
+      "workPermit": "Work permit",
+      "candidate": "Candidate"
     },
     "application": {
       "newTitle": "New application",
@@ -165,7 +206,11 @@
       "workPermitStatus": "Work permit status",
       "workPermitSubmitted": "Submission date (optional)",
       "workPermitDecisionHint": "Only when the work permit is approved or refused.",
-      "workPermitFileHint": "Upload the work permit itself in the Files box."
+      "workPermitFileHint": "Upload the work permit itself in the Files box.",
+      "pageTitle": "Application",
+      "unsaved": "You have unsaved changes.",
+      "discard": "Discard",
+      "saving": "Saving…"
     },
     "files": {
       "title": "Files",
@@ -182,7 +227,8 @@
       "uploaded": "File uploaded.",
       "by": "{name}, {date}",
       "uploading": "Uploading…",
-      "chooseFile": "Choose the file: {kind}"
+      "chooseFile": "Choose the file: {kind}",
+      "orDrop": "or drop a file here"
     },
     "delete": {
       "button": "Delete the application",
@@ -249,7 +295,8 @@
         "FILE_REPLACED": "File replaced",
         "FILE_PREVIEWED": "File previewed",
         "FILE_DOWNLOADED": "File downloaded",
-        "other": "Change"
+        "other": "Change",
+        "JOB_DELETED": "Job demand deleted"
       },
       "field": {
         "name": "name",
@@ -261,7 +308,7 @@
         "role": "role",
         "positions": "positions",
         "locations": "places",
-        "salary": "salary",
+        "salary": "salary details",
         "description": "description",
         "status": "status",
         "firstName": "first name",
@@ -281,7 +328,10 @@
         "workPermitStatus": "work permit status",
         "workPermitSubmittedDate": "work permit submitted",
         "workPermitDecisionDate": "work permit decision",
-        "other": "{name}"
+        "other": "{name}",
+        "salaryAmount": "salary amount",
+        "salaryCurrency": "currency",
+        "salaryPeriod": "salary period"
       }
     },
     "errors": {
@@ -300,7 +350,8 @@
       "decisionNeedsStatus": "A decision date needs the visa status Approved or Refused.",
       "trackingNeedsDate": "A tracking number needs the date it was sent.",
       "typeName": "Type the name exactly as shown.",
-      "permitDecisionNeedsStatus": "A decision date needs the work permit status Approved or Refused."
+      "permitDecisionNeedsStatus": "A decision date needs the work permit status Approved or Refused.",
+      "salaryIncomplete": "Give an amount, a currency and a period, or none of them."
     },
     "api": {
       "INVALID_CREDENTIALS": "The email address or the password is wrong.",
@@ -318,7 +369,8 @@
       "UNAUTHENTICATED": "Your session has ended. Sign in again.",
       "FORBIDDEN": "You cannot do this.",
       "CONFLICT": "This cannot be done in the current state.",
-      "INTERNAL_ERROR": "Something went wrong. Try again in a moment."
+      "INTERNAL_ERROR": "Something went wrong. Try again in a moment.",
+      "JOB_HAS_APPLICATIONS": "A job demand with applications cannot be deleted."
     },
     "ui": {
       "loading": "Loading…",
@@ -326,6 +378,39 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…"
+    },
+    "deleteJob": {
+      "button": "Delete",
+      "title": "Delete this job demand?",
+      "willRemove": "This deletes the job demand and its comments for good. Only a job demand without applications can be deleted.",
+      "keeps": "The history keeps one line with the role, who deleted it and when.",
+      "typeName": "Type the role to confirm: {name}",
+      "confirm": "Delete for good",
+      "done": "Job demand deleted."
+    },
+    "steps": {
+      "label": "Progress of the application",
+      "workPermit": "Work permit",
+      "appointment": "Visa appointment",
+      "decision": "Visa decision",
+      "dhl": "DHL sent",
+      "documents": "Documents received",
+      "done": "Done",
+      "current": "In progress",
+      "refused": "Refused",
+      "todo": "Not yet",
+      "doneShort": "Done",
+      "currentShort": "In progress",
+      "refusedShort": "Refused",
+      "todoShort": "Not yet"
+    },
+    "datePicker": {
+      "choose": "Choose a date",
+      "clear": "Clear the date: {label}",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "month": "Month",
+      "year": "Year"
     }
   },
   "common": {

@@ -1870,3 +1870,26 @@ The measured volume after the deployment is added to the pull request.
     The local `.env.e2e-prod` still had the default Container Apps address. The site redirects it to the domain, so `page.request` went without cookies (401).
 
 **PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/105>
+
+## 2026-11-13 - The partner area as a dashboard
+
+**What** (ADR-027, amendment 3):
+
+- **Home:** a band with the partner's logo, name and flag; four counts (open demands, candidates, work permits approved, visas approved); the job demands as cards with place, salary ("4,500 PLN / month"), positions filled (visas approved) with a bar, chips per stage, an Open/Closed badge and the last update; an empty state with "Create the first job demand".
+- **Job demand:** labelled facts. The applications are a table on desktop and cards on phones, with initials and coloured badges (grey, blue, green, red). Filter chips by work permit and visa status, and a search by name.
+- **Application:** a progress stepper and section cards with icons. Dates come from a calendar in the page's language, which replaces the three lists. A fixed save bar appears when something changed. The Files card has type icons, size, uploader and drag-and-drop. Comments are a thread, the history a timeline.
+- **Job demand salary:** amount, currency and period, all three or none (API rule and CHECK constraint, additive migration). The free text stays as details.
+- **Deleting a job demand:** a super admin who is a member, only without applications, after typing the role. One history entry with the role remains, and an audit entry with counts.
+- **Polish:** one card style (rounded, soft shadow, hover), skeletons while loading, icons in the menu, and toasts above the save bar.
+
+**Why**: production feedback asked for a professional dashboard that matches the public site.
+
+**Checks**:
+
+- `pnpm lint`, `typecheck`, `test` (api 374, shared 258, web 90) and `test:e2e` (637) passed, as did `build`.
+- The IDOR suite gains the salary rule (with the database CHECK) and the job deletion matrix (members, outsiders, a non-member super admin, the wrong role, another space, a demand with applications).
+- `pnpm test:browser` (Chromium and Firefox): 214 passed. The new dashboard test covers the summary, salary, filters, search, calendar, save bar, stepper and deletion. axe runs on every partner screen in light and dark mode and at 375 px, with no horizontal scroll.
+- WebKit: the partner and site-link specs passed (61). Two candidate tests failed once under load in the full WebKit run and passed when re-run; this branch does not touch them.
+- Screenshots of every screen in English, desktop and phone: `docs/screenshots/partner-area/`.
+
+**PR**: <https://github.com/hhhhhhhhhhhh4521515/iconbridge-platform/pull/106>

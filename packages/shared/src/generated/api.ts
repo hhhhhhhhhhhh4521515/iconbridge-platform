@@ -1802,7 +1802,11 @@ export interface paths {
         get: operations["PartnerAreaController_getJob"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete a job demand without applications (super admin)
+         * @description For a super admin who is a member of the space. `confirmName` is the role of the job demand. Other members get 404; a job demand with applications answers 409 JOB_HAS_APPLICATIONS. Its comments go; the history keeps one entry with the role.
+         */
+        delete: operations["PartnerAreaController_deleteJob"];
         options?: never;
         head?: never;
         /** Edit a job demand */
@@ -13408,6 +13412,11 @@ export interface operations {
                         role: string;
                         positions: number;
                         locations: string[];
+                        salaryAmount: number | null;
+                        /** @enum {string|null} */
+                        salaryCurrency: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                        /** @enum {string|null} */
+                        salaryPeriod: "HOUR" | "MONTH" | "YEAR" | null;
                         salary: string | null;
                         description: string;
                         /** @enum {string} */
@@ -13513,6 +13522,18 @@ export interface operations {
                     positions: number;
                     locations: string[];
                     /** @default null */
+                    salaryAmount?: number | null;
+                    /**
+                     * @default null
+                     * @enum {string|null}
+                     */
+                    salaryCurrency?: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                    /**
+                     * @default null
+                     * @enum {string|null}
+                     */
+                    salaryPeriod?: "HOUR" | "MONTH" | "YEAR" | null;
+                    /** @default null */
                     salary?: string | null;
                     /** @default  */
                     description?: string;
@@ -13531,6 +13552,11 @@ export interface operations {
                         role: string;
                         positions: number;
                         locations: string[];
+                        salaryAmount: number | null;
+                        /** @enum {string|null} */
+                        salaryCurrency: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                        /** @enum {string|null} */
+                        salaryPeriod: "HOUR" | "MONTH" | "YEAR" | null;
                         salary: string | null;
                         description: string;
                         /** @enum {string} */
@@ -13643,6 +13669,11 @@ export interface operations {
                         role: string;
                         positions: number;
                         locations: string[];
+                        salaryAmount: number | null;
+                        /** @enum {string|null} */
+                        salaryCurrency: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                        /** @enum {string|null} */
+                        salaryPeriod: "HOUR" | "MONTH" | "YEAR" | null;
                         salary: string | null;
                         description: string;
                         /** @enum {string} */
@@ -13717,6 +13748,107 @@ export interface operations {
             };
         };
     };
+    PartnerAreaController_deleteJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: unknown;
+                spaceId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirmName: string;
+                };
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "EMAIL_NOT_VERIFIED" | "NOT_FOUND" | "CONFLICT" | "EMAIL_TAKEN" | "INVALID_TOKEN" | "WEAK_PASSWORD" | "CAPTCHA_FAILED" | "LAST_SUPER_ADMIN" | "CANNOT_DISABLE_SELF" | "INVALID_JOB_TRANSITION" | "JOB_NOT_PUBLISHABLE" | "JOB_HAS_APPLICATIONS" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "DOCUMENT_IN_USE" | "PROFILE_INCOMPLETE" | "PASSPORT_EXPIRED" | "JOB_NOT_OPEN" | "MAX_ACTIVE_APPLICATIONS" | "CANNOT_WITHDRAW" | "INVALID_APPLICATION_TRANSITION" | "NO_POSITION_LEFT" | "CONSENT_REQUIRED" | "IMAGE_REQUIRED" | "RATE_LIMITED" | "REAPPLY_COOLDOWN" | "UNDO_NOT_ALLOWED" | "COOLDOWN_WAIVER_NOT_ALLOWED" | "PASSWORD_CHANGE_REQUIRED" | "PARTNER_SPACE_NAME_TAKEN" | "CONFIRMATION_MISMATCH" | "NOT_A_STAFF_ACCOUNT" | "STORAGE_UNAVAILABLE" | "INTERNAL_ERROR";
+                        message: string;
+                        details?: unknown;
+                        /** Format: date-time */
+                        nextAllowedAt?: string;
+                    };
+                };
+            };
+        };
+    };
     PartnerAreaController_updateJob: {
         parameters: {
             query?: never;
@@ -13733,6 +13865,11 @@ export interface operations {
                     role?: string;
                     positions?: number;
                     locations?: string[];
+                    salaryAmount?: number | null;
+                    /** @enum {string|null} */
+                    salaryCurrency?: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                    /** @enum {string|null} */
+                    salaryPeriod?: "HOUR" | "MONTH" | "YEAR" | null;
                     salary?: string | null;
                     description?: string;
                 };
@@ -13750,6 +13887,11 @@ export interface operations {
                         role: string;
                         positions: number;
                         locations: string[];
+                        salaryAmount: number | null;
+                        /** @enum {string|null} */
+                        salaryCurrency: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                        /** @enum {string|null} */
+                        salaryPeriod: "HOUR" | "MONTH" | "YEAR" | null;
                         salary: string | null;
                         description: string;
                         /** @enum {string} */
@@ -13862,6 +14004,11 @@ export interface operations {
                         role: string;
                         positions: number;
                         locations: string[];
+                        salaryAmount: number | null;
+                        /** @enum {string|null} */
+                        salaryCurrency: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                        /** @enum {string|null} */
+                        salaryPeriod: "HOUR" | "MONTH" | "YEAR" | null;
                         salary: string | null;
                         description: string;
                         /** @enum {string} */
@@ -13959,6 +14106,11 @@ export interface operations {
                         role: string;
                         positions: number;
                         locations: string[];
+                        salaryAmount: number | null;
+                        /** @enum {string|null} */
+                        salaryCurrency: "EUR" | "PLN" | "USD" | "GBP" | "CHF" | "CZK" | null;
+                        /** @enum {string|null} */
+                        salaryPeriod: "HOUR" | "MONTH" | "YEAR" | null;
                         salary: string | null;
                         description: string;
                         /** @enum {string} */

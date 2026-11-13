@@ -75,10 +75,29 @@
       "newJob": "Nowe zapotrzebowanie",
       "open": "Otwarte",
       "closed": "Zamknięte",
-      "empty": "Nie ma jeszcze zapotrzebowań.",
+      "empty": "Nie ma jeszcze zapotrzebowań. Utwórz pierwsze, a potem dodaj do niego kandydatów.",
       "positions": "{count, plural, one {# stanowisko} few {# stanowiska} many {# stanowisk} other {# stanowiska}}",
       "applications": "{count, plural, one {# kandydatura} few {# kandydatury} many {# kandydatur} other {# kandydatury}}",
-      "places": "Miejsca"
+      "places": "Miejsca",
+      "openJobs": "Otwarte zapotrzebowania",
+      "closedJobs": "Zamknięte zapotrzebowania",
+      "createFirst": "Utwórz pierwsze zapotrzebowanie",
+      "filled": "Obsadzono {filled} z {positions}",
+      "filledLabel": "Obsadzone stanowiska",
+      "updated": "Zaktualizowano {date}",
+      "noApplicationsYet": "Nie ma jeszcze kandydatur.",
+      "workPermitStage": "Zezwolenie na pracę",
+      "visaStage": "Wiza",
+      "location": "Miejsce",
+      "salary": "Wynagrodzenie",
+      "noSalary": "Wynagrodzenie nie podane",
+      "summary": {
+        "label": "Podsumowanie przestrzeni",
+        "openJobs": "Otwarte zapotrzebowania",
+        "candidates": "Kandydaci",
+        "permitsApproved": "Przyznane zezwolenia na pracę",
+        "visasApproved": "Przyznane wizy"
+      }
     },
     "workPermit": {
       "NOT_STARTED": "Nierozpoczęte",
@@ -93,7 +112,9 @@
       "APPOINTMENT_BOOKED": "Termin umówiony",
       "SUBMITTED": "Złożona",
       "APPROVED": "Przyznana",
-      "REFUSED": "Odmowa"
+      "REFUSED": "Odmowa",
+      "all": "Wszystkie",
+      "filter": "Filtruj według statusu wizy"
     },
     "job": {
       "newTitle": "Nowe zapotrzebowanie",
@@ -103,8 +124,8 @@
       "positions": "Liczba stanowisk",
       "places": "Miejsca",
       "placesHint": "Jedno miejsce w wierszu, najwyżej 10.",
-      "salary": "Wynagrodzenie (opcjonalnie)",
-      "salaryHint": "Na przykład: 4500 PLN brutto miesięcznie",
+      "salary": "Szczegóły wynagrodzenia (opcjonalnie)",
+      "salaryHint": "Na przykład: brutto, z zakwaterowaniem",
       "description": "Opis (opcjonalnie)",
       "create": "Utwórz zapotrzebowanie",
       "save": "Zapisz",
@@ -122,7 +143,26 @@
       "back": "Wszystkie zapotrzebowania",
       "edit": "Edytuj",
       "cancel": "Anuluj",
-      "noFilteredApplications": "Brak kandydatur z tym statusem zezwolenia na pracę."
+      "noFilteredApplications": "Żadna kandydatura nie pasuje do tych filtrów.",
+      "pageTitle": "Zapotrzebowanie",
+      "details": "Szczegóły",
+      "positionsLabel": "Stanowiska",
+      "locationLabel": "Miejsce",
+      "salaryLabel": "Wynagrodzenie",
+      "descriptionLabel": "Opis",
+      "notGiven": "Nie podano",
+      "salaryLegend": "Wynagrodzenie (opcjonalnie)",
+      "salaryAmount": "Kwota",
+      "salaryCurrency": "Waluta",
+      "salaryPeriod": "Za",
+      "salaryValue": "{amount} {currency} / {period}",
+      "per": {
+        "HOUR": "godzina",
+        "MONTH": "miesiąc",
+        "YEAR": "rok"
+      },
+      "search": "Szukaj po nazwisku",
+      "searchPlaceholder": "Szukaj po imieniu lub nazwisku"
     },
     "table": {
       "name": "Imię i nazwisko",
@@ -132,7 +172,8 @@
       "decision": "Decyzja",
       "dhlSent": "Wysyłka DHL",
       "documentsReceived": "Dokumenty otrzymane",
-      "workPermit": "Zezwolenie na pracę"
+      "workPermit": "Zezwolenie na pracę",
+      "candidate": "Kandydat"
     },
     "application": {
       "newTitle": "Nowa kandydatura",
@@ -165,7 +206,11 @@
       "workPermitStatus": "Status zezwolenia na pracę",
       "workPermitSubmitted": "Data złożenia (opcjonalnie)",
       "workPermitDecisionHint": "Tylko gdy zezwolenie na pracę zostało przyznane lub odmówione.",
-      "workPermitFileHint": "Samo zezwolenie na pracę dodaj w sekcji Pliki."
+      "workPermitFileHint": "Samo zezwolenie na pracę dodaj w sekcji Pliki.",
+      "pageTitle": "Kandydatura",
+      "unsaved": "Masz niezapisane zmiany.",
+      "discard": "Odrzuć zmiany",
+      "saving": "Zapisywanie…"
     },
     "files": {
       "title": "Pliki",
@@ -182,7 +227,8 @@
       "uploaded": "Plik dodany.",
       "by": "{name}, {date}",
       "uploading": "Wysyłanie…",
-      "chooseFile": "Wybierz plik: {kind}"
+      "chooseFile": "Wybierz plik: {kind}",
+      "orDrop": "lub upuść plik tutaj"
     },
     "delete": {
       "button": "Usuń kandydaturę",
@@ -249,7 +295,8 @@
         "FILE_REPLACED": "Plik zastąpiony",
         "FILE_PREVIEWED": "Podgląd pliku",
         "FILE_DOWNLOADED": "Plik pobrany",
-        "other": "Zmiana"
+        "other": "Zmiana",
+        "JOB_DELETED": "Zapotrzebowanie usunięte"
       },
       "field": {
         "name": "nazwa",
@@ -261,7 +308,7 @@
         "role": "stanowisko",
         "positions": "stanowiska",
         "locations": "miejsca",
-        "salary": "wynagrodzenie",
+        "salary": "szczegóły wynagrodzenia",
         "description": "opis",
         "status": "status",
         "firstName": "imię",
@@ -281,7 +328,10 @@
         "workPermitStatus": "status zezwolenia na pracę",
         "workPermitSubmittedDate": "złożenie zezwolenia na pracę",
         "workPermitDecisionDate": "decyzja w sprawie zezwolenia na pracę",
-        "other": "{name}"
+        "other": "{name}",
+        "salaryAmount": "kwota wynagrodzenia",
+        "salaryCurrency": "waluta",
+        "salaryPeriod": "okres wynagrodzenia"
       }
     },
     "errors": {
@@ -300,7 +350,8 @@
       "decisionNeedsStatus": "Data decyzji wymaga statusu Przyznana lub Odmowa.",
       "trackingNeedsDate": "Numer przesyłki wymaga daty wysyłki.",
       "typeName": "Wpisz nazwę dokładnie tak, jak podano.",
-      "permitDecisionNeedsStatus": "Data decyzji wymaga statusu zezwolenia na pracę Przyznane lub Odmowa."
+      "permitDecisionNeedsStatus": "Data decyzji wymaga statusu zezwolenia na pracę Przyznane lub Odmowa.",
+      "salaryIncomplete": "Podaj kwotę, walutę i okres albo żadne z nich."
     },
     "api": {
       "INVALID_CREDENTIALS": "Adres e-mail lub hasło jest nieprawidłowe.",
@@ -318,7 +369,8 @@
       "UNAUTHENTICATED": "Sesja wygasła. Zaloguj się ponownie.",
       "FORBIDDEN": "Nie możesz tego zrobić.",
       "CONFLICT": "W obecnym stanie nie jest to możliwe.",
-      "INTERNAL_ERROR": "Coś poszło nie tak. Spróbuj ponownie za chwilę."
+      "INTERNAL_ERROR": "Coś poszło nie tak. Spróbuj ponownie za chwilę.",
+      "JOB_HAS_APPLICATIONS": "Nie można usunąć zapotrzebowania, które ma kandydatury."
     },
     "ui": {
       "loading": "Ładowanie…",
@@ -326,6 +378,39 @@
       "cancel": "Anuluj",
       "save": "Zapisz",
       "saving": "Zapisywanie…"
+    },
+    "deleteJob": {
+      "button": "Usuń",
+      "title": "Usunąć to zapotrzebowanie?",
+      "willRemove": "Zapotrzebowanie i jego komentarze zostaną usunięte na zawsze. Można usunąć tylko zapotrzebowanie bez kandydatur.",
+      "keeps": "Historia zachowa jeden wpis ze stanowiskiem, osobą, która je usunęła, i datą.",
+      "typeName": "Wpisz stanowisko, aby potwierdzić: {name}",
+      "confirm": "Usuń na zawsze",
+      "done": "Zapotrzebowanie usunięte."
+    },
+    "steps": {
+      "label": "Postęp kandydatury",
+      "workPermit": "Zezwolenie na pracę",
+      "appointment": "Termin wizowy",
+      "decision": "Decyzja wizowa",
+      "dhl": "Wysłano DHL",
+      "documents": "Dokumenty otrzymane",
+      "done": "Zrobione",
+      "current": "W toku",
+      "refused": "Odmowa",
+      "todo": "Jeszcze nie",
+      "doneShort": "Zrobione",
+      "currentShort": "W toku",
+      "refusedShort": "Odmowa",
+      "todoShort": "Jeszcze nie"
+    },
+    "datePicker": {
+      "choose": "Wybierz datę",
+      "clear": "Wyczyść datę: {label}",
+      "previousMonth": "Poprzedni miesiąc",
+      "nextMonth": "Następny miesiąc",
+      "month": "Miesiąc",
+      "year": "Rok"
     }
   },
   "common": {

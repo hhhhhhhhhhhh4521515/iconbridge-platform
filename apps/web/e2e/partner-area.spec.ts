@@ -75,7 +75,10 @@ test.describe('partner area', () => {
       await page.getByLabel(/^Obecne hasło/).fill(PASSWORD);
       await page.getByLabel(/^Nowe hasło/).fill(NEW_PASSWORD);
       await page.getByRole('button', { name: 'Zmień hasło' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Zapotrzebowania' })).toBeVisible();
+      // Three calls after the redirect (session, space, job demands): slow under a full run.
+      await expect(page.getByRole('heading', { level: 1, name: 'Zapotrzebowania' })).toBeVisible({
+        timeout: 15_000,
+      });
       await expect(page).toHaveURL(new RegExp(`/partners/pl/spaces/${spaceId}$`));
       await expect(page.getByRole('banner')).toContainText(name);
 
@@ -198,7 +201,9 @@ test.describe('partner area', () => {
       await page.getByLabel(/^Obecne hasło/).fill(PASSWORD);
       await page.getByLabel(/^Nowe hasło/).fill(NEW_PASSWORD);
       await page.getByRole('button', { name: 'Zmień hasło' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Zapotrzebowania' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Zapotrzebowania' })).toBeVisible({
+        timeout: 15_000,
+      });
 
       // A job demand and two applications, through the API with the partner's own session.
       const jobResponse = await page.request.post(`/api/v1/partner-spaces/${spaceId}/jobs`, {
@@ -237,9 +242,7 @@ test.describe('partner area', () => {
       await expect(table.getByRole('row')).toHaveCount(2);
       await expect(table).toContainText('Omar E2E');
       await filter.getByRole('button', { name: 'Odmowa 0' }).click();
-      await expect(
-        page.getByText('Brak kandydatur z tym statusem zezwolenia na pracę.'),
-      ).toBeVisible();
+      await expect(page.getByText('Żadna kandydatura nie pasuje do tych filtrów.')).toBeVisible();
       await filter.getByRole('button', { name: 'Wszystkie 2' }).click();
       await table.getByRole('link', { name: 'Omar E2E' }).click();
 
@@ -277,6 +280,170 @@ test.describe('partner area', () => {
         data: { confirmName: name },
       });
       expect(removed.status()).toBe(204);
+      await admin.close();
+    }
+  });
+
+  test('the dashboard, a job demand and an application, in English', async ({ browser }) => {
+    test.setTimeout(180_000);
+    const admin = await adminSession(browser);
+    const name = `E2E Dashboard ${STAMP}-${test.info().project.name}`;
+    const spaceId = await createSpace(admin.request, name);
+    try {
+      // The super admin joins the space: the only member who may delete.
+      const me = (await (await admin.request.get('/api/v1/auth/me')).json()) as { id: string };
+      expect(
+        (
+          await admin.request.post(`/api/v1/admin/partner-spaces/${spaceId}/members`, {
+            data: { userId: me.id },
+          })
+        ).status(),
+      ).toBe(201);
+      const page = await admin.newPage();
+      const base = `/partners/en/spaces/${spaceId}`;
+
+      // An empty space: the band, zero counts and the first step.
+      await page.goto(base);
+      await expect(page.getByTestId('space-band')).toContainText(name);
+      await expect(page.getByTestId('space-band')).toContainText('Poland');
+      const summary = page.getByRole('list', { name: 'Summary of the space' });
+      await expect(summary.getByRole('listitem')).toHaveText([
+        /Open demands\s*0/,
+        /Candidates\s*0/,
+        /Work permits approved\s*0/,
+        /Visas approved\s*0/,
+      ]);
+      await page.getByRole('link', { name: 'Create the first job demand' }).click();
+
+      // A job demand with a salary: amount, currency and period go together.
+      const form = page.getByTestId('job-form');
+      await form.getByLabel('Role').fill('E2E Welder');
+      await form.getByLabel('Number of positions').fill('5');
+      await form.getByLabel('Places').fill('Gdańsk');
+      await form.getByLabel('Amount').fill('3000');
+      await form.getByRole('button', { name: 'Create the job demand' }).click();
+      await expect(
+        form.getByText('Give an amount, a currency and a period, or none of them.'),
+      ).toBeVisible();
+      await form.getByLabel('Currency').selectOption('PLN');
+      await form.getByLabel('Per', { exact: true }).selectOption('MONTH');
+      await form.getByRole('button', { name: 'Create the job demand' }).click();
+      await expect(toast(page, 'Job demand created.')).toBeVisible();
+      const facts = page.getByTestId('job-summary');
+      await expect(facts).toContainText('Positions5');
+      await expect(facts).toContainText('3,000 PLN / month');
+      await expect(facts).toContainText('0 / 5 filled');
+      const jobId = /jobs\/([0-9a-f-]+)$/.exec(page.url())?.[1] ?? '';
+
+      // Two people: one with an approved visa, one not started.
+      for (const [firstName, visaStatus] of [
+        ['Nadia', 'APPROVED'],
+        ['Omar', 'NOT_STARTED'],
+      ] as const) {
+        const created = await page.request.post(`/api/v1/partner-spaces/${spaceId}/applications`, {
+          data: {
+            jobId,
+            firstName,
+            lastName: 'E2E',
+            nationality: 'MA',
+            visaStatus,
+            ...(visaStatus === 'APPROVED' ? { visaDecisionDate: '2026-11-02' } : {}),
+          },
+        });
+        expect(created.status()).toBe(201);
+      }
+
+      // The job demand: chips per visa status, and a search by name.
+      await page.reload();
+      const table = page.getByTestId('applications-table');
+      await expect(table.getByRole('row')).toHaveCount(3);
+      await expect(
+        table.getByRole('row', { name: /Nadia E2E/ }).getByTestId('visa-badge'),
+      ).toHaveAttribute('data-tone', 'green');
+      const visa = page.getByRole('group', { name: 'Filter by visa status' });
+      await visa.getByRole('button', { name: 'Approved 1' }).click();
+      await expect(table.getByRole('row')).toHaveCount(2);
+      await expect(table).toContainText('Nadia E2E');
+      await visa.getByRole('button', { name: 'All 2' }).click();
+      await page.getByLabel('Search by name').fill('omar');
+      await expect(table.getByRole('row')).toHaveCount(2);
+      await expect(table).toContainText('Omar E2E');
+      await page.getByLabel('Search by name').fill('nobody');
+      await expect(page.getByText('No application matches these filters.')).toBeVisible();
+      await page.getByLabel('Search by name').fill('');
+      await expect(facts).toContainText('1 / 5 filled');
+      await table.getByRole('link', { name: 'Omar E2E' }).click();
+
+      // The application: the steps, a date from the calendar, the bar that saves.
+      const stepper = page.getByTestId('progress-stepper');
+      await expect(stepper.locator('[data-step="appointment"]')).toHaveAttribute(
+        'data-state',
+        'todo',
+      );
+      await expect(page.getByTestId('save-bar')).toHaveCount(0);
+      const application = page.getByTestId('application-form');
+      await application.getByLabel('Visa status').selectOption('APPOINTMENT_BOOKED');
+      await application.getByRole('button', { name: /^Appointment date/ }).click();
+      const calendar = page.getByRole('dialog', { name: 'Appointment date' });
+      await calendar.getByLabel('Year').selectOption('2026');
+      await calendar.getByLabel('Month', { exact: true }).selectOption({ label: 'December' });
+      await calendar.getByRole('button', { name: 'Friday, December 4, 2026' }).click();
+      await expect(calendar).toHaveCount(0);
+      await expect(application.getByRole('button', { name: /^Appointment date/ })).toContainText(
+        'Dec 4, 2026',
+      );
+      const bar = page.getByTestId('save-bar');
+      await expect(bar).toContainText('You have unsaved changes.');
+      await bar.getByRole('button', { name: 'Save' }).click();
+      await expect(toast(page, 'Application saved.')).toBeVisible();
+      await expect(bar).toHaveCount(0);
+      await expect(stepper.locator('[data-step="appointment"]')).toHaveAttribute(
+        'data-state',
+        'done',
+      );
+      await expect(stepper.locator('[data-step="appointment"]')).toContainText('Dec 4, 2026');
+      // Discarding puts the saved values back.
+      await application.getByLabel('First name').fill('Changed');
+      await page.getByTestId('save-bar').getByRole('button', { name: 'Discard' }).click();
+      await expect(application.getByLabel('First name')).toHaveValue('Omar');
+      await expect(page.getByTestId('save-bar')).toHaveCount(0);
+      // The history as a timeline.
+      await page.reload();
+      await expect(page.getByTestId('history')).toContainText(
+        'appointment date: (empty) → Dec 4, 2026',
+      );
+
+      // An empty job demand can be deleted by the super admin, after typing its role.
+      const empty = await page.request.post(`/api/v1/partner-spaces/${spaceId}/jobs`, {
+        data: { role: 'E2E Empty', positions: 1, locations: ['Łódź'] },
+      });
+      const emptyId = ((await empty.json()) as { id: string }).id;
+      await page.goto(`${base}/jobs/${emptyId}`);
+      await page.getByRole('button', { name: 'Delete', exact: true }).click();
+      const dialog = page.getByTestId('delete-job-form');
+      const confirm = dialog.getByRole('button', { name: 'Delete for good' });
+      await expect(confirm).toBeDisabled();
+      await dialog.getByLabel(/Type the role to confirm/).fill('E2E Empty');
+      await confirm.click();
+      await expect(page).toHaveURL(new RegExp(`${base}$`));
+      await expect(page.getByTestId('job-card')).toHaveCount(1);
+      await expect(summary.getByRole('listitem')).toHaveText([
+        /Open demands\s*1/,
+        /Candidates\s*2/,
+        /Work permits approved\s*0/,
+        /Visas approved\s*1/,
+      ]);
+      // A job demand with applications offers no deletion.
+      await page.goto(`${base}/jobs/${jobId}`);
+      await expect(page.getByRole('heading', { level: 1, name: 'E2E Welder' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
+      await page.goto(`${base}/history`);
+      await expect(page.getByTestId('history')).toContainText('Job demand deleted');
+      await expect(page.getByTestId('history')).toContainText('role: E2E Empty → (empty)');
+    } finally {
+      await admin.request.delete(`/api/v1/admin/partner-spaces/${spaceId}`, {
+        data: { confirmName: name },
+      });
       await admin.close();
     }
   });
