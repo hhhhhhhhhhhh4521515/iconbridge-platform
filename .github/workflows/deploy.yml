@@ -64,11 +64,12 @@ jobs:
           echo "In production: $deployed"
           files=$(git diff --name-only "$deployed" HEAD)
           printf '%s\n' "$files"
-          if grep -qvE '^docs/|\.md$|^infra/terraform/' <<<"$files"; then
+          # Not in any image: docs, Terraform, and the tests (browser tests, API e2e, specs).
+          if grep -qvE '^docs/|\.md$|^infra/terraform/|^apps/web/e2e/|^apps/api/test/|\.(spec|test)\.tsx?$' <<<"$files"; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           else
             echo "deploy=false" >> "$GITHUB_OUTPUT"
-            echo "Documentation and Terraform only: nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+            echo "Documentation, Terraform and tests only: nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   build:

@@ -10,6 +10,8 @@ import { PDF } from './support';
  * - the test candidate signs in and opens the account pages;
  * - it uploads one test document, reads it through its 5-minute link (Blob Storage with
  *   the managed identity) and deletes it: the only data created, removed in the test;
+ * - the partner area: the sign-in without a session, `noindex`, nothing for the candidate,
+ *   Turnstile checked before the password (no partner data exists or is created);
  * - the public figures (jobs, success stories, counters with the historical figures) are
  *   the same before and after: real data is untouched.
  *
@@ -112,6 +114,38 @@ test('production: public pages, test candidate, nothing real changed', async ({
     }
     const left = (await (await api.get('/api/v1/me/documents')).json()) as { id: string }[];
     expect(left.map((document) => document.id)).not.toContain(id);
+  });
+
+  await test.step('the partner area is fenced off, and creates nothing (ADR-027)', async () => {
+    // Without a session: the partner sign-in, never indexed.
+    const visitor = await request.get('/partners', { maxRedirects: 0 });
+    expect(visitor.status()).toBe(307);
+    expect(visitor.headers().location).toMatch(/\/partners\/(en|fr|pl)$/);
+    const login = await request.get('/partners/en/login');
+    expect(login.status()).toBe(200);
+    expect(login.headers()['x-robots-tag']).toContain('noindex');
+    expect(login.headers()['content-security-policy']).toContain("'strict-dynamic'");
+    const unknownSpace = '00000000-0000-4000-8000-000000000000';
+    const privatePage = await request.get(`/partners/pl/spaces/${unknownSpace}`, {
+      maxRedirects: 0,
+    });
+    expect(privatePage.status()).toBe(307);
+    expect(privatePage.headers().location).toContain('/partners/pl/login?next=');
+    // The test candidate is not a member of anything, and its account is not a partner login.
+    const api = page.request;
+    const spaces = await api.get('/api/v1/partner-spaces');
+    expect(spaces.status()).toBe(200);
+    expect(await spaces.json()).toEqual([]);
+    expect((await api.get(`/api/v1/partner-spaces/${unknownSpace}`)).status()).toBe(404);
+    // Turnstile is checked before the password: a bad token is refused, nothing is counted.
+    const signIn = await request.post('/api/v1/auth/partner-login', {
+      data: { email: EMAIL, password: PASSWORD, turnstileToken: 'e2e-not-a-token' },
+    });
+    expect(signIn.status()).toBe(400);
+    expect(((await signIn.json()) as { code: string }).code).toBe('CAPTCHA_FAILED');
+    // In the browser, a candidate session gets the "not for this account" screen.
+    await page.goto('/partners/en');
+    await expect(page.getByRole('alert')).toBeVisible();
   });
 
   await test.step('real jobs, success stories and figures are untouched', async () => {
