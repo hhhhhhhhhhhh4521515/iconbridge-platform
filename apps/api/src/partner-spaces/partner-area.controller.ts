@@ -28,6 +28,7 @@ import {
   createPartnerCommentSchema,
   createPartnerJobSchema,
   deletePartnerApplicationSchema,
+  deletePartnerJobSchema,
   downloadQuerySchema,
   PARTNER_FILE_KINDS,
   PARTNER_HISTORY_ENTITY_TYPES,
@@ -53,6 +54,7 @@ import {
   type CreatePartnerCommentInput,
   type CreatePartnerJobInput,
   type DeletePartnerApplicationInput,
+  type DeletePartnerJobInput,
   type DownloadQuery,
   type PartnerFile,
   type PartnerFileKind,
@@ -247,6 +249,37 @@ export class PartnerAreaController {
     @CurrentUser() user: AuthUser,
   ): Promise<PartnerJob> {
     return this.area.setJobStatus(space.id, params.jobId, 'OPEN', user);
+  }
+
+  @Delete(':spaceId/jobs/:jobId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @PartnerSpaceRoute()
+  @ApiOperation({
+    summary: 'Delete a job demand without applications (super admin)',
+    description:
+      'For a super admin who is a member of the space. `confirmName` is the role of the job ' +
+      'demand. Other members get 404; a job demand with applications answers 409 ' +
+      'JOB_HAS_APPLICATIONS. Its comments go; the history keeps one entry with the role.',
+  })
+  @ApiParam(SPACE_PARAM)
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiZodBody(deletePartnerJobSchema)
+  @ApiResponse({ status: 204 })
+  @ApiErrors(400, 401, 403, 404, 409)
+  async deleteJob(
+    @ZodParams(partnerJobParamsSchema) params: JobParams,
+    @ZodBody(deletePartnerJobSchema) body: DeletePartnerJobInput,
+    @CurrentSpace() space: PartnerSpaceContext,
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.area.deleteJob(
+      space.id,
+      params.jobId,
+      body.confirmName,
+      user,
+      requestMeta(request).ip,
+    );
   }
 
   @Get(':spaceId/jobs/:jobId/comments')

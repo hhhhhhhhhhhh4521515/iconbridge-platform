@@ -3,6 +3,7 @@ import {
   PARTNER_VISA_STATUSES,
   PARTNER_WORK_PERMIT_STATUSES,
   partnerApplicationIssues,
+  partnerJobIssues,
   partnerLocaleSchema,
   type CreatePartnerApplicationInput,
   type CreatePartnerCommentInput,
@@ -15,6 +16,8 @@ import {
   type PartnerHistoryEntry,
   type PartnerJob,
   type PartnerFileKind,
+  type PartnerSalaryCurrency,
+  type PartnerSalaryPeriod,
   type PartnerSpaceSummary,
   type PartnerVisaStatus,
   type PartnerWorkPermitStatus,
@@ -26,7 +29,7 @@ import { AuditService } from '../admin/audit/audit.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { Clock } from '../common/clock/clock.js';
 import { AppException, notFound } from '../common/errors/app.exception.js';
-import type { Prisma } from '../generated/prisma/client.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   PARTNER_FILE_SELECT,
@@ -59,6 +62,9 @@ const JOB_SELECT = {
   role: true,
   positions: true,
   locations: true,
+  salaryAmount: true,
+  salaryCurrency: true,
+  salaryPeriod: true,
   salary: true,
   description: true,
   status: true,
@@ -253,6 +259,13 @@ export class PartnerAreaService {
           { field: 'role', oldValue: null, newValue: input.role },
           { field: 'positions', oldValue: null, newValue: input.positions },
           { field: 'locations', oldValue: null, newValue: input.locations },
+          ...(input.salaryAmount !== null
+            ? [
+                { field: 'salaryAmount', oldValue: null, newValue: input.salaryAmount },
+                { field: 'salaryCurrency', oldValue: null, newValue: input.salaryCurrency },
+                { field: 'salaryPeriod', oldValue: null, newValue: input.salaryPeriod },
+              ]
+            : []),
           ...(input.salary ? [{ field: 'salary', oldValue: null, newValue: input.salary }] : []),
         ],
       });
@@ -271,10 +284,27 @@ export class PartnerAreaService {
     await this.prisma.$transaction(async (tx) => {
       const before = await tx.partnerJob.findFirst({
         where: { id: jobId, partnerSpaceId: spaceId },
-        select: { role: true, positions: true, locations: true, salary: true, description: true },
+        select: {
+          role: true,
+          positions: true,
+          locations: true,
+          salaryAmount: true,
+          salaryCurrency: true,
+          salaryPeriod: true,
+          salary: true,
+          description: true,
+        },
       });
       if (!before) {
         throw jobNotFound();
+      }
+      const issues = partnerJobIssues({ ...before, ...input });
+      if (issues.length > 0) {
+        throw new AppException(
+          'VALIDATION_ERROR',
+          HttpStatus.BAD_REQUEST,
+          issues.map((issue) => issue.message).join('; '),
+        );
       }
       const changes = changedFields(before, input);
       if (changes.length === 0) {
@@ -330,6 +360,76 @@ export class PartnerAreaService {
       });
     });
     return this.getJob(spaceId, jobId);
+  }
+
+  /**
+   * Deletes a job demand that has no application (ADR-027, amendment 3): a super admin who
+   * is a member, after typing its role. Its comments go; one history entry with the role
+   * (not personal data) remains, and the audit entry holds counts.
+   */
+  async deleteJob(
+    spaceId: string,
+    jobId: string,
+    confirmName: string,
+    user: AuthUser,
+    ip: string | null,
+  ): Promise<void> {
+    if (user.role !== 'SUPER_ADMIN') {
+      // Other members cannot delete: the same answer as an unknown job demand.
+      throw jobNotFound();
+    }
+    const actor = this.actorFor(user);
+    await this.prisma.$transaction(async (tx) => {
+      // The row lock waits for an application being added to it (its foreign key check
+      // holds a share lock on the row), so the count below sees it.
+      const locked = await tx.$queryRaw<{ role: string }[]>(Prisma.sql`
+        SELECT "role" FROM "partner_jobs"
+        WHERE "id" = ${jobId}::uuid AND "partner_space_id" = ${spaceId}::uuid
+        FOR UPDATE`);
+      const row = locked[0];
+      if (!row) {
+        throw jobNotFound();
+      }
+      if (confirmName.trim() !== row.role) {
+        throw new AppException(
+          'CONFIRMATION_MISMATCH',
+          HttpStatus.BAD_REQUEST,
+          'Type the role of the job demand exactly to delete it',
+        );
+      }
+      const [applications, comments] = await Promise.all([
+        tx.partnerApplication.count({ where: { partnerSpaceId: spaceId, partnerJobId: jobId } }),
+        tx.partnerComment.count({ where: { partnerSpaceId: spaceId, partnerJobId: jobId } }),
+      ]);
+      if (applications > 0) {
+        throw new AppException(
+          'JOB_HAS_APPLICATIONS',
+          HttpStatus.CONFLICT,
+          'A job demand with applications cannot be deleted',
+        );
+      }
+      await tx.partnerJob.deleteMany({ where: { id: jobId, partnerSpaceId: spaceId } });
+      await this.history.record(tx, {
+        spaceId,
+        actor,
+        entityType: 'job',
+        entityId: jobId,
+        action: 'JOB_DELETED',
+        changes: [{ field: 'role', oldValue: row.role, newValue: null }],
+      });
+      await this.audit.record(
+        {
+          actorId: user.id,
+          action: 'partner_job.delete',
+          entityType: 'partner_job',
+          entityId: jobId,
+          before: { partnerSpaceId: spaceId, comments },
+          after: null,
+          ip,
+        },
+        tx,
+      );
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -721,6 +821,10 @@ export class PartnerAreaService {
         role: row.role,
         positions: row.positions,
         locations: row.locations,
+        // The CHECK constraints keep these to the lists of the shared schemas.
+        salaryAmount: row.salaryAmount,
+        salaryCurrency: row.salaryCurrency as PartnerSalaryCurrency | null,
+        salaryPeriod: row.salaryPeriod as PartnerSalaryPeriod | null,
         salary: row.salary,
         description: row.description,
         status: row.status,

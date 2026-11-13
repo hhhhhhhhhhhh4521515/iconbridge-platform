@@ -902,6 +902,13 @@ model PartnerJob {
   positions      Int
   /// 1 to 10 places (CHECK constraint).
   locations      String[]
+  /// More than 0; amount, currency and period all set or all null (CHECK constraints).
+  salaryAmount   Int?             @map("salary_amount")
+  /// EUR, PLN, USD, GBP, CHF or CZK (CHECK constraint).
+  salaryCurrency String?          @map("salary_currency") @db.Char(3)
+  /// HOUR, MONTH or YEAR (CHECK constraint).
+  salaryPeriod   String?          @map("salary_period") @db.VarChar(5)
+  /// Free text about the pay, e.g. "gross, plus accommodation".
   salary         String?          @db.VarChar(200)
   /// Plain text, never HTML.
   description    String           @default("") @db.VarChar(5000)
