@@ -75,10 +75,29 @@
       "newJob": "Nouvelle demande",
       "open": "Ouvertes",
       "closed": "Fermées",
-      "empty": "Aucune demande pour l’instant.",
+      "empty": "Aucune demande pour l’instant. Créez la première, puis proposez-y des personnes.",
       "positions": "{count, plural, one {# poste} other {# postes}}",
       "applications": "{count, plural, one {# candidature} other {# candidatures}}",
-      "places": "Lieux"
+      "places": "Lieux",
+      "openJobs": "Demandes ouvertes",
+      "closedJobs": "Demandes fermées",
+      "createFirst": "Créer la première demande",
+      "filled": "{filled} / {positions} pourvus",
+      "filledLabel": "Postes pourvus",
+      "updated": "Mise à jour le {date}",
+      "noApplicationsYet": "Aucune candidature pour l’instant.",
+      "workPermitStage": "Permis de travail",
+      "visaStage": "Visa",
+      "location": "Lieu",
+      "salary": "Salaire",
+      "noSalary": "Salaire non indiqué",
+      "summary": {
+        "label": "Résumé de l’espace",
+        "openJobs": "Demandes ouvertes",
+        "candidates": "Candidats",
+        "permitsApproved": "Permis de travail accordés",
+        "visasApproved": "Visas accordés"
+      }
     },
     "workPermit": {
       "NOT_STARTED": "Non commencé",
@@ -93,7 +112,9 @@
       "APPOINTMENT_BOOKED": "Rendez-vous pris",
       "SUBMITTED": "Déposé",
       "APPROVED": "Accordé",
-      "REFUSED": "Refusé"
+      "REFUSED": "Refusé",
+      "all": "Tous",
+      "filter": "Filtrer par statut du visa"
     },
     "job": {
       "newTitle": "Nouvelle demande de postes",
@@ -103,8 +124,8 @@
       "positions": "Nombre de postes",
       "places": "Lieux",
       "placesHint": "Un lieu par ligne, 10 au plus.",
-      "salary": "Salaire (facultatif)",
-      "salaryHint": "Par exemple : 4 500 PLN brut par mois",
+      "salary": "Précisions sur le salaire (facultatif)",
+      "salaryHint": "Par exemple : brut, logement compris",
       "description": "Description (facultative)",
       "create": "Créer la demande",
       "save": "Enregistrer",
@@ -122,7 +143,26 @@
       "back": "Toutes les demandes",
       "edit": "Modifier",
       "cancel": "Annuler",
-      "noFilteredApplications": "Aucune candidature avec ce statut du permis de travail."
+      "noFilteredApplications": "Aucune candidature ne correspond à ces filtres.",
+      "pageTitle": "Demande de recrutement",
+      "details": "Détails",
+      "positionsLabel": "Postes",
+      "locationLabel": "Lieu",
+      "salaryLabel": "Salaire",
+      "descriptionLabel": "Description",
+      "notGiven": "Non indiqué",
+      "salaryLegend": "Salaire (facultatif)",
+      "salaryAmount": "Montant",
+      "salaryCurrency": "Devise",
+      "salaryPeriod": "Par",
+      "salaryValue": "{amount} {currency} / {period}",
+      "per": {
+        "HOUR": "heure",
+        "MONTH": "mois",
+        "YEAR": "an"
+      },
+      "search": "Rechercher par nom",
+      "searchPlaceholder": "Rechercher par prénom ou nom"
     },
     "table": {
       "name": "Nom",
@@ -132,7 +172,8 @@
       "decision": "Décision",
       "dhlSent": "Envoi DHL",
       "documentsReceived": "Documents reçus",
-      "workPermit": "Permis de travail"
+      "workPermit": "Permis de travail",
+      "candidate": "Candidat"
     },
     "application": {
       "newTitle": "Nouvelle candidature",
@@ -165,7 +206,11 @@
       "workPermitStatus": "Statut du permis de travail",
       "workPermitSubmitted": "Date de dépôt (facultatif)",
       "workPermitDecisionHint": "Seulement quand le permis de travail est accordé ou refusé.",
-      "workPermitFileHint": "Déposez le permis de travail lui-même dans le cadre Fichiers."
+      "workPermitFileHint": "Déposez le permis de travail lui-même dans le cadre Fichiers.",
+      "pageTitle": "Candidature",
+      "unsaved": "Vous avez des modifications non enregistrées.",
+      "discard": "Annuler les modifications",
+      "saving": "Enregistrement…"
     },
     "files": {
       "title": "Fichiers",
@@ -182,7 +227,8 @@
       "uploaded": "Fichier ajouté.",
       "by": "{name}, {date}",
       "uploading": "Envoi…",
-      "chooseFile": "Choisir le fichier : {kind}"
+      "chooseFile": "Choisir le fichier : {kind}",
+      "orDrop": "ou déposez un fichier ici"
     },
     "delete": {
       "button": "Supprimer la candidature",
@@ -249,7 +295,8 @@
         "FILE_REPLACED": "Fichier remplacé",
         "FILE_PREVIEWED": "Fichier consulté",
         "FILE_DOWNLOADED": "Fichier téléchargé",
-        "other": "Modification"
+        "other": "Modification",
+        "JOB_DELETED": "Demande supprimée"
       },
       "field": {
         "name": "nom",
@@ -261,7 +308,7 @@
         "role": "poste",
         "positions": "postes",
         "locations": "lieux",
-        "salary": "salaire",
+        "salary": "précisions sur le salaire",
         "description": "description",
         "status": "statut",
         "firstName": "prénom",
@@ -281,7 +328,10 @@
         "workPermitStatus": "statut du permis de travail",
         "workPermitSubmittedDate": "dépôt du permis de travail",
         "workPermitDecisionDate": "décision du permis de travail",
-        "other": "{name}"
+        "other": "{name}",
+        "salaryAmount": "montant du salaire",
+        "salaryCurrency": "devise",
+        "salaryPeriod": "période du salaire"
       }
     },
     "errors": {
@@ -300,7 +350,8 @@
       "decisionNeedsStatus": "Une date de décision demande le statut Accordé ou Refusé.",
       "trackingNeedsDate": "Un numéro de suivi demande la date d’envoi.",
       "typeName": "Tapez le nom exactement comme indiqué.",
-      "permitDecisionNeedsStatus": "Une date de décision demande le statut du permis de travail Accordé ou Refusé."
+      "permitDecisionNeedsStatus": "Une date de décision demande le statut du permis de travail Accordé ou Refusé.",
+      "salaryIncomplete": "Indiquez un montant, une devise et une période, ou aucun des trois."
     },
     "api": {
       "INVALID_CREDENTIALS": "L’adresse e-mail ou le mot de passe est incorrect.",
@@ -318,7 +369,8 @@
       "UNAUTHENTICATED": "Votre session est terminée. Reconnectez-vous.",
       "FORBIDDEN": "Vous ne pouvez pas faire cela.",
       "CONFLICT": "Ce n’est pas possible dans l’état actuel.",
-      "INTERNAL_ERROR": "Un problème est survenu. Réessayez dans un instant."
+      "INTERNAL_ERROR": "Un problème est survenu. Réessayez dans un instant.",
+      "JOB_HAS_APPLICATIONS": "Une demande qui a des candidatures ne peut pas être supprimée."
     },
     "ui": {
       "loading": "Chargement…",
@@ -326,6 +378,39 @@
       "cancel": "Annuler",
       "save": "Enregistrer",
       "saving": "Enregistrement…"
+    },
+    "deleteJob": {
+      "button": "Supprimer",
+      "title": "Supprimer cette demande ?",
+      "willRemove": "Cela supprime définitivement la demande et ses commentaires. Seule une demande sans candidature peut être supprimée.",
+      "keeps": "L’historique garde une ligne avec le poste, qui l’a supprimée et quand.",
+      "typeName": "Saisissez le poste pour confirmer : {name}",
+      "confirm": "Supprimer définitivement",
+      "done": "Demande supprimée."
+    },
+    "steps": {
+      "label": "Avancement de la candidature",
+      "workPermit": "Permis de travail",
+      "appointment": "Rendez-vous visa",
+      "decision": "Décision visa",
+      "dhl": "DHL envoyé",
+      "documents": "Documents reçus",
+      "done": "Terminé",
+      "current": "En cours",
+      "refused": "Refusé",
+      "todo": "Pas encore",
+      "doneShort": "Terminé",
+      "currentShort": "En cours",
+      "refusedShort": "Refusé",
+      "todoShort": "Pas encore"
+    },
+    "datePicker": {
+      "choose": "Choisir une date",
+      "clear": "Effacer la date : {label}",
+      "previousMonth": "Mois précédent",
+      "nextMonth": "Mois suivant",
+      "month": "Mois",
+      "year": "Année"
     }
   },
   "common": {

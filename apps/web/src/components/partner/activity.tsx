@@ -1,16 +1,18 @@
 'use client';
 
 import { PARTNER_HISTORY_ENTITY_TYPES } from '@iconbridge/shared/partner';
+import { MessagesSquare, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useState } from 'react';
 import { api, attempt, type PartnerComment, type PartnerHistoryEntry } from '@/lib/client-api';
 import { cta, field } from '@/lib/ui';
 import {
+  Avatar,
   card,
+  CardTitle,
   Failed,
   formatDate,
   formatDateTime,
-  heading,
   LoadingText,
   usePartner,
   usePartnerCall,
@@ -85,61 +87,74 @@ export function Comments({ target }: { target: Target }) {
   };
   return (
     <section className={card} aria-labelledby={`${fieldId}-title`} data-testid="comments">
-      <h2 id={`${fieldId}-title`} className={`${heading} mb-3`}>
+      <CardTitle icon={MessagesSquare} id={`${fieldId}-title`}>
         {t('title')}
-      </h2>
-      {failed ? (
-        <Failed onRetry={load} />
-      ) : items === null ? (
-        <LoadingText />
-      ) : items.length === 0 ? (
-        <p className="mb-4 text-sm text-muted-foreground">{t('empty')}</p>
-      ) : (
-        <ol className="mb-4 space-y-3">
-          {items.map((comment) => (
-            <li key={comment.id} className="rounded-lg bg-muted p-3">
-              <p className="text-xs text-muted-foreground">
-                {t('by', {
-                  name: comment.authorName,
-                  date: formatDateTime(comment.createdAt, lang),
-                })}
-              </p>
-              {/* Plain text, never HTML (ADR-027, rule 9). */}
-              <p className="mt-1 text-sm whitespace-pre-line">{comment.body}</p>
-            </li>
-          ))}
-        </ol>
-      )}
-      <form
-        className="space-y-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (body.trim()) {
-            void add();
-          }
-        }}
-      >
-        <label htmlFor={fieldId} className="block text-sm font-medium">
-          {t('label')}
-        </label>
-        <textarea
-          id={fieldId}
-          rows={3}
-          maxLength={2000}
-          className={field}
-          value={body}
-          aria-describedby={`${fieldId}-hint`}
-          onChange={(event) => {
-            setBody(event.target.value);
+      </CardTitle>
+      <div className="mt-5">
+        {failed ? (
+          <Failed onRetry={load} />
+        ) : items === null ? (
+          <LoadingText />
+        ) : items.length === 0 ? (
+          <p className="mb-4 text-sm text-muted-foreground">{t('empty')}</p>
+        ) : (
+          // A thread, oldest first.
+          <ol className="mb-5 space-y-4">
+            {items.map((comment) => {
+              return (
+                <li key={comment.id} className="flex items-start gap-2.5">
+                  <Avatar name={comment.authorName} size="sm" />
+                  <div className="max-w-[85%] min-w-0">
+                    <p className="mb-1 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{comment.authorName}</span> ·{' '}
+                      <time dateTime={comment.createdAt}>
+                        {formatDateTime(comment.createdAt, lang)}
+                      </time>
+                    </p>
+                    {/* Plain text, never HTML (ADR-027, rule 9). */}
+                    <p className="rounded-2xl rounded-ss-sm bg-muted px-4 py-2.5 text-sm break-words whitespace-pre-line">
+                      {comment.body}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+        <form
+          className="space-y-2 border-t border-border pt-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (body.trim()) {
+              void add();
+            }
           }}
-        />
-        <p id={`${fieldId}-hint`} className="text-xs text-muted-foreground">
-          {t('hint')}
-        </p>
-        <button type="submit" className={cta.outline} disabled={busy || body.trim() === ''}>
-          {t('submit')}
-        </button>
-      </form>
+        >
+          <label htmlFor={fieldId} className="block text-sm font-medium">
+            {t('label')}
+          </label>
+          <textarea
+            id={fieldId}
+            rows={2}
+            maxLength={2000}
+            className={field}
+            value={body}
+            aria-describedby={`${fieldId}-hint`}
+            onChange={(event) => {
+              setBody(event.target.value);
+            }}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p id={`${fieldId}-hint`} className="text-xs text-muted-foreground">
+              {t('hint')}
+            </p>
+            <button type="submit" className={cta.primary} disabled={busy || body.trim() === ''}>
+              <Send className="size-4 rtl:-scale-x-100" aria-hidden />
+              {t('submit')}
+            </button>
+          </div>
+        </form>
+      </div>
     </section>
   );
 }
@@ -167,6 +182,20 @@ function useValueText(): (field: string | null, value: string | null) => string 
     }
     return value;
   };
+}
+
+/** The colour of an entry's dot: created green, deleted red, files blue, the rest grey. */
+function dotOf(action: string): string {
+  if (/DELETED|REMOVED/.test(action)) {
+    return 'bg-red-600';
+  }
+  if (/CREATED|ADDED|REOPENED/.test(action)) {
+    return 'bg-emerald-600';
+  }
+  if (action.startsWith('FILE_')) {
+    return 'bg-blue-600';
+  }
+  return 'bg-muted-foreground';
 }
 
 /** Entries of the history, newest first; filtered by entity, or by application. */
@@ -238,40 +267,33 @@ export function HistoryList({
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : null}
       {items.length > 0 ? (
-        <div className="relative overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <caption className="sr-only">{t('title')}</caption>
-            <thead className="bg-muted/50 text-start">
-              <tr>
-                {(['when', 'who', 'what', 'change'] as const).map((column) => (
-                  <th key={column} scope="col" className="px-3 py-2 text-start font-semibold">
-                    {t(column)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {items.map((entry) => (
-                <tr key={entry.id}>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {formatDateTime(entry.createdAt, lang)}
-                  </td>
-                  <td className="px-3 py-2">{entry.actorName}</td>
-                  <td className="px-3 py-2">{actionName(entry.action)}</td>
-                  <td className="px-3 py-2">
-                    {entry.field
-                      ? t('fieldChange', {
-                          field: fieldName(entry.field),
-                          from: valueText(entry.field, entry.oldValue),
-                          to: valueText(entry.field, entry.newValue),
-                        })
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        // A vertical timeline, newest first: the line joins the dots.
+        <ol className="relative ms-2 border-s-2 border-border" aria-label={t('title')}>
+          {items.map((entry) => (
+            <li key={entry.id} className="relative ms-6 pb-5 last:pb-0">
+              <span
+                aria-hidden
+                className={`absolute -start-[1.95rem] top-1 size-3.5 rounded-full border-2 border-card ${dotOf(entry.action)}`}
+              />
+              <p className="text-sm">
+                <span className="font-semibold">{actionName(entry.action)}</span>
+                <span className="text-muted-foreground"> · {entry.actorName}</span>
+              </p>
+              {entry.field ? (
+                <p className="mt-0.5 text-sm">
+                  {t('fieldChange', {
+                    field: fieldName(entry.field),
+                    from: valueText(entry.field, entry.oldValue),
+                    to: valueText(entry.field, entry.newValue),
+                  })}
+                </p>
+              ) : null}
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                <time dateTime={entry.createdAt}>{formatDateTime(entry.createdAt, lang)}</time>
+              </p>
+            </li>
+          ))}
+        </ol>
       ) : null}
       {items.length < total ? (
         <button

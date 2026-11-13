@@ -4,15 +4,30 @@ import {
   createPartnerApplicationSchema,
   updatePartnerApplicationSchema,
 } from '@iconbridge/shared/partner';
-import { Download, Eye, Upload } from 'lucide-react';
+import {
+  Check,
+  Download,
+  Eye,
+  FileBadge,
+  FileImage,
+  FileText,
+  FolderOpen,
+  Stamp,
+  Trash2,
+  Truck,
+  Upload,
+  UserRound,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import NextLink from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { CountrySelect } from '@/components/forms/country-select';
-import { DateSelects } from '@/components/forms/date-field';
 import { fileForm } from '@/components/admin/image-cropper';
 import { Modal } from '@/components/ui/modal';
+import { countryName } from '@/lib/countries';
 import {
   api,
   attempt,
@@ -23,33 +38,35 @@ import {
 import { partnerHref } from '@/lib/partner-locale';
 import { cta } from '@/lib/ui';
 import { Comments, HistoryList } from './activity';
+import { DatePicker } from './date-picker';
 import { FormField, input } from './jobs';
 import {
+  Avatar,
   card,
+  CardTitle,
   Failed,
+  formatDate,
   formatDateTime,
-  heading,
+  IconTile,
   LoadingText,
   useIssueTexts,
   usePartner,
   usePartnerApiError,
   usePartnerCall,
   useSpace,
+  VISA_STATUSES,
+  VisaBadge,
   WORK_PERMIT_STATUSES,
   WorkPermitBadge,
+  type VisaStatus,
   type WorkPermitStatus,
 } from './partner-ui';
 
-const VISA_STATUSES = [
-  'NOT_STARTED',
-  'APPOINTMENT_BOOKED',
-  'SUBMITTED',
-  'APPROVED',
-  'REFUSED',
-] as const;
-type VisaStatus = (typeof VISA_STATUSES)[number];
 const FILE_KINDS = ['PASSPORT', 'CV', 'WORK_PERMIT'] as const;
 type FileKind = (typeof FILE_KINDS)[number];
+
+const backLink =
+  'inline-flex min-h-11 items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground';
 
 interface Values {
   firstName: string;
@@ -118,6 +135,34 @@ const toBody = (values: Values) => ({
   documentsReceivedDate: orNull(values.documentsReceivedDate),
 });
 
+const sameValues = (a: Values, b: Values) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * A section of the form as a card. The legend floats so it sits inside the card instead of
+ * on its border; the content clears it.
+ */
+function Section({
+  icon,
+  title,
+  children,
+  testId,
+}: {
+  icon: LucideIcon;
+  title: string;
+  children: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <fieldset className={`${card} min-w-0`} data-testid={testId}>
+      <legend className="float-start mb-5 flex w-full items-center gap-3 text-lg font-semibold tracking-tight">
+        <IconTile icon={icon} />
+        {title}
+      </legend>
+      <div className="clear-both space-y-5">{children}</div>
+    </fieldset>
+  );
+}
+
 /** Create an application for a job demand, or edit one. */
 function ApplicationForm({
   jobId,
@@ -137,10 +182,25 @@ function ApplicationForm({
   const router = useRouter();
   const call = usePartnerCall();
   const issueTexts = useIssueTexts();
-  const [values, setValues] = useState<Values>(() => toValues(application ?? null));
+  const [initial] = useState<Values>(() => toValues(application ?? null));
+  const [values, setValues] = useState<Values>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const dirty = !sameValues(values, initial);
   const year = new Date().getUTCFullYear();
+  // Leaving the page with unsaved changes asks first.
+  useEffect(() => {
+    if (!application || !dirty) {
+      return;
+    }
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => {
+      window.removeEventListener('beforeunload', warn);
+    };
+  }, [application, dirty]);
   const set = (key: keyof Values) => (event: { target: { value: string } }) => {
     setValues({ ...values, [key]: event.target.value });
   };
@@ -196,21 +256,45 @@ function ApplicationForm({
     }
   };
   const dateField = (key: DateFieldName, label: string, hint?: string) => (
-    <DateSelects
+    <DatePicker
       label={label}
+      lang={lang}
       value={values[key]}
       onChange={(value) => {
         setValues((current) => ({ ...current, [key]: value }));
       }}
-      fromYear={year + 2}
-      toYear={year - 3}
+      fromYear={year - 3}
+      toYear={year + 2}
       error={errors[key] ?? null}
-      {...(hint ? { hint } : {})}
+      hint={hint}
     />
+  );
+  const statusSelect = <S extends string>(
+    key: 'workPermitStatus' | 'visaStatus',
+    label: string,
+    statuses: readonly S[],
+    text: (status: S) => string,
+  ) => (
+    <FormField label={label} error={errors[key]}>
+      {(props) => (
+        <select
+          {...props}
+          className={`${input} sm:max-w-xs`}
+          value={values[key]}
+          onChange={set(key)}
+        >
+          {statuses.map((status) => (
+            <option key={status} value={status}>
+              {text(status)}
+            </option>
+          ))}
+        </select>
+      )}
+    </FormField>
   );
   return (
     <form
-      className="space-y-6"
+      className={`space-y-6 ${application && dirty ? 'pb-24' : ''}`}
       data-testid="application-form"
       noValidate
       onSubmit={(event) => {
@@ -218,9 +302,8 @@ function ApplicationForm({
         void submit();
       }}
     >
-      <fieldset className="space-y-4">
-        <legend className={`${heading} mb-2`}>{t('person')}</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <Section icon={UserRound} title={t('person')}>
+        <div className="grid gap-5 sm:grid-cols-2">
           <FormField label={t('firstName')} error={errors.firstName}>
             {(props) => (
               <input
@@ -248,21 +331,23 @@ function ApplicationForm({
             )}
           </FormField>
         </div>
-        <CountrySelect
-          label={t('nationality')}
-          name="nationality"
-          required
-          value={values.nationality}
-          onChange={(code) => {
-            setValues((current) => ({ ...current, nationality: code }));
-          }}
-        />
-        {errors.nationality ? (
-          <p role="alert" className="-mt-2 text-sm font-medium text-destructive">
-            {errors.nationality}
-          </p>
-        ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <CountrySelect
+            label={t('nationality')}
+            name="nationality"
+            required
+            value={values.nationality}
+            onChange={(code) => {
+              setValues((current) => ({ ...current, nationality: code }));
+            }}
+          />
+          {errors.nationality ? (
+            <p role="alert" className="mt-1 text-sm font-medium text-destructive">
+              {errors.nationality}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
           <FormField label={t('phone')} hint={t('phoneHint')} error={errors.phone}>
             {(props) => (
               <input
@@ -288,59 +373,28 @@ function ApplicationForm({
             )}
           </FormField>
         </div>
-      </fieldset>
-      <fieldset className="space-y-4" data-testid="work-permit-section">
-        <legend className={`${heading} mb-2`}>{t('workPermit')}</legend>
-        <FormField label={t('workPermitStatus')} error={errors.workPermitStatus}>
-          {(props) => (
-            <select
-              {...props}
-              className={`${input} max-w-xs`}
-              value={values.workPermitStatus}
-              onChange={set('workPermitStatus')}
-            >
-              {WORK_PERMIT_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {permit(status)}
-                </option>
-              ))}
-            </select>
-          )}
-        </FormField>
-        <div className="grid gap-4 md:grid-cols-2">
+      </Section>
+      <Section icon={FileBadge} title={t('workPermit')} testId="work-permit-section">
+        {statusSelect('workPermitStatus', t('workPermitStatus'), WORK_PERMIT_STATUSES, (status) =>
+          permit(status),
+        )}
+        <div className="grid gap-5 md:grid-cols-2">
           {dateField('workPermitSubmittedDate', t('workPermitSubmitted'))}
           {isDecided(values.workPermitStatus)
             ? dateField('workPermitDecisionDate', t('decisionDate'), t('workPermitDecisionHint'))
             : null}
         </div>
         <p className="text-sm text-muted-foreground">{t('workPermitFileHint')}</p>
-      </fieldset>
-      <fieldset className="space-y-4">
-        <legend className={`${heading} mb-2`}>{t('visa')}</legend>
-        <FormField label={t('visaStatus')} error={errors.visaStatus}>
-          {(props) => (
-            <select
-              {...props}
-              className={`${input} max-w-xs`}
-              value={values.visaStatus}
-              onChange={set('visaStatus')}
-            >
-              {VISA_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {visa(status)}
-                </option>
-              ))}
-            </select>
-          )}
-        </FormField>
-        <div className="grid gap-4 md:grid-cols-2">
+      </Section>
+      <Section icon={Stamp} title={t('visa')}>
+        {statusSelect('visaStatus', t('visaStatus'), VISA_STATUSES, (status) => visa(status))}
+        <div className="grid gap-5 md:grid-cols-2">
           {dateField('visaAppointmentDate', t('appointmentDate'))}
           {dateField('visaDecisionDate', t('decisionDate'), t('decisionHint'))}
         </div>
-      </fieldset>
-      <fieldset className="space-y-4">
-        <legend className={`${heading} mb-2`}>{t('dhl')}</legend>
-        <div className="grid gap-4 md:grid-cols-2">
+      </Section>
+      <Section icon={Truck} title={t('dhl')}>
+        <div className="grid gap-5 md:grid-cols-2">
           {dateField('dhlSentDate', t('dhlSent'))}
           <FormField label={t('dhlTracking')} error={errors.dhlTrackingNumber}>
             {(props) => (
@@ -355,13 +409,46 @@ function ApplicationForm({
             )}
           </FormField>
         </div>
-        {dateField('documentsReceivedDate', t('documentsReceived'))}
-      </fieldset>
-      <div className="flex justify-end">
-        <button type="submit" className={cta.primary} disabled={busy}>
-          {application ? t('save') : t('create')}
-        </button>
-      </div>
+        <div className="md:w-1/2 md:pe-2.5">
+          {dateField('documentsReceivedDate', t('documentsReceived'))}
+        </div>
+      </Section>
+      {application ? (
+        // Editing: a bar fixed at the bottom of the screen once something changed.
+        dirty ? (
+          <div
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_16px_rgb(0_0_0/0.08)] backdrop-blur"
+            data-testid="save-bar"
+          >
+            <div className="container-page flex flex-wrap items-center justify-between gap-3 py-3">
+              <p className="text-sm font-medium" role="status">
+                {t('unsaved')}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={cta.outline}
+                  onClick={() => {
+                    setValues(initial);
+                    setErrors({});
+                  }}
+                >
+                  {t('discard')}
+                </button>
+                <button type="submit" className={cta.primary} disabled={busy}>
+                  {busy ? t('saving') : t('save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null
+      ) : (
+        <div className="flex justify-end">
+          <button type="submit" className={cta.primary} disabled={busy}>
+            {t('create')}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
@@ -388,7 +475,7 @@ export function NewApplication() {
     };
   }, [jobId, space.id]);
   if (job === undefined) {
-    return <LoadingText />;
+    return <LoadingText variant="page" />;
   }
   if (job === null) {
     return (
@@ -400,27 +487,141 @@ export function NewApplication() {
     );
   }
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <NextLink
-        href={partnerHref(lang, `/spaces/${space.id}/jobs/${job.id}`)}
-        className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
-      >
-        ← {t('back')}
+    <div className="mx-auto max-w-3xl space-y-6">
+      <NextLink href={partnerHref(lang, `/spaces/${space.id}/jobs/${job.id}`)} className={backLink}>
+        <span aria-hidden>←</span> {t('back')}
       </NextLink>
-      <div className={card}>
-        <h1 className="text-2xl font-bold tracking-tight">{t('newTitle')}</h1>
-        <p className="mt-1 mb-4 text-sm text-muted-foreground">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">{t('newTitle')}</h1>
+        <p className="mt-1 text-muted-foreground">
           {t('job')}: {job.role}
         </p>
-        <ApplicationForm jobId={job.id} />
       </div>
+      <ApplicationForm jobId={job.id} />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Progress
+// ---------------------------------------------------------------------------
+
+type StepState = 'done' | 'current' | 'refused' | 'todo';
+
+/** The five steps of an application, from its saved state. */
+function stepsOf(application: PartnerApplication) {
+  const decided = (status: string): StepState =>
+    status === 'APPROVED'
+      ? 'done'
+      : status === 'REFUSED'
+        ? 'refused'
+        : status === 'SUBMITTED'
+          ? 'current'
+          : 'todo';
+  const reached = (value: unknown): StepState => (value ? 'done' : 'todo');
+  return [
+    {
+      key: 'workPermit',
+      state: decided(application.workPermitStatus),
+      date: application.workPermitDecisionDate ?? application.workPermitSubmittedDate,
+    },
+    {
+      key: 'appointment',
+      state: reached(application.visaAppointmentDate ?? application.visaStatus !== 'NOT_STARTED'),
+      date: application.visaAppointmentDate,
+    },
+    {
+      key: 'decision',
+      state: decided(application.visaStatus),
+      date: application.visaDecisionDate,
+    },
+    { key: 'dhl', state: reached(application.dhlSentDate), date: application.dhlSentDate },
+    {
+      key: 'documents',
+      state: reached(application.documentsReceivedDate),
+      date: application.documentsReceivedDate,
+    },
+  ] as const;
+}
+
+const STEP_STYLES: Record<StepState, { circle: string; line: string }> = {
+  done: {
+    circle: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950',
+    line: 'bg-emerald-600 dark:bg-emerald-500',
+  },
+  current: {
+    circle: 'border-2 border-blue-600 bg-background text-blue-700 dark:text-blue-300',
+    line: 'bg-border',
+  },
+  refused: { circle: 'bg-red-600 text-white', line: 'bg-border' },
+  todo: { circle: 'border-2 border-border bg-background text-muted-foreground', line: 'bg-border' },
+};
+
+/** Work permit → visa appointment → visa decision → DHL sent → documents received. */
+function Stepper({ application }: { application: PartnerApplication }) {
+  const t = useTranslations('partner.steps');
+  const { lang } = usePartner();
+  const steps = stepsOf(application);
+  return (
+    <section className={card} aria-labelledby="application-progress">
+      <h2 id="application-progress" className="sr-only">
+        {t('label')}
+      </h2>
+      <ol className="grid gap-4 md:grid-cols-5 md:gap-0" data-testid="progress-stepper">
+        {steps.map((step, index) => (
+          <li
+            key={step.key}
+            data-state={step.state}
+            data-step={step.key}
+            className="relative flex items-center gap-3 md:flex-col md:items-center md:gap-2 md:text-center"
+          >
+            {index > 0 ? (
+              <span
+                aria-hidden
+                className={`absolute end-1/2 top-5 hidden h-0.5 w-full -translate-y-1/2 md:block ${STEP_STYLES[step.state === 'todo' ? 'todo' : (steps[index - 1]?.state ?? 'todo')].line}`}
+              />
+            ) : null}
+            <span
+              aria-hidden
+              className={`relative z-10 inline-flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${STEP_STYLES[step.state].circle}`}
+            >
+              {step.state === 'done' ? (
+                <Check className="size-5" />
+              ) : step.state === 'refused' ? (
+                <X className="size-5" />
+              ) : (
+                index + 1
+              )}
+            </span>
+            <span className="min-w-0 md:px-2">
+              <span className="block text-sm font-semibold">{t(step.key)}</span>
+              <span className="block text-xs text-muted-foreground">
+                <span className="sr-only">{t(step.state)}: </span>
+                {step.date ? formatDate(step.date, lang) : t(`${step.state}Short`)}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Files
 // ---------------------------------------------------------------------------
+
+const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+/** 240 KB, 1.4 MB, in the reader's language. */
+function formatSize(bytes: number, lang: string): string {
+  const mb = bytes >= 1024 * 1024;
+  return new Intl.NumberFormat(lang, {
+    style: 'unit',
+    unit: mb ? 'megabyte' : 'kilobyte',
+    maximumFractionDigits: mb ? 1 : 0,
+  }).format(mb ? bytes / (1024 * 1024) : Math.max(1, Math.round(bytes / 1024)));
+}
 
 function FileRow({
   kind,
@@ -439,6 +640,7 @@ function FileRow({
   const call = usePartnerCall();
   const inputId = useId();
   const [busy, setBusy] = useState(false);
+  const [over, setOver] = useState(false);
   const upload = async (chosen: File) => {
     setBusy(true);
     const result = await call(
@@ -490,49 +692,98 @@ function FileRow({
   };
   const formats = kind === 'CV' ? t('formatsCv') : t('formatsScan');
   const accept =
-    kind === 'CV'
-      ? 'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx'
-      : 'application/pdf,image/jpeg,image/png';
+    kind === 'CV' ? `application/pdf,${DOCX},.docx` : 'application/pdf,image/jpeg,image/png';
   return (
     <li
-      className="flex flex-wrap items-center justify-between gap-3 py-3"
+      className={`rounded-xl border p-3 transition-colors ${
+        over ? 'border-primary bg-muted' : 'border-border'
+      }`}
       data-testid={`file-${kind}`}
+      data-drop={over ? 'over' : undefined}
+      // Dropping a file is a shortcut; the upload button does the same with the keyboard.
+      onDragOver={(event) => {
+        if (busy || !event.dataTransfer.types.includes('Files')) {
+          return;
+        }
+        event.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => {
+        setOver(false);
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        setOver(false);
+        const dropped = event.dataTransfer.files[0];
+        if (dropped && !busy) {
+          void upload(dropped);
+        }
+      }}
     >
-      <div className="min-w-0">
-        <p className="font-medium">{t(kind)}</p>
-        {file ? (
-          <p className="truncate text-sm text-muted-foreground">
-            {file.originalName} ·{' '}
-            {t('by', { name: file.uploadedBy ?? '—', date: formatDateTime(file.uploadedAt, lang) })}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t('none')} ({formats})
-          </p>
-        )}
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-lg ${
+            file
+              ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200'
+              : 'bg-muted text-muted-foreground'
+          }`}
+        >
+          {!file ? (
+            <FolderOpen className="size-5" />
+          ) : file.mimeType.startsWith('image/') ? (
+            <FileImage className="size-5" />
+          ) : (
+            <FileText className="size-5" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{t(kind)}</p>
+          {file ? (
+            <>
+              <p className="truncate text-sm" title={file.originalName}>
+                {file.originalName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {formatSize(file.sizeBytes, lang)} ·{' '}
+                {t('by', {
+                  name: file.uploadedBy ?? '—',
+                  date: formatDateTime(file.uploadedAt, lang),
+                })}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t('none')} ({formats})
+            </p>
+          )}
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {file &&
-        file.mimeType !==
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
-          <button type="button" className={cta.outline} onClick={() => void open(true)}>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {file && file.mimeType !== DOCX ? (
+          <button type="button" className={`${cta.outline} px-3`} onClick={() => void open(true)}>
             <Eye className="size-4" aria-hidden />
             {t('preview')}
             <span className="sr-only">: {t(kind)}</span>
           </button>
         ) : null}
         {file ? (
-          <button type="button" className={cta.outline} onClick={() => void open(false)}>
+          <button type="button" className={`${cta.outline} px-3`} onClick={() => void open(false)}>
             <Download className="size-4" aria-hidden />
             {t('download')}
             <span className="sr-only">: {t(kind)}</span>
           </button>
         ) : null}
-        <label htmlFor={inputId} className={`${cta.outline} cursor-pointer`} aria-disabled={busy}>
+        <label
+          htmlFor={inputId}
+          className={`${cta.outline} cursor-pointer px-3`}
+          aria-disabled={busy}
+        >
           <Upload className="size-4" aria-hidden />
           {busy ? t('uploading') : file ? t('replace') : t('upload')}
           <span className="sr-only">: {t(kind)}</span>
         </label>
+        <span className="hidden text-xs text-muted-foreground sm:inline">{t('orDrop')}</span>
         <input
           id={inputId}
           type="file"
@@ -674,7 +925,7 @@ export function ApplicationDetail({ applicationId }: { applicationId: string }) 
     setAsked((value) => value + 1);
   };
   if (application === undefined) {
-    return <LoadingText />;
+    return <LoadingText variant="page" />;
   }
   if (application === null) {
     return (
@@ -683,29 +934,38 @@ export function ApplicationDetail({ applicationId }: { applicationId: string }) 
       </div>
     );
   }
+  const name = `${application.firstName} ${application.lastName}`;
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <NextLink
         href={partnerHref(lang, `/spaces/${space.id}/jobs/${application.jobId}`)}
-        className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+        className={backLink}
       >
-        ← {t('back')}
+        <span aria-hidden>←</span> {t('back')}
       </NextLink>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {application.firstName} {application.lastName}
-          </h1>
-          <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-muted-foreground">{t('workPermit')}:</span>
-            <WorkPermitBadge status={application.workPermitStatus} />
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('job')}: {application.jobRole}
-            {application.updatedBy
-              ? ` · ${t('updatedBy', { name: application.updatedBy, date: formatDateTime(application.updatedAt, lang) })}`
-              : ''}
-          </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <Avatar name={name} size="lg" />
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t('job')}: {application.jobRole} · {countryName(application.nationality, lang)}
+            </p>
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">{t('workPermit')}:</span>
+              <WorkPermitBadge status={application.workPermitStatus} />
+              <span className="ms-2 text-muted-foreground">{t('visa')}:</span>
+              <VisaBadge status={application.visaStatus} />
+            </p>
+            {application.updatedBy ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('updatedBy', {
+                  name: application.updatedBy,
+                  date: formatDateTime(application.updatedAt, lang),
+                })}
+              </p>
+            ) : null}
+          </div>
         </div>
         {/* Only a super admin who is a member may delete (ADR-027, answer 4); the API decides. */}
         {user.role === 'SUPER_ADMIN' ? (
@@ -716,28 +976,28 @@ export function ApplicationDetail({ applicationId }: { applicationId: string }) 
               setDeleting(true);
             }}
           >
+            <Trash2 className="size-4" aria-hidden />
             {deleteText('button')}
           </button>
         ) : null}
       </div>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <section className={card} aria-label={t('save')}>
-          <ApplicationForm
-            key={version}
-            jobId={application.jobId}
-            application={application}
-            onSaved={(saved) => {
-              setApplication(saved);
-              setVersion((value) => value + 1);
-            }}
-          />
-        </section>
-        <div className="space-y-5">
+      <Stepper application={application} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <ApplicationForm
+          key={version}
+          jobId={application.jobId}
+          application={application}
+          onSaved={(saved) => {
+            setApplication(saved);
+            setVersion((value) => value + 1);
+          }}
+        />
+        <div className="space-y-6">
           <section className={card} aria-labelledby="application-files">
-            <h2 id="application-files" className={heading}>
+            <CardTitle icon={FolderOpen} id="application-files">
               {filesText('title')}
-            </h2>
-            <ul className="divide-y divide-border">
+            </CardTitle>
+            <ul className="mt-5 space-y-3">
               {FILE_KINDS.map((kind) => (
                 <FileRow
                   key={kind}
@@ -753,7 +1013,7 @@ export function ApplicationDetail({ applicationId }: { applicationId: string }) 
         </div>
       </div>
       <section className={card} aria-labelledby="application-history">
-        <h2 id="application-history" className={`${heading} mb-3`}>
+        <h2 id="application-history" className="mb-5 text-lg font-semibold tracking-tight">
           {history('title')}
         </h2>
         <HistoryList applicationId={application.id} key={version} />
