@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 import { adminSession, PASSWORD, PDF, pickCountry, STAMP, toast } from './support';
 
 /**
@@ -9,6 +9,33 @@ import { adminSession, PASSWORD, PDF, pickCountry, STAMP, toast } from './suppor
  * the space. `cleanup.ts` removes a space named "E2E …" that a stopped test left.
  */
 const NEW_PASSWORD = 'quiet-harbour-lantern-91';
+
+/**
+ * Fills a form until React holds the values, then sends it: a page just opened can take the
+ * typing before it hydrates (seen in WebKit under load), and hydration then empties the
+ * fields. The partner forms enable their button only once the fields are in React's state.
+ */
+async function fillAndSend(page: Page, fields: [Locator, string][], button: string) {
+  const send = page.getByRole('button', { name: button });
+  await expect(async () => {
+    for (const [field, value] of fields) {
+      await field.fill(value);
+    }
+    await expect(send).toBeEnabled({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+  await send.click();
+}
+
+/** The partner sign-in, in Polish. */
+const signIn = (page: Page, email: string, password: string) =>
+  fillAndSend(
+    page,
+    [
+      [page.getByLabel('Adres e-mail'), email],
+      [page.getByLabel(/^Hasło/), password],
+    ],
+    'Zaloguj się',
+  );
 
 async function createSpace(request: APIRequestContext, name: string) {
   const response = await request.post('/api/v1/admin/partner-spaces', {
@@ -41,9 +68,7 @@ test.describe('partner area', () => {
       await expect(
         page.getByRole('heading', { name: 'Logowanie do strefy partnera' }),
       ).toBeVisible();
-      await page.getByLabel('Adres e-mail').fill(email);
-      await page.getByLabel(/^Hasło/).fill(PASSWORD);
-      await page.getByRole('button', { name: 'Zaloguj się' }).click();
+      await signIn(page, email, PASSWORD);
 
       // The password set by the super admin is replaced first.
       await expect(page.getByTestId('forced-password')).toBeVisible();
@@ -168,9 +193,8 @@ test.describe('partner area', () => {
       expect(login.status()).toBe(201);
       const page = await partnerContext.newPage();
       await page.goto('/partners/pl/login');
-      await page.getByLabel('Adres e-mail').fill(email);
-      await page.getByLabel(/^Hasło/).fill(PASSWORD);
-      await page.getByRole('button', { name: 'Zaloguj się' }).click();
+      await signIn(page, email, PASSWORD);
+      await expect(page.getByTestId('forced-password')).toBeVisible();
       await page.getByLabel(/^Obecne hasło/).fill(PASSWORD);
       await page.getByLabel(/^Nowe hasło/).fill(NEW_PASSWORD);
       await page.getByRole('button', { name: 'Zmień hasło' }).click();
@@ -275,8 +299,11 @@ test.describe('partner area', () => {
       await own.close();
       // Forgot password: the same answer for any address.
       await page.goto('/partners/pl/forgot-password');
-      await page.getByLabel('Adres e-mail').fill(`e2e-nobody-${STAMP}@example.test`);
-      await page.getByRole('button', { name: 'Wyślij link' }).click();
+      await fillAndSend(
+        page,
+        [[page.getByLabel('Adres e-mail'), `e2e-nobody-${STAMP}@example.test`]],
+        'Wyślij link',
+      );
       await expect(page.getByRole('status')).toContainText('Jeśli ten adres należy');
     } finally {
       await visitor.close();
